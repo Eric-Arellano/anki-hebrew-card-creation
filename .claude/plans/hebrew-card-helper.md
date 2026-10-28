@@ -100,12 +100,8 @@ overridable, want components.*
   to any Host other than `127.0.0.1` or `localhost`, which blocks DNS rebinding. Under `/api`, it
   also refuses any method but GET and HEAD unless the body is JSON and the Origin is this server.
   Without these checks, any website I visit could open Add windows through this server.
-  `config.json`'s AnkiConnect URL must be loopback too, since the API key goes wherever it points.
-- **The API key.** If an AnkiConnect key is ever set, it comes from `ANKICONNECT_API_KEY`, declared
-  in `src/env.ts`. Only `src/lib/server/anki-connection.ts` reads it, and `$app/env/private` is
-  a module SvelteKit refuses to bundle into client code. `config.json`
-  never holds a secret. Deck and note-type names are fine to publish.
-- **Ignored files.** `.env*` (except `.env.example`), `data/`, `*.sqlite` and build output are
+  `config.json`'s AnkiConnect URL must be loopback too.
+- **Ignored files.** `data/`, `*.sqlite` and build output are
   gitignored.
 - **Paths.** No absolute home path appears in code or config.
 - **Wiktionary data is CC BY-SA 4.0, not MIT.** The fixtures carry an attribution README, and the

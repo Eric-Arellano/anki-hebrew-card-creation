@@ -50,7 +50,7 @@ export class AnkiError extends Error {
 
 const envelope = z.object({ result: z.unknown(), error: z.string().nullable() });
 
-export function createAnkiClient(url: string, key: string | undefined): AnkiClient {
+export function createAnkiClient(url: string): AnkiClient {
   return async (action, ...[params]) => {
     // The types already refuse other actions; this refuses them from untyped callers too.
     if (!Object.hasOwn(results, action)) {
@@ -62,7 +62,7 @@ export function createAnkiClient(url: string, key: string | undefined): AnkiClie
       response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, version: 6, params, ...(key ? { key } : {}) }),
+        body: JSON.stringify({ action, version: 6, params }),
       });
     } catch (cause) {
       throw new AnkiError(`Can't reach AnkiConnect at ${url}. Is Anki open?`, { cause });

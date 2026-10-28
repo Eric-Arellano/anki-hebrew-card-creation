@@ -31,8 +31,8 @@ those two facts.
 - **Svelte 5 runes only.** Most Svelte in training data is Svelte 4, so look an API up with the
   Svelte MCP server rather than recalling it, and run `svelte-autofixer` on each Svelte file you
   write until it reports nothing.
-- **No secrets, and no absolute home paths**, in code, config or fixtures. An AnkiConnect API key
-  comes from `ANKICONNECT_API_KEY` and is read only under `src/lib/server/`.
+- **No secrets, and no absolute home paths**, in code, config or fixtures. AnkiConnect is called
+  without an API key.
 
 ## Claude Code plans
 
@@ -153,4 +153,4 @@ Our worry is not too few docs; it is docs that quietly stop being true.
 
 - Do not touch CI unless that is the task.
 - Do not change the guardrails in `.claude/settings.json` unless that is the task.
-- Do not commit secrets, `.env`, or anything from `data/`.
+- Do not commit secrets or anything from `data/`.

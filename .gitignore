@@ -11,11 +11,6 @@ vite.config.ts.timestamp-*
 # OS
 .DS_Store
 
-# Env
-.env
-.env.*
-!.env.example
-
 # The dictionary and its index. Wiktionary's data is CC BY-SA and large, so it never lands in git.
 data/
 *.sqlite

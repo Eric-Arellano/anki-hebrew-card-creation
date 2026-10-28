@@ -25,7 +25,7 @@ const repoPath = nonEmpty.refine((value) => !/^([/\\~]|[A-Za-z]:)/.test(value), 
 
 const configSchema = z.strictObject({
   anki: z.strictObject({
-    // The API key goes wherever this points, so it may only point at this machine.
+    // Card contents go wherever this points, so it may only point at this machine.
     url: z.url({ protocol: /^http$/, hostname: /^(127\.0\.0\.1|localhost)$/ }),
     deck: nonEmpty,
     noteType: nonEmpty,

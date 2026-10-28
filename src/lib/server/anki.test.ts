@@ -21,7 +21,7 @@ describe('createAnkiClient', () => {
   describe('when AnkiConnect answers', () => {
     test('posts the action, version 6 and params, and returns the result', async () => {
       const fetch = replyWith({ result: fieldNames, error: null });
-      const anki = createAnkiClient(ANKI_URL, undefined);
+      const anki = createAnkiClient(ANKI_URL);
 
       expect(await anki('modelFieldNames', { modelName: 'Hebrew' })).toEqual(fieldNames);
       expect(fetch).toHaveBeenCalledWith(ANKI_URL, expect.objectContaining({ method: 'POST' }));
@@ -32,16 +32,10 @@ describe('createAnkiClient', () => {
       });
     });
 
-    test('sends the API key when there is one', async () => {
-      const fetch = replyWith({ result: 6, error: null });
-      await createAnkiClient(ANKI_URL, 'secret')('version');
-      expect(sentBody(fetch)).toEqual({ action: 'version', version: 6, key: 'secret' });
-    });
-
     test('rejects with what AnkiConnect said when it refuses', async () => {
       replyWith({ result: null, error: 'model was not found: No such note type' });
       await expect(
-        createAnkiClient(ANKI_URL, undefined)('modelFieldNames', {
+        createAnkiClient(ANKI_URL)('modelFieldNames', {
           modelName: 'No such note type',
         }),
       ).rejects.toThrow(
@@ -53,21 +47,21 @@ describe('createAnkiClient', () => {
 
     test('rejects a result of the wrong shape', async () => {
       replyWith({ result: 'six', error: null });
-      await expect(createAnkiClient(ANKI_URL, undefined)('version')).rejects.toThrow(
+      await expect(createAnkiClient(ANKI_URL)('version')).rejects.toThrow(
         new AnkiError('AnkiConnect sent an unexpected result for version'),
       );
     });
 
     test('rejects a reply that is not an AnkiConnect envelope', async () => {
       vi.stubGlobal('fetch', async () => new Response('<html>'));
-      await expect(createAnkiClient(ANKI_URL, undefined)('version')).rejects.toThrow(
+      await expect(createAnkiClient(ANKI_URL)('version')).rejects.toThrow(
         new AnkiError('AnkiConnect sent an unexpected reply to version'),
       );
     });
 
     test('rejects an HTTP error', async () => {
       replyWith({}, 403);
-      await expect(createAnkiClient(ANKI_URL, undefined)('version')).rejects.toThrow(
+      await expect(createAnkiClient(ANKI_URL)('version')).rejects.toThrow(
         new AnkiError('AnkiConnect answered 403 to version'),
       );
     });
@@ -78,7 +72,7 @@ describe('createAnkiClient', () => {
       vi.stubGlobal('fetch', async () => {
         throw new TypeError('fetch failed');
       });
-      await expect(createAnkiClient(ANKI_URL, undefined)('version')).rejects.toThrow(
+      await expect(createAnkiClient(ANKI_URL)('version')).rejects.toThrow(
         new AnkiError("Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?"),
       );
     });
@@ -87,7 +81,7 @@ describe('createAnkiClient', () => {
   describe('when the action is not allowlisted', () => {
     test('rejects without sending anything', async () => {
       const fetch = replyWith({ result: null, error: null });
-      const anki = createAnkiClient(ANKI_URL, undefined);
+      const anki = createAnkiClient(ANKI_URL);
       // @ts-expect-error The types refuse it too.
       await expect(anki('deleteNotes', { notes: [1751686072898] })).rejects.toThrow(
         new AnkiError('AnkiConnect action not allowed: deleteNotes'),
