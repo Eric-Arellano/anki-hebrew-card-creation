@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "$app/tsconfig",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    // Node runs `scripts/` and the `.ts` modules they import by stripping types, which can't
+    // handle enums, namespaces or parameter properties.
+    "erasableSyntaxOnly": true
+  },
+  "include": ["src", "tests", "vite.config.ts"]
+}
