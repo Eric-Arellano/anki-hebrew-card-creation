@@ -1,0 +1,248 @@
+[
+  {
+    "noteId": 1751686072898,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "כלב",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "כֶּלֶב",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "כלב טוב",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "dog",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<img alt=\"500 Male Dog Names with Meaning for 2025 | Spot Pet Insurance\" src=\"image-48258e0538aecfb7c668bfea2657cf398428fd72.jpg\">",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_כלב.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "m",
+        "order": 8
+      },
+      "Forms": {
+        "value": "f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "female dog<br><br><div><img alt=\"Top Girl Dog Names | Unique Ideas for Your Female Puppy Dog\" src=\"shutterstock_628340135-cute-siberian-husky-puppy-with-flowers-on-a-pink-background-background-1.jpg\"><br></div>",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "כַּלְבָּה",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793099191,
+    "cards": [1751686072899, 1751686072900, 1751819396650, 1793066688067]
+  },
+  {
+    "noteId": 1751714132957,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "חתול",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "חָתוּל",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "חתול טוב",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "cat",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<img alt=\"Feline therapy: Study suggests cats could fill an assistive niche | WSU Insider | Washington State University\" src=\"cat2-1024x676.jpg\">",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_חתול.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "m",
+        "order": 8
+      },
+      "Forms": {
+        "value": "f:&nbsp;חֲתוּלָה<br>m.pl:&nbsp;חֲתוּלִים<br>f.pl: חֲתוּלוֹת",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793068186,
+    "cards": [1751714132958, 1751714132959, 1751819372766]
+  },
+  {
+    "noteId": 1751714182456,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "דג",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "דָּג",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "דג טוב",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "fish",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<img alt=\"Fish | Definition, Species, Classification, &amp; Facts | Britannica\" src=\"Porcupine-fish-Diodon-hystox.jpg\">",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_דג.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "m",
+        "order": 8
+      },
+      "Forms": {
+        "value": "pl:&nbsp;דָּגִים",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793098728,
+    "cards": [1751714182456, 1751714182457, 1751819347909]
+  }
+]

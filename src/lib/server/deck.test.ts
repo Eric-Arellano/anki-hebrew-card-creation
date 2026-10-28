@@ -1,0 +1,179 @@
+import { describe, expect, test } from 'vitest';
+import { fakeAnki, unreachable } from '../../../tests/fake-anki.ts';
+import fieldNames from '../../../tests/fixtures/anki/model-field-names-hebrew.json' with {
+  type: 'json',
+};
+import bayit from '../../../tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
+import samples from '../../../tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
+  type: 'json',
+};
+import { config } from '../config.ts';
+import type { NoteInfo } from './anki.ts';
+import { findExisting, getStatus } from './deck.ts';
+
+// `&nbsp;` in a field decodes to this, not to a space.
+const NBSP = String.fromCodePoint(0xa0);
+
+const decks = ['Default', 'Judaism', 'Palabras nuevas', 'עברית'];
+const noteTypes = [
+  'Basic',
+  'Basic (and reversed card) Spanish',
+  'Basic (optional reversed card)',
+  'Basic (type in the answer)',
+  'Basic Spanish',
+  'Bracha',
+  'Cloze',
+  'Hebrew',
+  'Image Occlusion',
+];
+
+describe('getStatus', () => {
+  function connectedAnki(fields: string[]) {
+    return fakeAnki({
+      version: () => 6,
+      deckNames: () => decks,
+      modelNames: () => noteTypes,
+      modelFieldNames: () => fields,
+    });
+  }
+
+  describe('when Anki matches the config', () => {
+    test('reports the live fields and no drift', async () => {
+      const { anki, calls } = connectedAnki(fieldNames);
+      expect(await getStatus(anki, config)).toEqual({
+        kind: 'connected',
+        version: 6,
+        deckFound: true,
+        noteType: { found: true, fields: fieldNames, drift: { missing: [], unexpected: [] } },
+      });
+      expect(calls).toContainEqual({ action: 'modelFieldNames', params: { modelName: 'Hebrew' } });
+    });
+  });
+
+  describe('when a field has been renamed in Anki', () => {
+    test('names the field on both sides', async () => {
+      const renamed = fieldNames.map((name) => (name === 'Notes' ? 'Comments' : name));
+      const { anki } = connectedAnki(renamed);
+      expect(await getStatus(anki, config)).toEqual({
+        kind: 'connected',
+        version: 6,
+        deckFound: true,
+        noteType: {
+          found: true,
+          fields: renamed,
+          drift: { missing: ['Notes'], unexpected: ['Comments'] },
+        },
+      });
+    });
+  });
+
+  describe('when the deck and note type are missing', () => {
+    test('says so without asking for fields', async () => {
+      const { anki, calls } = fakeAnki({
+        version: () => 6,
+        deckNames: () => ['Default'],
+        modelNames: () => ['Basic'],
+      });
+      expect(await getStatus(anki, config)).toEqual({
+        kind: 'connected',
+        version: 6,
+        deckFound: false,
+        noteType: { found: false },
+      });
+      expect(calls.map((call) => call.action)).not.toContain('modelFieldNames');
+    });
+  });
+
+  describe('when Anki is closed', () => {
+    test('reports the error', async () => {
+      const { anki } = fakeAnki({
+        version: unreachable,
+        deckNames: unreachable,
+        modelNames: unreachable,
+      });
+      expect(await getStatus(anki, config)).toEqual({
+        kind: 'error',
+        message: "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
+      });
+    });
+  });
+
+  describe('when something other than Anki fails', () => {
+    test('rethrows', async () => {
+      const { anki } = fakeAnki({
+        version: () => {
+          throw new TypeError('bug');
+        },
+        deckNames: () => decks,
+        modelNames: () => noteTypes,
+      });
+      await expect(getStatus(anki, config)).rejects.toThrow(new TypeError('bug'));
+    });
+  });
+});
+
+describe('findExisting', () => {
+  function ankiWith(notes: NoteInfo[]) {
+    return fakeAnki({
+      findNotes: () => notes.map((note) => note.noteId),
+      notesInfo: ({ notes: ids }) => notes.filter((note) => ids.includes(note.noteId)),
+    });
+  }
+
+  const kelev = samples.filter((note) => note.fields.Hebrew.value === 'כלב');
+
+  describe('when the word has its own note', () => {
+    test('finds it as an exact match', async () => {
+      const { anki, calls } = ankiWith(kelev);
+      expect(await findExisting(anki, config, 'כלב')).toEqual({
+        exact: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+        related: [],
+      });
+      expect(calls[0]).toEqual({
+        action: 'findNotes',
+        params: { query: '"note:Hebrew" "Hebrew:*כלב*"' },
+      });
+    });
+
+    test('finds it from pointed input', async () => {
+      const { anki, calls } = ankiWith(kelev);
+      expect((await findExisting(anki, config, ' כֶּלֶב ')).exact).toHaveLength(1);
+      expect(calls[0]?.params).toEqual({ query: '"note:Hebrew" "Hebrew:*כלב*"' });
+    });
+  });
+
+  describe('when other notes contain the word', () => {
+    test('sorts them into related', async () => {
+      const { anki } = ankiWith(bayit);
+      expect(await findExisting(anki, config, 'בית')).toEqual({
+        exact: [{ noteId: 1752114960166, unpointed: 'בית', pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים` }],
+        related: [
+          { noteId: 1752426864218, unpointed: 'בית משפט', pointed: 'בֵּית מִשְׁפָּט' },
+          {
+            noteId: 1752427043636,
+            unpointed: 'בית ספר',
+            pointed: `[ms] בֵּית סֵפֶר [ps]${NBSP}בָּתֵּי סֵפֶר`,
+          },
+          { noteId: 1752428275813, unpointed: 'בית חולים', pointed: 'בֵּית חוֹלִים' },
+          { noteId: 1752428348888, unpointed: 'בית כנסת', pointed: 'בֵּית כְּנֶסֶת' },
+        ],
+      });
+    });
+  });
+
+  describe('when nothing matches', () => {
+    test('does not ask for note details', async () => {
+      const { anki, calls } = ankiWith([]);
+      expect(await findExisting(anki, config, 'זזזז')).toEqual({ exact: [], related: [] });
+      expect(calls.map((call) => call.action)).toEqual(['findNotes']);
+    });
+  });
+
+  describe('when the word is blank', () => {
+    test('asks Anki nothing', async () => {
+      const { anki, calls } = ankiWith(samples);
+      expect(await findExisting(anki, config, ' ')).toEqual({ exact: [], related: [] });
+      expect(calls).toEqual([]);
+    });
+  });
+});

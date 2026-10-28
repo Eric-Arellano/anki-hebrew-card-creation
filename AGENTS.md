@@ -80,8 +80,9 @@ differ from an agent's defaults:
 - **Early returns**, so the main logic is not nested. **Extract pure functions** from impure
   ones; they are what tests reach easily.
 - **Use `async`/`await`**, not promise chains.
-- **Anything `scripts/` imports uses relative `.ts` imports, not `$lib`**, because Node runs
-  those files directly, without Vite.
+- **Anything `scripts/` imports stays clear of `$app/*`**, because Node runs those files
+  directly, without Vite. `#lib/….ts` is fine there: it is a subpath import in `package.json`,
+  which Node resolves itself.
 - Don't bind a local that only renames something already named; inline the access instead. A
   local that names a computed value, or adds meaning, is fine. Tests get more slack for
   arrange-step locals.
