@@ -1,19 +1,23 @@
 import {
-  type Action,
+  type ActionParams,
+  type ActionResult,
+  type AllowedAction,
   type AnkiClient,
   AnkiError,
-  type Params,
-  type Result,
 } from '#lib/server/anki.ts';
 
-type Handlers = { [A in Action]?: (params: Params[A]) => Result<A> };
+type FakeActionHandlers = {
+  [A in AllowedAction]?: (params: ActionParams[A]) => ActionResult<A>;
+};
 
 /** An AnkiConnect that answers only the actions a test gives it, and records every call. */
-export function fakeAnki(handlers: Handlers) {
-  const calls: { action: Action; params: unknown }[] = [];
+export function fakeAnki(handlers: FakeActionHandlers) {
+  const calls: { action: AllowedAction; params: unknown }[] = [];
   const anki: AnkiClient = async (action, ...[params]) => {
     calls.push({ action, params });
-    const handler = handlers[action] as ((params: unknown) => Result<typeof action>) | undefined;
+    const handler = handlers[action] as
+      | ((params: unknown) => ActionResult<typeof action>)
+      | undefined;
     if (handler === undefined) throw new AnkiError(`the fake has no ${action}`);
     return handler(params);
   };

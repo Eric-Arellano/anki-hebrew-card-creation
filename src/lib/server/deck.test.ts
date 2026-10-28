@@ -3,19 +3,19 @@ import { fakeAnki, unreachable } from '../../../tests/fake-anki.ts';
 import fieldNames from '../../../tests/fixtures/anki/model-field-names-hebrew.json' with {
   type: 'json',
 };
-import bayit from '../../../tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
-import samples from '../../../tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
+import bayitNotes from '../../../tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
+import kelevChatulDagNotes from '../../../tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
 import { config } from '../config.ts';
 import type { NoteInfo } from './anki.ts';
-import { findExisting, getStatus } from './deck.ts';
+import { findExistingNotes, getAnkiStatus } from './deck.ts';
 
 // `&nbsp;` in a field decodes to this, not to a space.
 const NBSP = String.fromCodePoint(0xa0);
 
-const decks = ['Default', 'Judaism', 'Palabras nuevas', 'עברית'];
-const noteTypes = [
+const deckNames = ['Default', 'Judaism', 'Palabras nuevas', 'עברית'];
+const noteTypeNames = [
   'Basic',
   'Basic (and reversed card) Spanish',
   'Basic (optional reversed card)',
@@ -27,24 +27,28 @@ const noteTypes = [
   'Image Occlusion',
 ];
 
-describe('getStatus', () => {
-  function connectedAnki(fields: string[]) {
+describe('getAnkiStatus', () => {
+  function connectedAnkiWithFields(liveFieldNames: string[]) {
     return fakeAnki({
       version: () => 6,
-      deckNames: () => decks,
-      modelNames: () => noteTypes,
-      modelFieldNames: () => fields,
+      deckNames: () => deckNames,
+      modelNames: () => noteTypeNames,
+      modelFieldNames: () => liveFieldNames,
     });
   }
 
   describe('when Anki matches the config', () => {
     test('reports the live fields and no drift', async () => {
-      const { anki, calls } = connectedAnki(fieldNames);
-      expect(await getStatus(anki, config)).toEqual({
+      const { anki, calls } = connectedAnkiWithFields(fieldNames);
+      expect(await getAnkiStatus(anki, config)).toEqual({
         kind: 'connected',
-        version: 6,
+        ankiConnectVersion: 6,
         deckFound: true,
-        noteType: { found: true, fields: fieldNames, drift: { missing: [], unexpected: [] } },
+        noteType: {
+          found: true,
+          liveFieldNames: fieldNames,
+          drift: { missingFromAnki: [], unexpectedInAnki: [] },
+        },
       });
       expect(calls).toContainEqual({ action: 'modelFieldNames', params: { modelName: 'Hebrew' } });
     });
@@ -52,16 +56,18 @@ describe('getStatus', () => {
 
   describe('when a field has been renamed in Anki', () => {
     test('names the field on both sides', async () => {
-      const renamed = fieldNames.map((name) => (name === 'Notes' ? 'Comments' : name));
-      const { anki } = connectedAnki(renamed);
-      expect(await getStatus(anki, config)).toEqual({
+      const fieldNamesWithNotesRenamed = fieldNames.map((name) =>
+        name === 'Notes' ? 'Comments' : name,
+      );
+      const { anki } = connectedAnkiWithFields(fieldNamesWithNotesRenamed);
+      expect(await getAnkiStatus(anki, config)).toEqual({
         kind: 'connected',
-        version: 6,
+        ankiConnectVersion: 6,
         deckFound: true,
         noteType: {
           found: true,
-          fields: renamed,
-          drift: { missing: ['Notes'], unexpected: ['Comments'] },
+          liveFieldNames: fieldNamesWithNotesRenamed,
+          drift: { missingFromAnki: ['Notes'], unexpectedInAnki: ['Comments'] },
         },
       });
     });
@@ -74,9 +80,9 @@ describe('getStatus', () => {
         deckNames: () => ['Default'],
         modelNames: () => ['Basic'],
       });
-      expect(await getStatus(anki, config)).toEqual({
+      expect(await getAnkiStatus(anki, config)).toEqual({
         kind: 'connected',
-        version: 6,
+        ankiConnectVersion: 6,
         deckFound: false,
         noteType: { found: false },
       });
@@ -91,7 +97,7 @@ describe('getStatus', () => {
         deckNames: unreachable,
         modelNames: unreachable,
       });
-      expect(await getStatus(anki, config)).toEqual({
+      expect(await getAnkiStatus(anki, config)).toEqual({
         kind: 'error',
         message: "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
       });
@@ -104,30 +110,31 @@ describe('getStatus', () => {
         version: () => {
           throw new TypeError('bug');
         },
-        deckNames: () => decks,
-        modelNames: () => noteTypes,
+        deckNames: () => deckNames,
+        modelNames: () => noteTypeNames,
       });
-      await expect(getStatus(anki, config)).rejects.toThrow(new TypeError('bug'));
+      await expect(getAnkiStatus(anki, config)).rejects.toThrow(new TypeError('bug'));
     });
   });
 });
 
-describe('findExisting', () => {
-  function ankiWith(notes: NoteInfo[]) {
+describe('findExistingNotes', () => {
+  function ankiWithNotes(notes: NoteInfo[]) {
     return fakeAnki({
       findNotes: () => notes.map((note) => note.noteId),
-      notesInfo: ({ notes: ids }) => notes.filter((note) => ids.includes(note.noteId)),
+      notesInfo: ({ notes: requestedIds }) =>
+        notes.filter((note) => requestedIds.includes(note.noteId)),
     });
   }
 
-  const kelev = samples.filter((note) => note.fields.Hebrew.value === 'כלב');
+  const kelevNotes = kelevChatulDagNotes.filter((note) => note.fields.Hebrew.value === 'כלב');
 
   describe('when the word has its own note', () => {
     test('finds it as an exact match', async () => {
-      const { anki, calls } = ankiWith(kelev);
-      expect(await findExisting(anki, config, 'כלב')).toEqual({
-        exact: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
-        related: [],
+      const { anki, calls } = ankiWithNotes(kelevNotes);
+      expect(await findExistingNotes(anki, config, 'כלב')).toEqual({
+        exactMatches: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+        relatedMatches: [],
       });
       expect(calls[0]).toEqual({
         action: 'findNotes',
@@ -136,18 +143,20 @@ describe('findExisting', () => {
     });
 
     test('finds it from pointed input', async () => {
-      const { anki, calls } = ankiWith(kelev);
-      expect((await findExisting(anki, config, ' כֶּלֶב ')).exact).toHaveLength(1);
+      const { anki, calls } = ankiWithNotes(kelevNotes);
+      expect((await findExistingNotes(anki, config, ' כֶּלֶב ')).exactMatches).toHaveLength(1);
       expect(calls[0]?.params).toEqual({ query: '"note:Hebrew" "Hebrew:*כלב*"' });
     });
   });
 
   describe('when other notes contain the word', () => {
-    test('sorts them into related', async () => {
-      const { anki } = ankiWith(bayit);
-      expect(await findExisting(anki, config, 'בית')).toEqual({
-        exact: [{ noteId: 1752114960166, unpointed: 'בית', pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים` }],
-        related: [
+    test('lists them as related matches', async () => {
+      const { anki } = ankiWithNotes(bayitNotes);
+      expect(await findExistingNotes(anki, config, 'בית')).toEqual({
+        exactMatches: [
+          { noteId: 1752114960166, unpointed: 'בית', pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים` },
+        ],
+        relatedMatches: [
           { noteId: 1752426864218, unpointed: 'בית משפט', pointed: 'בֵּית מִשְׁפָּט' },
           {
             noteId: 1752427043636,
@@ -163,16 +172,22 @@ describe('findExisting', () => {
 
   describe('when nothing matches', () => {
     test('does not ask for note details', async () => {
-      const { anki, calls } = ankiWith([]);
-      expect(await findExisting(anki, config, 'זזזז')).toEqual({ exact: [], related: [] });
+      const { anki, calls } = ankiWithNotes([]);
+      expect(await findExistingNotes(anki, config, 'זזזז')).toEqual({
+        exactMatches: [],
+        relatedMatches: [],
+      });
       expect(calls.map((call) => call.action)).toEqual(['findNotes']);
     });
   });
 
   describe('when the word is blank', () => {
     test('asks Anki nothing', async () => {
-      const { anki, calls } = ankiWith(samples);
-      expect(await findExisting(anki, config, ' ')).toEqual({ exact: [], related: [] });
+      const { anki, calls } = ankiWithNotes(kelevChatulDagNotes);
+      expect(await findExistingNotes(anki, config, ' ')).toEqual({
+        exactMatches: [],
+        relatedMatches: [],
+      });
       expect(calls).toEqual([]);
     });
   });

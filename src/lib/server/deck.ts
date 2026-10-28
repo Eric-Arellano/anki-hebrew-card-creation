@@ -1,42 +1,55 @@
-import { htmlToText } from '#lib/anki/html.ts';
-import { fieldContainsKey, noteTypeIs } from '#lib/anki/search.ts';
+import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
+import { searchByFieldContainingKey, searchByNoteType } from '#lib/anki/search.ts';
 import type { Config } from '#lib/config.ts';
-import { toKey } from '#lib/hebrew/normalize.ts';
+import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 import { type AnkiClient, AnkiError, type NoteInfo } from '#lib/server/anki.ts';
 
-export type FieldDrift = { missing: string[]; unexpected: string[] };
+export type FieldDrift = { missingFromAnki: string[]; unexpectedInAnki: string[] };
 
 export type NoteTypeStatus =
   | { found: false }
-  // `fields` is the note type's live order, which the editor follows.
-  | { found: true; fields: string[]; drift: FieldDrift };
+  // In the note type's order, which the editor follows.
+  | { found: true; liveFieldNames: string[]; drift: FieldDrift };
 
 export type AnkiStatus =
   | { kind: 'error'; message: string }
-  | { kind: 'connected'; version: number; deckFound: boolean; noteType: NoteTypeStatus };
+  | {
+      kind: 'connected';
+      ankiConnectVersion: number;
+      deckFound: boolean;
+      noteType: NoteTypeStatus;
+    };
 
-export function fieldDrift(configured: readonly string[], live: readonly string[]): FieldDrift {
+export function findFieldDrift(
+  configuredFieldNames: readonly string[],
+  liveFieldNames: readonly string[],
+): FieldDrift {
   return {
-    missing: configured.filter((name) => !live.includes(name)),
-    unexpected: live.filter((name) => !configured.includes(name)),
+    missingFromAnki: configuredFieldNames.filter((name) => !liveFieldNames.includes(name)),
+    unexpectedInAnki: liveFieldNames.filter((name) => !configuredFieldNames.includes(name)),
   };
 }
 
-export async function getStatus(anki: AnkiClient, config: Config): Promise<AnkiStatus> {
+export async function getAnkiStatus(anki: AnkiClient, config: Config): Promise<AnkiStatus> {
   try {
-    const [version, decks, noteTypes] = await Promise.all([
+    const [ankiConnectVersion, deckNames, noteTypeNames] = await Promise.all([
       anki('version'),
       anki('deckNames'),
       anki('modelNames'),
     ]);
-    const deckFound = decks.includes(config.anki.deck);
-    if (!noteTypes.includes(config.anki.noteType)) {
-      return { kind: 'connected', version, deckFound, noteType: { found: false } };
+    const deckFound = deckNames.includes(config.anki.deck);
+    if (!noteTypeNames.includes(config.anki.noteType)) {
+      return { kind: 'connected', ankiConnectVersion, deckFound, noteType: { found: false } };
     }
 
-    const fields = await anki('modelFieldNames', { modelName: config.anki.noteType });
-    const drift = fieldDrift(Object.values(config.fields), fields);
-    return { kind: 'connected', version, deckFound, noteType: { found: true, fields, drift } };
+    const liveFieldNames = await anki('modelFieldNames', { modelName: config.anki.noteType });
+    const drift = findFieldDrift(Object.values(config.fields), liveFieldNames);
+    return {
+      kind: 'connected',
+      ankiConnectVersion,
+      deckFound,
+      noteType: { found: true, liveFieldNames, drift },
+    };
   } catch (error) {
     if (error instanceof AnkiError) return { kind: 'error', message: error.message };
     throw error;
@@ -45,29 +58,36 @@ export async function getStatus(anki: AnkiClient, config: Config): Promise<AnkiS
 
 export type ExistingNote = { noteId: number; unpointed: string; pointed: string };
 
-export type Existing = { exact: ExistingNote[]; related: ExistingNote[] };
+export type ExistingNotes = { exactMatches: ExistingNote[]; relatedMatches: ExistingNote[] };
 
-export function sortExisting(notes: readonly NoteInfo[], config: Config, key: string): Existing {
-  const existing = notes.map((note) => ({
+export function partitionByExactMatch(
+  notes: readonly NoteInfo[],
+  config: Config,
+  comparisonKey: string,
+): ExistingNotes {
+  const existingNotes = notes.map((note) => ({
     noteId: note.noteId,
-    unpointed: htmlToText(note.fields[config.fields.unpointed]?.value ?? ''),
-    pointed: htmlToText(note.fields[config.fields.pointed]?.value ?? ''),
+    unpointed: ankiFieldHtmlToText(note.fields[config.fields.unpointed]?.value ?? ''),
+    pointed: ankiFieldHtmlToText(note.fields[config.fields.pointed]?.value ?? ''),
   }));
-  const exact = existing.filter((note) => toKey(note.unpointed) === key);
-  return { exact, related: existing.filter((note) => !exact.includes(note)) };
+  const exactMatches = existingNotes.filter(
+    (note) => toComparisonKey(note.unpointed) === comparisonKey,
+  );
+  const relatedMatches = existingNotes.filter((note) => !exactMatches.includes(note));
+  return { exactMatches, relatedMatches };
 }
 
-export async function findExisting(
+export async function findExistingNotes(
   anki: AnkiClient,
   config: Config,
   word: string,
-): Promise<Existing> {
-  const key = toKey(word);
-  if (key === '') return { exact: [], related: [] };
+): Promise<ExistingNotes> {
+  const comparisonKey = toComparisonKey(word);
+  if (comparisonKey === '') return { exactMatches: [], relatedMatches: [] };
 
-  const query = `${noteTypeIs(config.anki.noteType)} ${fieldContainsKey(config.fields.unpointed, key)}`;
+  const query = `${searchByNoteType(config.anki.noteType)} ${searchByFieldContainingKey(config.fields.unpointed, comparisonKey)}`;
   const noteIds = await anki('findNotes', { query });
-  if (noteIds.length === 0) return { exact: [], related: [] };
+  if (noteIds.length === 0) return { exactMatches: [], relatedMatches: [] };
 
-  return sortExisting(await anki('notesInfo', { notes: noteIds }), config, key);
+  return partitionByExactMatch(await anki('notesInfo', { notes: noteIds }), config, comparisonKey);
 }

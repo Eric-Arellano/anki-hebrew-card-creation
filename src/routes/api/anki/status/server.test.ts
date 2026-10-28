@@ -20,9 +20,13 @@ describe('GET /api/anki/status', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       kind: 'connected',
-      version: 6,
+      ankiConnectVersion: 6,
       deckFound: true,
-      noteType: { found: true, fields: fieldNames, drift: { missing: [], unexpected: [] } },
+      noteType: {
+        found: true,
+        liveFieldNames: fieldNames,
+        drift: { missingFromAnki: [], unexpectedInAnki: [] },
+      },
     });
   });
 

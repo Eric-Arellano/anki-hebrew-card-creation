@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { ZodError } from 'zod';
-import raw from '../../config.json' with { type: 'json' };
+import rawConfig from '../../config.json' with { type: 'json' };
 import { parseConfig } from './config.ts';
 
-type Raw = typeof raw;
+type RawConfig = typeof rawConfig;
 
 /** The paths `parseConfig` rejects once `change` is applied to the repo's config. */
-function rejectedPaths(change: (config: Raw) => void): string[] {
-  const config = structuredClone(raw);
+function rejectedPathsAfter(change: (config: RawConfig) => void): string[] {
+  const config = structuredClone(rawConfig);
   change(config);
   try {
     parseConfig(config);
@@ -20,11 +20,11 @@ function rejectedPaths(change: (config: Raw) => void): string[] {
 
 describe('parseConfig', () => {
   test("accepts the repo's config.json", () => {
-    expect(parseConfig(raw)).toEqual(raw);
+    expect(parseConfig(rawConfig)).toEqual(rawConfig);
   });
 
   describe('when the config is wrong', () => {
-    test.each<[string, (config: Raw) => void, string]>([
+    test.each<[string, (config: RawConfig) => void, string]>([
       ['an unknown key', (c) => Object.assign(c, { extra: true }), ''],
       ['a missing field', (c) => Object.assign(c.fields, { notes: undefined }), 'fields.notes'],
       ['an empty field name', (c) => Object.assign(c.fields, { notes: '' }), 'fields.notes'],
@@ -73,7 +73,7 @@ describe('parseConfig', () => {
         'dictionary.index',
       ],
     ])('rejects %s', (_, change, path) => {
-      expect(rejectedPaths(change)).toEqual([path]);
+      expect(rejectedPathsAfter(change)).toEqual([path]);
     });
   });
 });

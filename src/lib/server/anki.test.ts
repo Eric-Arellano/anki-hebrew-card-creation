@@ -6,13 +6,13 @@ import { AnkiError, createAnkiClient } from './anki.ts';
 
 const ANKI_URL = 'http://127.0.0.1:8765';
 
-function replyWith(body: unknown, status = 200) {
+function stubFetchReplyingWith(body: unknown, status = 200) {
   const fetch = vi.fn(async () => Response.json(body, { status }));
   vi.stubGlobal('fetch', fetch);
   return fetch;
 }
 
-function sentBody(fetch: ReturnType<typeof replyWith>): unknown {
+function firstRequestBody(fetch: ReturnType<typeof stubFetchReplyingWith>): unknown {
   const init = fetch.mock.calls[0]?.at(1) as RequestInit | undefined;
   return JSON.parse(String(init?.body));
 }
@@ -20,12 +20,12 @@ function sentBody(fetch: ReturnType<typeof replyWith>): unknown {
 describe('createAnkiClient', () => {
   describe('when AnkiConnect answers', () => {
     test('posts the action, version 6 and params, and returns the result', async () => {
-      const fetch = replyWith({ result: fieldNames, error: null });
+      const fetch = stubFetchReplyingWith({ result: fieldNames, error: null });
       const anki = createAnkiClient(ANKI_URL);
 
       expect(await anki('modelFieldNames', { modelName: 'Hebrew' })).toEqual(fieldNames);
       expect(fetch).toHaveBeenCalledWith(ANKI_URL, expect.objectContaining({ method: 'POST' }));
-      expect(sentBody(fetch)).toEqual({
+      expect(firstRequestBody(fetch)).toEqual({
         action: 'modelFieldNames',
         version: 6,
         params: { modelName: 'Hebrew' },
@@ -33,7 +33,7 @@ describe('createAnkiClient', () => {
     });
 
     test('rejects with what AnkiConnect said when it refuses', async () => {
-      replyWith({ result: null, error: 'model was not found: No such note type' });
+      stubFetchReplyingWith({ result: null, error: 'model was not found: No such note type' });
       await expect(
         createAnkiClient(ANKI_URL)('modelFieldNames', {
           modelName: 'No such note type',
@@ -46,7 +46,7 @@ describe('createAnkiClient', () => {
     });
 
     test('rejects a result of the wrong shape', async () => {
-      replyWith({ result: 'six', error: null });
+      stubFetchReplyingWith({ result: 'six', error: null });
       await expect(createAnkiClient(ANKI_URL)('version')).rejects.toThrow(
         new AnkiError('AnkiConnect sent an unexpected result for version'),
       );
@@ -60,7 +60,7 @@ describe('createAnkiClient', () => {
     });
 
     test('rejects an HTTP error', async () => {
-      replyWith({}, 403);
+      stubFetchReplyingWith({}, 403);
       await expect(createAnkiClient(ANKI_URL)('version')).rejects.toThrow(
         new AnkiError('AnkiConnect answered 403 to version'),
       );
@@ -80,7 +80,7 @@ describe('createAnkiClient', () => {
 
   describe('when the action is not allowlisted', () => {
     test('rejects without sending anything', async () => {
-      const fetch = replyWith({ result: null, error: null });
+      const fetch = stubFetchReplyingWith({ result: null, error: null });
       const anki = createAnkiClient(ANKI_URL);
       // @ts-expect-error The types refuse it too.
       await expect(anki('deleteNotes', { notes: [1751686072898] })).rejects.toThrow(

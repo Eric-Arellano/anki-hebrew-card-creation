@@ -221,10 +221,10 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   - collapse whitespace and `&nbsp;`.
 - **Display and comparison.** Pointed strings display exactly as their source has them. Comparison
   NFC-normalizes both sides, because sources order combining marks differently.
-- **Anki field values are HTML.** They are compared after `htmlToText` in `src/lib/anki/html.ts`
+- **Anki field values are HTML.** They are compared after `ankiFieldHtmlToText` in `src/lib/anki/html.ts`
   strips tags and decodes entities. `&nbsp;` decodes to a real NBSP, which a key collapses
   but displayed text keeps.
-- **Where it lives.** `toKey` and `samePointed` are in `src/lib/hebrew/normalize.ts`. The defective
+- **Where it lives.** `toComparisonKey` and `isSamePointedText` are in `src/lib/hebrew/normalize.ts`. The defective
   key isn't written yet; it joins them with the index.
 
 ### The editor
@@ -253,7 +253,7 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   `src/lib/server/deck.ts`.
   - `GET /api/anki/status` answers `AnkiStatus`: an error message, or the version, whether the
     deck exists, and the note type's live fields and drift.
-  - `GET /api/anki/existing?word=` answers `Existing`: `exact` and `related` lists of
+  - `GET /api/anki/existing?word=` answers `ExistingNotes`: `exactMatches` and `relatedMatches` lists of
     `{noteId, unpointed, pointed}`, as text.
   - `POST /api/anki/browse` takes `{noteIds}` and answers 204.
 - **Cmd+Enter** hands off.

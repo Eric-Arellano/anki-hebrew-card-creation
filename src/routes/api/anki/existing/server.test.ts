@@ -1,7 +1,7 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, test, vi } from 'vitest';
 import { fakeAnki, unreachable } from '../../../../../tests/fake-anki.ts';
-import samples from '../../../../../tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
+import kelevChatulDagNotes from '../../../../../tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
 import { GET } from './+server.ts';
@@ -15,15 +15,15 @@ function get(query: string) {
 
 describe('GET /api/anki/existing', () => {
   test('answers with the matches for the word', async () => {
-    const dag = samples.filter((note) => note.fields.Hebrew.value === 'דג');
+    const dagNotes = kelevChatulDagNotes.filter((note) => note.fields.Hebrew.value === 'דג');
     connection.anki = fakeAnki({
-      findNotes: () => dag.map((note) => note.noteId),
-      notesInfo: () => dag,
+      findNotes: () => dagNotes.map((note) => note.noteId),
+      notesInfo: () => dagNotes,
     }).anki;
     const response = await get(`?word=${encodeURIComponent('דג')}`);
     expect(await response.json()).toEqual({
-      exact: [{ noteId: 1751714182456, unpointed: 'דג', pointed: 'דָּג' }],
-      related: [],
+      exactMatches: [{ noteId: 1751714182456, unpointed: 'דג', pointed: 'דָּג' }],
+      relatedMatches: [],
     });
   });
 
