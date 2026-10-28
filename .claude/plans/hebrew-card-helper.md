@@ -10,8 +10,8 @@ of it is rote, though:
 
 This plan builds a local helper that does the rote part and hands a pre-filled note to Anki's own
 Add window. I finish the note there and click Add. The target is about 80% of cards; the rest stay
-manual. This plan replaces the brief from the web chat that started the project, and nothing else
-in the repo restates it.
+manual. This plan replaces the brief from the web chat that started the project. Apart from the hard
+rules in `AGENTS.md`, nothing else in the repo restates it.
 
 Facts gathered on 2026-10-27, through read-only AnkiConnect calls and a handful of HEAD requests,
 that shape the design:
@@ -35,7 +35,8 @@ that shape the design:
   - Wiktionary answers 200 for a page that exists and 404 for one that doesn't.
   - Forvo answers 403 to anything that isn't a browser, whether the word exists or not.
   - Pealim's search page answers 200 for any query.
-- **The repo** holds only LICENSE (MIT) and a README, and will be public.
+- **The repo** is MIT and will be public. It has the SvelteKit skeleton with a placeholder page,
+  CI and the agent setup, and `AGENTS.md` carries the hard rules from § Decisions.
 
 ## Decisions
 
@@ -66,7 +67,13 @@ that shape the design:
 - **Approved dependencies:** `svelte`, `@sveltejs/kit`, `@sveltejs/adapter-node`,
   `@sveltejs/vite-plugin-svelte`, `vite`, `typescript`, `svelte-check`, `@biomejs/biome`,
   `vitest`, `zod`, `@testing-library/svelte` and `jsdom`. Anything else asks first. First-party
-  code is preferred when it is simple to write.
+  code is preferred when it is simple to write. Only the toolchain is installed so far; `zod`,
+  `@testing-library/svelte` and `jsdom` arrive with the first PR that uses them.
+- **Open:** `node:sqlite` needs `@types/node` to typecheck, since `$app/tsconfig` loads only
+  SvelteKit's types. It isn't on the list, so ask before PR 7.
+- *Considered, not done: porting foodservice-insights' `test-rigor`, `prune-comments`,
+  `writing-docs` and `svelte-file-editor`. Port them once there is enough code to need them; the
+  core of `writing-docs` is already in `AGENTS.md`.*
 
 *Rejected: a Python server (uv, ruff, ty, pytest, Justfile) with a Svelte UI, because that is two
 toolchains, and the composition logic would live on one side or be written twice.* *Rejected: the
@@ -105,8 +112,8 @@ one kind of request: a HEAD to tell me a link is a 404 before I click it.
   404 and 410 mean missing, 2xx and 3xx mean found, and anything else means unknown.
 - **No open proxy.** The browser sends a link id and a word, and the server builds the URL from
   config.
-- **Tests never reach the network.** The vitest setup replaces `fetch` with one that throws unless
-  a test installs a mock.
+- **Tests never reach the network.** `tests/setup.ts` replaces `fetch` with one that rejects
+  unless a test stubs its own with `vi.stubGlobal`.
 - **Once the index exists,** it answers the Wiktionary check, and no request goes out.
 - **Agents never download the dictionary.** I put it in `data/`.
 
@@ -311,57 +318,7 @@ used. The idea, to build only once I ask:
 2. Show the file for me to confirm.
 3. Attach it through `guiAddCards`' `audio` parameter (`path`, `filename`, `fields: ["Audio"]`).
 
-## PR 1 — scaffolding and agent setup
-
-No app behaviour yet: a placeholder page, the toolchain, CI, and what agents need to work here.
-
-- **SvelteKit skeleton** with TypeScript and adapter-node. The npm scripts are `dev`, `build`,
-  `start` (`HOST=127.0.0.1 node --env-file-if-exists=.env build`), `check` (svelte-check), `lint`
-  and `format` (Biome), and `test` (vitest). `dev` binds `127.0.0.1`.
-- **Supporting files:**
-  - `biome.json` modelled on foodservice-insights' (2-space, width 100, single quotes, Svelte
-    support);
-  - the vitest setup that makes `fetch` throw;
-  - `.gitignore`, `.env.example` and `.nvmrc`.
-- **CI:** `.github/workflows/ci.yml` runs `npm ci`, lint, check and test on PRs and on `main`.
-  `.github/dependabot.yml` covers npm and Actions.
-- **Claude setup,** ported from `GreenerByDefault/foodservice-insights` and cut down to one stack:
-  - `CLAUDE.md` is `@AGENTS.md`.
-  - **`AGENTS.md`**, drawing on that repo's sections:
-    - the code is the source of truth, and docs carry intent rather than restating code;
-    - § Claude Code plans;
-    - verifying a change (`npm run lint && npm run check && npm test`);
-    - development principles, comments and testing philosophy;
-    - PR sizing (squash-merge);
-    - off limits: CI and `.claude/settings.json` unless that's the task, and no secrets;
-    - this project's hard rules from § Decisions:
-      - only the allowlisted AnkiConnect actions, from code or `curl`;
-      - no `guiAddCards`/`guiBrowse` against my real Anki without asking, since it discards my
-        open Add window;
-      - third-party traffic only through `linkcheck.ts`;
-      - never download the dictionary or load it whole;
-      - the Hebrew text rules;
-      - ask before adding a dependency;
-      - Svelte 5 runes only.
-  - `.claude/settings.json` holds the deny, ask and allow guardrails and the format hook, adapted to
-    npm.
-  - `.claude/hooks/format-file.sh` runs Biome only.
-  - `.claude/skills/` gets `plan-adopt`, `plan-advance`, and `svelte-core-bestpractices` with its
-    LICENSE.
-  - `.mcp.json` adds the Svelte MCP.
-  - `.worktreeinclude` lists `.env` and `.claude/settings.local.json`.
-  - *Considered, not done: `test-rigor`, `prune-comments`, `writing-docs` and `svelte-file-editor`.
-    Port them once there is enough code to need them. The core of `writing-docs` goes into
-    `AGENTS.md`.*
-- **README:**
-  - what the tool does;
-  - requirements: Anki desktop, the AnkiConnect add-on, Node ≥ 24;
-  - setup and running;
-  - what it sends over the network;
-  - where the dictionary comes from;
-  - licenses.
-
-## PR 2 — config and the AnkiConnect client
+## PR 1 — config and the AnkiConnect client
 
 - **`config.json`** (§ `config.json` describes the note type) and `src/lib/config.ts`.
 - **`src/lib/hebrew/normalize.ts`** (§ Hebrew text handling).
@@ -374,7 +331,7 @@ No app behaviour yet: a placeholder page, the toolchain, CI, and what agents nee
   - `/api/anki/browse`: `guiBrowse` with `nid:…`.
 - Tests for each.
 
-## PR 3 — the editor and the hand-off
+## PR 2 — the editor and the hand-off
 
 - **`src/routes/+page.svelte` and its components:**
   - the inputs, link buttons and the fields as textareas;
@@ -388,7 +345,7 @@ No app behaviour yet: a placeholder page, the toolchain, CI, and what agents nee
 
 After this PR, the tool already works for words that are neither nouns nor verbs.
 
-## PR 4 — nouns
+## PR 3 — nouns
 
 - **Composition:**
   - a gender selector;
@@ -402,7 +359,7 @@ After this PR, the tool already works for words that are neither nouns nor verbs
 - **Tests:** composition against the כלב, חתול and דג notes, and agreement for `אָבוֹת`, `שָׁנִים`
   and `עֵינַיִם`.
 
-## PR 5 — verbs
+## PR 4 — verbs
 
 - A binyan dropdown.
 - A root input that accepts `דבר`, `ד.ב.ר`, `ד-ב-ר`, `ד ב ר` or `ד־ב־ר` and writes `ד־ב־ר`.
@@ -410,7 +367,7 @@ After this PR, the tool already works for words that are neither nouns nor verbs
 - The verb production answer.
 - Tests for root and binyan conversion, including the aliases.
 
-## PR 6 — link checks
+## PR 5 — link checks
 
 - **`src/lib/server/linkcheck.ts` and `/api/links/check`**, with a badge on the Wiktionary button once
   typing pauses.
@@ -420,9 +377,9 @@ After this PR, the tool already works for words that are neither nouns nor verbs
   - throttling;
   - an unknown link id.
 
-**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 7.
+**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 6.
 
-## PR 7 — inspect the dictionary
+## PR 6 — inspect the dictionary
 
 This PR needs the JSONL in `data/`.
 
@@ -440,7 +397,7 @@ This PR needs the JSONL in `data/`.
 
 No app code, and it stops for my review.
 
-## PR 8 — the index and lookup
+## PR 7 — the index and lookup
 
 - **`scripts/build-index.ts` and `npm run build-index`,** and `src/lib/server/dictionary.ts`
   (§ Dictionary).
@@ -451,7 +408,7 @@ No app code, and it stops for my review.
   - the male/haser fallback.
 - **README:** how to build the index.
 
-## PR 9 — lookup in the editor
+## PR 8 — lookup in the editor
 
 - **Lookup:** `/api/lookup` and a candidate picker.
 - **Prefill and hints:**
@@ -470,12 +427,12 @@ No app code, and it stops for my review.
 
 - **Every PR:** run `npm run lint && npm run check && npm test` and get CI green. Then run
   `git status` and read the diff for secrets, absolute home paths and anything from `data/`.
-- **PRs 3 to 6 and 9, by hand:**
+- **PRs 2 to 5 and 8, by hand:**
   - Run `npm run dev` with Anki open and drive `http://127.0.0.1:5173` (Playwright MCP works).
   - The status banner is green.
   - `כלב` finds its note as an exact match, and a nonsense word finds nothing.
   - The fields composed for כלב, חתול and דג match the real notes, field by field.
 - **The hand-off,** where `guiAddCards` opens the Add window, is tried by me. An agent tries it
   only after asking.
-- **PR 8:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
+- **PR 7:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
   the UI.
