@@ -6,9 +6,9 @@ export const DECK = 'עברית';
 export const NOTE_TYPE = 'Hebrew';
 export const TAGS: readonly string[] = [];
 
-export type PartOfSpeech = 'noun' | 'verb' | 'other';
+export const PARTS_OF_SPEECH = ['noun', 'verb', 'other'] as const;
 
-const EVERY_PART_OF_SPEECH: readonly PartOfSpeech[] = ['noun', 'verb', 'other'];
+export type PartOfSpeech = (typeof PARTS_OF_SPEECH)[number];
 
 // The editor shows fields by what they are for, in this order, rather than in Anki's flat order.
 export const FIELD_GROUPS = [
@@ -62,7 +62,7 @@ export const FIELDS = {
   definitions: { name: 'Definitions', shownFor: [] },
   productionContext: {
     name: 'Production context',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Disambiguation hints',
     label: 'Hint for recalling the Hebrew from its English meaning',
     help:
@@ -72,7 +72,7 @@ export const FIELDS = {
   },
   readingContext: {
     name: 'Reading context',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Disambiguation hints',
     label: 'Hint for reading the Hebrew without niqqud',
     help:
@@ -108,7 +108,7 @@ export const FIELDS = {
   },
   variant1Prompt: {
     name: 'Variant 1 prompt',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Unusual variants',
     label: 'Variant 1: English prompt',
     help:
@@ -118,7 +118,7 @@ export const FIELDS = {
   },
   variant1Answer: {
     name: 'Variant 1 answer',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Unusual variants',
     label: 'Variant 1: Hebrew answer, with niqqud',
     help:
@@ -128,20 +128,20 @@ export const FIELDS = {
   // Variant 1's help sits right above, so Variant 2 needs none.
   variant2Prompt: {
     name: 'Variant 2 prompt',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Unusual variants',
     label: 'Variant 2: English prompt',
     searchesImages: true,
   },
   variant2Answer: {
     name: 'Variant 2 answer',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Unusual variants',
     label: 'Variant 2: Hebrew answer, with niqqud',
   },
   examples: {
     name: 'Examples',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Extras',
     label: 'Examples',
     help:
@@ -150,7 +150,7 @@ export const FIELDS = {
   },
   notes: {
     name: 'Notes',
-    shownFor: EVERY_PART_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH,
     group: 'Extras',
     label: 'Notes',
     help:

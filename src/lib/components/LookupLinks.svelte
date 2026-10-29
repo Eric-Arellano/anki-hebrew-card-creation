@@ -1,5 +1,5 @@
 <script lang="ts">
-import { INPUT_NAMES } from '#lib/card-inputs.ts';
+import { INPUT_NAMES } from '#lib/card/inputs.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import LinkChip from './ui/LinkChip.svelte';
 

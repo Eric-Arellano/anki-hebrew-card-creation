@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import type { CardInputsDraft, Gender } from '#lib/card-inputs.ts';
+import type { NounDraft } from '#lib/card/noun.ts';
+import type { Gender } from '#lib/hebrew/gender.ts';
 import Checkbox from './ui/Checkbox.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
@@ -15,7 +16,7 @@ let {
   noun = $bindable(),
   children,
 }: {
-  noun: CardInputsDraft['noun'];
+  noun: NounDraft;
   // The pointed word, which leads the forms so every pointed form copied from a dictionary
   // sits in one row.
   children: Snippet;

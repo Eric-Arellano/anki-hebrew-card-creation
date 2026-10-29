@@ -296,7 +296,7 @@ describe('CardEditor', () => {
     });
 
     describe('when a field is hidden after being edited', () => {
-      test('sends its suggestion instead', async () => {
+      test('sends what composition gives it instead', async () => {
         const requests = await renderConnectedEditor();
         await fillDag();
         await typeInto(noteField('Other forms'), 'f: דָּגָה');
@@ -309,7 +309,7 @@ describe('CardEditor', () => {
         expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Forms: 'pl: דָּגִים' } });
       });
 
-      test('sends it blank when it has no suggestion', async () => {
+      test('sends it blank when composition gives it nothing', async () => {
         const requests = await renderConnectedEditor();
         await fillDag();
         await choosePartOfSpeech('Verb');

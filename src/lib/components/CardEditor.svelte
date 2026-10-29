@@ -3,21 +3,23 @@ import { onMount } from 'svelte';
 import { textareaToAnkiFieldHtml } from '#lib/anki/html.ts';
 import { ankiStatusProblem } from '#lib/anki/status.ts';
 import { errorMessage, getJson } from '#lib/api-client.ts';
+import { composeFields } from '#lib/card/compose.ts';
 import {
   type CardInputsDraft,
   completeInputs,
+  emptyDraft,
   INPUT_NAMES,
   missingInputs,
-} from '#lib/card-inputs.ts';
+} from '#lib/card/inputs.ts';
 import {
   FIELD_NAMES,
   type FieldValues,
+  PARTS_OF_SPEECH,
   type PartOfSpeech,
   shownFieldGroups,
   toAnkiFields,
 } from '#lib/note-type.ts';
 import type { AnkiStatus } from '#lib/server/deck.ts';
-import { suggestFields } from '#lib/suggest-fields.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import DefinitionsInput from './DefinitionsInput.svelte';
 import ExistingNotesPanel from './ExistingNotesPanel.svelte';
@@ -28,33 +30,26 @@ import NounInputs from './NounInputs.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 
-const PARTS_OF_SPEECH: readonly { value: PartOfSpeech; label: string }[] = [
-  { value: 'noun', label: 'Noun' },
-  { value: 'verb', label: 'Verb' },
-  { value: 'other', label: 'Other' },
-];
+const PART_OF_SPEECH_LABELS = {
+  noun: 'Noun',
+  verb: 'Verb',
+  other: 'Other',
+} satisfies Record<PartOfSpeech, string>;
 
-let draft: CardInputsDraft = $state({
-  word: '',
-  pointed: '',
-  definitions: [''],
-  partOfSpeech: undefined,
-  noun: {
-    gender: undefined,
-    pluralOnly: false,
-    plural: '',
-    feminine: '',
-    femininePlural: '',
-  },
-});
+const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
+  value,
+  label: PART_OF_SPEECH_LABELS[value],
+}));
+
+let draft: CardInputsDraft = $state(emptyDraft());
 // `undefined` while the check is in flight.
 let status: AnkiStatus | undefined = $state.raw();
 let edits: FieldValues = $state({});
 
-// Suggestions wait for every input, since each one shapes them. The fields shown depend only on
+// Composition waits for every input, since each one shapes it. The fields shown depend only on
 // the part of speech.
 const inputs = $derived(completeInputs(draft));
-const suggestions = $derived(inputs === undefined ? {} : suggestFields(inputs));
+const composed = $derived(inputs === undefined ? {} : composeFields(inputs));
 const shownGroups = $derived.by(() => {
   if (draft.partOfSpeech === undefined) return [];
   const liveFieldNames =
@@ -63,13 +58,13 @@ const shownGroups = $derived.by(() => {
       : FIELD_NAMES;
   return shownFieldGroups(liveFieldNames, draft.partOfSpeech);
 });
-// A hidden field gets only its suggestion, so an edit made under another part of speech, such as
+// A hidden field gets only what composition gives it, so an edit made under another part of speech, such as
 // a binyan typed before switching to noun, never reaches Anki.
 const ankiFields = $derived.by(() => {
   const shown = new Set(shownGroups.flatMap((group) => group.fields));
   return toAnkiFields((field) => {
     const edit = shown.has(field) ? edits[field] : undefined;
-    return edit === undefined ? suggestions[field] : textareaToAnkiFieldHtml(edit);
+    return edit === undefined ? composed[field] : textareaToAnkiFieldHtml(edit);
   });
 });
 const ankiProblem = $derived(status && ankiStatusProblem(status));
@@ -112,7 +107,7 @@ onMount(checkAnki);
     <ChoiceChips
       legend="Part of speech"
       name="part-of-speech"
-      options={PARTS_OF_SPEECH}
+      options={partOfSpeechOptions}
       bind:value={draft.partOfSpeech}
     />
     {#snippet pointedInput()}
