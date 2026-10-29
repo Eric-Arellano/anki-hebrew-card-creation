@@ -201,46 +201,51 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
 
 ### The editor
 
-- **One page,** `src/routes/+page.svelte`, renders `CardEditor` from `src/lib/components/`. It
-  separates what I tell it, what helps me research, and what goes to Anki:
+- **One page,** `src/routes/+page.svelte`, renders `CardEditor` from `src/lib/components/`. It is
+  one form that unfolds in the order I work: what the lookups need, then what they tell me, then
+  what I add by hand. There are no section headings; dividers carry the structure.
   - a header with a quiet connection status and "Check again"; only a problem gets a banner;
-  - **Word:** the four inputs, all required: the Hebrew word without niqqud and with it (RTL),
-    the English meanings (`DefinitionsInput`), and the part of speech (`noun`, `verb` or
-    `other`), which starts unchosen rather than defaulted. The meanings are one input each, with
-    "+ Another meaning", and only the first is required. A card usually has one image per
-    meaning, so each meaning's row carries its own Images (EN) chip. Beneath the inputs sit the
-    deck check (`ExistingNotesPanel`), and a "Look up" row of the links searched by the word. A
-    chip whose input is blank is disabled, with the input to fill in its tooltip;
-  - **Card:** held back until every input is filled, since each one shapes composition. Then a
-    textarea per field worth editing for the part of speech (`NoteFields`), by the groups in
+  - **The word and its meanings,** the only inputs the lookups need: the Hebrew word without
+    niqqud (RTL), and the English meanings (`DefinitionsInput`), one input per meaning, with
+    "+ Another meaning". A card usually has one image per meaning, so each meaning's row carries
+    its own Images (EN) chip. Beneath them sit the deck check (`ExistingNotesPanel`) and a
+    "Look up" row of the links searched by the word. A chip whose input is blank is disabled,
+    with the input to fill in its tooltip;
+  - **The grammar,** which the lookups fill in: the part of speech (`noun`, `verb` or `other`),
+    unchosen rather than defaulted, then the Hebrew word with niqqud. No input has a
+    placeholder;
+  - **The free-text fields,** once a part of speech is chosen, since that alone decides which
+    are shown: a textarea per field worth editing for it (`NoteFields`), by the groups in
     `src/lib/note-type.ts`, each group in the note type's live field order, or `FIELD_NAMES`'
-    order until Anki answers;
+    order until Anki answers. Each field has its own label, clearer than Anki's name, and help
+    above its textarea saying when to fill it and what to write, with an example. Both live in
+    `src/lib/note-type.ts`. The help speaks of what I see when studying, never of Anki's card
+    names. A variant's prompt carries an Images (EN) chip searched with it, since its card
+    usually gets an image. No shown field gets a suggestion, so none offers a reset;
   - the hand-off bar (`HandOffBar`), which names the inputs still needed.
   Composition controls for nouns and verbs, and the copy chips, are still to come.
-- **Open:** a one-line hint per field that stays free text (the contexts, variants, examples and
-  notes), once PRs 1 and 2 show which fields keep a textarea.
 - **Display.** Hebrew is `dir="rtl" lang="he"`, and field textareas are `dir="auto"`, all in the
   `font-hebrew` stack from `src/routes/layout.css`, which renders niqqud clearly at a large size.
-  Styling is Tailwind utilities, with the shared base styles in that file. Textareas hold raw Anki HTML.
+  Styling is Tailwind utilities, with the shared base styles in that file. Textareas hold Anki
+  HTML, except that a new line becomes `<br>` at the hand-off.
 - **Composition** is `suggestFields(inputs)` in `src/lib/suggest-fields.ts`, a pure
   function from `CardInputs` (`src/lib/card-inputs.ts`) to `FieldValues`, keyed by `FIELDS` key
   so a typo can't name a field; Anki names appear only at the hand-off. It fills `Hebrew`,
   `Pointed`, and `Definitions` from the meanings I typed: one alone as it is, several as
   `1. friend<br>2. companion`. That is my own wording, unlike the dictionary's glosses, which
   wait on the prefill decision below. For `other`, the production answer is the word itself. For
-  a noun or a verb it stays blank until that part of speech has its own composition, rather than
-  being guessed. New composition extends this function and `CardInputs`.
+  a noun or a verb it stays blank, and shown for me to type, until that part of speech has its
+  own composition, rather than being guessed. New composition extends this function and `CardInputs`.
 - **Each field has a role,** in `src/lib/note-type.ts`, which says for which parts of speech the
   editor shows it. `Hebrew`, `Pointed` and `Definitions` are never shown, because the inputs
   are those fields; neither are `Images` and `Audio`, which I paste in Anki. `Gender` is for
-  nouns, `Binyan` and `Root` for verbs, and a verb's `Forms` stays hidden while it is Open. A
-  hidden field is sent with only what composition gives it, so a stale edit from another part of
+  nouns, `Binyan` and `Root` for verbs, and a verb's `Forms` stays hidden while it is Open.
+  `Production answer` is shown only where composition leaves it blank. A hidden field is sent with only what composition gives it, so a stale edit from another part of
   speech never reaches Anki. A field that a new input or control writes, such as the binyan
   dropdown, is hidden there the same way, rather than shown twice.
 - **My edits stick.** `CardEditor` keeps an `edits` map holding only the fields I've typed in. A
-  field shows its edit, else its suggestion, so recomposition never overwrites an edit. Where a
-  non-blank suggestion differs from my edit, a `Use "…"` button deletes the edit; a field with
-  nothing suggested gets no button, since clearing it needs none.
+  shown field sends its edit, else its suggestion, so recomposition never overwrites an edit.
+  *Rejected: a `Use "…"` button to go back to a suggestion, because no shown field has one.*
 - **Copy chips** cover the pointed טוֹב forms and the prepositions. A click copies with a brief
   confirmation. There are no binyan chips, because the binyan dropdown writes the field itself.
 - **The deck check**

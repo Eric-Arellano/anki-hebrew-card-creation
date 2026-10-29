@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import { textareaToAnkiFieldHtml } from '#lib/anki/html.ts';
 import { ankiStatusProblem } from '#lib/anki/status.ts';
 import { errorMessage, getJson } from '#lib/api-client.ts';
 import {
@@ -42,24 +43,26 @@ let draft: CardInputsDraft = $state({
 let status: AnkiStatus | undefined = $state.raw();
 let edits: FieldValues = $state({});
 
-// The card waits for every input, since each one shapes what is suggested.
+// Suggestions wait for every input, since each one shapes them. The fields shown depend only on
+// the part of speech.
 const inputs = $derived(completeInputs(draft));
 const suggestions = $derived(inputs === undefined ? {} : suggestFields(inputs));
 const shownGroups = $derived.by(() => {
-  if (inputs === undefined) return [];
+  if (draft.partOfSpeech === undefined) return [];
   const liveFieldNames =
     status?.kind === 'connected' && status.noteType.found
       ? status.noteType.liveFieldNames
       : FIELD_NAMES;
-  return shownFieldGroups(liveFieldNames, inputs.partOfSpeech);
+  return shownFieldGroups(liveFieldNames, draft.partOfSpeech);
 });
 // A hidden field gets only its suggestion, so an edit made under another part of speech, such as
 // a binyan typed before switching to noun, never reaches Anki.
 const ankiFields = $derived.by(() => {
   const shown = new Set(shownGroups.flatMap((group) => group.fields));
-  return toAnkiFields(
-    (field) => (shown.has(field) ? edits[field] : undefined) ?? suggestions[field],
-  );
+  return toAnkiFields((field) => {
+    const edit = shown.has(field) ? edits[field] : undefined;
+    return edit === undefined ? suggestions[field] : textareaToAnkiFieldHtml(edit);
+  });
 });
 const ankiProblem = $derived(status && ankiStatusProblem(status));
 const missingInputsMessage = $derived.by(() => {
@@ -86,51 +89,36 @@ onMount(checkAnki);
     <ConnectionStatus {status} problem={ankiProblem} onrecheck={checkAnki} />
   </header>
 
-  <section aria-labelledby="word-heading" class="space-y-4">
-    <h2 id="word-heading">Word</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] items-start gap-4">
-      <TextInput
-        label="Hebrew word, without niqqud"
-        lang="he"
-        placeholder="כלב"
-        bind:value={draft.word}
-      />
-      <TextInput
-        label="Hebrew word, with niqqud"
-        lang="he"
-        placeholder="כֶּלֶב"
-        bind:value={draft.pointed}
-      />
+  <!-- The word and its meanings come first, because they are all the lookups need, and the
+       lookups are where the niqqud below comes from. -->
+  <section aria-label="Word" class="space-y-4">
+    <div class="grid items-start gap-4 sm:grid-cols-2">
+      <TextInput label="Hebrew word, without niqqud" lang="he" bind:value={draft.word} />
       <DefinitionsInput word={draft.word} bind:definitions={draft.definitions} />
     </div>
     <ExistingNotesPanel word={draft.word} />
+    <LookupLinks word={draft.word} />
+  </section>
+
+  <section aria-label="Word forms" class="space-y-4 border-t border-gray-200 pt-8">
     <ChoiceChips
       legend="Part of speech"
       name="part-of-speech"
       options={PARTS_OF_SPEECH}
       bind:value={draft.partOfSpeech}
     />
-    <LookupLinks word={draft.word} />
+    <div class="forms-row">
+      <TextInput label="Hebrew word, with niqqud" lang="he" bind:value={draft.pointed} />
+    </div>
   </section>
 
-  <section aria-labelledby="card-heading" class="space-y-4">
-    <h2 id="card-heading">Card</h2>
-    {#if inputs === undefined}
-      <p class="text-gray-600">Fill in the word above to build the card.</p>
-    {:else}
-      <NoteFields
-        groups={shownGroups}
-        {suggestions}
-        {edits}
-        onedit={(field, value) => {
-          edits[field] = value;
-        }}
-        onreset={(field) => {
-          delete edits[field];
-        }}
-      />
-    {/if}
-  </section>
+  <NoteFields
+    groups={shownGroups}
+    {edits}
+    onedit={(field, value) => {
+      edits[field] = value;
+    }}
+  />
 
   <HandOffBar
     fields={ankiFields}

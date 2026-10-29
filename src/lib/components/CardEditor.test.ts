@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
+import { FIELDS } from '#lib/note-type.ts';
 import type { AnkiStatus, ExistingNotes } from '#lib/server/deck.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import CardEditor from './CardEditor.svelte';
@@ -49,13 +50,11 @@ async function renderConnectedEditor(existing?: ExistingNotes) {
 }
 
 function input(label: string) {
-  return within(screen.getByRole('region', { name: 'Word' })).getByLabelText(label);
+  return screen.getByLabelText(label) as HTMLInputElement;
 }
 
 function noteField(fieldName: string) {
-  return within(screen.getByRole('region', { name: 'Card' })).getByLabelText(
-    fieldName,
-  ) as HTMLTextAreaElement;
+  return screen.getByLabelText(fieldName) as HTMLTextAreaElement;
 }
 
 async function typeInto(element: HTMLElement, value: string) {
@@ -76,8 +75,8 @@ async function fillInputs({
   gloss: string;
 }) {
   await typeInto(input('Hebrew word, without niqqud'), word);
-  await typeInto(input('Hebrew word, with niqqud'), pointed);
   await typeInto(input('English meaning'), gloss);
+  await typeInto(input('Hebrew word, with niqqud'), pointed);
 }
 
 async function fillDag() {
@@ -141,7 +140,9 @@ describe('CardEditor', () => {
           (screen.getByRole('button', { name: 'Open in Anki' }) as HTMLButtonElement).disabled,
         ).toBe(true);
         expect(
-          screen.getByText('Still needed: niqqud, English meaning, part of speech'),
+          screen.getByText(
+            'Still needed: English meaning, part of speech, Hebrew word with niqqud',
+          ),
         ).toBeTruthy();
       });
     });
@@ -200,68 +201,93 @@ describe('CardEditor', () => {
     });
   });
 
-  describe('the card', () => {
-    describe('while an input is blank', () => {
-      test('shows no fields', async () => {
+  describe('the note fields', () => {
+    describe('before the part of speech is chosen', () => {
+      test('are not shown', async () => {
         await renderConnectedEditor();
         await fillInputs({ word: 'דג', pointed: 'דָּג', gloss: 'fish' });
-        const card = screen.getByRole('region', { name: 'Card' });
-        expect(within(card).queryAllByRole('textbox')).toEqual([]);
-        expect(card.textContent).toContain('Fill in the word above');
+        expect(screen.queryByLabelText('Notes')).toBeNull();
       });
     });
-  });
 
-  describe('editing a field', () => {
-    test('keeps the edit when the inputs change, until reset', async () => {
-      await renderConnectedEditor();
-      await fillDag();
-      const productionAnswer = noteField('Production answer');
-      expect(productionAnswer.value).toBe('דג');
-
-      await typeInto(productionAnswer, 'דג קטן');
-      await typeInto(input('Hebrew word, without niqqud'), 'דגים');
-      expect(productionAnswer.value).toBe('דג קטן');
-
-      const reset = { name: 'Reset Production answer to suggestion' };
-      await fireEvent.click(screen.getByRole('button', reset));
-      expect(productionAnswer.value).toBe('דגים');
-      expect(screen.queryByRole('button', reset)).toBeNull();
+    describe('once the part of speech is chosen', () => {
+      test('are shown, even while another input is blank', async () => {
+        await renderConnectedEditor();
+        await choosePartOfSpeech('Other');
+        expect(noteField('Notes')).toBeTruthy();
+      });
     });
 
-    describe('when composition suggests nothing for it', () => {
-      test('offers no reset', async () => {
+    test('explain when to fill a field, outside the field', async () => {
+      await renderConnectedEditor();
+      await choosePartOfSpeech('Other');
+      const readingContext = noteField('Hint for reading the Hebrew without niqqud');
+      expect(readingContext.placeholder).toBe('');
+      expect(
+        document.getElementById(readingContext.getAttribute('aria-describedby') ?? '')?.textContent,
+      ).toBe(FIELDS.readingContext.help);
+    });
+
+    test('send an edit under its name in Anki', async () => {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      await typeInto(noteField('Hint for reading the Hebrew without niqqud'), 'הדג גדול');
+
+      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+      await screen.findByText(/Opened in Anki/);
+      expect(addRequests(requests)[0]?.body).toMatchObject({
+        fields: { 'Reading context': 'הדג גדול' },
+      });
+    });
+
+    test('send each new line as a line break', async () => {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      await typeInto(noteField('Notes'), 'first\nsecond');
+
+      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+      await screen.findByText(/Opened in Anki/);
+      expect(addRequests(requests)[0]?.body).toMatchObject({
+        fields: { Notes: 'first<br>second' },
+      });
+    });
+
+    describe('for a variant', () => {
+      test('search images for its prompt, once there is one', async () => {
         await renderConnectedEditor();
-        await fillDag();
-        await typeInto(noteField('Notes'), 'a note');
-        expect(screen.queryByRole('button', { name: 'Reset Notes to suggestion' })).toBeNull();
+        await choosePartOfSpeech('Other');
+        const prompt = noteField('Variant 1: English prompt');
+        const promptField = prompt.parentElement as HTMLElement;
+        expect(within(promptField).getByText('Images (EN)').title).toBe('Type the prompt first');
+        await typeInto(prompt, 'good tables');
+        expect(
+          within(promptField).getByRole('link', { name: 'Images (EN)' }).getAttribute('href'),
+        ).toBe('https://www.google.com/search?udm=2&q=good%20tables');
       });
     });
   });
 
   describe('the fields shown', () => {
-    function shownFieldLabels() {
-      return within(screen.getByRole('region', { name: 'Card' }))
-        .getAllByRole('textbox')
-        .map((textarea) => (textarea as HTMLTextAreaElement).labels[0]?.textContent);
+    function shownFieldIds() {
+      return [...document.querySelectorAll('textarea')].map((textarea) => textarea.id);
     }
 
     test('leave out the inputs and the media', async () => {
       await renderConnectedEditor();
       await fillDag();
-      expect(shownFieldLabels()).not.toContain('Hebrew');
-      expect(shownFieldLabels()).not.toContain('Pointed');
-      expect(shownFieldLabels()).not.toContain('Definitions');
-      expect(shownFieldLabels()).not.toContain('Images');
-      expect(shownFieldLabels()).not.toContain('Audio');
+      for (const field of ['unpointed', 'pointed', 'definitions', 'images', 'audio']) {
+        expect(shownFieldIds()).not.toContain(`field-${field}`);
+      }
     });
 
     test('follow the part of speech', async () => {
       await renderConnectedEditor();
       await fillDag();
       await choosePartOfSpeech('Verb');
-      expect(shownFieldLabels()).toContain('Binyan');
-      expect(shownFieldLabels()).not.toContain('Gender');
+      expect(shownFieldIds()).toContain('field-binyan');
+      expect(shownFieldIds()).not.toContain('field-gender');
     });
 
     describe('when a field is hidden after being edited', () => {
@@ -320,7 +346,9 @@ describe('CardEditor', () => {
     test('is disabled and says which input to fill', async () => {
       await renderConnectedEditor();
       const links = screen.getByRole('navigation', { name: 'Look up' });
-      expect(within(links).getByText('Wiktionary').title).toBe('Type the Hebrew word first');
+      expect(within(links).getByText('Wiktionary').title).toBe(
+        'Type the Hebrew word without niqqud first',
+      );
       await typeInto(input('Hebrew word, without niqqud'), 'דג');
       expect(within(links).getByRole('link', { name: 'Images (HE)' })).toBeTruthy();
       expect(screen.queryByRole('link', { name: 'Images (EN)' })).toBeNull();

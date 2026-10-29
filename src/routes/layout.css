@@ -58,3 +58,13 @@
     @apply text-red-700;
   }
 }
+
+/* A muted line saying what something is for, or what it will write. */
+@utility hint {
+  @apply text-sm text-gray-500;
+}
+
+/* The pointed word. Four columns keep a lone input from stretching across the page. */
+@utility forms-row {
+  @apply grid gap-4 sm:grid-cols-2 md:grid-cols-4;
+}

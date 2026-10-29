@@ -1,14 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { FIELD_NAMES, shownFieldGroups, toAnkiFields } from './note-type.ts';
+import { FIELD_NAMES, quotedParts, shownFieldGroups, toAnkiFields } from './note-type.ts';
 
-const answersAndContext = [
-  { group: 'Answers', fields: ['productionAnswer'] },
-  { group: 'Context', fields: ['productionContext', 'readingContext'] },
-];
+const context = { group: 'Disambiguation hints', fields: ['productionContext', 'readingContext'] };
 const variantsAndExtras = [
   {
-    group: 'Variants',
+    group: 'Unusual variants',
     fields: ['variant1Prompt', 'variant1Answer', 'variant2Prompt', 'variant2Answer'],
   },
   { group: 'Extras', fields: ['examples', 'notes'] },
@@ -16,20 +13,22 @@ const variantsAndExtras = [
 
 describe('shownFieldGroups', () => {
   describe('for a noun', () => {
-    test('shows gender and forms, but not binyan or root', () => {
+    test('shows its answer, gender and forms, but not binyan or root', () => {
       expect(shownFieldGroups(fieldNames, 'noun')).toEqual([
-        ...answersAndContext,
+        { group: 'Answer', fields: ['productionAnswer'] },
         { group: 'Grammar', fields: ['gender', 'forms'] },
+        context,
         ...variantsAndExtras,
       ]);
     });
   });
 
   describe('for a verb', () => {
-    test('shows binyan and root, but not gender or forms', () => {
+    test('shows its answer, binyan and root, but not gender or forms', () => {
       expect(shownFieldGroups(fieldNames, 'verb')).toEqual([
-        ...answersAndContext,
+        { group: 'Answer', fields: ['productionAnswer'] },
         { group: 'Grammar', fields: ['binyan', 'root'] },
+        context,
         ...variantsAndExtras,
       ]);
     });
@@ -38,8 +37,8 @@ describe('shownFieldGroups', () => {
   describe('for any other word', () => {
     test('shows forms only', () => {
       expect(shownFieldGroups(fieldNames, 'other')).toEqual([
-        ...answersAndContext,
         { group: 'Grammar', fields: ['forms'] },
+        context,
         ...variantsAndExtras,
       ]);
     });
@@ -48,7 +47,7 @@ describe('shownFieldGroups', () => {
   describe('when Anki orders fields differently', () => {
     test('keeps its order within a group', () => {
       expect(shownFieldGroups(['Notes', 'Reading context', 'Examples'], 'noun')).toEqual([
-        { group: 'Context', fields: ['readingContext'] },
+        { group: 'Disambiguation hints', fields: ['readingContext'] },
         { group: 'Extras', fields: ['notes', 'examples'] },
       ]);
     });
@@ -76,5 +75,29 @@ describe('FIELD_NAMES', () => {
   // Two keys naming one field would make composition a guess about which one it fills.
   test('names each field once', () => {
     expect(new Set(FIELD_NAMES).size).toBe(FIELD_NAMES.length);
+  });
+});
+
+describe('quotedParts', () => {
+  test('splits out each quoted example', () => {
+    expect(quotedParts('For example, “ד־ב־ר” for לְדַבֵּר, or “a b”.')).toEqual([
+      { text: 'For example, ', quoted: false },
+      { text: 'ד־ב־ר', quoted: true },
+      { text: ' for לְדַבֵּר, or ', quoted: false },
+      { text: 'a b', quoted: true },
+      { text: '.', quoted: false },
+    ]);
+  });
+
+  describe('when a quote starts the text', () => {
+    test('leaves out the empty part before it', () => {
+      expect(quotedParts('“a”')).toEqual([{ text: 'a', quoted: true }]);
+    });
+  });
+
+  describe('without quotes', () => {
+    test('returns the whole text', () => {
+      expect(quotedParts('plain')).toEqual([{ text: 'plain', quoted: false }]);
+    });
   });
 });
