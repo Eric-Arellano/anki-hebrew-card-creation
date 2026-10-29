@@ -1,43 +1,51 @@
 import { isHttpError } from '@sveltejs/kit';
-import { describe, expect, test, vi } from 'vitest';
-import { fakeAnki, unreachable } from '../../../../../tests/fake-anki.ts';
-import kelevChatulDagNotes from '../../../../../tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
+import { describe, expect, test } from 'vitest';
+import { testConfig } from '#tests/config.ts';
+import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
+import kelevChatulDagNotes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
-import { GET } from './+server.ts';
+import { _findExisting } from './+server.ts';
 
-const connection = vi.hoisted(() => ({ anki: undefined as unknown }));
-vi.mock('#lib/server/anki-connection.ts', () => connection);
-
-function get(query: string) {
-  return GET({ url: new URL(`http://127.0.0.1:5173/api/anki/existing${query}`) } as never);
+function existingUrl(query: string) {
+  return new URL(`http://127.0.0.1:5173/api/anki/existing${query}`);
 }
 
-describe('GET /api/anki/existing', () => {
+describe('_findExisting', () => {
   test('answers with the matches for the word', async () => {
     const dagNotes = kelevChatulDagNotes.filter((note) => note.fields.Hebrew.value === 'דג');
-    connection.anki = fakeAnki({
+    const { anki } = fakeAnki({
       findNotes: () => dagNotes.map((note) => note.noteId),
       notesInfo: () => dagNotes,
-    }).anki;
-    const response = await get(`?word=${encodeURIComponent('דג')}`);
+    });
+    const response = await _findExisting(
+      anki,
+      testConfig,
+      existingUrl(`?word=${encodeURIComponent('דג')}`),
+    );
     expect(await response.json()).toEqual({
       exactMatches: [{ noteId: 1751714182456, unpointed: 'דג', pointed: 'דָּג' }],
       relatedMatches: [],
     });
   });
 
-  test('answers 400 without a word', async () => {
-    connection.anki = fakeAnki({}).anki;
-    await expect(get('')).rejects.toSatisfy((error) => isHttpError(error, 400));
+  describe('without a word', () => {
+    test('answers 400 without calling Anki', async () => {
+      const { anki, calls } = fakeAnki({});
+      await expect(_findExisting(anki, testConfig, existingUrl(''))).rejects.toSatisfy((error) =>
+        isHttpError(error, 400),
+      );
+      expect(calls).toEqual([]);
+    });
   });
 
-  test('answers 502 when Anki is closed', async () => {
-    connection.anki = fakeAnki({ findNotes: unreachable }).anki;
-    await expect(get('?word=x')).rejects.toSatisfy(
-      (error) =>
-        isHttpError(error, 502) &&
-        error.body.message === "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
-    );
+  describe('when Anki is closed', () => {
+    test('answers 502 with the reason', async () => {
+      await expect(_findExisting(closedAnki, testConfig, existingUrl('?word=x'))).rejects.toSatisfy(
+        (error) =>
+          isHttpError(error, 502) &&
+          error.body.message === "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
+      );
+    });
   });
 });

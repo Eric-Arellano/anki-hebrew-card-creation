@@ -1,23 +1,21 @@
 import { isHttpError } from '@sveltejs/kit';
-import { describe, expect, test, vi } from 'vitest';
-import { fakeAnki, unreachable } from '../../../../../tests/fake-anki.ts';
-import { POST } from './+server.ts';
+import { describe, expect, test } from 'vitest';
+import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
+import { _browseNotes } from './+server.ts';
 
-const connection = vi.hoisted(() => ({ anki: undefined as unknown }));
-vi.mock('#lib/server/anki-connection.ts', () => connection);
-
-function post(body: string) {
-  const request = new Request('http://127.0.0.1:5173/api/anki/browse', { method: 'POST', body });
-  return POST({ request } as never);
+function postRequest(body: string) {
+  return new Request('http://127.0.0.1:5173/api/anki/browse', { method: 'POST', body });
 }
 
-describe('POST /api/anki/browse', () => {
+describe('_browseNotes', () => {
   test('opens the Browse window on the notes', async () => {
-    const fake = fakeAnki({ guiBrowse: () => [1751686072899] });
-    connection.anki = fake.anki;
-    const response = await post(JSON.stringify({ noteIds: [1751686072898, 1751714132957] }));
+    const { anki, calls } = fakeAnki({ guiBrowse: () => [1751686072899] });
+    const response = await _browseNotes(
+      anki,
+      postRequest(JSON.stringify({ noteIds: [1751686072898, 1751714132957] })),
+    );
     expect(response.status).toBe(204);
-    expect(fake.calls).toEqual([
+    expect(calls).toEqual([
       { action: 'guiBrowse', params: { query: 'nid:1751686072898,1751714132957' } },
     ]);
   });
@@ -31,17 +29,19 @@ describe('POST /api/anki/browse', () => {
       ['an extra key', '{"noteIds": [1751686072898], "query": "deck:*"}'],
       ['a body that is not JSON', 'nid:1'],
     ])('answers 400 to %s without calling Anki', async (_, body) => {
-      const fake = fakeAnki({ guiBrowse: () => [] });
-      connection.anki = fake.anki;
-      await expect(post(body)).rejects.toSatisfy((error) => isHttpError(error, 400));
-      expect(fake.calls).toEqual([]);
+      const { anki, calls } = fakeAnki({ guiBrowse: () => [] });
+      await expect(_browseNotes(anki, postRequest(body))).rejects.toSatisfy((error) =>
+        isHttpError(error, 400),
+      );
+      expect(calls).toEqual([]);
     });
   });
 
-  test('answers 502 when Anki is closed', async () => {
-    connection.anki = fakeAnki({ guiBrowse: unreachable }).anki;
-    await expect(post('{"noteIds": [1751686072898]}')).rejects.toSatisfy((error) =>
-      isHttpError(error, 502),
-    );
+  describe('when Anki is closed', () => {
+    test('answers 502', async () => {
+      await expect(
+        _browseNotes(closedAnki, postRequest('{"noteIds": [1751686072898]}')),
+      ).rejects.toSatisfy((error) => isHttpError(error, 502));
+    });
   });
 });

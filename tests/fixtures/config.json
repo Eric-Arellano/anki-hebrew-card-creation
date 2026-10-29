@@ -1,0 +1,94 @@
+{
+  "anki": {
+    "url": "http://127.0.0.1:8765",
+    "deck": "עברית",
+    "noteType": "Hebrew",
+    "tags": []
+  },
+  "fields": {
+    "unpointed": "Hebrew",
+    "pointed": "Pointed",
+    "productionAnswer": "Production answer",
+    "definitions": "Definitions",
+    "productionContext": "Production context",
+    "readingContext": "Reading context",
+    "images": "Images",
+    "audio": "Audio",
+    "gender": "Gender",
+    "forms": "Forms",
+    "binyan": "Binyan",
+    "root": "Root",
+    "variant1Prompt": "Variant 1 prompt",
+    "variant1Answer": "Variant 1 answer",
+    "variant2Prompt": "Variant 2 prompt",
+    "variant2Answer": "Variant 2 answer",
+    "examples": "Examples",
+    "notes": "Notes"
+  },
+  "gender": { "m": "m", "f": "f", "both": "mf" },
+  "tov": {
+    "unpointed": { "m": "טוב", "f": "טובה" },
+    "pointed": {
+      "m": { "sg": "טוֹב", "pl": "טוֹבִים" },
+      "f": { "sg": "טוֹבָה", "pl": "טוֹבוֹת" }
+    }
+  },
+  "productionAnswer": { "noun": "{word} {tov}", "verb": "{word} {preposition}" },
+  "forms": {
+    "separator": "<br>",
+    "labels": { "plural": "pl", "feminine": "f", "mascPlural": "m.pl", "femPlural": "f.pl" }
+  },
+  "root": { "separator": "־" },
+  "binyanim": [
+    { "value": "pa'al", "aliases": ["paal", "qal", "kal"] },
+    { "value": "nif'al", "aliases": ["nifal"] },
+    { "value": "pi'el", "aliases": ["piel"] },
+    { "value": "pu'al", "aliases": ["pual"] },
+    { "value": "hif'il", "aliases": ["hifil"] },
+    { "value": "huf'al", "aliases": ["hof'al", "hufal", "hofal"] },
+    { "value": "hitpa'el", "aliases": ["hitpael"] }
+  ],
+  "prepositions": ["ל", "ב", "על", "עם", "מ", "אל", "אחרי", "בפני", "מפני"],
+  "links": [
+    {
+      "id": "wiktionary",
+      "label": "Wiktionary",
+      "template": "https://en.wiktionary.org/wiki/{word}#Hebrew",
+      "check": true
+    },
+    {
+      "id": "pealim",
+      "label": "Pealim",
+      "template": "https://www.pealim.com/search/?q={word}",
+      "check": false
+    },
+    {
+      "id": "forvo",
+      "label": "Forvo",
+      "template": "https://forvo.com/word/{word}/#he",
+      "check": false
+    },
+    {
+      "id": "images-en",
+      "label": "Images (EN)",
+      "template": "https://www.google.com/search?udm=2&q={gloss}",
+      "check": false
+    },
+    {
+      "id": "images-he",
+      "label": "Images (HE)",
+      "template": "https://www.google.com/search?udm=2&q={word}",
+      "check": false
+    }
+  ],
+  "linkCheck": {
+    "userAgent": "anki-hebrew-card-creation (+https://github.com/Eric-Arellano/anki-hebrew-card-creation)",
+    "minIntervalMs": 1000,
+    "timeoutMs": 5000
+  },
+  "definitions": { "prefillFromDictionary": false },
+  "dictionary": {
+    "jsonl": "data/kaikki.org-dictionary-Hebrew.jsonl",
+    "index": "data/hebrew.sqlite"
+  }
+}

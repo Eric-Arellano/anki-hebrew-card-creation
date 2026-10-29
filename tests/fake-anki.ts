@@ -18,12 +18,14 @@ export function fakeAnki(handlers: FakeActionHandlers) {
     const handler = handlers[action] as
       | ((params: unknown) => ActionResult<typeof action>)
       | undefined;
-    if (handler === undefined) throw new AnkiError(`the fake has no ${action}`);
+    // Not an AnkiError, which the code under test would catch and report as Anki failing.
+    if (handler === undefined) throw new Error(`the fake has no ${action}`);
     return handler(params);
   };
   return { anki, calls };
 }
 
-export function unreachable(): never {
+/** An AnkiConnect that fails every action the way `createAnkiClient` does when Anki is closed. */
+export const closedAnki: AnkiClient = async () => {
   throw new AnkiError("Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?");
-}
+};

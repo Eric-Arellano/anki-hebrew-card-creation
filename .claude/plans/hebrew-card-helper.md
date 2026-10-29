@@ -322,11 +322,13 @@ point at one shared copy.
   - Anki search escaping and config validation;
   - the irregular-plural heuristic and lookup.
 - **Server tests** run AnkiConnect through `fakeAnki` in `tests/fake-anki.ts`, which answers only
-  the actions a test hands it and records every call. A route test mocks
-  `#lib/server/anki-connection.ts` to hand the route a fake. The link checker runs against a
-  mocked `fetch`.
+  the actions a test hands it and records every call. A route's `+server.ts` exports a `_`-prefixed
+  function that takes the client and config as arguments, and its test calls that with a fake, so
+  no test mocks a module. The link checker runs against a mocked `fetch`.
 - **Anki fixtures** in `tests/fixtures/anki/` are replies from my real AnkiConnect: `notesInfo`
-  for כלב, חתול and דג and for the `בית` notes, and the note type's field names.
+  for כלב, חתול and דג and for the `בית` notes, and the note type's field names. Tests read
+  `testConfig` from `tests/config.ts`, the config those replies were recorded under, never the
+  repo's `config.json`.
 - **Component tests** use `@testing-library/svelte` and jsdom, and cover:
   - the confirm step coming before the hand-off;
   - my edits surviving recomposition.

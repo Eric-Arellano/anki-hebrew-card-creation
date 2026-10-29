@@ -1,38 +1,23 @@
 import { describe, expect, test } from 'vitest';
-import { fakeAnki, unreachable } from '../../../tests/fake-anki.ts';
-import fieldNames from '../../../tests/fixtures/anki/model-field-names-hebrew.json' with {
+import { testConfig as config } from '#tests/config.ts';
+import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
+import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
+import bayitNotes from '#tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
+import kelevChatulDagNotes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
-import bayitNotes from '../../../tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
-import kelevChatulDagNotes from '../../../tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
-  type: 'json',
-};
-import { config } from '../config.ts';
 import type { NoteInfo } from './anki.ts';
 import { findExistingNotes, getAnkiStatus } from './deck.ts';
 
 // `&nbsp;` in a field decodes to this, not to a space.
 const NBSP = String.fromCodePoint(0xa0);
 
-const deckNames = ['Default', 'Judaism', 'Palabras nuevas', 'עברית'];
-const noteTypeNames = [
-  'Basic',
-  'Basic (and reversed card) Spanish',
-  'Basic (optional reversed card)',
-  'Basic (type in the answer)',
-  'Basic Spanish',
-  'Bracha',
-  'Cloze',
-  'Hebrew',
-  'Image Occlusion',
-];
-
 describe('getAnkiStatus', () => {
   function connectedAnkiWithFields(liveFieldNames: string[]) {
     return fakeAnki({
       version: () => 6,
-      deckNames: () => deckNames,
-      modelNames: () => noteTypeNames,
+      deckNames: () => ['Default', 'עברית'],
+      modelNames: () => ['Basic', 'Hebrew'],
       modelFieldNames: () => liveFieldNames,
     });
   }
@@ -92,12 +77,7 @@ describe('getAnkiStatus', () => {
 
   describe('when Anki is closed', () => {
     test('reports the error', async () => {
-      const { anki } = fakeAnki({
-        version: unreachable,
-        deckNames: unreachable,
-        modelNames: unreachable,
-      });
-      expect(await getAnkiStatus(anki, config)).toEqual({
+      expect(await getAnkiStatus(closedAnki, config)).toEqual({
         kind: 'error',
         message: "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
       });
@@ -110,8 +90,8 @@ describe('getAnkiStatus', () => {
         version: () => {
           throw new TypeError('bug');
         },
-        deckNames: () => deckNames,
-        modelNames: () => noteTypeNames,
+        deckNames: () => ['Default'],
+        modelNames: () => ['Basic'],
       });
       await expect(getAnkiStatus(anki, config)).rejects.toThrow(new TypeError('bug'));
     });

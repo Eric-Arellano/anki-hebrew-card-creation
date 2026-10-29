@@ -1,13 +1,14 @@
 import { describe, expect, test } from 'vitest';
 import { ZodError } from 'zod';
+import rawTestConfig from '#tests/fixtures/config.json' with { type: 'json' };
 import rawConfig from '../../config.json' with { type: 'json' };
 import { parseConfig } from './config.ts';
 
-type RawConfig = typeof rawConfig;
+type RawConfig = typeof rawTestConfig;
 
-/** The paths `parseConfig` rejects once `change` is applied to the repo's config. */
+/** The paths `parseConfig` rejects once `change` is applied to the test config. */
 function rejectedPathsAfter(change: (config: RawConfig) => void): string[] {
-  const config = structuredClone(rawConfig);
+  const config = structuredClone(rawTestConfig);
   change(config);
   try {
     parseConfig(config);

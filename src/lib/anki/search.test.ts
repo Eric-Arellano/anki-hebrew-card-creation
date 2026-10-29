@@ -14,9 +14,7 @@ describe('quoteSearchTerm', () => {
 
 describe('searchByNoteType', () => {
   test('quotes a name with spaces', () => {
-    expect(searchByNoteType('Basic (and reversed card) Spanish')).toBe(
-      '"note:Basic (and reversed card) Spanish"',
-    );
+    expect(searchByNoteType('Basic (and reversed card)')).toBe('"note:Basic (and reversed card)"');
   });
 
   test('escapes the characters special inside quotes', () => {

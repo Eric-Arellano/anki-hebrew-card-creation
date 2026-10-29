@@ -6,7 +6,8 @@
   "type": "module",
   "imports": {
     "#lib": "./src/lib",
-    "#lib/*": "./src/lib/*"
+    "#lib/*": "./src/lib/*",
+    "#tests/*": "./tests/*"
   },
   "engines": {
     "node": ">=24"

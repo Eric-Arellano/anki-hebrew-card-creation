@@ -1,13 +1,15 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { searchByNoteIds } from '#lib/anki/search.ts';
-import { AnkiError } from '#lib/server/anki.ts';
+import { type AnkiClient, AnkiError } from '#lib/server/anki.ts';
 import { anki } from '#lib/server/anki-connection.ts';
 import type { RequestHandler } from './$types';
 
 const browseRequestBodySchema = z.strictObject({ noteIds: z.array(z.int().positive()).min(1) });
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = ({ request }) => _browseNotes(anki, request);
+
+export async function _browseNotes(anki: AnkiClient, request: Request): Promise<Response> {
   const parsedBody = browseRequestBodySchema.safeParse(await request.json().catch(() => undefined));
   if (!parsedBody.success) error(400, 'noteIds must be a non-empty list of note ids');
   try {
@@ -17,4 +19,4 @@ export const POST: RequestHandler = async ({ request }) => {
     throw cause;
   }
   return new Response(null, { status: 204 });
-};
+}
