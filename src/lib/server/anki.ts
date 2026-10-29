@@ -65,6 +65,8 @@ export function createAnkiClient(ankiConnectUrl: string): AnkiClient {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, version: 6, params }),
+        // A redirect could carry the card's contents off this machine.
+        redirect: 'error',
       });
     } catch (cause) {
       throw new AnkiError(`Can't reach AnkiConnect at ${ankiConnectUrl}. Is Anki open?`, {

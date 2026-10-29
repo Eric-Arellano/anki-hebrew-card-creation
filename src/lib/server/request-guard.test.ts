@@ -95,10 +95,11 @@ describe('whyRequestIsRefused', () => {
   });
 
   describe('for a POST outside the API', () => {
-    test('needs only the Host', () => {
-      expect(
-        whyRequestIsRefused(requestTo('/apiary', { host: 'localhost:5173' }, 'POST')),
-      ).toBeUndefined();
+    test.each(['/', '/%61pi/anki/browse'])('checks %s the same way', (path) => {
+      const headers = { host: 'localhost:5173', 'content-type': 'text/plain' };
+      expect(whyRequestIsRefused(requestTo(path, headers, 'POST'))).toBe(
+        'Content-Type must be JSON',
+      );
     });
   });
 });

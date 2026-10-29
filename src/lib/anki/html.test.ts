@@ -18,6 +18,7 @@ describe('ankiFieldHtmlToText', () => {
 
   test('leaves an entity it does not know as it is', () => {
     expect(ankiFieldHtmlToText('&bogus; &#99999999;')).toBe('&bogus; &#99999999;');
+    expect(ankiFieldHtmlToText('&constructor; &toString;')).toBe('&constructor; &toString;');
   });
 
   test('trims', () => {

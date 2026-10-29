@@ -12,10 +12,9 @@ export function whyRequestIsRefused(request: Request): string | undefined {
     return 'Host must be 127.0.0.1 or localhost';
   }
 
-  const { pathname } = new URL(request.url);
-  const isApiPath = pathname === '/api' || pathname.startsWith('/api/');
-  const isReadOnlyMethod = request.method === 'GET' || request.method === 'HEAD';
-  if (!isApiPath || isReadOnlyMethod) return undefined;
+  // Every path, not just `/api`: SvelteKit decodes the pathname before routing, so a check on the
+  // raw one is skipped by `/%61pi/…`.
+  if (request.method === 'GET' || request.method === 'HEAD') return undefined;
 
   // A cross-site page can send a form or a `text/plain` fetch without a CORS preflight, but not
   // JSON. Browsers always send Origin on a POST, so a missing one isn't a browser on this page.

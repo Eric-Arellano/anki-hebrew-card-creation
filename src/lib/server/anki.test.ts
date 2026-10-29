@@ -22,7 +22,10 @@ describe('createAnkiClient', () => {
       const anki = createAnkiClient(ANKI_URL);
 
       expect(await anki('modelFieldNames', { modelName: 'Hebrew' })).toEqual(fieldNames);
-      expect(fetch).toHaveBeenCalledWith(ANKI_URL, expect.objectContaining({ method: 'POST' }));
+      expect(fetch).toHaveBeenCalledWith(
+        ANKI_URL,
+        expect.objectContaining({ method: 'POST', redirect: 'error' }),
+      );
       expect(firstRequestBody(fetch)).toEqual({
         action: 'modelFieldNames',
         version: 6,

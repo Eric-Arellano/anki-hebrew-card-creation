@@ -97,7 +97,7 @@ overridable, want components.*
 - **Binding.** The server binds `127.0.0.1` in both dev and `start`. adapter-node defaults to
   `0.0.0.0`, so the `start` script sets `HOST`.
 - **Request checks.** `src/lib/server/request-guard.ts`, run from `hooks.server.ts`, answers 403
-  to any Host other than `127.0.0.1` or `localhost`, which blocks DNS rebinding. Under `/api`, it
+  to any Host other than `127.0.0.1` or `localhost`, which blocks DNS rebinding. On every path, it
   also refuses any method but GET and HEAD unless the body is JSON and the Origin is this server.
   Without these checks, any website I visit could open Add windows through this server.
   `config.json`'s AnkiConnect URL must be loopback too.
