@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
+import type { FieldDrift } from '#lib/api.ts';
 import { FIELD_NAMES } from '#lib/note-type.ts';
-import type { FieldDrift } from '#lib/server/deck.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { ankiStatusProblem, fieldOrder } from './status.ts';
 

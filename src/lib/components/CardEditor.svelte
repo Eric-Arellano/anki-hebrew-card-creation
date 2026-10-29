@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { errorMessage, getJson } from '#lib/api-client.ts';
+import { type AnkiStatus, errorMessage, fetchAnkiStatus } from '#lib/api.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { handOffFields } from '#lib/card/hand-off.ts';
 import {
@@ -17,7 +17,6 @@ import {
   type PartOfSpeech,
   shownFieldGroups,
 } from '#lib/note-type.ts';
-import type { AnkiStatus } from '#lib/server/deck.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import DefinitionsInput from './DefinitionsInput.svelte';
 import ExistingNotesPanel from './ExistingNotesPanel.svelte';
@@ -64,7 +63,7 @@ const missingInputsMessage = $derived.by(() => {
 async function checkAnki() {
   status = undefined;
   try {
-    status = await getJson<AnkiStatus>('/api/anki/status');
+    status = await fetchAnkiStatus();
   } catch (error) {
     status = { kind: 'error', message: errorMessage(error) };
   }

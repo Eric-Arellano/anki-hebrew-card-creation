@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
+import type { AnkiStatus, ExistingNotes } from '#lib/api.ts';
 import { FIELDS } from '#lib/note-type.ts';
-import type { AnkiStatus, ExistingNotes } from '#lib/server/deck.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import CardEditor from './CardEditor.svelte';
 
