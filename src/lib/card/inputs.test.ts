@@ -63,14 +63,14 @@ describe('missingInputs', () => {
   });
 
   describe('for a verb', () => {
-    test('requires a binyan and root, after the pointed word as the editor shows them', () => {
+    test('requires a preposition before the pointed word, and a binyan and root after it', () => {
       expect(
         missingInputs({
           ...ledaberDraft,
           pointed: '',
-          verb: { binyan: undefined, root: '', preposition: 'none' },
+          verb: { binyan: undefined, root: '', preposition: undefined },
         }),
-      ).toEqual(['pointed', 'binyan', 'root']);
+      ).toEqual(['preposition', 'pointed', 'binyan', 'root']);
     });
 
     test('counts a root that is not only letters as missing', () => {
@@ -163,6 +163,14 @@ describe('completeInputs', () => {
       expect(
         completeInputs({ ...ledaberDraft, verb: { ...verb, preposition: 'none' } }),
       ).toMatchObject({ verb: { preposition: undefined } });
+    });
+  });
+
+  describe('for a verb while its preposition is unchosen', () => {
+    test('returns nothing', () => {
+      expect(
+        completeInputs({ ...ledaberDraft, verb: { ...verb, preposition: undefined } }),
+      ).toBeUndefined();
     });
   });
 

@@ -51,6 +51,7 @@ type RequiredInput =
   | 'definitions'
   | 'partOfSpeech'
   | 'gender'
+  | 'preposition'
   | 'binyan'
   | 'root';
 
@@ -60,6 +61,7 @@ export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
   definitions: 'English meaning',
   partOfSpeech: 'part of speech',
   gender: 'gender',
+  preposition: 'preposition',
   pointed: 'Hebrew word with niqqud',
   binyan: 'binyan',
   root: 'root',
@@ -81,8 +83,10 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
     ...ifBlank('word', draft.word),
     ...ifBlank('definitions', filledDefinitions(draft.definitions)[0]),
     ...ifBlank('partOfSpeech', draft.partOfSpeech),
-    // A noun's gender sits before the pointed word, and a verb's binyan and root after it.
+    // A noun's gender and a verb's preposition sit before the pointed word, and a verb's binyan and
+    // root after it.
     ...(draft.partOfSpeech === 'noun' ? missingNounInputs(draft.noun) : []),
+    ...(draft.partOfSpeech === 'verb' ? ifBlank('preposition', draft.verb.preposition) : []),
     ...ifBlank('pointed', draft.pointed),
     ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb) : []),
   ];

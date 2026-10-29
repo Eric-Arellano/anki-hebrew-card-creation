@@ -18,15 +18,16 @@ export type VerbInputs = {
   preposition: Preposition | undefined;
 };
 
-// The root is as the human typed it. The preposition starts as את, the commonest case.
+// The root is as the human typed it. The preposition starts unchosen, like the binyan: it is part of
+// the answer the Production card checks, and את and none are easy to mix up.
 export type VerbDraft = {
   binyan: Binyan | undefined;
   root: string;
-  preposition: Preposition | 'none';
+  preposition: Preposition | 'none' | undefined;
 };
 
 export function emptyVerbDraft(): VerbDraft {
-  return { binyan: undefined, root: '', preposition: 'את' };
+  return { binyan: undefined, root: '', preposition: undefined };
 }
 
 // A root that isn't only letters is as missing as a blank one.
@@ -39,7 +40,9 @@ export function missingVerbInputs({ binyan, root }: VerbDraft): ('binyan' | 'roo
 
 export function completeVerb({ binyan, root, preposition }: VerbDraft): VerbInputs | undefined {
   const formattedRoot = formatRoot(root);
-  if (binyan === undefined || formattedRoot === undefined) return undefined;
+  if (binyan === undefined || formattedRoot === undefined || preposition === undefined) {
+    return undefined;
+  }
   return {
     binyan,
     root: formattedRoot,

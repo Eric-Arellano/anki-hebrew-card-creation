@@ -334,6 +334,7 @@ describe('CardEditor', () => {
         await fillDag();
         await typeInto(noteField('Other forms'), 'f: דָּגָה');
         await fillVerb("pa'al", 'דוג');
+        await fireEvent.click(screen.getByRole('radio', { name: 'None' }));
 
         await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
@@ -482,12 +483,14 @@ describe('CardEditor', () => {
       });
     });
 
-    test('starts with את chosen, and needs its binyan and root', async () => {
+    test('starts with nothing chosen, and needs its preposition, binyan and root', async () => {
       await renderConnectedEditor();
       await fillInputs({ word: 'לראות', pointed: 'לִרְאוֹת', gloss: 'to see' });
       await choosePartOfSpeech('Verb');
-      expect((screen.getByRole('radio', { name: 'את' }) as HTMLInputElement).checked).toBe(true);
-      expect(screen.getByText('Still needed: binyan, root')).toBeTruthy();
+      expect(
+        screen.getAllByRole('radio', { checked: true }).map((radio) => radio.getAttribute('name')),
+      ).toEqual(['part-of-speech']);
+      expect(screen.getByText('Still needed: preposition, binyan, root')).toBeTruthy();
     });
 
     describe('with a root that is not only letters', () => {
@@ -495,6 +498,7 @@ describe('CardEditor', () => {
         await renderConnectedEditor();
         await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to speak' });
         await fillVerb("pi'el", 'דִּבֵּר');
+        await fireEvent.click(screen.getByRole('radio', { name: 'את' }));
         expect(screen.getByText(/Type only the root's Hebrew letters/)).toBeTruthy();
         expect(screen.getByText('Still needed: root')).toBeTruthy();
       });
