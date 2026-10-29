@@ -2,11 +2,13 @@ import type { PartOfSpeech } from '#lib/note-type.ts';
 
 export type Gender = 'm' | 'f' | 'mf';
 
-// The forms are pointed, as the human copies them from a dictionary, and any may be blank. Only a
-// masculine noun has a feminine counterpart (כלב → כלבה); any other has just its plural.
+// The forms are pointed, as the human copies them from a dictionary, and any may be blank. A noun
+// that is only ever plural, like מים, has no other forms. Of the rest, only a masculine noun
+// can have a feminine counterpart (כלב → כלבה), and most have none.
 export type NounInputs =
-  | { gender: 'm'; plural: string; feminine: string; femininePlural: string }
-  | { gender: 'f' | 'mf'; plural: string };
+  | { pluralOnly: true; gender: Gender }
+  | { pluralOnly: false; gender: 'm'; plural: string; feminine: string; femininePlural: string }
+  | { pluralOnly: false; gender: 'f' | 'mf'; plural: string };
 
 type WordInputs = { word: string; pointed: string };
 
@@ -24,7 +26,13 @@ export type CardInputs = WordInputs & { definitions: Definitions } & (
 export type CardInputsDraft = WordInputs & {
   definitions: string[];
   partOfSpeech: PartOfSpeech | undefined;
-  noun: Omit<Extract<NounInputs, { gender: 'm' }>, 'gender'> & { gender: Gender | undefined };
+  noun: {
+    gender: Gender | undefined;
+    pluralOnly: boolean;
+    plural: string;
+    feminine: string;
+    femininePlural: string;
+  };
 };
 
 type RequiredInput = keyof WordInputs | 'definitions' | 'partOfSpeech' | 'gender';
@@ -78,12 +86,21 @@ export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
   }
   const definitions: Definitions = [first, ...rest];
   if (partOfSpeech !== 'noun') return { ...word, definitions, partOfSpeech };
-  const { gender, plural, ...counterpart } = noun;
+  const completeNoun = completeNounInputs(noun);
+  if (completeNoun === undefined) return undefined;
+  return { ...word, definitions, partOfSpeech, noun: completeNoun };
+}
+
+// Drops the forms that the gender, or being only plural, rules out.
+function completeNounInputs({
+  gender,
+  pluralOnly,
+  plural,
+  ...counterpart
+}: CardInputsDraft['noun']): NounInputs | undefined {
   if (gender === undefined) return undefined;
-  return {
-    ...word,
-    definitions,
-    partOfSpeech,
-    noun: gender === 'm' ? { gender, plural, ...counterpart } : { gender, plural },
-  };
+  if (pluralOnly) return { pluralOnly, gender };
+  return gender === 'm'
+    ? { pluralOnly, gender, plural, ...counterpart }
+    : { pluralOnly, gender, plural };
 }

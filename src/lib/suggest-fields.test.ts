@@ -12,6 +12,7 @@ const dagInputs: CardInputs = {
 };
 
 const masculine: NounInputs = {
+  pluralOnly: false,
   gender: 'm',
   plural: '',
   feminine: '',
@@ -82,6 +83,7 @@ describe('suggestFields', () => {
           definitions: ['cat'],
           partOfSpeech: 'noun',
           noun: {
+            pluralOnly: false,
             gender: 'm',
             plural: 'חֲתוּלִים',
             feminine: 'חֲתוּלָה',
@@ -98,13 +100,34 @@ describe('suggestFields', () => {
       ['mf', 'דג טוב'],
     ] as const)('of gender %s', (gender, productionAnswer) => {
       test(`answers ${productionAnswer} and labels its plural pl`, () => {
-        expect(suggestFields(nounInputs({ gender, plural: 'דָּגִים' }))).toEqual({
+        expect(suggestFields(nounInputs({ pluralOnly: false, gender, plural: 'דָּגִים' }))).toEqual({
           unpointed: 'דג',
           pointed: 'דָּג',
           definitions: 'fish',
           productionAnswer,
           gender,
           forms: 'pl: דָּגִים',
+        });
+      });
+    });
+
+    describe('that is only plural', () => {
+      test('answers in the plural and has no forms', () => {
+        expect(
+          suggestFields({
+            word: 'מים',
+            pointed: 'מַיִם',
+            definitions: ['water'],
+            partOfSpeech: 'noun',
+            noun: { pluralOnly: true, gender: 'm' },
+          }),
+        ).toEqual({
+          unpointed: 'מים',
+          pointed: 'מַיִם',
+          definitions: 'water',
+          productionAnswer: 'מים טובים',
+          gender: 'm',
+          forms: '',
         });
       });
     });
@@ -157,6 +180,7 @@ describe('suggestFields', () => {
           definitions: ['fish & chips'],
           pointed: 'דָּג',
           noun: {
+            pluralOnly: false,
             gender: 'm',
             plural: ' <b> ',
             feminine: ' דָּגָה ',

@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import type { CardInputsDraft, Gender } from '#lib/card-inputs.ts';
+import Checkbox from './ui/Checkbox.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 
@@ -15,7 +16,7 @@ let {
   children,
 }: {
   noun: CardInputsDraft['noun'];
-  // The pointed singular, which leads the forms so every pointed form copied from a dictionary
+  // The pointed word, which leads the forms so every pointed form copied from a dictionary
   // sits in one row.
   children: Snippet;
 } = $props();
@@ -24,9 +25,11 @@ let {
 <fieldset class="space-y-4">
   <legend class="sr-only">Noun</legend>
   <ChoiceChips legend="Gender" name="gender" options={GENDERS} bind:value={noun.gender} />
+  <!-- A noun like מים has no singular, so it agrees in the plural and has no forms to copy. -->
+  <Checkbox label="Only plural, like מים" bind:checked={noun.pluralOnly} />
   <div class="forms-row">
     {@render children()}
-    {#if noun.gender !== undefined}
+    {#if noun.gender !== undefined && !noun.pluralOnly}
       <TextInput
         label={noun.gender === 'm' ? 'Masculine plural, with niqqud' : 'Plural, with niqqud'}
         lang="he"
@@ -34,8 +37,8 @@ let {
         bind:value={noun.plural}
       />
     {/if}
-    <!-- Only a masculine noun has a feminine counterpart, so only it asks for one. -->
-    {#if noun.gender === 'm'}
+    <!-- Only a masculine noun can have a feminine counterpart, so only it asks for one. -->
+    {#if noun.gender === 'm' && !noun.pluralOnly}
       <TextInput
         label="Feminine singular, with niqqud"
         lang="he"

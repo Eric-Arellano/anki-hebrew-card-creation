@@ -165,9 +165,10 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
 
 - **`Hebrew`** is what I typed. It is never derived from `Pointed`: `דִּבֵּר` strips to `דבר`, but the
   word is spelled `דיבר`.
-- **`Pointed`** is the pointed singular only.
+- **`Pointed`** is the pointed singular only, or the plural for a noun that has no singular.
 - **`Production answer`** is plain unpointed text with normal spaces: no HTML, no `&nbsp;`.
-  - Nouns use `{word} {tov}`, with `טוב` for m and mf and `טובה` for f.
+  - Nouns use `{word} {tov}`, with `טוב` for m and mf and `טובה` for f. A noun that is only
+    plural, like `מים`, takes `טובים` or `טובות`.
   - Verbs use `{word} {preposition}`, trimmed when there is no preposition: `לדבר עם`, `לדבר`.
     A verb that takes את has none: `לראות`, never `לראות את`. The preposition appears nowhere
     else on the note; `Hebrew` and `Pointed` stay the bare infinitive.
@@ -217,10 +218,11 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   - **The grammar,** which the lookups fill in: the part of speech (`noun`, `verb` or `other`),
     unchosen rather than defaulted, then the Hebrew word with niqqud. A noun adds `NounInputs`:
     gender chips, required and unchosen to start, and then one row of pointed forms led by the
-    word with niqqud, so every form copied from a dictionary sits together. Every noun has a
-    plural, labelled "Masculine plural" for a masculine one. Only a masculine noun has a feminine
-    counterpart, so only it asks for the feminine and feminine plural. No input has a
-    placeholder;
+    word with niqqud, so every form copied from a dictionary sits together. Under the gender
+    chips, an "Only plural, like מים" checkbox (`ui/Checkbox`), off to start, marks a noun with
+    no singular; it asks for no forms. Any other noun asks for its plural, labelled "Masculine plural" for a
+    masculine one. Only a masculine noun can have a feminine counterpart, so only it asks for
+    the feminine and feminine plural, both optional. No input has a placeholder;
   - **The free-text fields,** once a part of speech is chosen, since that alone decides which
     are shown: a textarea per field worth editing for it (`NoteFields`), by the groups in
     `src/lib/note-type.ts`, each group in the note type's live field order, or `FIELD_NAMES`'
@@ -241,12 +243,14 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   `Pointed`, and `Definitions` from the meanings I typed: one alone as it is, several as
   `1. friend<br>2. companion`. That is my own wording, unlike the dictionary's glosses, which
   wait on the prefill decision below. For `other`, the production answer is
-  the word itself, and so is a verb's until verbs add the preposition. A noun's is `{word} טוב`
-  or `{word} טובה` by gender, and its inputs write `Gender` and `Forms`. I fill a variant
+  the word itself, and so is a verb's until verbs add the preposition. A noun's is `{word}` and
+  the טוב that agrees with its gender and, for a plural-only noun, its number; its inputs write
+  `Gender` and `Forms`. I fill a variant
   myself, copying a feminine from the forms row; *Rejected: a "Use feminine as Variant 1"
   checkbox, because it guessed the English prompt (`female dog`) from the first meaning.*
   - `CardInputs` is a union on the part of speech, so a noun can't reach composition without a
-    gender, and `NounInputs` is a union on gender, so a feminine noun can't carry a counterpart.
+    gender, and `NounInputs` is a union on being plural-only and on gender, so a plural-only
+    noun can't carry forms and a feminine noun can't carry a counterpart.
     The draft keeps every input, under its own part of speech's key (`noun`), while another part
     of speech or gender is chosen, so switching back loses nothing; `completeInputs` drops what
     the choice doesn't use. Verbs add a sibling key the same way.

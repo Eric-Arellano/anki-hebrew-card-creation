@@ -41,6 +41,7 @@ let draft: CardInputsDraft = $state({
   partOfSpeech: undefined,
   noun: {
     gender: undefined,
+    pluralOnly: false,
     plural: '',
     feminine: '',
     femininePlural: '',

@@ -32,7 +32,7 @@ function definitionsHtml(definitions: Definitions): string {
 
 function suggestNounFields(word: string, noun: NounInputs): FieldValues {
   return {
-    productionAnswer: `${word} ${productionTov(noun.gender)}`,
+    productionAnswer: `${word} ${productionTov(noun)}`,
     gender: noun.gender,
     forms: nounFormsHtml(noun),
   };
@@ -49,6 +49,7 @@ function nounFormsHtml(noun: NounInputs): string {
 }
 
 function nounFormLines(noun: NounInputs): [label: string, form: string][] {
+  if (noun.pluralOnly) return [];
   if (noun.gender !== 'm' || (noun.feminine.trim() === '' && noun.femininePlural.trim() === '')) {
     return [['pl', noun.plural]];
   }

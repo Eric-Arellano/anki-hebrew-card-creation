@@ -364,12 +364,34 @@ describe('CardEditor', () => {
       });
     });
 
+    describe('that is only plural', () => {
+      test('asks for no forms, and answers in the plural', async () => {
+        const requests = await renderConnectedEditor();
+        await fillInputs({ word: 'מים', pointed: 'מַיִם', gloss: 'water' });
+        await chooseNoun('Masculine');
+        await typeInto(input('Masculine plural, with niqqud'), 'מַיִם');
+        await fireEvent.click(screen.getByRole('checkbox', { name: /Only plural/ }));
+        expect(screen.queryByLabelText(/plural, with niqqud/i)).toBeNull();
+
+        expect(await handOff(requests)).toEqual({
+          fields: {
+            ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+            Hebrew: 'מים',
+            Pointed: 'מַיִם',
+            Definitions: 'water',
+            'Production answer': 'מים טובים',
+            Gender: 'm',
+          },
+        });
+      });
+    });
+
     describe('while its gender is unchosen', () => {
       test('asks for no forms and says the gender is needed', async () => {
         await renderConnectedEditor();
         await fillInputs({ word: 'כלב', pointed: 'כֶּלֶב', gloss: 'dog' });
         await choosePartOfSpeech('Noun');
-        expect(screen.queryByLabelText(/plural/)).toBeNull();
+        expect(screen.queryByLabelText(/plural, with niqqud/i)).toBeNull();
         expect(screen.getByText('Still needed: gender')).toBeTruthy();
       });
     });

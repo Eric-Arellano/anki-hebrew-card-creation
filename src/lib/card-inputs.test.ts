@@ -3,6 +3,7 @@ import { type CardInputsDraft, completeInputs, missingInputs } from './card-inpu
 
 const noun: CardInputsDraft['noun'] = {
   gender: undefined,
+  pluralOnly: false,
   plural: 'כְּלָבִים',
   feminine: 'כַּלְבָּה',
   femininePlural: 'כְּלָבוֹת',
@@ -86,7 +87,25 @@ describe('completeInputs', () => {
         partOfSpeech: 'noun',
         definitions: ['fish'],
         pointed: 'דָּג',
-        noun: { gender: 'f', plural: 'כְּלָבִים' },
+        noun: { pluralOnly: false, gender: 'f', plural: 'כְּלָבִים' },
+      });
+    });
+  });
+
+  describe('for a noun that is only plural', () => {
+    test('drops every form', () => {
+      expect(
+        completeInputs({
+          ...dagDraft,
+          partOfSpeech: 'noun',
+          noun: { ...noun, gender: 'm', pluralOnly: true },
+        }),
+      ).toEqual({
+        word: 'דג',
+        partOfSpeech: 'noun',
+        definitions: ['fish'],
+        pointed: 'דָּג',
+        noun: { pluralOnly: true, gender: 'm' },
       });
     });
   });
