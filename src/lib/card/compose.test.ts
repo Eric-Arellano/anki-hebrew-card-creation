@@ -66,7 +66,7 @@ describe('composeFields', () => {
           pointed: 'לְדַבֵּר',
           definitions: ['to speak'],
           partOfSpeech: 'verb',
-          verb: { binyan: "pi'el", root: 'ד.ב.ר', preposition: 'עם' },
+          verb: { binyan: "pi'el", root: 'ד־ב־ר', preposition: 'עם' },
         }),
       ).toEqual({
         unpointed: 'לדבר',
@@ -86,22 +86,9 @@ describe('composeFields', () => {
             pointed: 'לִרְאוֹת',
             definitions: ['to see'],
             partOfSpeech: 'verb',
-            verb: { binyan: "pa'al", root: 'ראה', preposition: undefined },
+            verb: { binyan: "pa'al", root: 'ר־א־ה', preposition: undefined },
           }).productionAnswer,
         ).toBe('לראות');
-      });
-    });
-
-    describe('with no binyan and a root that is not only letters', () => {
-      test('leaves both blank', () => {
-        const fields = composeFields({
-          word: 'לדבר',
-          pointed: 'לְדַבֵּר',
-          definitions: ['to speak'],
-          partOfSpeech: 'verb',
-          verb: { binyan: undefined, root: 'דִּבֵּר', preposition: undefined },
-        });
-        expect([fields.binyan, fields.root]).toEqual(['', '']);
       });
     });
   });

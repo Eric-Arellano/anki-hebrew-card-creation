@@ -46,7 +46,13 @@ export function emptyDraft(): CardInputsDraft {
   };
 }
 
-type RequiredInput = keyof WordInputs | 'definitions' | 'partOfSpeech' | 'gender' | 'preposition';
+type RequiredInput =
+  | keyof WordInputs
+  | 'definitions'
+  | 'partOfSpeech'
+  | 'gender'
+  | 'binyan'
+  | 'root';
 
 /** How the editor's messages name each required input, in the order the editor shows them. */
 export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
@@ -54,8 +60,9 @@ export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
   definitions: 'English meaning',
   partOfSpeech: 'part of speech',
   gender: 'gender',
-  preposition: 'preposition',
   pointed: 'Hebrew word with niqqud',
+  binyan: 'binyan',
+  root: 'root',
 };
 
 function filledDefinitions(definitions: readonly string[]): string[] {
@@ -74,10 +81,10 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
     ...ifBlank('word', draft.word),
     ...ifBlank('definitions', filledDefinitions(draft.definitions)[0]),
     ...ifBlank('partOfSpeech', draft.partOfSpeech),
-    // The part of speech's own inputs sit between its chips and the pointed word.
+    // A noun's gender sits before the pointed word, and a verb's binyan and root after it.
     ...(draft.partOfSpeech === 'noun' ? missingNounInputs(draft.noun) : []),
-    ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb) : []),
     ...ifBlank('pointed', draft.pointed),
+    ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb) : []),
   ];
 }
 

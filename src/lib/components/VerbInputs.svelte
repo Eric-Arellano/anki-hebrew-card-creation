@@ -6,9 +6,10 @@ import { formatRoot } from '#lib/hebrew/root.ts';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 
-// None comes first: most verbs take a direct object, which needs no preposition.
+// Most verbs take a direct object with את, or no object at all, and neither puts a preposition in
+// the answer, so this comes first and starts chosen.
 const PREPOSITION_OPTIONS: readonly { value: Preposition | 'none'; label: string }[] = [
-  { value: 'none', label: 'None' },
+  { value: 'none', label: 'את or none' },
   ...PREPOSITIONS.map((value) => ({ value, label: value })),
 ];
 
@@ -23,7 +24,7 @@ let {
 
 const formattedRoot = $derived(formatRoot(verb.root));
 
-// The blank option stays choosable, so an unknown binyan is left blank, not guessed.
+// The blank option is there only to start unchosen, so the editor never guesses the binyan.
 function setBinyan(value: Binyan | '') {
   verb.binyan = value === '' ? undefined : value;
 }
@@ -40,20 +41,20 @@ function setBinyan(value: Binyan | '') {
   <div class="forms-row">
     {@render children()}
     <label class="grid gap-1">
-      <span>Binyan</span>
-      <select class="text-2xl" bind:value={() => verb.binyan ?? '', setBinyan}>
+      <span class="required-mark">Binyan</span>
+      <select class="text-2xl" required bind:value={() => verb.binyan ?? '', setBinyan}>
         <option value=""></option>
         {#each BINYANIM as binyan (binyan)}
           <option value={binyan}>{binyan}</option>
         {/each}
       </select>
     </label>
-    <TextInput label="Root, like דבר or ד.ב.ר" lang="he" required={false} bind:value={verb.root} />
+    <TextInput label="Root, like דבר or ד.ב.ר" lang="he" bind:value={verb.root} />
   </div>
   {#if verb.root.trim() !== ''}
     <p class="hint" aria-live="polite">
       {#if formattedRoot === undefined}
-        The root is left blank until it is only Hebrew letters, without niqqud.
+        Type only the root's Hebrew letters, without niqqud.
       {:else}
         Writes the root as <bdi lang="he">{formattedRoot}</bdi>.
       {/if}

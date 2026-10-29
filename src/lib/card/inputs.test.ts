@@ -11,7 +11,7 @@ const noun: NounDraft = {
   femininePlural: 'כְּלָבוֹת',
 };
 
-const verb: VerbDraft = { binyan: "pi'el", root: 'דבר', preposition: undefined };
+const verb: VerbDraft = { binyan: "pi'el", root: 'ד.ב.ר', preposition: 'עם' };
 
 const dagDraft: CardInputsDraft = {
   word: 'דג',
@@ -63,17 +63,18 @@ describe('missingInputs', () => {
   });
 
   describe('for a verb', () => {
-    test('requires a preposition, or none, before the pointed word', () => {
-      expect(missingInputs({ ...ledaberDraft, pointed: '' })).toEqual(['preposition', 'pointed']);
-    });
-
-    test('requires neither binyan nor root', () => {
+    test('requires a binyan and root, after the pointed word as the editor shows them', () => {
       expect(
         missingInputs({
           ...ledaberDraft,
+          pointed: '',
           verb: { binyan: undefined, root: '', preposition: 'none' },
         }),
-      ).toEqual([]);
+      ).toEqual(['pointed', 'binyan', 'root']);
+    });
+
+    test('counts a root that is not only letters as missing', () => {
+      expect(missingInputs({ ...ledaberDraft, verb: { ...verb, root: 'דִּבֵּר' } })).toEqual(['root']);
     });
   });
 });
@@ -146,13 +147,13 @@ describe('completeInputs', () => {
   });
 
   describe('for a verb', () => {
-    test('returns its preposition, binyan and root', () => {
-      expect(completeInputs({ ...ledaberDraft, verb: { ...verb, preposition: 'עם' } })).toEqual({
+    test('returns its preposition, binyan and root, joined with maqafs', () => {
+      expect(completeInputs(ledaberDraft)).toEqual({
         word: 'לדבר',
         partOfSpeech: 'verb',
         definitions: ['to speak'],
         pointed: 'לְדַבֵּר',
-        verb: { binyan: "pi'el", root: 'דבר', preposition: 'עם' },
+        verb: { binyan: "pi'el", root: 'ד־ב־ר', preposition: 'עם' },
       });
     });
   });
@@ -165,9 +166,11 @@ describe('completeInputs', () => {
     });
   });
 
-  describe('for a verb while its preposition is unchosen', () => {
+  describe('for a verb while its binyan is unchosen', () => {
     test('returns nothing', () => {
-      expect(completeInputs(ledaberDraft)).toBeUndefined();
+      expect(
+        completeInputs({ ...ledaberDraft, verb: { ...verb, binyan: undefined } }),
+      ).toBeUndefined();
     });
   });
 

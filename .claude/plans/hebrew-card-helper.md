@@ -52,9 +52,9 @@ the code that implements it, not up front. `BINYANIM` is in `src/lib/hebrew/biny
   dictionary's verb lemma is the past 3ms, so prefill has to find the infinitive (§ Dictionary).
 - **A verb's inputs are a binyan, a root and a preposition** (`VerbDraft` in `card/verb.ts`), and
   they write `Binyan`, `Root` and the production answer, so those fields are never shown. The
-  root is kept as typed and `formatRoot` (`src/lib/hebrew/root.ts`) joins it with maqafs at
-  composition, so prefill can write a category's `ח־ב־ר` straight in. The preposition starts
-  unchosen and must be picked, "None" included, because it is part of the typed answer.
+  binyan and root are required; the preposition starts as "את or none". The root is kept as typed
+  and `formatRoot` (`src/lib/hebrew/root.ts`) joins it with maqafs, so prefill can write a
+  category's `ח־ב־ר` straight in.
 - **Open:** what a verb's `Forms` holds. It stays hidden for verbs until the dictionary
   inspection decides it.
 
