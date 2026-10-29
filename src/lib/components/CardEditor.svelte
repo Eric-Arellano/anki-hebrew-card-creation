@@ -1,9 +1,9 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { textareaToAnkiFieldHtml } from '#lib/anki/html.ts';
-import { ankiStatusProblem } from '#lib/anki/status.ts';
+import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
 import { errorMessage, getJson } from '#lib/api-client.ts';
 import { composeFields } from '#lib/card/compose.ts';
+import { handOffFields } from '#lib/card/hand-off.ts';
 import {
   type CardInputsDraft,
   completeInputs,
@@ -12,12 +12,10 @@ import {
   missingInputs,
 } from '#lib/card/inputs.ts';
 import {
-  FIELD_NAMES,
   type FieldValues,
   PARTS_OF_SPEECH,
   type PartOfSpeech,
   shownFieldGroups,
-  toAnkiFields,
 } from '#lib/note-type.ts';
 import type { AnkiStatus } from '#lib/server/deck.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
@@ -50,23 +48,12 @@ let edits: FieldValues = $state({});
 // the part of speech.
 const inputs = $derived(completeInputs(draft));
 const composed = $derived(inputs === undefined ? {} : composeFields(inputs));
-const shownGroups = $derived.by(() => {
-  if (draft.partOfSpeech === undefined) return [];
-  const liveFieldNames =
-    status?.kind === 'connected' && status.noteType.found
-      ? status.noteType.liveFieldNames
-      : FIELD_NAMES;
-  return shownFieldGroups(liveFieldNames, draft.partOfSpeech);
-});
-// A hidden field gets only what composition gives it, so an edit made under another part of speech, such as
-// a binyan typed before switching to noun, never reaches Anki.
-const ankiFields = $derived.by(() => {
-  const shown = new Set(shownGroups.flatMap((group) => group.fields));
-  return toAnkiFields((field) => {
-    const edit = shown.has(field) ? edits[field] : undefined;
-    return edit === undefined ? composed[field] : textareaToAnkiFieldHtml(edit);
-  });
-});
+const shownGroups = $derived(
+  draft.partOfSpeech === undefined ? [] : shownFieldGroups(fieldOrder(status), draft.partOfSpeech),
+);
+const ankiFields = $derived(
+  handOffFields({ composed, edits, shownFields: shownGroups.flatMap((group) => group.fields) }),
+);
 const ankiProblem = $derived(status && ankiStatusProblem(status));
 const missingInputsMessage = $derived.by(() => {
   const missing = missingInputs(draft);

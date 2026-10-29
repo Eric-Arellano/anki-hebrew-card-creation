@@ -1,5 +1,12 @@
-import { DECK, NOTE_TYPE } from '#lib/note-type.ts';
+import { DECK, FIELD_NAMES, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiStatus } from '#lib/server/deck.ts';
+
+/** The note type's fields in Anki's order, or in `FIELD_NAMES`' order until Anki gives one. */
+export function fieldOrder(status: AnkiStatus | undefined): readonly string[] {
+  return status?.kind === 'connected' && status.noteType.found
+    ? status.noteType.liveFieldNames
+    : FIELD_NAMES;
+}
 
 /** What stops a hand-off to this Anki, or `undefined` when nothing does. */
 export function ankiStatusProblem(status: AnkiStatus): string | undefined {
