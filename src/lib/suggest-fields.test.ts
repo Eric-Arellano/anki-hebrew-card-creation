@@ -2,7 +2,12 @@ import { describe, expect, test } from 'vitest';
 import type { CardInputs } from './card-inputs.ts';
 import { suggestFields } from './suggest-fields.ts';
 
-const dagInputs: CardInputs = { word: 'דג', partOfSpeech: 'other', gloss: 'fish', pointed: 'דָּג' };
+const dagInputs: CardInputs = {
+  word: 'דג',
+  partOfSpeech: 'other',
+  definitions: ['fish'],
+  pointed: 'דָּג',
+};
 
 describe('suggestFields', () => {
   describe('for a word that is neither a noun nor a verb', () => {
@@ -27,13 +32,21 @@ describe('suggestFields', () => {
     });
   });
 
+  describe('with several meanings', () => {
+    test('numbers them, one per line', () => {
+      expect(
+        suggestFields({ ...dagInputs, definitions: ['fish', 'Pisces & co'] }).definitions,
+      ).toBe('1. fish<br>2. Pisces &amp; co');
+    });
+  });
+
   describe('when the inputs need cleaning', () => {
     test('trims them and escapes HTML', () => {
       expect(
         suggestFields({
           word: ' דג ',
           partOfSpeech: 'other',
-          gloss: ' fish & chips ',
+          definitions: ['fish & chips'],
           pointed: ' דָּג ',
         }),
       ).toEqual({
@@ -47,7 +60,9 @@ describe('suggestFields', () => {
 
   describe('when the inputs are blank', () => {
     test('suggests blank fields', () => {
-      expect(suggestFields({ word: '', partOfSpeech: 'other', gloss: '', pointed: '' })).toEqual({
+      expect(
+        suggestFields({ word: '', partOfSpeech: 'other', definitions: [''], pointed: '' }),
+      ).toEqual({
         unpointed: '',
         pointed: '',
         definitions: '',

@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
-import type { CardInputs } from '#lib/card-inputs.ts';
 import type { AnkiStatus, ExistingNotes } from '#lib/server/deck.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import CardEditor from './CardEditor.svelte';
@@ -67,7 +66,15 @@ async function choosePartOfSpeech(label: string) {
   await fireEvent.click(screen.getByRole('radio', { name: label }));
 }
 
-async function fillInputs({ word, pointed, gloss }: Omit<CardInputs, 'partOfSpeech'>) {
+async function fillInputs({
+  word,
+  pointed,
+  gloss,
+}: {
+  word: string;
+  pointed: string;
+  gloss: string;
+}) {
   await typeInto(input('Hebrew word, without niqqud'), word);
   await typeInto(input('Hebrew word, with niqqud'), pointed);
   await typeInto(input('English meaning'), gloss);
@@ -157,6 +164,42 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('two meanings', () => {
+    test('send numbered definitions, and each has its own image search', async () => {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
+      await typeInto(input('English meaning 2'), 'Pisces');
+
+      expect(
+        screen
+          .getAllByRole('link', { name: 'Images (EN)' })
+          .map((link) => link.getAttribute('href')),
+      ).toEqual([
+        'https://www.google.com/search?udm=2&q=fish',
+        'https://www.google.com/search?udm=2&q=Pisces',
+      ]);
+      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+      await screen.findByText(/Opened in Anki/);
+      expect(addRequests(requests)[0]?.body).toMatchObject({
+        fields: { Definitions: '1. fish<br>2. Pisces' },
+      });
+    });
+
+    describe('after removing the second', () => {
+      test('send the first alone', async () => {
+        await renderConnectedEditor();
+        await fillDag();
+        await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
+        await typeInto(input('English meaning 2'), 'Pisces');
+        await fireEvent.click(screen.getByRole('button', { name: 'Remove English meaning 2' }));
+        expect(screen.queryByLabelText('English meaning 2')).toBeNull();
+        expect(screen.getAllByRole('link', { name: 'Images (EN)' })).toHaveLength(1);
+      });
+    });
+  });
+
   describe('the card', () => {
     describe('while an input is blank', () => {
       test('shows no fields', async () => {
@@ -173,18 +216,17 @@ describe('CardEditor', () => {
     test('keeps the edit when the inputs change, until reset', async () => {
       await renderConnectedEditor();
       await fillDag();
-      const definitions = noteField('Definitions');
-      expect(definitions.value).toBe('fish');
+      const productionAnswer = noteField('Production answer');
+      expect(productionAnswer.value).toBe('דג');
 
-      await typeInto(definitions, 'fish (animal)');
-      await typeInto(input('English meaning'), 'a fish');
-      expect(definitions.value).toBe('fish (animal)');
+      await typeInto(productionAnswer, 'דג קטן');
+      await typeInto(input('Hebrew word, without niqqud'), 'דגים');
+      expect(productionAnswer.value).toBe('דג קטן');
 
-      await fireEvent.click(
-        screen.getByRole('button', { name: 'Reset Definitions to suggestion' }),
-      );
-      expect(definitions.value).toBe('a fish');
-      expect(screen.queryByRole('button', { name: 'Reset Definitions to suggestion' })).toBeNull();
+      const reset = { name: 'Reset Production answer to suggestion' };
+      await fireEvent.click(screen.getByRole('button', reset));
+      expect(productionAnswer.value).toBe('דגים');
+      expect(screen.queryByRole('button', reset)).toBeNull();
     });
 
     describe('when composition suggests nothing for it', () => {
@@ -209,6 +251,7 @@ describe('CardEditor', () => {
       await fillDag();
       expect(shownFieldLabels()).not.toContain('Hebrew');
       expect(shownFieldLabels()).not.toContain('Pointed');
+      expect(shownFieldLabels()).not.toContain('Definitions');
       expect(shownFieldLabels()).not.toContain('Images');
       expect(shownFieldLabels()).not.toContain('Audio');
     });
@@ -276,11 +319,12 @@ describe('CardEditor', () => {
   describe('a link that needs an input still blank', () => {
     test('is disabled and says which input to fill', async () => {
       await renderConnectedEditor();
-      await typeInto(input('Hebrew word, without niqqud'), 'דג');
       const links = screen.getByRole('navigation', { name: 'Look up' });
-      expect(within(links).queryByRole('link', { name: 'Images (EN)' })).toBeNull();
-      expect(within(links).getByText('Images (EN)').title).toBe('Type the English meaning first');
+      expect(within(links).getByText('Wiktionary').title).toBe('Type the Hebrew word first');
+      await typeInto(input('Hebrew word, without niqqud'), 'דג');
       expect(within(links).getByRole('link', { name: 'Images (HE)' })).toBeTruthy();
+      expect(screen.queryByRole('link', { name: 'Images (EN)' })).toBeNull();
+      expect(screen.getByText('Images (EN)').title).toBe('Type the meaning first');
     });
   });
 });

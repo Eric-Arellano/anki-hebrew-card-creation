@@ -18,6 +18,7 @@ import {
 import type { AnkiStatus } from '#lib/server/deck.ts';
 import { suggestFields } from '#lib/suggest-fields.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
+import DefinitionsInput from './DefinitionsInput.svelte';
 import ExistingNotesPanel from './ExistingNotesPanel.svelte';
 import HandOffBar from './HandOffBar.svelte';
 import LookupLinks from './LookupLinks.svelte';
@@ -31,7 +32,12 @@ const PARTS_OF_SPEECH: readonly { value: PartOfSpeech; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-let draft: CardInputsDraft = $state({ word: '', pointed: '', gloss: '', partOfSpeech: undefined });
+let draft: CardInputsDraft = $state({
+  word: '',
+  pointed: '',
+  definitions: [''],
+  partOfSpeech: undefined,
+});
 // `undefined` while the check is in flight.
 let status: AnkiStatus | undefined = $state.raw();
 let edits: FieldValues = $state({});
@@ -82,7 +88,7 @@ onMount(checkAnki);
 
   <section aria-labelledby="word-heading" class="space-y-4">
     <h2 id="word-heading">Word</h2>
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] items-start gap-4">
       <TextInput
         label="Hebrew word, without niqqud"
         lang="he"
@@ -95,7 +101,7 @@ onMount(checkAnki);
         placeholder="כֶּלֶב"
         bind:value={draft.pointed}
       />
-      <TextInput label="English meaning" lang="en" placeholder="dog" bind:value={draft.gloss} />
+      <DefinitionsInput word={draft.word} bind:definitions={draft.definitions} />
     </div>
     <ExistingNotesPanel word={draft.word} />
     <ChoiceChips
@@ -104,7 +110,7 @@ onMount(checkAnki);
       options={PARTS_OF_SPEECH}
       bind:value={draft.partOfSpeech}
     />
-    <LookupLinks values={draft} />
+    <LookupLinks word={draft.word} />
   </section>
 
   <section aria-labelledby="card-heading" class="space-y-4">

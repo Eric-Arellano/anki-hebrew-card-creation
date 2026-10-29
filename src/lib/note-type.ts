@@ -24,15 +24,15 @@ type Field = { name: string } & (
 
 // A field shown for no part of speech is sent to Anki as composition fills it, which is blank
 // unless it comes from an input:
-// - `Hebrew` and `Pointed` are the inputs themselves, so a second place to edit them would only
-//   let the two drift apart.
+// - `Hebrew`, `Pointed` and `Definitions` are written by the inputs, so a second place to edit
+//   them would only let the two drift apart.
 // - `Images` and `Audio` are media, which the human pastes into Anki's Add window.
 // - A verb's `Forms` is still undecided in the plan, so it stays blank rather than guessed.
 export const FIELDS = {
   unpointed: { name: 'Hebrew', shownFor: [] },
   pointed: { name: 'Pointed', shownFor: [] },
   productionAnswer: { name: 'Production answer', shownFor: EVERY_PART_OF_SPEECH, group: 'Answers' },
-  definitions: { name: 'Definitions', shownFor: EVERY_PART_OF_SPEECH, group: 'Answers' },
+  definitions: { name: 'Definitions', shownFor: [] },
   productionContext: {
     name: 'Production context',
     shownFor: EVERY_PART_OF_SPEECH,

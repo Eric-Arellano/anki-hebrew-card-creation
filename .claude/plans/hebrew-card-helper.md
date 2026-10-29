@@ -205,10 +205,12 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   separates what I tell it, what helps me research, and what goes to Anki:
   - a header with a quiet connection status and "Check again"; only a problem gets a banner;
   - **Word:** the four inputs, all required: the Hebrew word without niqqud and with it (RTL),
-    the English meaning (the `{gloss}` placeholder), and the part of speech (`noun`, `verb` or
-    `other`), which starts unchosen rather than defaulted. Beneath them sit the deck check
-    (`ExistingNotesPanel`), and a "Look up" row of link chips; a chip whose placeholder is blank
-    is disabled, with the input to fill in its tooltip;
+    the English meanings (`DefinitionsInput`), and the part of speech (`noun`, `verb` or
+    `other`), which starts unchosen rather than defaulted. The meanings are one input each, with
+    "+ Another meaning", and only the first is required. A card usually has one image per
+    meaning, so each meaning's row carries its own Images (EN) chip. Beneath the inputs sit the
+    deck check (`ExistingNotesPanel`), and a "Look up" row of the links searched by the word. A
+    chip whose input is blank is disabled, with the input to fill in its tooltip;
   - **Card:** held back until every input is filled, since each one shapes composition. Then a
     textarea per field worth editing for the part of speech (`NoteFields`), by the groups in
     `src/lib/note-type.ts`, each group in the note type's live field order, or `FIELD_NAMES`'
@@ -223,17 +225,18 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
 - **Composition** is `suggestFields(inputs)` in `src/lib/suggest-fields.ts`, a pure
   function from `CardInputs` (`src/lib/card-inputs.ts`) to `FieldValues`, keyed by `FIELDS` key
   so a typo can't name a field; Anki names appear only at the hand-off. It fills `Hebrew`,
-  `Pointed`, and `Definitions` from the gloss I typed. That is my own wording, unlike the
-  dictionary's glosses, which wait on the prefill decision below. For `other`, the production answer is
-  the word itself. For a noun or a verb it stays blank until that part of speech has its own
-  composition, rather than being guessed. New composition extends this function and `CardInputs`.
+  `Pointed`, and `Definitions` from the meanings I typed: one alone as it is, several as
+  `1. friend<br>2. companion`. That is my own wording, unlike the dictionary's glosses, which
+  wait on the prefill decision below. For `other`, the production answer is the word itself. For
+  a noun or a verb it stays blank until that part of speech has its own composition, rather than
+  being guessed. New composition extends this function and `CardInputs`.
 - **Each field has a role,** in `src/lib/note-type.ts`, which says for which parts of speech the
-  editor shows it. `Hebrew` and `Pointed` are never shown, because the inputs are those fields;
-  neither are `Images` and `Audio`, which I paste in Anki. `Gender` is for nouns, `Binyan` and
-  `Root` for verbs, and a verb's `Forms` stays hidden while it is Open. A hidden field is sent
-  with only what composition gives it, so a stale edit from another part of speech never reaches
-  Anki. A field that a new input or control writes, such as the binyan dropdown, is hidden there
-  the same way, rather than shown twice.
+  editor shows it. `Hebrew`, `Pointed` and `Definitions` are never shown, because the inputs
+  are those fields; neither are `Images` and `Audio`, which I paste in Anki. `Gender` is for
+  nouns, `Binyan` and `Root` for verbs, and a verb's `Forms` stays hidden while it is Open. A
+  hidden field is sent with only what composition gives it, so a stale edit from another part of
+  speech never reaches Anki. A field that a new input or control writes, such as the binyan
+  dropdown, is hidden there the same way, rather than shown twice.
 - **My edits stick.** `CardEditor` keeps an `edits` map holding only the fields I've typed in. A
   field shows its edit, else its suggestion, so recomposition never overwrites an edit. Where a
   non-blank suggestion differs from my edit, a `Use "…"` button deletes the edit; a field with
