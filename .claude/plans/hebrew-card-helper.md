@@ -36,7 +36,14 @@ that shape the design:
   - Forvo answers 403 to anything that isn't a browser, whether the word exists or not.
   - Pealim's search page answers 200 for any query.
 - **The repo** is MIT and will be public. It has the SvelteKit skeleton with a placeholder page,
-  CI and the agent setup, and `AGENTS.md` carries the hard rules from § Decisions.
+  CI and the agent setup, and `AGENTS.md` carries the hard rules from § Decisions. Behind the page
+  sit `config.json`, the allowlisted AnkiConnect client, the request guard and three
+  endpoints (`/api/anki/status`, `/api/anki/existing`, `/api/anki/browse`), so the editor has
+  something to talk to.
+- **SvelteKit 3** postdates most of what an agent recalls. `$lib` is gone: `#lib` is a subpath
+  import in `package.json`, imported with its `.ts` extension, and Node resolves it too, so
+  `scripts/` can use it. The `$env/*` modules are deprecated: a variable is declared in
+  `src/env.ts` and imported from `$app/env/private`.
 
 ## Decisions
 
@@ -46,8 +53,13 @@ that shape the design:
 - **The tool never creates, edits or deletes a note.** The AnkiConnect client accepts only `version`,
   `deckNames`, `modelNames`, `modelFieldNames`, `findNotes`, `notesInfo`, `guiAddCards` and
   `guiBrowse`.
-  - The allowlist is enforced by the client's types and again at runtime.
+  - The allowlist is the `results` object in `src/lib/server/anki.ts`, which also validates each
+    reply with zod. The client is a function, `anki(action, params)`, so the types refuse any
+    other action, and a runtime check refuses one from an untyped caller.
   - The payload is `{action, version: 6, params}`, plus `key` when one is configured.
+  - Every failure, from Anki being closed to a malformed reply, is an `AnkiError`, which the
+    routes answer with 502. Routes import the one live client from
+    `src/lib/server/anki-connection.ts`.
 - **The hand-off always asks first.** `guiAddCards` opens Anki's Add window, pre-filled. Calling it
   again replaces that window and discards anything I typed there, so every hand-off confirms first
   and says so.
@@ -61,16 +73,16 @@ that shape the design:
   AnkiConnect's `webCorsOriginList`. The routes also query SQLite through Node's built-in
   `node:sqlite`, so nothing needs native compilation.
 - **One language:** the pure Hebrew logic in `src/lib/hebrew/` is shared by the UI, the server and
-  the index script. Node ≥ 24 runs `.ts` scripts directly, so anything a script imports uses
-  relative `.ts` imports, not `$lib`.
+  the index script. Node ≥ 24 runs `.ts` scripts directly, so anything a script imports stays
+  clear of `$app/*`; `#lib` is fine there.
 - **Tooling:** npm, Biome, svelte-check and vitest.
 - **Approved dependencies:** `svelte`, `@sveltejs/kit`, `@sveltejs/adapter-node`,
   `@sveltejs/vite-plugin-svelte`, `vite`, `typescript`, `svelte-check`, `@biomejs/biome`,
   `vitest`, `zod`, `@testing-library/svelte` and `jsdom`. Anything else asks first. First-party
-  code is preferred when it is simple to write. Only the toolchain is installed so far; `zod`,
+  code is preferred when it is simple to write. The toolchain and `zod` are installed;
   `@testing-library/svelte` and `jsdom` arrive with the first PR that uses them.
 - **Open:** `node:sqlite` needs `@types/node` to typecheck, since `$app/tsconfig` loads only
-  SvelteKit's types. It isn't on the list, so ask before PR 7.
+  SvelteKit's types. It isn't on the list, so ask before PR 6.
 - *Considered, not done: porting foodservice-insights' `test-rigor`, `prune-comments`,
   `writing-docs` and `svelte-file-editor`. Port them once there is enough code to need them; the
   core of `writing-docs` is already in `AGENTS.md`.*
@@ -84,13 +96,12 @@ overridable, want components.*
 
 - **Binding.** The server binds `127.0.0.1` in both dev and `start`. adapter-node defaults to
   `0.0.0.0`, so the `start` script sets `HOST`.
-- **Request checks.** `hooks.server.ts` rejects any Host other than `127.0.0.1` or `localhost`,
-  which blocks DNS rebinding. It also rejects any `/api` POST that isn't JSON from the same Origin.
+- **Request checks.** `src/lib/server/request-guard.ts`, run from `hooks.server.ts`, answers 403
+  to any Host other than `127.0.0.1` or `localhost`, which blocks DNS rebinding. On every path, it
+  also refuses any method but GET and HEAD unless the body is JSON and the Origin is this server.
   Without these checks, any website I visit could open Add windows through this server.
-- **The API key.** If an AnkiConnect key is ever set, it comes from `ANKICONNECT_API_KEY` and is read
-  only under `src/lib/server/`, which SvelteKit refuses to bundle into client code. `config.json`
-  never holds a secret. Deck and note-type names are fine to publish.
-- **Ignored files.** `.env*` (except `.env.example`), `data/`, `*.sqlite` and build output are
+  `config.json`'s AnkiConnect URL must be loopback too.
+- **Ignored files.** `data/`, `*.sqlite` and build output are
   gitignored.
 - **Paths.** No absolute home path appears in code or config.
 - **Wiktionary data is CC BY-SA 4.0, not MIT.** The fixtures carry an attribution README, and the
@@ -152,7 +163,7 @@ one kind of request: a HEAD to tell me a link is a 404 before I click it.
     { "value": "hif'il", "aliases": ["hifil"] }, { "value": "huf'al", "aliases": ["hof'al", "hufal", "hofal"] },
     { "value": "hitpa'el", "aliases": ["hitpael"] }
   ],
-  "prepositions": ["ל", "ב", "על", "עם", "מ", "אל", "אחרי"],
+  "prepositions": ["ל", "ב", "על", "עם", "מ", "אל", "אחרי", "בפני", "מפני"],
   "links": [
     { "id": "wiktionary", "label": "Wiktionary", "template": "https://en.wiktionary.org/wiki/{word}#Hebrew", "check": true },
     { "id": "pealim", "label": "Pealim", "template": "https://www.pealim.com/search/?q={word}", "check": false },
@@ -160,13 +171,20 @@ one kind of request: a HEAD to tell me a link is a 404 before I click it.
     { "id": "images-en", "label": "Images (EN)", "template": "https://www.google.com/search?udm=2&q={gloss}", "check": false },
     { "id": "images-he", "label": "Images (HE)", "template": "https://www.google.com/search?udm=2&q={word}", "check": false }
   ],
-  "linkCheck": { "userAgent": "anki-hebrew-card-creation (+<repo URL>)", "minIntervalMs": 1000, "timeoutMs": 5000 },
+  "linkCheck": { "userAgent": "anki-hebrew-card-creation (+https://github.com/Eric-Arellano/anki-hebrew-card-creation)", "minIntervalMs": 1000, "timeoutMs": 5000 },
   "definitions": { "prefillFromDictionary": false },
   "dictionary": { "jsonl": "data/kaikki.org-dictionary-Hebrew.jsonl", "index": "data/hebrew.sqlite" }
 }
 ```
 
-**Open:** the preposition list is a starter, and I'll edit it.
+`src/lib/config.ts` rejects what would make composition a guess: two keys naming one field, an
+alias shared by two binyanim, a template placeholder the composer doesn't fill, or a path that
+isn't relative to the repo.
+
+**Prepositions.** The list holds the prepositions a verb can govern, ordered roughly by how often.
+את is left out on purpose: most verbs take a direct object, and those get no preposition at all.
+A verb that governs another one, `לחכות ל` or `לפחד מ`, carries it so I learn the word with it,
+and only in `Production answer`. The list is mine to edit.
 
 ### Card conventions
 
@@ -178,6 +196,8 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
 - **`Production answer`** is plain unpointed text with normal spaces: no HTML, no `&nbsp;`.
   - Nouns use `{word} {tov}`, with `טוב` for m and mf and `טובה` for f.
   - Verbs use `{word} {preposition}`, trimmed when there is no preposition: `לדבר עם`, `לדבר`.
+    A verb that takes את has none: `לראות`, never `לראות את`. The preposition appears nowhere
+    else on the note; `Hebrew` and `Pointed` stay the bare infinitive.
 - **`Gender`** is `m`, `f` or `mf`.
 - **`Forms`** is pointed, `label: form` per line, joined with `<br>`. It is `pl: דָּגִים` alone, or
   `f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת` once there is a feminine counterpart.
@@ -201,7 +221,11 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   - collapse whitespace and `&nbsp;`.
 - **Display and comparison.** Pointed strings display exactly as their source has them. Comparison
   NFC-normalizes both sides, because sources order combining marks differently.
-- **Anki field values are HTML.** They are compared after stripping tags and entities.
+- **Anki field values are HTML.** They are compared after `ankiFieldHtmlToText` in `src/lib/anki/html.ts`
+  strips tags and decodes entities. `&nbsp;` decodes to a real NBSP, which a key collapses
+  but displayed text keeps.
+- **Where it lives.** `toComparisonKey` and `isSamePointedText` are in `src/lib/hebrew/normalize.ts`. The defective
+  key isn't written yet; it joins them with the index.
 
 ### The editor
 
@@ -218,10 +242,20 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
 - **Copy chips** cover the pointed טוֹב forms and the prepositions. A click copies with a brief
   confirmation. There are no binyan chips, because the binyan dropdown writes the field itself.
 - **"Already in deck?"**
-  - It searches `"Hebrew:*word*"`, then sorts the `notesInfo` results into exact matches (equal
-    after normalization) and related ones (`בית` → `בית ספר`).
-  - Searches escape `\ " * _` and quote every term, so field names with spaces work.
+  - It searches `"note:Hebrew" "Hebrew:*key*"`, then sorts the `notesInfo` results into exact
+    matches (equal after normalization) and related ones (`בית` → `בית ספר`). In the key, a
+    space becomes `*` and a geresh or gershayim `_`, so `&nbsp;` and ASCII quotes in old notes
+    still match.
+  - Searches escape `\ " * _` and quote every term, so field names with spaces work
+    (`src/lib/anki/search.ts`).
   - A Browse button opens the matches through `guiBrowse` with `nid:…`.
+- **The endpoints the editor calls** already exist; their shapes are types in
+  `src/lib/server/deck.ts`.
+  - `GET /api/anki/status` answers `AnkiStatus`: an error message, or the version, whether the
+    deck exists, and the note type's live fields and drift.
+  - `GET /api/anki/existing?word=` answers `ExistingNotes`: `exactMatches` and `relatedMatches` lists of
+    `{noteId, unpointed, pointed}`, as text.
+  - `POST /api/anki/browse` takes `{noteIds}` and answers 204.
 - **Cmd+Enter** hands off.
 
 ### Dictionary: kaikki.org's Wiktionary extract, indexed into SQLite
@@ -287,8 +321,14 @@ point at one shared copy.
   - root and binyan conversion;
   - Anki search escaping and config validation;
   - the irregular-plural heuristic and lookup.
-- **Server tests** run AnkiConnect through a fake client and the link checker against a mocked
-  `fetch`. They also check what the hooks reject.
+- **Server tests** run AnkiConnect through `fakeAnki` in `tests/fake-anki.ts`, which answers only
+  the actions a test hands it and records every call. A route's `+server.ts` exports a `_`-prefixed
+  function that takes the client and config as arguments, and its test calls that with a fake, so
+  no test mocks a module. The link checker runs against a mocked `fetch`.
+- **Anki fixtures** in `tests/fixtures/anki/` are replies from my real AnkiConnect: `notesInfo`
+  for כלב, חתול and דג and for the `בית` notes, and the note type's field names. Tests read
+  `testConfig` from `tests/config.ts`, the config those replies were recorded under, never the
+  repo's `config.json`.
 - **Component tests** use `@testing-library/svelte` and jsdom, and cover:
   - the confirm step coming before the hand-off;
   - my edits surviving recomposition.
@@ -318,20 +358,7 @@ used. The idea, to build only once I ask:
 2. Show the file for me to confirm.
 3. Attach it through `guiAddCards`' `audio` parameter (`path`, `filename`, `fields: ["Audio"]`).
 
-## PR 1 — config and the AnkiConnect client
-
-- **`config.json`** (§ `config.json` describes the note type) and `src/lib/config.ts`.
-- **`src/lib/hebrew/normalize.ts`** (§ Hebrew text handling).
-- **`src/lib/anki/search.ts`**, which escapes and quotes search terms.
-- **`src/lib/server/anki.ts`**, the allowlisted client, with a fake for tests.
-- **`src/hooks.server.ts`** (§ Local only, and safe to publish).
-- **Endpoints:**
-  - `/api/anki/status`: version, deck, note type, and field drift.
-  - `/api/anki/existing`: exact and related matches.
-  - `/api/anki/browse`: `guiBrowse` with `nid:…`.
-- Tests for each.
-
-## PR 2 — the editor and the hand-off
+## PR 1 — the editor and the hand-off
 
 - **`src/routes/+page.svelte` and its components:**
   - the inputs, link buttons and the fields as textareas;
@@ -345,7 +372,7 @@ used. The idea, to build only once I ask:
 
 After this PR, the tool already works for words that are neither nouns nor verbs.
 
-## PR 3 — nouns
+## PR 2 — nouns
 
 - **Composition:**
   - a gender selector;
@@ -359,7 +386,7 @@ After this PR, the tool already works for words that are neither nouns nor verbs
 - **Tests:** composition against the כלב, חתול and דג notes, and agreement for `אָבוֹת`, `שָׁנִים`
   and `עֵינַיִם`.
 
-## PR 4 — verbs
+## PR 3 — verbs
 
 - A binyan dropdown.
 - A root input that accepts `דבר`, `ד.ב.ר`, `ד-ב-ר`, `ד ב ר` or `ד־ב־ר` and writes `ד־ב־ר`.
@@ -367,7 +394,7 @@ After this PR, the tool already works for words that are neither nouns nor verbs
 - The verb production answer.
 - Tests for root and binyan conversion, including the aliases.
 
-## PR 5 — link checks
+## PR 4 — link checks
 
 - **`src/lib/server/linkcheck.ts` and `/api/links/check`**, with a badge on the Wiktionary button once
   typing pauses.
@@ -377,9 +404,9 @@ After this PR, the tool already works for words that are neither nouns nor verbs
   - throttling;
   - an unknown link id.
 
-**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 6.
+**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 5.
 
-## PR 6 — inspect the dictionary
+## PR 5 — inspect the dictionary
 
 This PR needs the JSONL in `data/`.
 
@@ -397,7 +424,7 @@ This PR needs the JSONL in `data/`.
 
 No app code, and it stops for my review.
 
-## PR 7 — the index and lookup
+## PR 6 — the index and lookup
 
 - **`scripts/build-index.ts` and `npm run build-index`,** and `src/lib/server/dictionary.ts`
   (§ Dictionary).
@@ -408,7 +435,7 @@ No app code, and it stops for my review.
   - the male/haser fallback.
 - **README:** how to build the index.
 
-## PR 8 — lookup in the editor
+## PR 7 — lookup in the editor
 
 - **Lookup:** `/api/lookup` and a candidate picker.
 - **Prefill and hints:**
@@ -427,12 +454,12 @@ No app code, and it stops for my review.
 
 - **Every PR:** run `npm run lint && npm run check && npm test` and get CI green. Then run
   `git status` and read the diff for secrets, absolute home paths and anything from `data/`.
-- **PRs 2 to 5 and 8, by hand:**
+- **PRs 1 to 4 and 7, by hand:**
   - Run `npm run dev` with Anki open and drive `http://127.0.0.1:5173` (Playwright MCP works).
   - The status banner is green.
   - `כלב` finds its note as an exact match, and a nonsense word finds nothing.
   - The fields composed for כלב, חתול and דג match the real notes, field by field.
 - **The hand-off,** where `guiAddCards` opens the Add window, is tried by me. An agent tries it
   only after asking.
-- **PR 7:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
+- **PR 6:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
   the UI.

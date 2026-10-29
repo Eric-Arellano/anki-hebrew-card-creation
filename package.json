@@ -4,13 +4,18 @@
   "private": true,
   "license": "MIT",
   "type": "module",
+  "imports": {
+    "#lib": "./src/lib",
+    "#lib/*": "./src/lib/*",
+    "#tests/*": "./tests/*"
+  },
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "HOST=127.0.0.1 node --env-file-if-exists=.env build",
+    "start": "HOST=127.0.0.1 node build",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "lint": "biome ci --error-on-warnings .",
@@ -26,6 +31,7 @@
     "svelte-check": "^4.7.7",
     "typescript": "^6.0.3",
     "vite": "^8.3.4",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "zod": "^4.6.7"
   }
 }

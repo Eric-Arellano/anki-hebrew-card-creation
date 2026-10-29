@@ -1,0 +1,412 @@
+[
+  {
+    "noteId": 1752114960166,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "בית",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "(ms) בַּיִת<br>(mp)&nbsp;בָּתִּים",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "house",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<div><img alt=\"We Buy Houses In Kansas City\" src=\"paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437.jpg\"></div>",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_בית.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "",
+        "order": 8
+      },
+      "Forms": {
+        "value": "",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793066671,
+    "cards": [1752114960166, 1752114960167, 1752114960168]
+  },
+  {
+    "noteId": 1752426864218,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "בית משפט",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "בֵּית מִשְׁפָּט",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<div><img alt=\"Supreme Court of the United States building front entrance with a ...\" src=\"paste-bc38c0336cc7bbc1cb96638340e10ed882aed1ea.jpg\"></div>",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_בית_משפט.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "",
+        "order": 8
+      },
+      "Forms": {
+        "value": "",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793066671,
+    "cards": [1752426864218, 1752426864219, 1752426864220]
+  },
+  {
+    "noteId": 1752427043636,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "בית ספר",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "[ms] בֵּית סֵפֶר<br>[ps]&nbsp;בָּתֵּי סֵפֶר",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "school",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<img alt=\"School Bus House Kids: Over 1,294 Royalty-Free Licensable Stock Illustrations &amp; Drawings | Shutterstock\" src=\"city-street-school-building-yellow-260nw-2207352731.jpg\">",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_בית_ספר.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "",
+        "order": 8
+      },
+      "Forms": {
+        "value": "",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793066671,
+    "cards": [1752427043637, 1752427043638, 1752427043639]
+  },
+  {
+    "noteId": 1752428275813,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "בית חולים",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "בֵּית חוֹלִים",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<div><img alt=\"Pictures Of A Hospital - Cliparts.co\" src=\"paste-7cf8ec51b9b2f51dbef69c40afcb148bc42d6e46.png\"></div>",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_בית_חולים.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "",
+        "order": 8
+      },
+      "Forms": {
+        "value": "",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "חולים = patients",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793066671,
+    "cards": [1752428275815, 1752428275816, 1752428275817]
+  },
+  {
+    "noteId": 1752428348888,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "בית כנסת",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "בֵּית כְּנֶסֶת",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<img alt=\"Great Synagogue (Plzeň) - Wikipedia\" src=\"Synagogue_Plzen_087.JPG\">",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_בית_כנסת.mp3]",
+        "order": 7
+      },
+      "Gender": {
+        "value": "",
+        "order": 8
+      },
+      "Forms": {
+        "value": "",
+        "order": 9
+      },
+      "Binyan": {
+        "value": "",
+        "order": 10
+      },
+      "Root": {
+        "value": "",
+        "order": 11
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 15
+      },
+      "Examples": {
+        "value": "",
+        "order": 16
+      },
+      "Notes": {
+        "value": "",
+        "order": 17
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793066671,
+    "cards": [1752428348888, 1752428348889, 1752428348890]
+  }
+]

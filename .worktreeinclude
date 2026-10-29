@@ -1,4 +1,0 @@
-# Selects which gitignored files are copied into new worktrees.
-
-.env
-.claude/settings.local.json

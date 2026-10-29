@@ -30,8 +30,6 @@ npm run build
 npm start        # http://127.0.0.1:3000
 ```
 
-If you have set an API key in AnkiConnect, copy `.env.example` to `.env` and fill it in.
-
 The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can open Add
 windows in your Anki.
 
