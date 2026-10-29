@@ -12,7 +12,7 @@ describe('missingInputs', () => {
   test('lists the blank inputs in the order the editor shows them', () => {
     expect(
       missingInputs({ ...dagDraft, pointed: ' ', definitions: [''], partOfSpeech: undefined }),
-    ).toEqual(['pointed', 'definitions', 'partOfSpeech']);
+    ).toEqual(['definitions', 'partOfSpeech', 'pointed']);
   });
 
   describe('when every input is filled', () => {

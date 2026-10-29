@@ -18,13 +18,13 @@ type RequiredInput = keyof WordInputs | 'definitions' | 'partOfSpeech';
 
 /** How the editor's messages name each required input, in the order the editor shows them. */
 export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
-  word: 'Hebrew word',
-  pointed: 'niqqud',
+  word: 'Hebrew word without niqqud',
   definitions: 'English meaning',
   partOfSpeech: 'part of speech',
+  pointed: 'Hebrew word with niqqud',
 };
 
-const INPUT_ORDER: readonly RequiredInput[] = ['word', 'pointed', 'definitions', 'partOfSpeech'];
+const INPUT_ORDER: readonly RequiredInput[] = ['word', 'definitions', 'partOfSpeech', 'pointed'];
 
 function inputValue(draft: CardInputsDraft, key: RequiredInput): string | undefined {
   switch (key) {

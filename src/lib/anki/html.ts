@@ -30,3 +30,8 @@ export function ankiFieldHtmlToText(html: string): string {
 export function textToAnkiFieldHtml(text: string): string {
   return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
+
+/** A textarea's value as Anki field HTML: the human may type HTML, and a new line is a `<br>`. */
+export function textareaToAnkiFieldHtml(value: string): string {
+  return value.replace(/\r?\n/g, '<br>');
+}

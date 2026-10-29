@@ -1,53 +1,82 @@
 <script lang="ts">
-import { type FieldKey, type FieldValues, FIELDS, type ShownFieldGroup } from '#lib/note-type.ts';
+import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
+import { buildLinkUrl, LINKS } from '#lib/links.ts';
+import {
+  type FieldKey,
+  type FieldValues,
+  fieldDisplay,
+  GROUP_HELP,
+  quotedParts,
+  type ShownFieldGroup,
+} from '#lib/note-type.ts';
+import LinkChip from './ui/LinkChip.svelte';
+
+// The meanings' own image search, here searched with a variant's English prompt.
+const imagesLink = LINKS.find((link) => link.id === 'images-en');
 
 let {
   groups,
-  suggestions,
   edits,
   onedit,
-  onreset,
 }: {
   groups: ShownFieldGroup[];
-  suggestions: FieldValues;
-  // Only the fields the human has edited, which no suggestion overwrites.
   edits: FieldValues;
   onedit: (field: FieldKey, value: string) => void;
-  onreset: (field: FieldKey) => void;
 } = $props();
 </script>
 
 {#each groups as { group, fields } (group)}
-  <div class="grid gap-x-6 gap-y-2 border-t border-gray-100 pt-4 md:grid-cols-[7rem_1fr]">
+  {@const groupHelp = GROUP_HELP[group]}
+  <div class="grid gap-x-6 gap-y-2 border-t border-gray-100 pt-4 md:grid-cols-[10rem_1fr]">
     <h3 class="text-gray-600">{group}</h3>
-    <!-- Two columns pair a variant's prompt with its answer. -->
-    <div class="grid gap-4 sm:grid-cols-2">
+    <!-- Two columns pair a variant's prompt with its answer. Each field spans three rows of this
+         grid, for its label, help and textarea, so help of different lengths still lines up a
+         pair's textareas. -->
+    <div class="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+      {#if groupHelp !== undefined}
+        <p class="hint mb-3 sm:col-span-2">{groupHelp}</p>
+      {/if}
       {#each fields as field (field)}
-        {@const fieldName = FIELDS[field].name}
-        {@const edit = edits[field]}
-        {@const suggestion = suggestions[field] ?? ''}
-        <div class="grid content-start gap-1">
-          <label for="field-{field}">{fieldName}</label>
-          <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is raw Anki HTML. -->
+        {@const { label, help, searchesImages } = fieldDisplay(field)}
+        <div class="mb-3 grid gap-1 sm:row-span-3 sm:grid-rows-subgrid">
+          <div class="flex items-end justify-between gap-2">
+            <label for="field-{field}">{label}</label>
+            {#if searchesImages && imagesLink !== undefined}
+              <LinkChip
+                label={imagesLink.label}
+                url={buildLinkUrl(imagesLink, {
+                  word: '',
+                  gloss: ankiFieldHtmlToText(edits[field] ?? ''),
+                })}
+                blankInput="prompt"
+              />
+            {/if}
+          </div>
+          {#if help !== undefined}
+            <!-- An example stays on one line, and `<bdi>` keeps a Hebrew one from reordering the
+                 English around it. `ltr`, as Anki shows these fields, so “כרטיס רכבת (train
+                 ticket)” keeps its English on the right. -->
+            <p id="help-{field}" class="hint">
+              {#each quotedParts(help) as part, index (index)}
+                {#if part.quoted}
+                  <span class="whitespace-nowrap">“<bdi dir="ltr">{part.text}</bdi>”</span>
+                {:else}
+                  {part.text}
+                {/if}
+              {/each}
+            </p>
+          {/if}
+          <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML, except
+               that a new line becomes `<br>` at the hand-off. -->
           <textarea
             id="field-{field}"
             dir="auto"
             rows="2"
-            class="font-hebrew text-xl"
-            value={edit ?? suggestion}
+            class="font-hebrew text-xl sm:row-start-3"
+            aria-describedby={help && `help-${field}`}
+            value={edits[field] ?? ''}
             oninput={(event) => onedit(field, event.currentTarget.value)}
           ></textarea>
-          <!-- Only where there is a suggestion to go back to: clearing a field needs no button. -->
-          {#if edit !== undefined && suggestion !== '' && edit !== suggestion}
-            <button
-              type="button"
-              class="justify-self-start text-sm"
-              aria-label="Reset {fieldName} to suggestion"
-              onclick={() => onreset(field)}
-            >
-              Use “{suggestion}”
-            </button>
-          {/if}
         </div>
       {/each}
     </div>

@@ -11,15 +11,36 @@ export type PartOfSpeech = 'noun' | 'verb' | 'other';
 const EVERY_PART_OF_SPEECH: readonly PartOfSpeech[] = ['noun', 'verb', 'other'];
 
 // The editor shows fields by what they are for, in this order, rather than in Anki's flat order.
-export const FIELD_GROUPS = ['Answers', 'Context', 'Grammar', 'Variants', 'Extras'] as const;
+export const FIELD_GROUPS = [
+  'Answer',
+  'Grammar',
+  'Disambiguation hints',
+  'Unusual variants',
+  'Extras',
+] as const;
 
 type FieldGroup = (typeof FIELD_GROUPS)[number];
 
-// `shownFor` is the parts of speech for which the editor shows the field as a textarea, and a
-// shown field needs a group to appear in.
+// Help for a whole group, where help on each field would repeat itself.
+export const GROUP_HELP: Partial<Record<FieldGroup, string>> = {
+  'Unusual variants':
+    "Use these for a form of the word that's hard to remember, like an irregular plural or a " +
+    "feminine form. You'll be quizzed on each one separately.",
+};
+
+// `shownFor` is the parts of speech for which the editor shows the field as a textarea. A shown
+// field needs a group to appear in, and a `label`, because Anki's names are terse. It may carry
+// `help` saying when to fill it and what to write, and `searchesImages` for a field whose text
+// is worth an image search.
 type Field = { name: string } & (
   | { shownFor: readonly [] }
-  | { shownFor: readonly PartOfSpeech[]; group: FieldGroup }
+  | {
+      shownFor: readonly PartOfSpeech[];
+      group: FieldGroup;
+      label: string;
+      help?: string;
+      searchesImages?: true;
+    }
 );
 
 // A field shown for no part of speech is sent to Anki as composition fills it, which is blank
@@ -27,30 +48,129 @@ type Field = { name: string } & (
 // - `Hebrew`, `Pointed` and `Definitions` are written by the inputs, so a second place to edit
 //   them would only let the two drift apart.
 // - `Images` and `Audio` are media, which the human pastes into Anki's Add window.
+// - `Production answer` is composed entirely for `other`, so the human can't drift from the form
+//   the Production card checks the typed answer against.
 // - A verb's `Forms` is still undecided in the plan, so it stays blank rather than guessed.
+//
+// The help speaks of what the human sees when studying, never of Anki's card names: the
+// Production context shows beside the English, the Reading context under the Hebrew. Neither may
+// give the answer away. An example goes in “curly quotes”, which `quotedParts` finds.
 export const FIELDS = {
   unpointed: { name: 'Hebrew', shownFor: [] },
   pointed: { name: 'Pointed', shownFor: [] },
-  productionAnswer: { name: 'Production answer', shownFor: EVERY_PART_OF_SPEECH, group: 'Answers' },
+  productionAnswer: {
+    name: 'Production answer',
+    shownFor: ['noun', 'verb'],
+    group: 'Answer',
+    label: 'Hebrew answer you type',
+    help:
+      "What you'll type when shown the English, without niqqud. A noun takes טוב or טובה by its " +
+      'gender, as in “כלב טוב”, and a verb the preposition it takes, as in “לדבר עם”.',
+  },
   definitions: { name: 'Definitions', shownFor: [] },
   productionContext: {
     name: 'Production context',
     shownFor: EVERY_PART_OF_SPEECH,
-    group: 'Context',
+    group: 'Disambiguation hints',
+    label: 'Hint for recalling the Hebrew from its English meaning',
+    help:
+      'Use this if more than one Hebrew word could mean the English. Say which one you want, ' +
+      'without giving it away. For example, “to ask” could be לשאול or לבקש, so for לשאול write ' +
+      '“a question, not a favor”.',
   },
-  readingContext: { name: 'Reading context', shownFor: EVERY_PART_OF_SPEECH, group: 'Context' },
+  readingContext: {
+    name: 'Reading context',
+    shownFor: EVERY_PART_OF_SPEECH,
+    group: 'Disambiguation hints',
+    label: 'Hint for reading the Hebrew without niqqud',
+    help:
+      'Use this if the Hebrew without niqqud could be read as more than one word. Write a short ' +
+      'Hebrew phrase that shows which one, without translating it. For example, ספר could be ' +
+      '“book”, “barber” or “he counted”, so for “book” write “קראתי ספר”.',
+  },
   images: { name: 'Images', shownFor: [] },
   audio: { name: 'Audio', shownFor: [] },
-  gender: { name: 'Gender', shownFor: ['noun'], group: 'Grammar' },
-  forms: { name: 'Forms', shownFor: ['noun', 'other'], group: 'Grammar' },
-  binyan: { name: 'Binyan', shownFor: ['verb'], group: 'Grammar' },
-  root: { name: 'Root', shownFor: ['verb'], group: 'Grammar' },
-  variant1Prompt: { name: 'Variant 1 prompt', shownFor: EVERY_PART_OF_SPEECH, group: 'Variants' },
-  variant1Answer: { name: 'Variant 1 answer', shownFor: EVERY_PART_OF_SPEECH, group: 'Variants' },
-  variant2Prompt: { name: 'Variant 2 prompt', shownFor: EVERY_PART_OF_SPEECH, group: 'Variants' },
-  variant2Answer: { name: 'Variant 2 answer', shownFor: EVERY_PART_OF_SPEECH, group: 'Variants' },
-  examples: { name: 'Examples', shownFor: EVERY_PART_OF_SPEECH, group: 'Extras' },
-  notes: { name: 'Notes', shownFor: EVERY_PART_OF_SPEECH, group: 'Extras' },
+  gender: {
+    name: 'Gender',
+    shownFor: ['noun'],
+    group: 'Grammar',
+    label: 'Gender',
+    help: '“m”, “f”, or “mf” for a noun that is both.',
+  },
+  forms: {
+    name: 'Forms',
+    shownFor: ['noun', 'other'],
+    group: 'Grammar',
+    label: 'Other forms',
+    help:
+      "The word's other forms, one per line, each with a short label first. For example, for the " +
+      'adjective גָּדוֹל: “f: גְּדוֹלָה”, then “m.pl: גְּדוֹלִים” on the next line.',
+  },
+  binyan: {
+    name: 'Binyan',
+    shownFor: ['verb'],
+    group: 'Grammar',
+    label: 'Binyan',
+    help: "The verb's pattern, spelled pa'al, nif'al, pi'el, pu'al, hif'il, huf'al or hitpa'el.",
+  },
+  root: {
+    name: 'Root',
+    shownFor: ['verb'],
+    group: 'Grammar',
+    label: 'Root',
+    help: 'The root letters, joined by maqafs (־). For example, “ד־ב־ר” for לְדַבֵּר.',
+  },
+  variant1Prompt: {
+    name: 'Variant 1 prompt',
+    shownFor: EVERY_PART_OF_SPEECH,
+    group: 'Unusual variants',
+    label: 'Variant 1: English prompt',
+    help:
+      "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
+      '“female dog” for כלב. Find an image with Images (EN), then paste it into this field in Anki.',
+    searchesImages: true,
+  },
+  variant1Answer: {
+    name: 'Variant 1 answer',
+    shownFor: EVERY_PART_OF_SPEECH,
+    group: 'Unusual variants',
+    label: 'Variant 1: Hebrew answer, with niqqud',
+    help:
+      'The Hebrew you should recall. For example, “שֻׁלְחָנוֹת טוֹבִים” for “good tables”. For a ' +
+      'feminine, copy it from the forms above.',
+  },
+  // Variant 1's help sits right above, so Variant 2 needs none.
+  variant2Prompt: {
+    name: 'Variant 2 prompt',
+    shownFor: EVERY_PART_OF_SPEECH,
+    group: 'Unusual variants',
+    label: 'Variant 2: English prompt',
+    searchesImages: true,
+  },
+  variant2Answer: {
+    name: 'Variant 2 answer',
+    shownFor: EVERY_PART_OF_SPEECH,
+    group: 'Unusual variants',
+    label: 'Variant 2: Hebrew answer, with niqqud',
+  },
+  examples: {
+    name: 'Examples',
+    shownFor: EVERY_PART_OF_SPEECH,
+    group: 'Extras',
+    label: 'Examples',
+    help:
+      'Phrases or sentences that use the word, each with its English. For example, ' +
+      '“כרטיס רכבת (train ticket)” or “הרכבת מאחרת (the train is late)” for רכבת.',
+  },
+  notes: {
+    name: 'Notes',
+    shownFor: EVERY_PART_OF_SPEECH,
+    group: 'Extras',
+    label: 'Notes',
+    help:
+      'Anything else worth remembering about the word. For example, ' +
+      '“homophone with קרה (to happen)” for קרא.',
+  },
 } as const satisfies Record<string, Field>;
 
 export type FieldKey = keyof typeof FIELDS;
@@ -87,4 +207,25 @@ export function shownFieldGroups(
     group,
     fields: shown.filter(([, fieldGroup]) => fieldGroup === group).map(([key]) => key),
   })).filter(({ fields }) => fields.length > 0);
+}
+
+/** How the editor shows a field: its name, what it says about when to fill it, and any search. */
+export function fieldDisplay(key: FieldKey): {
+  label: string;
+  help?: string;
+  searchesImages?: true;
+} {
+  const field: Field = FIELDS[key];
+  if (!('group' in field)) return { label: field.name };
+  return { label: field.label, help: field.help, searchesImages: field.searchesImages };
+}
+
+export type TextPart = { text: string; quoted: boolean };
+
+/** `text` split around its “quoted” examples, without the quote marks. */
+export function quotedParts(text: string): TextPart[] {
+  return text
+    .split(/“([^”]*)”/)
+    .map((part, index) => ({ text: part, quoted: index % 2 === 1 }))
+    .filter((part) => part.quoted || part.text !== '');
 }
