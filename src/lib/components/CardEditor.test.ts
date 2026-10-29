@@ -65,6 +65,11 @@ async function choosePartOfSpeech(label: string) {
   await fireEvent.click(screen.getByRole('radio', { name: label }));
 }
 
+async function chooseNoun(gender: string) {
+  await choosePartOfSpeech('Noun');
+  await fireEvent.click(screen.getByRole('radio', { name: gender }));
+}
+
 async function fillInputs({
   word,
   pointed,
@@ -291,17 +296,143 @@ describe('CardEditor', () => {
     });
 
     describe('when a field is hidden after being edited', () => {
-      test('sends it blank', async () => {
+      test('sends its suggestion instead', async () => {
+        const requests = await renderConnectedEditor();
+        await fillDag();
+        await typeInto(noteField('Other forms'), 'f: דָּגָה');
+        await chooseNoun('Masculine');
+        await typeInto(input('Masculine plural, with niqqud'), 'דָּגִים');
+
+        await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+        await screen.findByText(/Opened in Anki/);
+        expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Forms: 'pl: דָּגִים' } });
+      });
+
+      test('sends it blank when it has no suggestion', async () => {
         const requests = await renderConnectedEditor();
         await fillDag();
         await choosePartOfSpeech('Verb');
         await typeInto(noteField('Binyan'), "pi'el");
-        await choosePartOfSpeech('Noun');
+        await chooseNoun('Masculine');
 
         await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
         await screen.findByText(/Opened in Anki/);
         expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Binyan: '' } });
+      });
+    });
+  });
+
+  describe('a noun', () => {
+    async function handOff(requests: ServerRequest[]) {
+      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+      await screen.findByText(/Opened in Anki/);
+      return addRequests(requests)[0]?.body;
+    }
+
+    test('sends its production answer, gender and forms', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'כלב', pointed: 'כֶּלֶב', gloss: 'dog' });
+      await chooseNoun('Masculine');
+      await typeInto(input('Masculine plural, with niqqud'), 'כְּלָבִים');
+      await typeInto(input('Feminine singular, with niqqud'), 'כַּלְבָּה');
+      await typeInto(input('Feminine plural, with niqqud'), 'כְּלָבוֹת');
+
+      expect(await handOff(requests)).toEqual({
+        fields: {
+          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+          Hebrew: 'כלב',
+          Pointed: 'כֶּלֶב',
+          Definitions: 'dog',
+          'Production answer': 'כלב טוב',
+          Gender: 'm',
+          Forms: 'f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת',
+        },
+      });
+    });
+
+    test('requires only the pointed word of its forms', async () => {
+      await renderConnectedEditor();
+      await chooseNoun('Masculine');
+      expect(
+        [
+          'Hebrew word, with niqqud',
+          'Masculine plural, with niqqud',
+          'Feminine singular, with niqqud',
+          'Feminine plural, with niqqud',
+        ].map((label) => input(label).required),
+      ).toEqual([true, false, false, false]);
+    });
+
+    describe('of feminine gender', () => {
+      test('asks only for its plural, and sends no counterpart typed under masculine', async () => {
+        const requests = await renderConnectedEditor();
+        await fillInputs({ word: 'שנה', pointed: 'שָׁנָה', gloss: 'year' });
+        await chooseNoun('Masculine');
+        await typeInto(input('Feminine singular, with niqqud'), 'שָׁנָה');
+        await chooseNoun('Feminine');
+        expect(screen.queryByLabelText('Feminine singular, with niqqud')).toBeNull();
+        await typeInto(input('Plural, with niqqud'), 'שָׁנִים');
+
+        expect(await handOff(requests)).toEqual({
+          fields: {
+            ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+            Hebrew: 'שנה',
+            Pointed: 'שָׁנָה',
+            Definitions: 'year',
+            'Production answer': 'שנה טובה',
+            Gender: 'f',
+            Forms: 'pl: שָׁנִים',
+          },
+        });
+      });
+    });
+
+    describe('that is only plural', () => {
+      test('asks for no forms, and answers in the plural', async () => {
+        const requests = await renderConnectedEditor();
+        await fillInputs({ word: 'מים', pointed: 'מַיִם', gloss: 'water' });
+        await chooseNoun('Masculine');
+        await typeInto(input('Masculine plural, with niqqud'), 'מַיִם');
+        await fireEvent.click(screen.getByRole('checkbox', { name: /Only plural/ }));
+        expect(screen.queryByLabelText(/plural, with niqqud/i)).toBeNull();
+
+        expect(await handOff(requests)).toEqual({
+          fields: {
+            ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+            Hebrew: 'מים',
+            Pointed: 'מַיִם',
+            Definitions: 'water',
+            'Production answer': 'מים טובים',
+            Gender: 'm',
+          },
+        });
+      });
+    });
+
+    describe('while its gender is unchosen', () => {
+      test('asks for no forms and says the gender is needed', async () => {
+        await renderConnectedEditor();
+        await fillInputs({ word: 'כלב', pointed: 'כֶּלֶב', gloss: 'dog' });
+        await choosePartOfSpeech('Noun');
+        expect(screen.queryByLabelText(/plural, with niqqud/i)).toBeNull();
+        expect(screen.getByText('Still needed: gender')).toBeTruthy();
+      });
+    });
+
+    describe('after switching away and back', () => {
+      test('keeps its inputs', async () => {
+        await renderConnectedEditor();
+        await chooseNoun('Feminine');
+        await typeInto(input('Plural, with niqqud'), 'שָׁנִים');
+        await choosePartOfSpeech('Other');
+        await choosePartOfSpeech('Noun');
+        expect((input('Plural, with niqqud') as HTMLInputElement).value).toBe('שָׁנִים');
+        expect((screen.getByRole('radio', { name: 'Feminine' }) as HTMLInputElement).checked).toBe(
+          true,
+        );
       });
     });
   });

@@ -24,6 +24,7 @@ import ExistingNotesPanel from './ExistingNotesPanel.svelte';
 import HandOffBar from './HandOffBar.svelte';
 import LookupLinks from './LookupLinks.svelte';
 import NoteFields from './NoteFields.svelte';
+import NounInputs from './NounInputs.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 
@@ -38,6 +39,13 @@ let draft: CardInputsDraft = $state({
   pointed: '',
   definitions: [''],
   partOfSpeech: undefined,
+  noun: {
+    gender: undefined,
+    pluralOnly: false,
+    plural: '',
+    feminine: '',
+    femininePlural: '',
+  },
 });
 // `undefined` while the check is in flight.
 let status: AnkiStatus | undefined = $state.raw();
@@ -90,7 +98,7 @@ onMount(checkAnki);
   </header>
 
   <!-- The word and its meanings come first, because they are all the lookups need, and the
-       lookups are where the niqqud below comes from. -->
+       lookups are where the niqqud, gender and forms below come from. -->
   <section aria-label="Word" class="space-y-4">
     <div class="grid items-start gap-4 sm:grid-cols-2">
       <TextInput label="Hebrew word, without niqqud" lang="he" bind:value={draft.word} />
@@ -107,9 +115,14 @@ onMount(checkAnki);
       options={PARTS_OF_SPEECH}
       bind:value={draft.partOfSpeech}
     />
-    <div class="forms-row">
+    {#snippet pointedInput()}
       <TextInput label="Hebrew word, with niqqud" lang="he" bind:value={draft.pointed} />
-    </div>
+    {/snippet}
+    {#if draft.partOfSpeech === 'noun'}
+      <NounInputs bind:noun={draft.noun}> {@render pointedInput()} </NounInputs>
+    {:else}
+      <div class="forms-row">{@render pointedInput()}</div>
+    {/if}
   </section>
 
   <NoteFields

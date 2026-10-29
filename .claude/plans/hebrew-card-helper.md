@@ -39,7 +39,7 @@ that shape the design:
   hard rules from § Decisions. Behind the editor (§ The editor) sit `src/lib/note-type.ts`, the
   allowlisted AnkiConnect client, the request guard and four endpoints (`/api/anki/status`,
   `/api/anki/existing`, `/api/anki/browse`, `/api/anki/add`). The editor already works end to end
-  for words that are neither nouns nor verbs; nouns and verbs wait on their own composition.
+  for nouns and for words that are neither nouns nor verbs; verbs wait on their own composition.
 - **SvelteKit 3** postdates most of what an agent recalls. `$lib` is gone: `#lib` is a subpath
   import in `package.json`, imported with its `.ts` extension, and Node resolves it too, so
   `scripts/` can use it. The `$env/*` modules are deprecated: a variable is declared in
@@ -84,7 +84,7 @@ that shape the design:
   `vitest`, `zod`, `@testing-library/svelte` and `jsdom`. Anything else asks first. First-party
   code is preferred when it is simple to write. All of them are installed.
 - **Open:** `node:sqlite` needs `@types/node` to typecheck, since `$app/tsconfig` loads only
-  SvelteKit's types. It isn't on the list, so ask before PR 5.
+  SvelteKit's types. It isn't on the list, so ask before PR 4.
 - *Considered, not done: porting foodservice-insights' `test-rigor`, `prune-comments`,
   `writing-docs` and `svelte-file-editor`. Port them once there is enough code to need them; the
   core of `writing-docs` is already in `AGENTS.md`.*
@@ -135,9 +135,11 @@ one kind of request: a HEAD to tell me a link is a 404 before I click it.
 
 - **Code, not config.** The tool is built for one deck and one note type, so their names, each
   field's Anki name and the parts of speech it is shown for live in `src/lib/note-type.ts`.
-  Every later format (טוֹב forms, gender values, forms labels, the root separator, binyan
-  aliases, prepositions, link-check settings, dictionary paths) lands as a typed constant in the
-  module that implements it, not up front. Link templates live in `src/lib/links.ts`.
+  Every other format lands as a typed constant in the module that implements it, not up front:
+  the gender values are `Gender` in `src/lib/card-inputs.ts`, the production טוב is in
+  `src/lib/hebrew/tov.ts`, and the forms labels are in `src/lib/suggest-fields.ts`. The root
+  separator, binyan aliases, prepositions, link-check settings and dictionary paths follow the
+  same rule. Link templates live in `src/lib/links.ts`.
   *Rejected: a `config.json` validated with zod, because it split each field across JSON and TS
   and needed a schema to recover what types give for free.*
 - **Drift check.** On load, the server compares `FIELD_NAMES` with the live `modelFieldNames`.
@@ -163,9 +165,10 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
 
 - **`Hebrew`** is what I typed. It is never derived from `Pointed`: `דִּבֵּר` strips to `דבר`, but the
   word is spelled `דיבר`.
-- **`Pointed`** is the pointed singular only.
+- **`Pointed`** is the pointed singular only, or the plural for a noun that has no singular.
 - **`Production answer`** is plain unpointed text with normal spaces: no HTML, no `&nbsp;`.
-  - Nouns use `{word} {tov}`, with `טוב` for m and mf and `טובה` for f.
+  - Nouns use `{word} {tov}`, with `טוב` for m and mf and `טובה` for f. A noun that is only
+    plural, like `מים`, takes `טובים` or `טובות`.
   - Verbs use `{word} {preposition}`, trimmed when there is no preposition: `לדבר עם`, `לדבר`.
     A verb that takes את has none: `לראות`, never `לראות את`. The preposition appears nowhere
     else on the note; `Hebrew` and `Pointed` stay the bare infinitive.
@@ -178,7 +181,8 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   - `Binyan` is a transliteration: pa'al, nif'al, pi'el, pu'al, hif'il, huf'al, hitpa'el.
   - `Root` is joined with maqafs: `ד־ב־ר`.
 - **Adjective agreement follows grammatical gender, not the plural suffix:** `אָבוֹת טוֹבִים`,
-  `שָׁנִים טוֹבוֹת`, `עֵינַיִם טוֹבוֹת`.
+  `שָׁנִים טוֹבוֹת`, `עֵינַיִם טוֹבוֹת`. Only the irregular-plural variant (§ Dictionary) needs a
+  pointed plural טוֹב; `src/lib/hebrew/tov.ts` holds just the production טוב until then.
 - **Open:** what a verb's `Forms` holds. It stays blank until it is decided, after the dictionary
   inspection.
 
@@ -212,8 +216,13 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
     "Look up" row of the links searched by the word. A chip whose input is blank is disabled,
     with the input to fill in its tooltip;
   - **The grammar,** which the lookups fill in: the part of speech (`noun`, `verb` or `other`),
-    unchosen rather than defaulted, then the Hebrew word with niqqud. No input has a
-    placeholder;
+    unchosen rather than defaulted, then the Hebrew word with niqqud. A noun adds `NounInputs`:
+    gender chips, required and unchosen to start, and then one row of pointed forms led by the
+    word with niqqud, so every form copied from a dictionary sits together. Under the gender
+    chips, an "Only plural, like מים" checkbox (`ui/Checkbox`), off to start, marks a noun with
+    no singular; it asks for no forms. Any other noun asks for its plural, labelled "Masculine plural" for a
+    masculine one. Only a masculine noun can have a feminine counterpart, so only it asks for
+    the feminine and feminine plural, both optional. No input has a placeholder;
   - **The free-text fields,** once a part of speech is chosen, since that alone decides which
     are shown: a textarea per field worth editing for it (`NoteFields`), by the groups in
     `src/lib/note-type.ts`, each group in the note type's live field order, or `FIELD_NAMES`'
@@ -221,9 +230,9 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
     above its textarea saying when to fill it and what to write, with an example. Both live in
     `src/lib/note-type.ts`. The help speaks of what I see when studying, never of Anki's card
     names. A variant's prompt carries an Images (EN) chip searched with it, since its card
-    usually gets an image. No shown field gets a suggestion, so none offers a reset;
+    usually gets an image. No shown field gets a suggestion yet, so none offers a reset;
   - the hand-off bar (`HandOffBar`), which names the inputs still needed.
-  Composition controls for nouns and verbs, and the copy chips, are still to come.
+  The verb's inputs are still to come.
 - **Display.** Hebrew is `dir="rtl" lang="he"`, and field textareas are `dir="auto"`, all in the
   `font-hebrew` stack from `src/routes/layout.css`, which renders niqqud clearly at a large size.
   Styling is Tailwind utilities, with the shared base styles in that file. Textareas hold Anki
@@ -233,21 +242,34 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   so a typo can't name a field; Anki names appear only at the hand-off. It fills `Hebrew`,
   `Pointed`, and `Definitions` from the meanings I typed: one alone as it is, several as
   `1. friend<br>2. companion`. That is my own wording, unlike the dictionary's glosses, which
-  wait on the prefill decision below. For `other`, the production answer is the word itself. For
-  a noun or a verb it stays blank, and shown for me to type, until that part of speech has its
-  own composition, rather than being guessed. New composition extends this function and `CardInputs`.
+  wait on the prefill decision below. For `other`, the production answer is
+  the word itself, and so is a verb's until verbs add the preposition. A noun's is `{word}` and
+  the טוב that agrees with its gender and, for a plural-only noun, its number; its inputs write
+  `Gender` and `Forms`. I fill a variant
+  myself, copying a feminine from the forms row; *Rejected: a "Use feminine as Variant 1"
+  checkbox, because it guessed the English prompt (`female dog`) from the first meaning.*
+  - `CardInputs` is a union on the part of speech, so a noun can't reach composition without a
+    gender, and `NounInputs` is a union on being plural-only and on gender, so a plural-only
+    noun can't carry forms and a feminine noun can't carry a counterpart.
+    The draft keeps every input, under its own part of speech's key (`noun`), while another part
+    of speech or gender is chosen, so switching back loses nothing; `completeInputs` drops what
+    the choice doesn't use. Verbs add a sibling key the same way.
 - **Each field has a role,** in `src/lib/note-type.ts`, which says for which parts of speech the
-  editor shows it. `Hebrew`, `Pointed` and `Definitions` are never shown, because the inputs
-  are those fields; neither are `Images` and `Audio`, which I paste in Anki. `Gender` is for
-  nouns, `Binyan` and `Root` for verbs, and a verb's `Forms` stays hidden while it is Open.
-  `Production answer` is shown only where composition leaves it blank. A hidden field is sent with only what composition gives it, so a stale edit from another part of
-  speech never reaches Anki. A field that a new input or control writes, such as the binyan
-  dropdown, is hidden there the same way, rather than shown twice.
+  editor shows it. `Hebrew`, `Pointed` and `Definitions` are never shown, because the inputs are
+  those fields;
+  neither are `Images` and `Audio`, which I paste in Anki. A hidden field is sent with only what
+  composition gives it, so a stale edit from another part of speech never reaches Anki. A field
+  that an input writes entirely is hidden for that part of speech rather than shown twice: a
+  noun's `Gender` and `Forms`, and soon a verb's `Binyan` and `Root`. A verb's `Forms` stays
+  hidden while it is Open.
+- **The production answer is never editable.** The Production card checks what I type against
+  it, so composition writes it for every part of speech, it is never shown, and nobody gets fancy
+  with it.
 - **My edits stick.** `CardEditor` keeps an `edits` map holding only the fields I've typed in. A
   shown field sends its edit, else its suggestion, so recomposition never overwrites an edit.
   *Rejected: a `Use "…"` button to go back to a suggestion, because no shown field has one.*
-- **Copy chips** cover the pointed טוֹב forms and the prepositions. A click copies with a brief
-  confirmation. There are no binyan chips, because the binyan dropdown writes the field itself.
+- *Rejected: copy chips for the טוֹב forms and the prepositions, because each only ever lands in
+  the production answer, which composition writes.*
 - **The deck check**
   - Once typing pauses, it searches `"note:Hebrew" "Hebrew:*key*"`, then sorts the `notesInfo`
     results into exact matches (equal after normalization) and related ones (`בית` → `בית ספר`).
@@ -300,10 +322,11 @@ What I've seen in it, all to be verified before writing the parser:
 3. Every candidate is shown with its pointed headword, POS, first gloss and root. None is picked
    for me.
 
-**Prefill, after I pick:**
+**Prefill, after I pick,** fills the inputs, never the fields they compose, so the production
+answer follows from them as it does when I type:
 - `Pointed`: for verbs, the pointed infinitive.
-- `Gender`, plus root and binyan converted to my formats through the binyan aliases.
-- `Forms` and the production answer.
+- the gender chips and the pointed plural, feminine and feminine-plural inputs;
+- root and binyan, converted to my formats through the binyan aliases.
 - Glosses go in a read-only panel. **Open:** whether `Definitions` is ever prefilled
   from them, since I write my own; it starts off.
 - The deck check also searches the lemma's title, which finds old past-tense verb notes.
@@ -317,7 +340,8 @@ What I've seen in it, all to be verified before writing the parser:
 
 Both sides come from the pointed forms, stripped and made defective, so a male-spelled input
 (`שולחן` against `שֻׁלְחָנוֹת`) doesn't raise a false alarm. The hint offers "Use as Variant N": the
-pointed plural plus `טוֹבִים` or `טוֹבוֹת`.
+pointed plural plus `טוֹבִים` or `טוֹבוֹת` by gender, and both as choices for an `mf` noun. Those
+pointed forms join `src/lib/hebrew/tov.ts` with it.
 
 **Open:** every worktree needs `data/`. Either copy it through `.worktreeinclude`, or let the dictionary
 path point at one shared copy.
@@ -326,7 +350,6 @@ path point at one shared copy.
 
 - **Pure logic carries most tests:**
   - normalization and defective keys;
-  - טוֹב selection by gender and number;
   - composition, checked field by field against the three real notes;
   - root and binyan conversion;
   - Anki search escaping;
@@ -370,31 +393,17 @@ used. The idea, to build only once I ask:
 2. Show the file for me to confirm.
 3. Attach it through `guiAddCards`' `audio` parameter (`path`, `filename`, `fields: ["Audio"]`).
 
-## PR 1 — nouns
-
-- **Composition:**
-  - a gender selector;
-  - the production answer;
-  - a Forms builder with plural, feminine and feminine-plural inputs, which writes either the
-    `pl:` shape or the `f:`/`m.pl:`/`f.pl:` shape;
-  - "Use feminine as Variant 1", which fills the answer with the pointed feminine and the prompt
-    with `female {gloss}`.
-- **Copy chips** for the טוֹב forms and the prepositions.
-- **Modules:** `src/lib/hebrew/tov.ts`, plus the noun branch of `suggestFields` and the new
-  inputs on `CardInputs` in `src/lib/card-inputs.ts`. The gender selector reuses
-  `ui/ChoiceChips`, as the verb's preposition choice will.
-- **Tests:** composition against the כלב, חתול and דג notes, and agreement for `אָבוֹת`, `שָׁנִים`
-  and `עֵינַיִם`.
-
-## PR 2 — verbs
+## PR 1 — verbs
 
 - A binyan dropdown.
 - A root input that accepts `דבר`, `ד.ב.ר`, `ד-ב-ר`, `ד ב ר` or `ד־ב־ר` and writes `ד־ב־ר`.
-- Choosing a preposition.
-- The verb production answer.
+- Choosing a preposition, with `ui/ChoiceChips` as the noun's gender does.
+- The preposition in the verb's production answer, which is the bare word until then.
+- These inputs go on a `verb` branch of `CardInputs` and a `verb` key of the draft, beside
+  `noun`, and `Binyan` and `Root` are hidden for verbs once they write them.
 - Tests for root and binyan conversion, including the aliases.
 
-## PR 3 — link checks
+## PR 2 — link checks
 
 - **`src/lib/server/linkcheck.ts` and `/api/links/check`**, with a badge on the Wiktionary button once
   typing pauses.
@@ -404,9 +413,9 @@ used. The idea, to build only once I ask:
   - throttling;
   - an unknown link id.
 
-**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 4.
+**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 3.
 
-## PR 4 — inspect the dictionary
+## PR 3 — inspect the dictionary
 
 This PR needs the JSONL in `data/`.
 
@@ -424,7 +433,7 @@ This PR needs the JSONL in `data/`.
 
 No app code, and it stops for my review.
 
-## PR 5 — the index and lookup
+## PR 4 — the index and lookup
 
 - **`scripts/build-index.ts` and `npm run build-index`,** and `src/lib/server/dictionary.ts`
   (§ Dictionary).
@@ -435,7 +444,7 @@ No app code, and it stops for my review.
   - the male/haser fallback.
 - **README:** how to build the index.
 
-## PR 6 — lookup in the editor
+## PR 5 — lookup in the editor
 
 - **Lookup:** `/api/lookup` and a candidate picker.
 - **Prefill and hints:**
@@ -454,12 +463,13 @@ No app code, and it stops for my review.
 
 - **Every PR:** run `npm run lint && npm run check && npm test` and get CI green. Then run
   `git status` and read the diff for secrets, absolute home paths and anything from `data/`.
-- **PRs 1 to 3 and 6, by hand:**
+- **PRs 1, 2 and 5, by hand:**
   - Run `npm run dev` with Anki open and drive `http://127.0.0.1:5173` (Playwright MCP works).
   - The status banner is green.
   - `כלב` finds its note as an exact match, and a nonsense word finds nothing.
-  - The fields composed for כלב, חתול and דג match the real notes, field by field.
+  - The hand-off payload for the word the PR touches, captured in the browser without reaching
+    Anki, matches a real note field by field.
 - **The hand-off,** where `guiAddCards` opens the Add window, is tried by me. An agent tries it
   only after asking.
-- **PR 5:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
+- **PR 4:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
   the UI.

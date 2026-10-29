@@ -12,7 +12,6 @@ const EVERY_PART_OF_SPEECH: readonly PartOfSpeech[] = ['noun', 'verb', 'other'];
 
 // The editor shows fields by what they are for, in this order, rather than in Anki's flat order.
 export const FIELD_GROUPS = [
-  'Answer',
   'Grammar',
   'Disambiguation hints',
   'Unusual variants',
@@ -48,8 +47,9 @@ type Field = { name: string } & (
 // - `Hebrew`, `Pointed` and `Definitions` are written by the inputs, so a second place to edit
 //   them would only let the two drift apart.
 // - `Images` and `Audio` are media, which the human pastes into Anki's Add window.
-// - `Production answer` is composed entirely for `other`, so the human can't drift from the form
-//   the Production card checks the typed answer against.
+// - `Production answer` is composed entirely, so the human can't drift from the form the
+//   Production card checks the typed answer against.
+// - A noun's `Gender` and `Forms` are written entirely by its inputs.
 // - A verb's `Forms` is still undecided in the plan, so it stays blank rather than guessed.
 //
 // The help speaks of what the human sees when studying, never of Anki's card names: the
@@ -58,15 +58,7 @@ type Field = { name: string } & (
 export const FIELDS = {
   unpointed: { name: 'Hebrew', shownFor: [] },
   pointed: { name: 'Pointed', shownFor: [] },
-  productionAnswer: {
-    name: 'Production answer',
-    shownFor: ['noun', 'verb'],
-    group: 'Answer',
-    label: 'Hebrew answer you type',
-    help:
-      "What you'll type when shown the English, without niqqud. A noun takes טוב or טובה by its " +
-      'gender, as in “כלב טוב”, and a verb the preposition it takes, as in “לדבר עם”.',
-  },
+  productionAnswer: { name: 'Production answer', shownFor: [] },
   definitions: { name: 'Definitions', shownFor: [] },
   productionContext: {
     name: 'Production context',
@@ -90,16 +82,10 @@ export const FIELDS = {
   },
   images: { name: 'Images', shownFor: [] },
   audio: { name: 'Audio', shownFor: [] },
-  gender: {
-    name: 'Gender',
-    shownFor: ['noun'],
-    group: 'Grammar',
-    label: 'Gender',
-    help: '“m”, “f”, or “mf” for a noun that is both.',
-  },
+  gender: { name: 'Gender', shownFor: [] },
   forms: {
     name: 'Forms',
-    shownFor: ['noun', 'other'],
+    shownFor: ['other'],
     group: 'Grammar',
     label: 'Other forms',
     help:
