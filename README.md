@@ -39,9 +39,8 @@ windows in your Anki.
 
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
   plus the calls that open the Add and Browse windows.
-- **To Wiktionary:** a HEAD request for a word's page, so a missing page is flagged before you
-  click its link. Nothing else is fetched from any third-party site. Other links (Pealim, Forvo,
-  image search) are only opened when you click them.
+- **To third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are only
+  opened when you click them.
 
 ## The dictionary
 

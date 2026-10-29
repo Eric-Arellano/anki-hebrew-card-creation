@@ -17,9 +17,8 @@ those two facts.
   `guiAddCards` and `guiBrowse` — from code and from `curl` alike. Nothing here creates, edits or deletes a note; I click Add myself.
 - **Don't call `guiAddCards` or `guiBrowse` against my real Anki without asking.** `guiAddCards`
   replaces the open Add window and discards whatever I had typed there.
-- **Reach third-party sites only through `src/lib/server/linkcheck.ts`**, which sends HEAD
-  requests and nothing else. No other module calls `fetch` on an outside host, and no test
-  reaches the network or a real Anki.
+- **Never reach a third-party site.** No module calls `fetch` on an outside host; the tool only
+  builds links I click. No test reaches the network or a real Anki.
 - **Never download the dictionary, and never load it whole.** I put the kaikki.org JSONL in
   `data/`. It is large, so stream it with `grep`, `head` or `readline`.
 - **Follow the Hebrew text rules.** Build keys through `src/lib/hebrew/`, never by ad hoc string
