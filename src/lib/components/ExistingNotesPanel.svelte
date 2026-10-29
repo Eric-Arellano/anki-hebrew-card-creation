@@ -1,6 +1,11 @@
 <script lang="ts">
-import { errorMessage, getJson, postJson } from '#lib/api-client.ts';
-import type { ExistingNote, ExistingNotes } from '#lib/server/deck.ts';
+import {
+  browseNotes,
+  type ExistingNote,
+  type ExistingNotes,
+  errorMessage,
+  fetchExistingNotes,
+} from '#lib/api.ts';
 
 // Waits for typing to pause, so each keystroke doesn't search Anki.
 const SEARCH_DELAY_MS = 300;
@@ -16,14 +21,14 @@ async function searchAfterPause(searchedWord: string): Promise<ExistingNotes | u
   await new Promise((resolve) => setTimeout(resolve, SEARCH_DELAY_MS));
   // Typing went on, and the newer search replaces this one.
   if (searchedWord !== query) return undefined;
-  return getJson<ExistingNotes>(`/api/anki/existing?word=${encodeURIComponent(searchedWord)}`);
+  return fetchExistingNotes(searchedWord);
 }
 
 async function browse(notes: ExistingNotes) {
   browseFailure = undefined;
   const noteIds = [...notes.exactMatches, ...notes.relatedMatches].map((note) => note.noteId);
   try {
-    await postJson('/api/anki/browse', { noteIds });
+    await browseNotes(noteIds);
   } catch (error) {
     browseFailure = errorMessage(error);
   }

@@ -1,6 +1,6 @@
 <script lang="ts">
+import type { AnkiStatus } from '#lib/api.ts';
 import { DECK, NOTE_TYPE } from '#lib/note-type.ts';
-import type { AnkiStatus } from '#lib/server/deck.ts';
 
 let {
   status,

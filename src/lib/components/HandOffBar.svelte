@@ -1,5 +1,5 @@
 <script lang="ts">
-import { errorMessage, postJson } from '#lib/api-client.ts';
+import { errorMessage, openAddWindow } from '#lib/api.ts';
 
 let {
   fields,
@@ -34,7 +34,7 @@ function askToHandOff() {
 async function handOffToAnki() {
   handOff = { kind: 'opening' };
   try {
-    await postJson('/api/anki/add', { fields });
+    await openAddWindow(fields);
     handOff = { kind: 'opened' };
   } catch (error) {
     handOff = { kind: 'failed', message: errorMessage(error) };

@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest';
+import { FIELDS, type FieldKey } from '#lib/note-type.ts';
 import notes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with { type: 'json' };
-import type { CardInputs, NounInputs } from './card-inputs.ts';
-import { FIELDS, type FieldKey } from './note-type.ts';
-import { suggestFields } from './suggest-fields.ts';
+import { composeFields } from './compose.ts';
+import type { CardInputs } from './inputs.ts';
+import type { NounInputs } from './noun.ts';
 
 const dagInputs: CardInputs = {
   word: 'דג',
@@ -45,10 +46,10 @@ const NOUN_FIELDS = [
   'forms',
 ] as const;
 
-describe('suggestFields', () => {
+describe('composeFields', () => {
   describe('for a word that is neither a noun nor a verb', () => {
     test('fills the word, its pointed form, its definition and its production answer', () => {
-      expect(suggestFields(dagInputs)).toEqual({
+      expect(composeFields(dagInputs)).toEqual({
         unpointed: 'דג',
         pointed: 'דָּג',
         definitions: 'fish',
@@ -59,7 +60,7 @@ describe('suggestFields', () => {
 
   describe('for a verb', () => {
     test('answers with the word itself', () => {
-      expect(suggestFields({ ...dagInputs, partOfSpeech: 'verb' })).toEqual({
+      expect(composeFields({ ...dagInputs, partOfSpeech: 'verb' })).toEqual({
         unpointed: 'דג',
         pointed: 'דָּג',
         definitions: 'fish',
@@ -70,14 +71,14 @@ describe('suggestFields', () => {
 
   describe('for the real noun notes', () => {
     test('composes דג, which has only a plural', () => {
-      expect(suggestFields(nounInputs({ ...masculine, plural: 'דָּגִים' }))).toEqual(
+      expect(composeFields(nounInputs({ ...masculine, plural: 'דָּגִים' }))).toEqual(
         realFields('דג', NOUN_FIELDS),
       );
     });
 
     test('composes חתול, which has a feminine counterpart', () => {
       expect(
-        suggestFields({
+        composeFields({
           word: 'חתול',
           pointed: 'חָתוּל',
           definitions: ['cat'],
@@ -100,7 +101,7 @@ describe('suggestFields', () => {
       ['mf', 'דג טוב'],
     ] as const)('of gender %s', (gender, productionAnswer) => {
       test(`answers ${productionAnswer} and labels its plural pl`, () => {
-        expect(suggestFields(nounInputs({ pluralOnly: false, gender, plural: 'דָּגִים' }))).toEqual({
+        expect(composeFields(nounInputs({ pluralOnly: false, gender, plural: 'דָּגִים' }))).toEqual({
           unpointed: 'דג',
           pointed: 'דָּג',
           definitions: 'fish',
@@ -114,7 +115,7 @@ describe('suggestFields', () => {
     describe('that is only plural', () => {
       test('answers in the plural and has no forms', () => {
         expect(
-          suggestFields({
+          composeFields({
             word: 'מים',
             pointed: 'מַיִם',
             definitions: ['water'],
@@ -134,7 +135,7 @@ describe('suggestFields', () => {
 
     describe('with only a feminine plural', () => {
       test('labels the forms as a feminine counterpart', () => {
-        expect(suggestFields(nounInputs({ ...masculine, femininePlural: 'כְּלָבוֹת' })).forms).toBe(
+        expect(composeFields(nounInputs({ ...masculine, femininePlural: 'כְּלָבוֹת' })).forms).toBe(
           'f.pl: כְּלָבוֹת',
         );
       });
@@ -143,7 +144,7 @@ describe('suggestFields', () => {
     describe('with a feminine counterpart of only spaces', () => {
       test('labels its plural pl', () => {
         expect(
-          suggestFields(
+          composeFields(
             nounInputs({ ...masculine, plural: 'דָּגִים', feminine: ' ', femininePlural: ' ' }),
           ).forms,
         ).toBe('pl: דָּגִים');
@@ -152,7 +153,7 @@ describe('suggestFields', () => {
 
     describe('with no forms', () => {
       test('leaves the forms blank', () => {
-        expect(suggestFields(nounInputs(masculine)).forms).toBe('');
+        expect(composeFields(nounInputs(masculine)).forms).toBe('');
       });
     });
   });
@@ -160,7 +161,7 @@ describe('suggestFields', () => {
   describe('with several meanings', () => {
     test('numbers them, one per line', () => {
       expect(
-        suggestFields({ ...dagInputs, definitions: ['fish', 'Pisces & co'] }).definitions,
+        composeFields({ ...dagInputs, definitions: ['fish', 'Pisces & co'] }).definitions,
       ).toBe('1. fish<br>2. Pisces &amp; co');
     });
   });
@@ -168,7 +169,7 @@ describe('suggestFields', () => {
   describe('when the inputs need cleaning', () => {
     test('trims them and escapes HTML', () => {
       expect(
-        suggestFields({
+        composeFields({
           word: ' דג ',
           partOfSpeech: 'other',
           definitions: ['fish & chips'],
@@ -184,7 +185,7 @@ describe('suggestFields', () => {
 
     test('trims and escapes a noun’s forms', () => {
       expect(
-        suggestFields({
+        composeFields({
           word: 'דג',
           partOfSpeech: 'noun',
           definitions: ['fish & chips'],
@@ -204,7 +205,7 @@ describe('suggestFields', () => {
   describe('when the inputs are blank', () => {
     test('suggests blank fields', () => {
       expect(
-        suggestFields({ word: '', partOfSpeech: 'other', definitions: [''], pointed: '' }),
+        composeFields({ word: '', partOfSpeech: 'other', definitions: [''], pointed: '' }),
       ).toEqual({
         unpointed: '',
         pointed: '',

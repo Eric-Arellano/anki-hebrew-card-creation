@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import type { FieldDrift } from '#lib/server/deck.ts';
+import type { FieldDrift } from '#lib/api.ts';
+import { FIELD_NAMES } from '#lib/note-type.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { ankiStatusProblem } from './status.ts';
+import { ankiStatusProblem, fieldOrder } from './status.ts';
 
 function connectedWithDrift(drift: FieldDrift) {
   return {
@@ -70,6 +71,40 @@ describe('ankiStatusProblem', () => {
       ).toBe(
         'src/lib/note-type.ts and the Hebrew note type disagree on fields (not in note-type.ts: Comments, Tags)',
       );
+    });
+  });
+});
+
+describe('fieldOrder', () => {
+  test("follows Anki's order once Anki gives one", () => {
+    const liveFieldNames = [...fieldNames].reverse();
+    const drift = { missingFromAnki: [], unexpectedInAnki: [] };
+    expect(
+      fieldOrder({
+        kind: 'connected',
+        ankiConnectVersion: 6,
+        deckFound: true,
+        noteType: { found: true, liveFieldNames, drift },
+      }),
+    ).toEqual(liveFieldNames);
+  });
+
+  describe('while Anki is being checked', () => {
+    test("follows note-type.ts's order", () => {
+      expect(fieldOrder(undefined)).toEqual(FIELD_NAMES);
+    });
+  });
+
+  describe('when Anki has no such note type', () => {
+    test("follows note-type.ts's order", () => {
+      expect(
+        fieldOrder({
+          kind: 'connected',
+          ankiConnectVersion: 6,
+          deckFound: true,
+          noteType: { found: false },
+        }),
+      ).toEqual(FIELD_NAMES);
     });
   });
 });

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { type CardInputsDraft, completeInputs, missingInputs } from './card-inputs.ts';
+import { type CardInputsDraft, completeInputs, missingInputs } from './inputs.ts';
+import type { NounDraft } from './noun.ts';
 
-const noun: CardInputsDraft['noun'] = {
+const noun: NounDraft = {
   gender: undefined,
   pluralOnly: false,
   plural: 'כְּלָבִים',

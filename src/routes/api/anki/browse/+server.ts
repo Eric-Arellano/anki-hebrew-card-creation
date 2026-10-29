@@ -1,8 +1,8 @@
-import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { searchByNoteIds } from '#lib/anki/search.ts';
-import { type AnkiClient, AnkiError } from '#lib/server/anki.ts';
+import type { AnkiClient } from '#lib/server/anki-client.ts';
 import { anki } from '#lib/server/anki-connection.ts';
+import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/http.ts';
 import type { RequestHandler } from './$types';
 
 const browseRequestBodySchema = z.strictObject({ noteIds: z.array(z.int().positive()).min(1) });
@@ -10,13 +10,11 @@ const browseRequestBodySchema = z.strictObject({ noteIds: z.array(z.int().positi
 export const POST: RequestHandler = ({ request }) => _browseNotes(anki, request);
 
 export async function _browseNotes(anki: AnkiClient, request: Request): Promise<Response> {
-  const parsedBody = browseRequestBodySchema.safeParse(await request.json().catch(() => undefined));
-  if (!parsedBody.success) error(400, 'noteIds must be a non-empty list of note ids');
-  try {
-    await anki('guiBrowse', { query: searchByNoteIds(parsedBody.data.noteIds) });
-  } catch (cause) {
-    if (cause instanceof AnkiError) error(502, cause.message);
-    throw cause;
-  }
+  const { noteIds } = await parseJsonBody(
+    request,
+    browseRequestBodySchema,
+    'noteIds must be a non-empty list of note ids',
+  );
+  await withAnkiErrorsAs502(() => anki('guiBrowse', { query: searchByNoteIds(noteIds) }));
   return new Response(null, { status: 204 });
 }
