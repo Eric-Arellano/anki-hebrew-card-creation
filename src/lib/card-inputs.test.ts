@@ -1,11 +1,19 @@
 import { describe, expect, test } from 'vitest';
 import { type CardInputsDraft, completeInputs, missingInputs } from './card-inputs.ts';
 
+const noun: CardInputsDraft['noun'] = {
+  gender: undefined,
+  plural: 'כְּלָבִים',
+  feminine: 'כַּלְבָּה',
+  femininePlural: 'כְּלָבוֹת',
+};
+
 const dagDraft: CardInputsDraft = {
   word: 'דג',
   partOfSpeech: 'other',
   definitions: ['fish'],
   pointed: 'דָּג',
+  noun,
 };
 
 describe('missingInputs', () => {
@@ -24,6 +32,12 @@ describe('missingInputs', () => {
   describe('while every meaning is blank', () => {
     test('lists the meaning', () => {
       expect(missingInputs({ ...dagDraft, definitions: ['', ' '] })).toEqual(['definitions']);
+    });
+  });
+
+  describe('for a noun', () => {
+    test('requires a gender', () => {
+      expect(missingInputs({ ...dagDraft, partOfSpeech: 'noun' })).toEqual(['gender']);
     });
   });
 });
@@ -49,6 +63,34 @@ describe('completeInputs', () => {
     });
   });
 
+  describe('for a masculine noun', () => {
+    test('returns its feminine counterpart too', () => {
+      expect(
+        completeInputs({ ...dagDraft, partOfSpeech: 'noun', noun: { ...noun, gender: 'm' } }),
+      ).toEqual({
+        word: 'דג',
+        partOfSpeech: 'noun',
+        definitions: ['fish'],
+        pointed: 'דָּג',
+        noun: { ...noun, gender: 'm' },
+      });
+    });
+  });
+
+  describe('for a feminine noun', () => {
+    test('drops the feminine counterpart typed under masculine', () => {
+      expect(
+        completeInputs({ ...dagDraft, partOfSpeech: 'noun', noun: { ...noun, gender: 'f' } }),
+      ).toEqual({
+        word: 'דג',
+        partOfSpeech: 'noun',
+        definitions: ['fish'],
+        pointed: 'דָּג',
+        noun: { gender: 'f', plural: 'כְּלָבִים' },
+      });
+    });
+  });
+
   describe('while an input is blank', () => {
     test('returns nothing', () => {
       expect(completeInputs({ ...dagDraft, definitions: [' '] })).toBeUndefined();
@@ -58,6 +100,12 @@ describe('completeInputs', () => {
   describe('while the part of speech is unchosen', () => {
     test('returns nothing', () => {
       expect(completeInputs({ ...dagDraft, partOfSpeech: undefined })).toBeUndefined();
+    });
+  });
+
+  describe('for a noun while its gender is unchosen', () => {
+    test('returns nothing', () => {
+      expect(completeInputs({ ...dagDraft, partOfSpeech: 'noun' })).toBeUndefined();
     });
   });
 });

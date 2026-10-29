@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import type { CardInputs } from './card-inputs.ts';
+import notes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with { type: 'json' };
+import type { CardInputs, NounInputs } from './card-inputs.ts';
+import { FIELDS, type FieldKey } from './note-type.ts';
 import { suggestFields } from './suggest-fields.ts';
 
 const dagInputs: CardInputs = {
@@ -8,6 +10,39 @@ const dagInputs: CardInputs = {
   definitions: ['fish'],
   pointed: 'דָּג',
 };
+
+const masculine: NounInputs = {
+  gender: 'm',
+  plural: '',
+  feminine: '',
+  femininePlural: '',
+};
+
+function nounInputs(noun: NounInputs): CardInputs {
+  return { ...dagInputs, partOfSpeech: 'noun', noun };
+}
+
+/** A field of the real note for `word`, read through `FIELDS` so a renamed field fails here. */
+function realField(word: string, field: FieldKey): string {
+  const note = notes.find((candidate) => candidate.fields.Hebrew.value === word);
+  if (note === undefined) throw new Error(`No fixture note for ${word}`);
+  const fields: Record<string, { value: string }> = note.fields;
+  // The human typed these in Anki's editor, which keeps some spaces as `&nbsp;`.
+  return fields[FIELDS[field].name]?.value.replaceAll('&nbsp;', ' ') ?? '';
+}
+
+function realFields(word: string, fields: readonly FieldKey[]) {
+  return Object.fromEntries(fields.map((field) => [field, realField(word, field)]));
+}
+
+const NOUN_FIELDS = [
+  'unpointed',
+  'pointed',
+  'definitions',
+  'productionAnswer',
+  'gender',
+  'forms',
+] as const;
 
 describe('suggestFields', () => {
   describe('for a word that is neither a noun nor a verb', () => {
@@ -21,13 +56,70 @@ describe('suggestFields', () => {
     });
   });
 
-  describe.each(['noun', 'verb'] as const)('for a %s', (partOfSpeech) => {
-    test('leaves the production answer blank', () => {
-      expect(suggestFields({ ...dagInputs, partOfSpeech })).toEqual({
+  describe('for a verb', () => {
+    test('answers with the word itself', () => {
+      expect(suggestFields({ ...dagInputs, partOfSpeech: 'verb' })).toEqual({
         unpointed: 'דג',
         pointed: 'דָּג',
         definitions: 'fish',
-        productionAnswer: '',
+        productionAnswer: 'דג',
+      });
+    });
+  });
+
+  describe('for the real noun notes', () => {
+    test('composes דג, which has only a plural', () => {
+      expect(suggestFields(nounInputs({ ...masculine, plural: 'דָּגִים' }))).toEqual(
+        realFields('דג', NOUN_FIELDS),
+      );
+    });
+
+    test('composes חתול, which has a feminine counterpart', () => {
+      expect(
+        suggestFields({
+          word: 'חתול',
+          pointed: 'חָתוּל',
+          definitions: ['cat'],
+          partOfSpeech: 'noun',
+          noun: {
+            gender: 'm',
+            plural: 'חֲתוּלִים',
+            feminine: 'חֲתוּלָה',
+            femininePlural: 'חֲתוּלוֹת',
+          },
+        }),
+      ).toEqual(realFields('חתול', NOUN_FIELDS));
+    });
+  });
+
+  describe('for a noun', () => {
+    describe.each([
+      ['f', 'דג טובה'],
+      ['mf', 'דג טוב'],
+    ] as const)('of gender %s', (gender, productionAnswer) => {
+      test(`answers ${productionAnswer} and labels its plural pl`, () => {
+        expect(suggestFields(nounInputs({ gender, plural: 'דָּגִים' }))).toEqual({
+          unpointed: 'דג',
+          pointed: 'דָּג',
+          definitions: 'fish',
+          productionAnswer,
+          gender,
+          forms: 'pl: דָּגִים',
+        });
+      });
+    });
+
+    describe('with only a feminine plural', () => {
+      test('labels the forms as a feminine counterpart', () => {
+        expect(suggestFields(nounInputs({ ...masculine, femininePlural: 'כְּלָבוֹת' })).forms).toBe(
+          'f.pl: כְּלָבוֹת',
+        );
+      });
+    });
+
+    describe('with no forms', () => {
+      test('leaves the forms blank', () => {
+        expect(suggestFields(nounInputs(masculine)).forms).toBe('');
       });
     });
   });
@@ -55,6 +147,23 @@ describe('suggestFields', () => {
         definitions: 'fish &amp; chips',
         productionAnswer: 'דג',
       });
+    });
+
+    test('trims and escapes a noun’s forms', () => {
+      expect(
+        suggestFields({
+          word: 'דג',
+          partOfSpeech: 'noun',
+          definitions: ['fish & chips'],
+          pointed: 'דָּג',
+          noun: {
+            gender: 'm',
+            plural: ' <b> ',
+            feminine: ' דָּגָה ',
+            femininePlural: '',
+          },
+        }).forms,
+      ).toBe('f: דָּגָה<br>m.pl: &lt;b&gt;');
     });
   });
 

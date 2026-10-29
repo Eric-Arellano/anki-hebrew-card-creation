@@ -64,7 +64,8 @@
   @apply text-sm text-gray-500;
 }
 
-/* The pointed word. Four columns keep a lone input from stretching across the page. */
+/* The pointed word and its forms. Four columns hold a masculine noun's, and keep a lone input
+   from stretching across the page. */
 @utility forms-row {
   @apply grid gap-4 sm:grid-cols-2 md:grid-cols-4;
 }

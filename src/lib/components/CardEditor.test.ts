@@ -65,6 +65,11 @@ async function choosePartOfSpeech(label: string) {
   await fireEvent.click(screen.getByRole('radio', { name: label }));
 }
 
+async function chooseNoun(gender: string) {
+  await choosePartOfSpeech('Noun');
+  await fireEvent.click(screen.getByRole('radio', { name: gender }));
+}
+
 async function fillInputs({
   word,
   pointed,
@@ -296,12 +301,90 @@ describe('CardEditor', () => {
         await fillDag();
         await choosePartOfSpeech('Verb');
         await typeInto(noteField('Binyan'), "pi'el");
-        await choosePartOfSpeech('Noun');
+        await chooseNoun('Masculine');
 
         await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
         await screen.findByText(/Opened in Anki/);
         expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Binyan: '' } });
+      });
+    });
+  });
+
+  describe('a noun', () => {
+    async function handOff(requests: ServerRequest[]) {
+      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+      await screen.findByText(/Opened in Anki/);
+      return addRequests(requests)[0]?.body;
+    }
+
+    test('sends its production answer, gender and forms', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'כלב', pointed: 'כֶּלֶב', gloss: 'dog' });
+      await chooseNoun('Masculine');
+      await typeInto(input('Masculine plural, with niqqud'), 'כְּלָבִים');
+      await typeInto(input('Feminine singular, with niqqud'), 'כַּלְבָּה');
+      await typeInto(input('Feminine plural, with niqqud'), 'כְּלָבוֹת');
+
+      expect(await handOff(requests)).toEqual({
+        fields: {
+          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+          Hebrew: 'כלב',
+          Pointed: 'כֶּלֶב',
+          Definitions: 'dog',
+          'Production answer': 'כלב טוב',
+          Gender: 'm',
+          Forms: 'f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת',
+        },
+      });
+    });
+
+    describe('of feminine gender', () => {
+      test('asks only for its plural, and sends no counterpart typed under masculine', async () => {
+        const requests = await renderConnectedEditor();
+        await fillInputs({ word: 'שנה', pointed: 'שָׁנָה', gloss: 'year' });
+        await chooseNoun('Masculine');
+        await typeInto(input('Feminine singular, with niqqud'), 'שָׁנָה');
+        await chooseNoun('Feminine');
+        expect(screen.queryByLabelText('Feminine singular, with niqqud')).toBeNull();
+        await typeInto(input('Plural, with niqqud'), 'שָׁנִים');
+
+        expect(await handOff(requests)).toEqual({
+          fields: {
+            ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+            Hebrew: 'שנה',
+            Pointed: 'שָׁנָה',
+            Definitions: 'year',
+            'Production answer': 'שנה טובה',
+            Gender: 'f',
+            Forms: 'pl: שָׁנִים',
+          },
+        });
+      });
+    });
+
+    describe('while its gender is unchosen', () => {
+      test('asks for no forms and says the gender is needed', async () => {
+        await renderConnectedEditor();
+        await fillInputs({ word: 'כלב', pointed: 'כֶּלֶב', gloss: 'dog' });
+        await choosePartOfSpeech('Noun');
+        expect(screen.queryByLabelText(/plural/)).toBeNull();
+        expect(screen.getByText('Still needed: gender')).toBeTruthy();
+      });
+    });
+
+    describe('after switching away and back', () => {
+      test('keeps its inputs', async () => {
+        await renderConnectedEditor();
+        await chooseNoun('Feminine');
+        await typeInto(input('Plural, with niqqud'), 'שָׁנִים');
+        await choosePartOfSpeech('Other');
+        await choosePartOfSpeech('Noun');
+        expect((input('Plural, with niqqud') as HTMLInputElement).value).toBe('שָׁנִים');
+        expect((screen.getByRole('radio', { name: 'Feminine' }) as HTMLInputElement).checked).toBe(
+          true,
+        );
       });
     });
   });
