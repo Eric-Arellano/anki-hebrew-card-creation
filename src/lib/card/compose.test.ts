@@ -59,12 +59,49 @@ describe('composeFields', () => {
   });
 
   describe('for a verb', () => {
-    test('answers with the word itself', () => {
-      expect(composeFields({ ...dagInputs, partOfSpeech: 'verb' })).toEqual({
-        unpointed: 'דג',
-        pointed: 'דָּג',
-        definitions: 'fish',
-        productionAnswer: 'דג',
+    test('answers with its preposition, and writes its binyan and root', () => {
+      expect(
+        composeFields({
+          word: 'לדבר',
+          pointed: 'לְדַבֵּר',
+          definitions: ['to speak'],
+          partOfSpeech: 'verb',
+          verb: { binyan: "pi'el", root: 'ד.ב.ר', preposition: 'עם' },
+        }),
+      ).toEqual({
+        unpointed: 'לדבר',
+        pointed: 'לְדַבֵּר',
+        definitions: 'to speak',
+        productionAnswer: 'לדבר עם',
+        binyan: "pi'el",
+        root: 'ד־ב־ר',
+      });
+    });
+
+    describe('that takes no preposition', () => {
+      test('answers with the word alone', () => {
+        expect(
+          composeFields({
+            word: 'לראות',
+            pointed: 'לִרְאוֹת',
+            definitions: ['to see'],
+            partOfSpeech: 'verb',
+            verb: { binyan: "pa'al", root: 'ראה', preposition: undefined },
+          }).productionAnswer,
+        ).toBe('לראות');
+      });
+    });
+
+    describe('with no binyan and a root that is not only letters', () => {
+      test('leaves both blank', () => {
+        const fields = composeFields({
+          word: 'לדבר',
+          pointed: 'לְדַבֵּר',
+          definitions: ['to speak'],
+          partOfSpeech: 'verb',
+          verb: { binyan: undefined, root: 'דִּבֵּר', preposition: undefined },
+        });
+        expect([fields.binyan, fields.root]).toEqual(['', '']);
       });
     });
   });

@@ -7,8 +7,8 @@ rote: looking a word up in three places, typing טוֹבָה again, copying a pl
 the right field with the right label. This tool does the rote part and hands a pre-filled note to
 Anki's own Add window, where I finish it and click Add. The target is about 80% of cards.
 
-The editor already works end to end for nouns and for words that are neither nouns nor verbs.
-What's left is verbs and the offline dictionary. Facts that shape that work:
+The editor already works end to end for every part of speech. What's left is the offline
+dictionary, and prefilling the editor from it. Facts that shape that work:
 
 - **Only כלב, חתול and דג follow the current card conventions.** The other notes predate them, so
   the three are the sample, not the deck. Old verb notes hold the past 3ms (`דיבר`) in `Hebrew` and
@@ -36,29 +36,25 @@ Forvo answers 403 to anything that isn't a browser.*
 ### Formats are typed constants in the module that uses them
 
 The note type lives in `src/lib/note-type.ts`; each other format lands as a typed constant beside
-the code that implements it, not up front. Still to land, with their features:
+the code that implements it, not up front. `BINYANIM` is in `src/lib/hebrew/binyan.ts` and
+`PREPOSITIONS` in `src/lib/card/verb.ts`. Still to land, with their features:
 
-- **Binyanim** and the aliases that convert to them: `pa'al` (paal, qal, kal), `nif'al` (nifal),
-  `pi'el` (piel), `pu'al` (pual), `hif'il` (hifil), `huf'al` (hof'al, hufal, hofal), `hitpa'el`
-  (hitpael). No alias may name two binyanim.
-- **Prepositions** a verb can govern, roughly by frequency: ל, ב, על, עם, מ, אל, אחרי, בפני, מפני.
-  The list is mine to edit. את is left out on purpose: a verb that takes a direct object gets no
-  preposition at all.
+- **The aliases that convert to a binyan**, joining `binyan.ts` with the prefill that first needs
+  them: `pa'al` (paal, qal, kal), `nif'al` (nifal), `pi'el` (piel), `pu'al` (pual), `hif'il`
+  (hifil), `huf'al` (hof'al, hufal, hofal), `hitpa'el` (hitpael). No alias may name two binyanim.
+  The editor's binyan input is a dropdown of `BINYANIM`, so nothing typed needs them before then.
 - **The dictionary paths:** `data/kaikki.org-dictionary-Hebrew.jsonl`, indexed into
   `data/hebrew.sqlite`.
 
 ### Verb conventions
 
-- **Verbs use the infinitive everywhere:** `Hebrew` is `לדבר` and `Pointed` is `לְדַבֵּר`.
-- **`Production answer` is `{word} {preposition}`,** trimmed when there is none: `לדבר עם`,
-  `לדבר`, and `לראות`, never `לראות את`. The preposition appears nowhere else on the note.
-- **`Binyan`** is a transliteration from the list above, and **`Root`** is joined with maqafs:
-  `ד־ב־ר`.
-- **The verb's inputs follow the noun's pattern:** `src/lib/card/verb.ts` beside `card/noun.ts`,
-  holding the verb's inputs, draft, completion and composition, which `card/inputs.ts` and
-  `card/compose.ts` dispatch to. The draft keeps a `verb` key beside `noun`, so switching part of
-  speech loses nothing. A field an input writes entirely is hidden for that part of speech, so
-  `Binyan` and `Root` are hidden for verbs once they're inputs.
+- **Verbs use the infinitive everywhere:** `Hebrew` is `לדבר` and `Pointed` is `לְדַבֵּר`. The
+  dictionary's verb lemma is the past 3ms, so prefill has to find the infinitive (§ Dictionary).
+- **A verb's inputs are a binyan, a root and a preposition** (`VerbDraft` in `card/verb.ts`), and
+  they write `Binyan`, `Root` and the production answer, so those fields are never shown. The
+  root is kept as typed and `formatRoot` (`src/lib/hebrew/root.ts`) joins it with maqafs at
+  composition, so prefill can write a category's `ח־ב־ר` straight in. The preposition starts
+  unchosen and must be picked, "None" included, because it is part of the typed answer.
 - **Open:** what a verb's `Forms` holds. It stays hidden for verbs until the dictionary
   inspection decides it.
 
@@ -97,7 +93,7 @@ root, and none is picked for me.
 **Prefill, after I pick,** fills the inputs, never the fields they compose:
 - the pointed word (for verbs, the pointed infinitive);
 - the gender chips and the pointed plural, feminine and feminine-plural inputs;
-- root and binyan, converted through the aliases.
+- the root, and the binyan converted through the aliases; a binyan no alias names stays blank.
 - Glosses go in a read-only panel. **Open:** whether `Definitions` is ever prefilled from them,
   since I write my own; it starts off.
 - The deck check also searches the lemma's title, which finds old past-tense verb notes, and the
@@ -115,7 +111,7 @@ grammatical gender, not the suffix (`אָבוֹת טוֹבִים`, `שָׁנִי
 `mf` noun. Those pointed forms join `src/lib/hebrew/tov.ts`.
 
 - **Open:** `node:sqlite` needs `@types/node` to typecheck, since `$app/tsconfig` loads only
-  SvelteKit's types. Ask before PR 3.
+  SvelteKit's types. Ask before PR 2.
 - **Open:** every worktree needs `data/`. Either copy it through `.worktreeinclude`, or let the
   dictionary path point at one shared copy.
 
@@ -126,16 +122,7 @@ build only once I ask: after I click the Forvo link, watch Downloads (`os.homedi
 for a new `pronunciation_he_<word>.mp3`, show it for me to confirm, and attach it through
 `guiAddCards`' `audio` parameter.
 
-## PR 1 — verbs
-
-- A binyan dropdown, and a root input that accepts `דבר`, `ד.ב.ר`, `ד-ב-ר`, `ד ב ר` or `ד־ב־ר`
-  and writes `ד־ב־ר`.
-- A preposition choice with `ui/ChoiceChips`, and the preposition in the production answer.
-- Tests for root and binyan conversion, including the aliases.
-
-Independent of the dictionary: it can land before, after or alongside PR 2.
-
-## PR 2 — inspect the dictionary
+## PR 1 — inspect the dictionary
 
 Needs the JSONL in `data/`.
 
@@ -148,17 +135,18 @@ Needs the JSONL in `data/`.
 
 No app code, and it stops for my review.
 
-## PR 3 — the index and lookup
+## PR 2 — the index and lookup
 
 - `scripts/build-index.ts`, `npm run build-index`, and `src/lib/server/dictionary.ts`.
 - Tests on the fixtures: homographs, a plural finding its lemma, an infinitive finding its lemma,
   and the male/haser fallback.
 - README: how to build the index.
 
-## PR 4 — lookup in the editor
+## PR 3 — lookup in the editor
 
 - `/api/lookup`, with its reply type and call in `src/lib/api.ts`, and a candidate picker;
   prefill after I pick; the glosses panel.
+- The binyan aliases in `src/lib/hebrew/binyan.ts`, tested on every alias.
 - The irregular-plural hint (`src/lib/hebrew/plural.ts`), tested on flagged `עיר`/`ערים`,
   `אב`/`אבות`, `שנה`/`שנים`, `עין`/`עיניים`, `שולחן`/`שולחנות`, and unflagged `כלב`/`כלבים`,
   `דלת`/`דלתות`.
@@ -169,8 +157,8 @@ No app code, and it stops for my review.
 
 ## Verification
 
-- **PRs 1 and 4, by hand:** run `npm run dev` with Anki open and drive `http://127.0.0.1:5173`
+- **PR 3, by hand:** run `npm run dev` with Anki open and drive `http://127.0.0.1:5173`
   (Playwright MCP works). The hand-off payload for the word the PR touches, captured in the
   browser without reaching Anki, matches a real note field by field. Only I try the real
   hand-off; an agent asks first.
-- **PR 3:** `npm run build-index` on the real file, then spot-check its tests' lookups in the UI.
+- **PR 2:** `npm run build-index` on the real file, then spot-check its tests' lookups in the UI.

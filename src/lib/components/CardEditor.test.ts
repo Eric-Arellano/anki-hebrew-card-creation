@@ -290,9 +290,10 @@ describe('CardEditor', () => {
     test('follow the part of speech', async () => {
       await renderConnectedEditor();
       await fillDag();
+      expect(shownFieldIds()).toContain('field-forms');
       await choosePartOfSpeech('Verb');
-      expect(shownFieldIds()).toContain('field-binyan');
-      expect(shownFieldIds()).not.toContain('field-gender');
+      expect(shownFieldIds()).not.toContain('field-forms');
+      expect(shownFieldIds()).toContain('field-notes');
     });
 
     describe('when a field is hidden after being edited', () => {
@@ -312,14 +313,14 @@ describe('CardEditor', () => {
       test('sends it blank when composition gives it nothing', async () => {
         const requests = await renderConnectedEditor();
         await fillDag();
+        await typeInto(noteField('Other forms'), 'f: דָּגָה');
         await choosePartOfSpeech('Verb');
-        await typeInto(noteField('Binyan'), "pi'el");
-        await chooseNoun('Masculine');
+        await fireEvent.click(screen.getByRole('radio', { name: 'None' }));
 
         await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
         await screen.findByText(/Opened in Anki/);
-        expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Binyan: '' } });
+        expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Forms: '' } });
       });
     });
   });
@@ -433,6 +434,61 @@ describe('CardEditor', () => {
         expect((screen.getByRole('radio', { name: 'Feminine' }) as HTMLInputElement).checked).toBe(
           true,
         );
+      });
+    });
+  });
+
+  describe('a verb', () => {
+    async function chooseVerb(preposition: string) {
+      await choosePartOfSpeech('Verb');
+      await fireEvent.click(screen.getByRole('radio', { name: preposition }));
+    }
+
+    test('sends its production answer with its preposition, and its binyan and root', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to speak' });
+      await chooseVerb('עם');
+      await fireEvent.change(screen.getByRole('combobox', { name: 'Binyan' }), {
+        target: { value: "pi'el" },
+      });
+      await typeInto(input('Root, like דבר or ד.ב.ר'), 'ד.ב.ר');
+      expect(screen.getByText(/Writes the root as/).textContent?.trim()).toBe(
+        'Writes the root as ד־ב־ר.',
+      );
+
+      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+      await screen.findByText(/Opened in Anki/);
+      expect(addRequests(requests)[0]?.body).toEqual({
+        fields: {
+          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+          Hebrew: 'לדבר',
+          Pointed: 'לְדַבֵּר',
+          Definitions: 'to speak',
+          'Production answer': 'לדבר עם',
+          Binyan: "pi'el",
+          Root: 'ד־ב־ר',
+        },
+      });
+    });
+
+    describe('while its preposition is unchosen', () => {
+      test('says the preposition is needed', async () => {
+        await renderConnectedEditor();
+        await fillInputs({ word: 'לראות', pointed: 'לִרְאוֹת', gloss: 'to see' });
+        await choosePartOfSpeech('Verb');
+        expect(screen.getByText('Still needed: preposition')).toBeTruthy();
+        await fireEvent.click(screen.getByRole('radio', { name: 'None' }));
+        expect(screen.queryByText(/Still needed/)).toBeNull();
+      });
+    });
+
+    describe('with a root that is not only letters', () => {
+      test('says it will be left blank', async () => {
+        await renderConnectedEditor();
+        await choosePartOfSpeech('Verb');
+        await typeInto(input('Root, like דבר or ד.ב.ר'), 'דִּבֵּר');
+        expect(screen.getByText(/The root is left blank/)).toBeTruthy();
       });
     });
   });

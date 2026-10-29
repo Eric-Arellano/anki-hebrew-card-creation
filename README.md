@@ -8,9 +8,9 @@ and click Add. The tool never adds, edits or deletes a note itself.
 It is built for my own deck and note type, which `src/lib/note-type.ts` describes. To adapt it,
 edit that file.
 
-**Status:** early. The editor and the hand-off to Anki work, and a noun's gender, forms and
-production answer are filled in for you. A verb's binyan and root, and dictionary lookups, are
-still to come, so you fill those in by hand.
+**Status:** early. The editor and the hand-off to Anki work. A noun's gender and forms, a verb's
+binyan, root and preposition, and every production answer are filled in from what you choose.
+Dictionary lookups are still to come.
 
 ## Requirements
 

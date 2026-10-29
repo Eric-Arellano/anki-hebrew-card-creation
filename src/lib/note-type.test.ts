@@ -13,18 +13,14 @@ const variantsAndExtras = [
 
 describe('shownFieldGroups', () => {
   describe('for a noun', () => {
-    test('shows neither the fields its inputs write nor binyan or root', () => {
+    test('shows none of the fields its inputs write', () => {
       expect(shownFieldGroups(fieldNames, 'noun')).toEqual([context, ...variantsAndExtras]);
     });
   });
 
   describe('for a verb', () => {
-    test('shows binyan and root, but not forms', () => {
-      expect(shownFieldGroups(fieldNames, 'verb')).toEqual([
-        { group: 'Grammar', fields: ['binyan', 'root'] },
-        context,
-        ...variantsAndExtras,
-      ]);
+    test('shows none of the fields its inputs write, nor forms', () => {
+      expect(shownFieldGroups(fieldNames, 'verb')).toEqual([context, ...variantsAndExtras]);
     });
   });
 

@@ -5,6 +5,13 @@ import {
   type NounDraft,
   type NounInputs,
 } from '#lib/card/noun.ts';
+import {
+  completeVerb,
+  emptyVerbDraft,
+  missingVerbInputs,
+  type VerbDraft,
+  type VerbInputs,
+} from '#lib/card/verb.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 
 type WordInputs = { word: string; pointed: string };
@@ -14,7 +21,8 @@ export type Definitions = readonly [string, ...string[]];
 
 export type CardInputs = WordInputs & { definitions: Definitions } & (
     | { partOfSpeech: 'noun'; noun: NounInputs }
-    | { partOfSpeech: Exclude<PartOfSpeech, 'noun'> }
+    | { partOfSpeech: 'verb'; verb: VerbInputs }
+    | { partOfSpeech: 'other' }
   );
 
 // The inputs as the editor holds them while the human types: the part of speech starts unchosen,
@@ -24,6 +32,7 @@ export type CardInputsDraft = WordInputs & {
   definitions: string[];
   partOfSpeech: PartOfSpeech | undefined;
   noun: NounDraft;
+  verb: VerbDraft;
 };
 
 export function emptyDraft(): CardInputsDraft {
@@ -33,10 +42,11 @@ export function emptyDraft(): CardInputsDraft {
     definitions: [''],
     partOfSpeech: undefined,
     noun: emptyNounDraft(),
+    verb: emptyVerbDraft(),
   };
 }
 
-type RequiredInput = keyof WordInputs | 'definitions' | 'partOfSpeech' | 'gender';
+type RequiredInput = keyof WordInputs | 'definitions' | 'partOfSpeech' | 'gender' | 'preposition';
 
 /** How the editor's messages name each required input, in the order the editor shows them. */
 export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
@@ -44,6 +54,7 @@ export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
   definitions: 'English meaning',
   partOfSpeech: 'part of speech',
   gender: 'gender',
+  preposition: 'preposition',
   pointed: 'Hebrew word with niqqud',
 };
 
@@ -65,20 +76,29 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
     ...ifBlank('partOfSpeech', draft.partOfSpeech),
     // The part of speech's own inputs sit between its chips and the pointed word.
     ...(draft.partOfSpeech === 'noun' ? missingNounInputs(draft.noun) : []),
+    ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb) : []),
     ...ifBlank('pointed', draft.pointed),
   ];
 }
 
 /** `draft` as `CardInputs` once every required input is filled, else `undefined`. */
 export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
-  const { partOfSpeech, noun, definitions: definitionRows, ...word } = draft;
+  const { partOfSpeech, noun, verb, definitions: definitionRows, ...word } = draft;
   const [first, ...rest] = filledDefinitions(definitionRows);
   if (partOfSpeech === undefined || first === undefined || missingInputs(draft).length > 0) {
     return undefined;
   }
-  const definitions: Definitions = [first, ...rest];
-  if (partOfSpeech !== 'noun') return { ...word, definitions, partOfSpeech };
-  const nounInputs = completeNoun(noun);
-  if (nounInputs === undefined) return undefined;
-  return { ...word, definitions, partOfSpeech, noun: nounInputs };
+  const card = { ...word, definitions: [first, ...rest] satisfies Definitions };
+  switch (partOfSpeech) {
+    case 'noun': {
+      const nounInputs = completeNoun(noun);
+      return nounInputs && { ...card, partOfSpeech, noun: nounInputs };
+    }
+    case 'verb': {
+      const verbInputs = completeVerb(verb);
+      return verbInputs && { ...card, partOfSpeech, verb: verbInputs };
+    }
+    case 'other':
+      return { ...card, partOfSpeech };
+  }
 }

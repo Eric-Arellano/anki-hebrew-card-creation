@@ -49,7 +49,8 @@ type Field = { name: string } & (
 // - `Images` and `Audio` are media, which the human pastes into Anki's Add window.
 // - `Production answer` is composed entirely, so the human can't drift from the form the
 //   Production card checks the typed answer against.
-// - A noun's `Gender` and `Forms` are written entirely by its inputs.
+// - A noun's `Gender` and `Forms`, and a verb's `Binyan` and `Root`, are written entirely by their
+//   inputs.
 // - A verb's `Forms` is still undecided in the plan, so it stays blank rather than guessed.
 //
 // The help speaks of what the human sees when studying, never of Anki's card names: the
@@ -92,20 +93,8 @@ export const FIELDS = {
       "The word's other forms, one per line, each with a short label first. For example, for the " +
       'adjective גָּדוֹל: “f: גְּדוֹלָה”, then “m.pl: גְּדוֹלִים” on the next line.',
   },
-  binyan: {
-    name: 'Binyan',
-    shownFor: ['verb'],
-    group: 'Grammar',
-    label: 'Binyan',
-    help: "The verb's pattern, spelled pa'al, nif'al, pi'el, pu'al, hif'il, huf'al or hitpa'el.",
-  },
-  root: {
-    name: 'Root',
-    shownFor: ['verb'],
-    group: 'Grammar',
-    label: 'Root',
-    help: 'The root letters, joined by maqafs (־). For example, “ד־ב־ר” for לְדַבֵּר.',
-  },
+  binyan: { name: 'Binyan', shownFor: [] },
+  root: { name: 'Root', shownFor: [] },
   variant1Prompt: {
     name: 'Variant 1 prompt',
     shownFor: PARTS_OF_SPEECH,

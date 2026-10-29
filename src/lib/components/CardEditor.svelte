@@ -26,6 +26,7 @@ import NoteFields from './NoteFields.svelte';
 import NounInputs from './NounInputs.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
+import VerbInputs from './VerbInputs.svelte';
 
 const PART_OF_SPEECH_LABELS = {
   noun: 'Noun',
@@ -101,6 +102,8 @@ onMount(checkAnki);
     {/snippet}
     {#if draft.partOfSpeech === 'noun'}
       <NounInputs bind:noun={draft.noun}> {@render pointedInput()} </NounInputs>
+    {:else if draft.partOfSpeech === 'verb'}
+      <VerbInputs bind:verb={draft.verb}> {@render pointedInput()} </VerbInputs>
     {:else}
       <div class="forms-row">{@render pointedInput()}</div>
     {/if}
