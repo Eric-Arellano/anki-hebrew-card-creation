@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { ankiFieldHtmlToText } from './html.ts';
+import { ankiFieldHtmlToText, textToAnkiFieldHtml } from './html.ts';
 
 describe('ankiFieldHtmlToText', () => {
   test('turns line breaks into spaces and drops other tags', () => {
@@ -23,5 +23,15 @@ describe('ankiFieldHtmlToText', () => {
 
   test('trims', () => {
     expect(ankiFieldHtmlToText(' <div>דג</div> ')).toBe('דג');
+  });
+});
+
+describe('textToAnkiFieldHtml', () => {
+  test('escapes the characters HTML would read as markup', () => {
+    expect(textToAnkiFieldHtml('salt & <pepper>')).toBe('salt &amp; &lt;pepper&gt;');
+  });
+
+  test('round-trips through ankiFieldHtmlToText', () => {
+    expect(ankiFieldHtmlToText(textToAnkiFieldHtml('a &amp; <b>'))).toBe('a &amp; <b>');
   });
 });
