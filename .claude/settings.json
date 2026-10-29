@@ -43,17 +43,16 @@
     "ask": [
       "Bash(rm -rf:*)",
 
-      "Bash(npx:*)",
-      "Bash(npm exec:*)",
+      "Bash(npx *-y*)",
+      "Bash(npm exec *-y*)",
+      "Bash(*npm_config_yes*)",
 
       "Bash(npm install *)",
       "Bash(npm i *)",
       "Bash(npm add:*)",
       "Bash(npm update:*)",
       "Bash(npm up:*)",
-      "Bash(npm uninstall:*)",
-
-      "Bash(curl *:8765*)"
+      "Bash(npm uninstall:*)"
     ],
 
     "allow": [
@@ -150,7 +149,23 @@
     ]
   },
 
+  "env": {
+    "npm_config_yes": "false"
+  },
+
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/anki-guard.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
