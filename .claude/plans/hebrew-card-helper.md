@@ -41,8 +41,12 @@ the code that implements it, not up front. `BINYANIM` is in `src/lib/hebrew/biny
 
 - **The aliases that convert to a binyan**, joining `binyan.ts` with the prefill that first needs
   them: `pa'al` (paal, qal, kal), `nif'al` (nifal), `pi'el` (piel), `pu'al` (pual), `hif'il`
-  (hifil), `huf'al` (hof'al, hufal, hofal), `hitpa'el` (hitpael). No alias may name two binyanim.
-  The editor's binyan input is a dropdown of `BINYANIM`, so nothing typed needs them before then.
+  (hifil), `huf'al` (hof'al, hufal, hofal), `hitpa'el` (hitpael), and the dictionary's codes, `pa`,
+  `nif`, `pi`, `pu`, `hif`, `huf` and `hit`. No alias may name two binyanim. The editor's binyan
+  input is a dropdown of `BINYANIM`, so nothing typed needs them before then.
+- **The dictionary's prepositions map onto `PREPOSITIONS`** once stripped of points and maqaf:
+  `לְ־` and `ל־` are ל, and `אֵת` and "direct" are את. One outside the list, like `אֶל`, suggests
+  nothing.
 - **The dictionary paths:** `data/kaikki.org-dictionary-Hebrew.jsonl`, indexed into
   `data/hebrew.sqlite`.
 
@@ -55,10 +59,10 @@ the code that implements it, not up front. `BINYANIM` is in `src/lib/hebrew/biny
   binyan, root and preposition are all required, and none starts chosen. את counts as a
   preposition and the production answer keeps it (`לראות את`); "None" is only for a verb with no
   object, like ללכת. The root is kept as typed
-  and `formatRoot` (`src/lib/hebrew/root.ts`) joins it with maqafs, so prefill can write a
-  category's `ח־ב־ר` straight in.
-- **Open:** what a verb's `Forms` holds. It stays hidden for verbs until the dictionary
-  inspection decides it.
+  and `formatRoot` (`src/lib/hebrew/root.ts`) joins it with maqafs, so prefill can write the
+  dictionary's root, joined or not, straight in.
+- **Open:** what a verb's `Forms` holds. It stays hidden for verbs until that's decided;
+  § Dictionary lists what the file offers for it.
 
 ### Dictionary: kaikki.org's Wiktionary extract, indexed into SQLite
 
@@ -66,36 +70,101 @@ kaikki.org publishes English Wiktionary as JSONL, extracted by wiktextract. I do
 file into `data/`; it is only ever streamed, never loaded whole. It is CC BY-SA 4.0, not MIT, so
 fixtures from it carry an attribution README.
 
-What I've seen in it, all to be verified before writing the parser:
+What the file holds, from the 2026-10-25 extract; `tests/fixtures/kaikki/hebrew.jsonl` has real
+lines for each claim:
 
-- `word` is the unpointed title, `lang_code` is `he`, and there's a `pos`.
-- `head_templates[].expansion` carries the pointed headword (`בְּלִי • (b'lí) …`), and each `forms[]`
-  entry has `form` and `tags`.
-- Categories carry facts (`Hebrew masculine nouns`, `Hebrew terms belonging to the root ח־ב־ר`).
-  Some flag gaps, such as missing plurals, so expect incomplete coverage.
-- Where the binyan lives, and how reliably, is unknown.
-- **Verb lemmas are the past 3ms (`דִּבֵּר`), not the infinitive my cards use.** The infinitive comes
-  from `forms[]` or the head template, or the field is left blank.
+- **One line per entry**: a title, a `pos` and an etymology. All 18,182 lines are `lang_code`
+  `he`. Homographs are separate lines with the same `word`, and `etymology_number`, absent on a
+  page with one etymology, groups them: ספר has six.
+- **Titles are ktiv male**: `דיבר`, `שולחן`, `חיכה`. A haser spelling gets its own entry, whose
+  sense has `alt_of` pointing at the male title and the tags `alt-of` and `misspelling`: `שלחן` →
+  `שולחן`, and the verb `דבר` → `דיבר`. Where the two spellings agree, as in `כלב`, there's one entry.
+- **The pointed headword** is the `forms[]` entry tagged `canonical`. The `he-noun` or `he-verb`
+  head template holds it too, as `wv` when it spells the title, or `dwv` when it's the haser
+  spelling of a male title (`שולחן` / `שֻׁלְחָן`).
+- **Gender** is the head template's `g`, plus `g2` for a noun that takes both (`רוח`, 43 nouns).
+  The values are `m` and `f`, with `-p` for a plural-only noun (`מוניטין`) and `-d` for a
+  dual-only one (`משקפיים`). The gender chips can't show `-p` or `-d`, so those leave the
+  chips blank.
+- **Noun forms** are the `forms[]` entries without a `source`, from the head template, tagged
+  `indefinite`+`plural`, `dual` or, for the feminine counterpart, just `feminine`. A `wv` entry
+  gives each one only pointed; a `dwv` entry gives the male spelling and then the pointed one
+  (`שולחנות`, `שֻׁלְחָנוֹת`). Entries with `source: declension` or `conjugation` are the inflection
+  table: mostly possessed forms, 53,000 of them.
+- **Only 56% of nouns list a plural** (4,192 of 7,508), and a second plural (`pl2`) means choices.
+  **The feminine plural is almost never on the masculine** (11 of 575 nouns with a feminine
+  counterpart): it is the plural of the feminine's own entry, the one whose `m` names this noun.
+  `חתולה` has two entries, and only `חֲתוּלָה` names `חָתוּל`. Prefill fills it only after the index
+  makes that second lookup.
+- **Some plurals have their own form-of entry** (`ערים`, `שולחנות`, `עיניים`), whose `form_of[].word`
+  is sometimes pointed (`עִיר`). A pointed target is what tells `עִיר` (city) from `עַיִר` (donkey
+  foal). A bare title can't, so it offers both.
+- **Verb lemmas are the past 3ms (`דִּבֵּר`), not the infinitive my cards use.** The binyan is the
+  `he-verb` template's first argument, which is never spelled like a name: `pa`, `nif`, `pi`, `pu`,
+  `hif`, `huf`, `hit`, with `hitpu'al` twice and `nitpa'el` once. These codes join the aliases.
+- **The infinitive** is the head template's `inf`/`infdwv` (tagged `infinitive`) for only 77
+  verbs. For the rest, it's the infinitive row of the `he-conj` table, which wiktextract fails to
+  tag: a `forms[]` entry with `source: conjugation`, tagged `error-unrecognized-form`, and the
+  only such entry that starts with ל. 1,960 of 2,125 conjugated verbs have one. Most of the others
+  are pu'al and huf'al, which have no infinitive (`-`), so the input is left blank. A verb may list
+  two infinitives (`לַחֲדֹר`, `לַחְדֹּר`), which become choices. The unpointed infinitive is listed
+  when the title is male (`לספור`). Otherwise it's the pointed form's `links` target (`לדבר#Hebrew`):
+  the source's own spelling, not one derived from the pointed form.
+- **The infinitive's own entry (`לדבר`) has no `form_of`**, only a gloss, "To-infinitive of
+  דיבר". It finds its lemma through the lemma's keys, never by following that gloss.
+- **The root** is maqaf-joined in the `he-rootbox` etymology template (`שׁ־נ־ה`; about 1,400 nouns
+  and 600 verbs), and unjoined in the `he-conj` template's second argument (`שׁמשׁ`). Both may
+  carry shin and sin dots, which a stored root drops.
+- **Categories sit on the wrong entry.** kaikki gives an etymology section's categories to just
+  one of its entries: the construct-form `אב` carries the father entry's root and "plurals ending
+  in ־ות" categories, and the father entry has neither. A root category ("Hebrew terms belonging to
+  the root …", on 6,000 entries) agrees with the templates 98% of the time; the rest only add a
+  sense label (`ע־ב־ר (pregnancy)`). So a category belongs to every entry with the same title and
+  `etymology_number`, and is used only when the entry has no template root. The other categories
+  are mostly housekeeping (`Pages with entries`).
+- **Governing prepositions appear, rarely.** They're in `raw_glosses`, never `glosses`:
+  `to wait, wait for [with לְ־ ‘for’]` and `[with ב־ (b'-) ‘in’]`. Only 104 of 2,515 verb lemmas
+  have one, spelled pointed or not, with or without a maqaf (`לְ־`, `ל־`, `עַל`, `על`), and now and
+  then as `אֵת` or "direct". At most, that's a suggested preposition chip, never one picked for
+  me.
+- **Glosses** are `senses[].glosses`. Form-of and alt-of senses have generated ones ("defective
+  spelling of …"), which the panel skips.
+- For a verb's `Forms` (still **Open**, below), the file offers the head template's future 3ms
+  (`fut`) and passive counterpart (`pass`), and every cell of the conjugation table, pointed.
+- **Open:** kaikki.org marks this postprocessed file deprecated and "will be removed". The
+  fallback is to filter the 24.8 GB all-language raw extract for `lang_code == "he"`, and the raw
+  format differs, so the parser would need checking against it.
 
 **The index.** `scripts/build-index.ts` keeps `lang_code == "he"` and writes, through Node's
 built-in `node:sqlite`:
-- `entries`: word, POS, pointed headword, genders, root, binyan, pointed plurals, infinitive,
-  glosses and `form_of`/`alt_of` targets;
+- `entries`: word, POS, etymology number, pointed headword, genders (`-p` and `-d` kept as they
+  are), root, binyan, pointed plurals, the pointed feminine counterpart and, on a feminine, the
+  masculine it names (`m`), the infinitives pointed and unpointed, any governing preposition,
+  glosses, and `form_of`/`alt_of` targets as written, pointed or not;
 - `keys`: a normalized key and a defective key per entry, covering the headword *and* every
-  `forms[]` entry, so typing a plural or an infinitive finds the lemma. The defective key removes
-  internal ו and י, because ktiv male and ktiv haser spell words differently; it joins
-  `src/lib/hebrew/normalize.ts`;
+  `forms[]` entry that is a word (not `romanization`, `class`, `table-tags`,
+  `inflection-template` or `-`), so typing a plural, an infinitive or a conjugated form finds the
+  lemma. The defective key removes internal ו and י, because ktiv male and ktiv haser spell words
+  differently; it joins `src/lib/hebrew/normalize.ts`;
 - `meta`: the source file's size and mtime and the schema version, so the UI can say when the
   index is stale.
 
 **Lookup:** an exact key first, following `form_of`/`alt_of` to the lemma; then the defective
-key, labelled "possible match". Every candidate shows its pointed headword, POS, first gloss and
-root, and none is picked for me.
+key, labelled "possible match". An `alt_of` target is a male title. A pointed `form_of` target
+narrows the lemmas with that title to the one whose pointed headword matches it (`עִיר`, not
+`עַיִר`); a bare one leaves them all as candidates. Every candidate shows its pointed headword,
+POS, first gloss and root, and none is picked for me.
 
-**Prefill, after I pick,** fills the inputs, never the fields they compose:
-- the pointed word (for verbs, the pointed infinitive);
-- the gender chips and the pointed plural, feminine and feminine-plural inputs;
-- the root, and the binyan converted through the aliases; a binyan no alias names stays blank.
+**Prefill, after I pick,** fills the inputs, never the fields they compose. Where the entry has
+two values, they become choices; where it has none, the input stays blank:
+- the pointed word. For a verb, that's the pointed infinitive, and the unpointed `Hebrew` takes
+  the source's own unpointed infinitive. A pu'al or huf'al verb has none, so both stay blank;
+- the gender chips, left blank for `-p` and `-d`, and the pointed plural and feminine;
+- the feminine plural, from the feminine's own entry whose `m` names this noun, not from this one;
+- the root, from the entry's templates, or else from a root category on its etymology section,
+  with any shin and sin dots dropped;
+- the binyan, converted through the aliases; a binyan no alias names stays blank;
+- a preposition from the glosses' `[with …]`, offered as a suggested chip, never selected for me.
 - Glosses go in a read-only panel. **Open:** whether `Definitions` is ever prefilled from them,
   since I write my own; it starts off.
 - The deck check also searches the lemma's title, which finds old past-tense verb notes, and the
@@ -113,9 +182,11 @@ grammatical gender, not the suffix (`אָבוֹת טוֹבִים`, `שָׁנִי
 `mf` noun. Those pointed forms join `src/lib/hebrew/tov.ts`.
 
 - **Open:** `node:sqlite` needs `@types/node` to typecheck, since `$app/tsconfig` loads only
-  SvelteKit's types. Ask before PR 2.
-- **Open:** every worktree needs `data/`. Either copy it through `.worktreeinclude`, or let the
-  dictionary path point at one shared copy.
+  SvelteKit's types. Ask before PR 1.
+- Every worktree gets its own `data/`: `.worktreeinclude` lists it, for worktrunk's `post-start`
+  hook and for Claude Code desktop. Each copy builds its own index, so worktrees can't race on one
+  SQLite file. *Rejected: one shared copy symlinked from the main worktree, because rebuilding the
+  index in one worktree would change it under the others.*
 
 ### Not yet: Forvo audio pickup
 
@@ -124,30 +195,22 @@ build only once I ask: after I click the Forvo link, watch Downloads (`os.homedi
 for a new `pronunciation_he_<word>.mp3`, show it for me to confirm, and attach it through
 `guiAddCards`' `audio` parameter.
 
-## PR 1 — inspect the dictionary
 
-Needs the JSONL in `data/`.
-
-- Stream the entries for `ספר` (homographs), `אב`, `שנה`, `עיר`, `שולחן`, `דיבר`/`לדבר`, and a verb
-  with a governing preposition, such as `לחכות ל` or `להשתמש ב`.
-- Copy the real lines into `tests/fixtures/kaikki/`, with an attribution README.
-- Replace "what I've seen" in § Dictionary with what is true: where each fact lives, whether titles
-  are ktiv male or haser, where the binyan is, and whether governing prepositions appear at all.
-- Resolve the Open on a verb's `Forms`.
-
-No app code, and it stops for my review.
-
-## PR 2 — the index and lookup
+## PR 1 — the index and lookup
 
 - `scripts/build-index.ts`, `npm run build-index`, and `src/lib/server/dictionary.ts`.
-- Tests on the fixtures: homographs, a plural finding its lemma, an infinitive finding its lemma,
-  and the male/haser fallback.
-- README: how to build the index.
+- Tests that build an index from `tests/fixtures/kaikki/hebrew.jsonl`, as from the real file:
+  homographs, a plural finding its lemma (and `עָרִים` finding only `עִיר`, not `עַיִר`), an
+  infinitive finding its lemma, the male/haser fallback, a root from a category on a sibling
+  entry (`אב`), the infinitive and its unpointed spelling, a pu'al with none (`דובר`), the
+  binyan code, the preposition in `raw_glosses` (`חיכה`, `השתמש`), and the feminine plural reached
+  from the masculine (`כלב` → `כלבה`, and `חתול` → only the `חתולה` that names it).
+- README: how to build the index, after the download steps already there.
 
-## PR 3 — lookup in the editor
+## PR 2 — lookup in the editor
 
 - `/api/lookup`, with its reply type and call in `src/lib/api.ts`, and a candidate picker;
-  prefill after I pick; the glosses panel.
+  prefill after I pick; the glosses panel; the suggested preposition chip.
 - The binyan aliases in `src/lib/hebrew/binyan.ts`, tested on every alias.
 - The irregular-plural hint (`src/lib/hebrew/plural.ts`), tested on flagged `עיר`/`ערים`,
   `אב`/`אבות`, `שנה`/`שנים`, `עין`/`עיניים`, `שולחן`/`שולחנות`, and unflagged `כלב`/`כלבים`,
@@ -159,8 +222,8 @@ No app code, and it stops for my review.
 
 ## Verification
 
-- **PR 3, by hand:** run `npm run dev` with Anki open and drive `http://127.0.0.1:5173`
+- **PR 2, by hand:** run `npm run dev` with Anki open and drive `http://127.0.0.1:5173`
   (Playwright MCP works). The hand-off payload for the word the PR touches, captured in the
   browser without reaching Anki, matches a real note field by field. Only I try the real
   hand-off; an agent asks first.
-- **PR 2:** `npm run build-index` on the real file, then spot-check its tests' lookups in the UI.
+- **PR 1:** `npm run build-index` on the real file, then spot-check its tests' lookups in the UI.

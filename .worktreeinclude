@@ -1,0 +1,3 @@
+# Gitignored files a new worktree gets a copy of: from Claude Code desktop, and from worktrunk's
+# post-start hook in .config/wt.toml.
+data/
