@@ -23,21 +23,21 @@ type FieldGroup = (typeof FIELD_GROUPS)[number];
 // Help for a whole group, where help on each field would repeat itself.
 export const GROUP_HELP: Partial<Record<FieldGroup, string>> = {
   'Unusual variants':
-    "Use these for a form of the word that's hard to remember, like an irregular plural or a " +
-    "feminine form. You'll be quizzed on each one separately.",
+    "Use these for a form of the word that's hard to remember. You'll be quizzed on each one " +
+    'separately.',
 };
 
 // `shownFor` is the parts of speech for which the editor shows the field as a textarea. A shown
 // field needs a group to appear in, and a `label`, because Anki's names are terse. It may carry
-// `help` saying when to fill it and what to write, and `searchesImages` for a field whose text
-// is worth an image search.
+// `help` saying when to fill it and what to write, given per part of speech where its examples
+// differ, and `searchesImages` for a field whose text is worth an image search.
 type Field = { name: string } & (
   | { shownFor: readonly [] }
   | {
       shownFor: readonly PartOfSpeech[];
       group: FieldGroup;
       label: string;
-      help?: string;
+      help?: string | Partial<Record<PartOfSpeech, string>>;
       searchesImages?: true;
     }
 );
@@ -100,9 +100,18 @@ export const FIELDS = {
     shownFor: PARTS_OF_SPEECH,
     group: 'Unusual variants',
     label: 'Variant 1: English prompt',
-    help:
-      "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
-      '“female dog” for כלב. Find an image with Images (EN), then paste it into this field in Anki.',
+    help: {
+      noun:
+        "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
+        '“female dog” for כלב. Find an image with Images (EN), then paste it into this field in ' +
+        'Anki.',
+      verb:
+        "What you'll be shown. For example, “I will go” for ללכת's irregular future. Find an " +
+        'image with Images (EN), then paste it into this field in Anki.',
+      other:
+        "What you'll be shown, for a form that doesn't follow the usual pattern. Find an image " +
+        'with Images (EN), then paste it into this field in Anki.',
+    },
     searchesImages: true,
   },
   variant1Answer: {
@@ -110,9 +119,13 @@ export const FIELDS = {
     shownFor: PARTS_OF_SPEECH,
     group: 'Unusual variants',
     label: 'Variant 1: Hebrew answer, with niqqud',
-    help:
-      'The Hebrew you should recall. For example, “שֻׁלְחָנוֹת טוֹבִים” for “good tables”. For a ' +
-      'feminine, copy it from the forms above.',
+    help: {
+      noun:
+        'The Hebrew you should recall. For example, “שֻׁלְחָנוֹת טוֹבִים” for “good tables”, or ' +
+        '“כַּלְבָּה” for “female dog”.',
+      verb: 'The Hebrew you should recall. For example, “אֵלֵךְ” for “I will go”.',
+      other: 'The Hebrew you should recall, copied from the forms above.',
+    },
   },
   // Variant 1's help sits right above, so Variant 2 needs none.
   variant2Prompt: {
@@ -185,14 +198,18 @@ export function shownFieldGroups(
 }
 
 /** How the editor shows a field: its name, what it says about when to fill it, and any search. */
-export function fieldDisplay(key: FieldKey): {
+export function fieldDisplay(
+  key: FieldKey,
+  partOfSpeech: PartOfSpeech,
+): {
   label: string;
   help?: string;
   searchesImages?: true;
 } {
   const field: Field = FIELDS[key];
   if (!('group' in field)) return { label: field.name };
-  return { label: field.label, help: field.help, searchesImages: field.searchesImages };
+  const help = typeof field.help === 'object' ? field.help[partOfSpeech] : field.help;
+  return { label: field.label, help, searchesImages: field.searchesImages };
 }
 
 export type TextPart = { text: string; quoted: boolean };

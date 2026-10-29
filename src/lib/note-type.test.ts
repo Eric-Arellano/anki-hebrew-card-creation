@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { FIELD_NAMES, quotedParts, shownFieldGroups, toAnkiFields } from './note-type.ts';
+import {
+  FIELD_NAMES,
+  FIELDS,
+  fieldDisplay,
+  quotedParts,
+  shownFieldGroups,
+  toAnkiFields,
+} from './note-type.ts';
 
 const context = { group: 'Disambiguation hints', fields: ['productionContext', 'readingContext'] };
 const variantsAndExtras = [
@@ -57,6 +64,28 @@ describe('toAnkiFields', () => {
     expect(toAnkiFields((key) => (key === 'definitions' ? 'fish' : undefined))).toEqual({
       ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
       Definitions: 'fish',
+    });
+  });
+});
+
+describe('fieldDisplay', () => {
+  test('gives a field the help for the part of speech', () => {
+    expect(fieldDisplay('variant1Answer', 'verb')).toEqual({
+      label: 'Variant 1: Hebrew answer, with niqqud',
+      help: FIELDS.variant1Answer.help.verb,
+      searchesImages: undefined,
+    });
+  });
+
+  describe('for a field with one help for every part of speech', () => {
+    test('gives it that help', () => {
+      expect(fieldDisplay('notes', 'noun').help).toBe(FIELDS.notes.help);
+    });
+  });
+
+  describe('for a field the editor never shows', () => {
+    test('gives only its name', () => {
+      expect(fieldDisplay('root', 'verb')).toEqual({ label: 'Root' });
     });
   });
 });

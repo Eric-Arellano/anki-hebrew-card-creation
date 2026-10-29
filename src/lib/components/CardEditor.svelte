@@ -109,13 +109,16 @@ onMount(checkAnki);
     {/if}
   </section>
 
-  <NoteFields
-    groups={shownGroups}
-    {edits}
-    onedit={(field, value) => {
-      edits[field] = value;
-    }}
-  />
+  {#if draft.partOfSpeech !== undefined}
+    <NoteFields
+      groups={shownGroups}
+      partOfSpeech={draft.partOfSpeech}
+      {edits}
+      onedit={(field, value) => {
+        edits[field] = value;
+      }}
+    />
+  {/if}
 
   <HandOffBar
     fields={ankiFields}

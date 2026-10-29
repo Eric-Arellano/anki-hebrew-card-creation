@@ -6,11 +6,9 @@ import { formatRoot } from '#lib/hebrew/root.ts';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 
-// Most verbs take a direct object with את, or no object at all, and neither puts a preposition in
-// the answer, so this comes first and starts chosen.
 const PREPOSITION_OPTIONS: readonly { value: Preposition | 'none'; label: string }[] = [
-  { value: 'none', label: 'את or none' },
   ...PREPOSITIONS.map((value) => ({ value, label: value })),
+  { value: 'none', label: 'None' },
 ];
 
 let {
@@ -33,7 +31,7 @@ function setBinyan(value: Binyan | '') {
 <fieldset class="space-y-4">
   <legend class="sr-only">Verb</legend>
   <ChoiceChips
-    legend="Preposition it takes"
+    legend="Preposition it takes (מילת יחס)"
     name="preposition"
     options={PREPOSITION_OPTIONS}
     bind:value={verb.preposition}

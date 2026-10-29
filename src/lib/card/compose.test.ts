@@ -78,17 +78,31 @@ describe('composeFields', () => {
       });
     });
 
-    describe('that takes no preposition', () => {
-      test('answers with the word alone', () => {
+    describe('that takes a direct object', () => {
+      test('answers with את', () => {
         expect(
           composeFields({
             word: 'לראות',
             pointed: 'לִרְאוֹת',
             definitions: ['to see'],
             partOfSpeech: 'verb',
-            verb: { binyan: "pa'al", root: 'ר־א־ה', preposition: undefined },
+            verb: { binyan: "pa'al", root: 'ר־א־ה', preposition: 'את' },
           }).productionAnswer,
-        ).toBe('לראות');
+        ).toBe('לראות את');
+      });
+    });
+
+    describe('that takes no preposition', () => {
+      test('answers with the word alone', () => {
+        expect(
+          composeFields({
+            word: 'ללכת',
+            pointed: 'לָלֶכֶת',
+            definitions: ['to go'],
+            partOfSpeech: 'verb',
+            verb: { binyan: "pa'al", root: 'ה־ל־ך', preposition: undefined },
+          }).productionAnswer,
+        ).toBe('ללכת');
       });
     });
   });

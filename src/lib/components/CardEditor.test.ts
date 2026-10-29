@@ -267,6 +267,17 @@ describe('CardEditor', () => {
       });
     });
 
+    describe('for the variants', () => {
+      test('explain with examples for the part of speech', async () => {
+        await renderConnectedEditor();
+        await choosePartOfSpeech('Verb');
+        const answer = noteField('Variant 1: Hebrew answer, with niqqud');
+        expect(
+          document.getElementById(answer.getAttribute('aria-describedby') ?? '')?.textContent,
+        ).toBe(FIELDS.variant1Answer.help.verb);
+      });
+    });
+
     describe('for a variant', () => {
       test('search images for its prompt, once there is one', async () => {
         await renderConnectedEditor();
@@ -471,13 +482,11 @@ describe('CardEditor', () => {
       });
     });
 
-    test('starts with no preposition chosen, and needs its binyan and root', async () => {
+    test('starts with את chosen, and needs its binyan and root', async () => {
       await renderConnectedEditor();
       await fillInputs({ word: 'לראות', pointed: 'לִרְאוֹת', gloss: 'to see' });
       await choosePartOfSpeech('Verb');
-      expect((screen.getByRole('radio', { name: 'את or none' }) as HTMLInputElement).checked).toBe(
-        true,
-      );
+      expect((screen.getByRole('radio', { name: 'את' }) as HTMLInputElement).checked).toBe(true);
       expect(screen.getByText('Still needed: binyan, root')).toBeTruthy();
     });
 
