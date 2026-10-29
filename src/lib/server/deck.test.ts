@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest';
-import { testConfig as config } from '#tests/config.ts';
 import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import bayitNotes from '#tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
@@ -22,10 +21,10 @@ describe('getAnkiStatus', () => {
     });
   }
 
-  describe('when Anki matches the config', () => {
+  describe('when Anki matches the note type', () => {
     test('reports the live fields and no drift', async () => {
       const { anki, calls } = connectedAnkiWithFields(fieldNames);
-      expect(await getAnkiStatus(anki, config)).toEqual({
+      expect(await getAnkiStatus(anki)).toEqual({
         kind: 'connected',
         ankiConnectVersion: 6,
         deckFound: true,
@@ -45,7 +44,7 @@ describe('getAnkiStatus', () => {
         name === 'Notes' ? 'Comments' : name,
       );
       const { anki } = connectedAnkiWithFields(fieldNamesWithNotesRenamed);
-      expect(await getAnkiStatus(anki, config)).toEqual({
+      expect(await getAnkiStatus(anki)).toEqual({
         kind: 'connected',
         ankiConnectVersion: 6,
         deckFound: true,
@@ -65,7 +64,7 @@ describe('getAnkiStatus', () => {
         deckNames: () => ['Default'],
         modelNames: () => ['Basic'],
       });
-      expect(await getAnkiStatus(anki, config)).toEqual({
+      expect(await getAnkiStatus(anki)).toEqual({
         kind: 'connected',
         ankiConnectVersion: 6,
         deckFound: false,
@@ -77,7 +76,7 @@ describe('getAnkiStatus', () => {
 
   describe('when Anki is closed', () => {
     test('reports the error', async () => {
-      expect(await getAnkiStatus(closedAnki, config)).toEqual({
+      expect(await getAnkiStatus(closedAnki)).toEqual({
         kind: 'error',
         message: "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
       });
@@ -93,7 +92,7 @@ describe('getAnkiStatus', () => {
         deckNames: () => ['Default'],
         modelNames: () => ['Basic'],
       });
-      await expect(getAnkiStatus(anki, config)).rejects.toThrow(new TypeError('bug'));
+      await expect(getAnkiStatus(anki)).rejects.toThrow(new TypeError('bug'));
     });
   });
 });
@@ -112,7 +111,7 @@ describe('findExistingNotes', () => {
   describe('when the word has its own note', () => {
     test('finds it as an exact match', async () => {
       const { anki, calls } = ankiWithNotes(kelevNotes);
-      expect(await findExistingNotes(anki, config, 'כלב')).toEqual({
+      expect(await findExistingNotes(anki, 'כלב')).toEqual({
         exactMatches: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
         relatedMatches: [],
       });
@@ -124,7 +123,7 @@ describe('findExistingNotes', () => {
 
     test('finds it from pointed input', async () => {
       const { anki, calls } = ankiWithNotes(kelevNotes);
-      expect((await findExistingNotes(anki, config, ' כֶּלֶב ')).exactMatches).toHaveLength(1);
+      expect((await findExistingNotes(anki, ' כֶּלֶב ')).exactMatches).toHaveLength(1);
       expect(calls[0]?.params).toEqual({ query: '"note:Hebrew" "Hebrew:*כלב*"' });
     });
   });
@@ -132,7 +131,7 @@ describe('findExistingNotes', () => {
   describe('when other notes contain the word', () => {
     test('lists them as related matches', async () => {
       const { anki } = ankiWithNotes(bayitNotes);
-      expect(await findExistingNotes(anki, config, 'בית')).toEqual({
+      expect(await findExistingNotes(anki, 'בית')).toEqual({
         exactMatches: [
           { noteId: 1752114960166, unpointed: 'בית', pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים` },
         ],
@@ -153,7 +152,7 @@ describe('findExistingNotes', () => {
   describe('when nothing matches', () => {
     test('does not ask for note details', async () => {
       const { anki, calls } = ankiWithNotes([]);
-      expect(await findExistingNotes(anki, config, 'זזזז')).toEqual({
+      expect(await findExistingNotes(anki, 'זזזז')).toEqual({
         exactMatches: [],
         relatedMatches: [],
       });
@@ -164,7 +163,7 @@ describe('findExistingNotes', () => {
   describe('when the word is blank', () => {
     test('asks Anki nothing', async () => {
       const { anki, calls } = ankiWithNotes(kelevChatulDagNotes);
-      expect(await findExistingNotes(anki, config, ' ')).toEqual({
+      expect(await findExistingNotes(anki, ' ')).toEqual({
         exactMatches: [],
         relatedMatches: [],
       });

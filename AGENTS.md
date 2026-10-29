@@ -3,9 +3,9 @@
 How we want code written here, and the rules this project can't afford to have broken.
 
 **The code is the source of truth.** Commands are defined in [`package.json`](package.json); the
-layout is the filesystem; field names, formats and link templates live in the config that
-validates them. The README orients someone getting started and can lag behind — when it disagrees
-with the code, the code wins and the README is a bug to fix.
+layout is the filesystem; the note type lives in `src/lib/note-type.ts`, and each format in the
+module that uses it. The README orients someone getting started and can lag behind — when it
+disagrees with the code, the code wins and the README is a bug to fix.
 
 ## Hard rules
 
