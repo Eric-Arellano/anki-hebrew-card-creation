@@ -15,6 +15,9 @@ const resultSchemaByAllowedAction = {
   deckNames: z.array(z.string()),
   modelNames: z.array(z.string()),
   modelFieldNames: z.array(z.string()),
+  modelFieldDescriptions: z.array(z.string()),
+  // Keyed by card template name.
+  modelTemplates: z.record(z.string(), z.object({ Front: z.string(), Back: z.string() })),
   findNotes: z.array(z.number()),
   notesInfo: z.array(noteInfoSchema),
   guiAddCards: z.number().nullable(),
@@ -28,6 +31,8 @@ export type ActionParams = {
   deckNames: undefined;
   modelNames: undefined;
   modelFieldNames: { modelName: string };
+  modelFieldDescriptions: { modelName: string };
+  modelTemplates: { modelName: string };
   findNotes: { query: string };
   notesInfo: { notes: number[] };
   guiAddCards: {

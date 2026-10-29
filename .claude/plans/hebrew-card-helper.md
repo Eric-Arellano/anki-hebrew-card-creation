@@ -51,8 +51,9 @@ that shape the design:
 
 - **No LLM or AI calls at runtime.** The tool is deterministic.
 - **The tool never creates, edits or deletes a note.** The AnkiConnect client accepts only `version`,
-  `deckNames`, `modelNames`, `modelFieldNames`, `findNotes`, `notesInfo`, `guiAddCards` and
-  `guiBrowse`.
+  `deckNames`, `modelNames`, `modelFieldNames`, `modelFieldDescriptions`, `modelTemplates`,
+  `findNotes`, `notesInfo`, `guiAddCards` and `guiBrowse`. The note type's descriptions and
+  templates are read for research only; no route calls them yet.
   - The allowlist is the `results` object in `src/lib/server/anki.ts`, which also validates each
     reply with zod. The client is a function, `anki(action, params)`, so the types refuse any
     other action, and a runtime check refuses one from an untyped caller.

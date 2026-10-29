@@ -13,8 +13,8 @@ This tool talks to my real Anki collection and is published openly. Each rule be
 those two facts.
 
 - **Call only the allowlisted AnkiConnect actions**: `version`, `deckNames`, `modelNames`,
-  `modelFieldNames`, `findNotes`, `notesInfo`, `guiAddCards` and `guiBrowse` — from code and from
-  `curl` alike. Nothing here creates, edits or deletes a note; I click Add myself.
+  `modelFieldNames`, `modelFieldDescriptions`, `modelTemplates`, `findNotes`, `notesInfo`,
+  `guiAddCards` and `guiBrowse` — from code and from `curl` alike. Nothing here creates, edits or deletes a note; I click Add myself.
 - **Don't call `guiAddCards` or `guiBrowse` against my real Anki without asking.** `guiAddCards`
   replaces the open Add window and discards whatever I had typed there.
 - **Reach third-party sites only through `src/lib/server/linkcheck.ts`**, which sends HEAD
