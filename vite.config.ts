@@ -1,5 +1,6 @@
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -9,6 +10,7 @@ export default defineConfig({
   preview: { host: '127.0.0.1' },
 
   plugins: [
+    tailwindcss(),
     sveltekit({
       compilerOptions: {
         // Runes mode for our code only, not libraries. Removable in Svelte 6.
