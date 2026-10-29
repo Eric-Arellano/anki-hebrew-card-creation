@@ -37,7 +37,7 @@ that shape the design:
   - Pealim's search page answers 200 for any query.
 - **The repo** is MIT and will be public. It has the SvelteKit skeleton with a placeholder page,
   CI and the agent setup, and `AGENTS.md` carries the hard rules from § Decisions. Behind the page
-  sit `config.json`, the allowlisted AnkiConnect client, the request guard and three
+  sit `src/lib/note-type.ts`, the allowlisted AnkiConnect client, the request guard and three
   endpoints (`/api/anki/status`, `/api/anki/existing`, `/api/anki/browse`), so the editor has
   something to talk to.
 - **SvelteKit 3** postdates most of what an agent recalls. `$lib` is gone: `#lib` is a subpath
@@ -100,10 +100,10 @@ overridable, want components.*
   to any Host other than `127.0.0.1` or `localhost`, which blocks DNS rebinding. On every path, it
   also refuses any method but GET and HEAD unless the body is JSON and the Origin is this server.
   Without these checks, any website I visit could open Add windows through this server.
-  `config.json`'s AnkiConnect URL must be loopback too.
+  The AnkiConnect URL in `src/lib/server/anki-connection.ts` must be loopback too.
 - **Ignored files.** `data/`, `*.sqlite` and build output are
   gitignored.
-- **Paths.** No absolute home path appears in code or config.
+- **Paths.** No absolute home path appears in code.
 - **Wiktionary data is CC BY-SA 4.0, not MIT.** The fixtures carry an attribution README, and the
   README says so. Turn on GitHub secret scanning and push protection when the repo goes public.
 
@@ -122,64 +122,35 @@ one kind of request: a HEAD to tell me a link is a 404 before I click it.
   - a timeout.
   404 and 410 mean missing, 2xx and 3xx mean found, and anything else means unknown.
 - **No open proxy.** The browser sends a link id and a word, and the server builds the URL from
-  config.
+  the link templates, which are code.
 - **Tests never reach the network.** `tests/setup.ts` replaces `fetch` with one that rejects
   unless a test stubs its own with `vi.stubGlobal`.
 - **Once the index exists,** it answers the Wiktionary check, and no request goes out.
 - **Agents never download the dictionary.** I put it in `data/`.
 
-### `config.json` describes the note type
+### The note type is code
 
-- **Config, not code.** Every field name, value format, chip list and link template lives in
-  `config.json`, which `src/lib/config.ts` validates with zod. No code hardcodes them.
-- **Drift check.** On load, the server compares the configured fields with the live
-  `modelFieldNames`. The UI names any field that has drifted, and the hand-off stays disabled until
-  config and Anki match.
-- **The first version, abridged:**
-
-```json
-{
-  "anki": { "url": "http://127.0.0.1:8765", "deck": "עברית", "noteType": "Hebrew", "tags": [] },
-  "fields": {
-    "unpointed": "Hebrew", "pointed": "Pointed", "productionAnswer": "Production answer",
-    "definitions": "Definitions", "productionContext": "Production context",
-    "readingContext": "Reading context", "images": "Images", "audio": "Audio",
-    "gender": "Gender", "forms": "Forms", "binyan": "Binyan", "root": "Root",
-    "variant1Prompt": "Variant 1 prompt", "variant1Answer": "Variant 1 answer",
-    "variant2Prompt": "Variant 2 prompt", "variant2Answer": "Variant 2 answer",
-    "examples": "Examples", "notes": "Notes"
-  },
-  "gender": { "m": "m", "f": "f", "both": "mf" },
-  "tov": {
-    "unpointed": { "m": "טוב", "f": "טובה" },
-    "pointed": { "m": { "sg": "טוֹב", "pl": "טוֹבִים" }, "f": { "sg": "טוֹבָה", "pl": "טוֹבוֹת" } }
-  },
-  "productionAnswer": { "noun": "{word} {tov}", "verb": "{word} {preposition}" },
-  "forms": { "separator": "<br>", "labels": { "plural": "pl", "feminine": "f", "mascPlural": "m.pl", "femPlural": "f.pl" } },
-  "root": { "separator": "־" },
-  "binyanim": [
-    { "value": "pa'al", "aliases": ["paal", "qal", "kal"] }, { "value": "nif'al", "aliases": ["nifal"] },
-    { "value": "pi'el", "aliases": ["piel"] }, { "value": "pu'al", "aliases": ["pual"] },
-    { "value": "hif'il", "aliases": ["hifil"] }, { "value": "huf'al", "aliases": ["hof'al", "hufal", "hofal"] },
-    { "value": "hitpa'el", "aliases": ["hitpael"] }
-  ],
-  "prepositions": ["ל", "ב", "על", "עם", "מ", "אל", "אחרי", "בפני", "מפני"],
-  "links": [
-    { "id": "wiktionary", "label": "Wiktionary", "template": "https://en.wiktionary.org/wiki/{word}#Hebrew", "check": true },
-    { "id": "pealim", "label": "Pealim", "template": "https://www.pealim.com/search/?q={word}", "check": false },
-    { "id": "forvo", "label": "Forvo", "template": "https://forvo.com/word/{word}/#he", "check": false },
-    { "id": "images-en", "label": "Images (EN)", "template": "https://www.google.com/search?udm=2&q={gloss}", "check": false },
-    { "id": "images-he", "label": "Images (HE)", "template": "https://www.google.com/search?udm=2&q={word}", "check": false }
-  ],
-  "linkCheck": { "userAgent": "anki-hebrew-card-creation (+https://github.com/Eric-Arellano/anki-hebrew-card-creation)", "minIntervalMs": 1000, "timeoutMs": 5000 },
-  "definitions": { "prefillFromDictionary": false },
-  "dictionary": { "jsonl": "data/kaikki.org-dictionary-Hebrew.jsonl", "index": "data/hebrew.sqlite" }
-}
-```
-
-`src/lib/config.ts` rejects what would make composition a guess: two keys naming one field, an
-alias shared by two binyanim, a template placeholder the composer doesn't fill, or a path that
-isn't relative to the repo.
+- **Code, not config.** The tool is built for one deck and one note type, so their names, each
+  field's Anki name live in `src/lib/note-type.ts`.
+  Every later format (טוֹב forms, gender values, forms labels, the root separator, binyan
+  aliases, prepositions, link-check settings, dictionary paths) lands as a typed constant in the
+  module that implements it, not up front.
+  *Rejected: a `config.json` validated with zod, because it split each field across JSON and TS
+  and needed a schema to recover what types give for free.*
+- **Drift check.** On load, the server compares `FIELD_NAMES` with the live `modelFieldNames`.
+  The UI names any field that has drifted, and the hand-off stays disabled until
+  `note-type.ts` and Anki match.
+- **Values that land with their features** (the rest are in § Card conventions):
+  - binyanim and the aliases that convert to them: `pa'al` (paal, qal, kal), `nif'al` (nifal),
+    `pi'el` (piel), `pu'al` (pual), `hif'il` (hifil), `huf'al` (hof'al, hufal, hofal),
+    `hitpa'el` (hitpael). No alias may name two binyanim.
+  - link templates: Wiktionary `https://en.wiktionary.org/wiki/{word}#Hebrew`, Pealim
+    `https://www.pealim.com/search/?q={word}`, Forvo `https://forvo.com/word/{word}/#he`, and
+    Google Images by `{gloss}` and by `{word}`
+    (`https://www.google.com/search?udm=2&q=…`). Only Wiktionary's is checked.
+  - prepositions: ל, ב, על, עם, מ, אל, אחרי, בפני, מפני.
+  - link check: at least 1000 ms between requests to a host, a 5000 ms timeout.
+  - dictionary: `data/kaikki.org-dictionary-Hebrew.jsonl`, indexed into `data/hebrew.sqlite`.
 
 **Prepositions.** The list holds the prepositions a verb can govern, ordered roughly by how often.
 את is left out on purpose: most verbs take a direct object, and those get no preposition at all.
@@ -292,10 +263,10 @@ What I've seen in it, all to be verified before writing the parser:
 
 **Prefill, after I pick:**
 - `Pointed`: for verbs, the pointed infinitive.
-- `Gender`, plus root and binyan converted to my formats through the config aliases.
+- `Gender`, plus root and binyan converted to my formats through the binyan aliases.
 - `Forms` and the production answer.
-- Glosses go in a read-only panel. `Definitions` is prefilled only when the config toggle is on,
-  since I write my own.
+- Glosses go in a read-only panel. **Open:** whether `Definitions` is ever prefilled
+  from them, since I write my own; it starts off.
 - "Already in deck?" also searches the lemma's title, which finds old past-tense verb notes.
 - The Wiktionary link points at the lemma's page.
 
@@ -309,8 +280,8 @@ Both sides come from the pointed forms, stripped and made defective, so a male-s
 (`שולחן` against `שֻׁלְחָנוֹת`) doesn't raise a false alarm. The hint offers "Use as Variant N": the
 pointed plural plus `טוֹבִים` or `טוֹבוֹת`.
 
-**Open:** every worktree needs `data/`. Either copy it through `.worktreeinclude`, or let config
-point at one shared copy.
+**Open:** every worktree needs `data/`. Either copy it through `.worktreeinclude`, or let the dictionary
+path point at one shared copy.
 
 ### Testing
 
@@ -319,16 +290,15 @@ point at one shared copy.
   - טוֹב selection by gender and number;
   - composition, checked field by field against the three real notes;
   - root and binyan conversion;
-  - Anki search escaping and config validation;
+  - Anki search escaping;
   - the irregular-plural heuristic and lookup.
 - **Server tests** run AnkiConnect through `fakeAnki` in `tests/fake-anki.ts`, which answers only
   the actions a test hands it and records every call. A route's `+server.ts` exports a `_`-prefixed
-  function that takes the client and config as arguments, and its test calls that with a fake, so
+  function that takes the client as an argument, and its test calls that with a fake, so
   no test mocks a module. The link checker runs against a mocked `fetch`.
 - **Anki fixtures** in `tests/fixtures/anki/` are replies from my real AnkiConnect: `notesInfo`
-  for כלב, חתול and דג and for the `בית` notes, and the note type's field names. Tests read
-  `testConfig` from `tests/config.ts`, the config those replies were recorded under, never the
-  repo's `config.json`.
+  for כלב, חתול and דג and for the `בית` notes, and the note type's field names. Renaming a field in
+  `note-type.ts` means re-recording them.
 - **Component tests** use `@testing-library/svelte` and jsdom, and cover:
   - the confirm step coming before the hand-off;
   - my edits surviving recomposition.

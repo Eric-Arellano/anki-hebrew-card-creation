@@ -5,8 +5,8 @@ links, the pointed forms, the plural and gender fields, and a check for whether 
 already in your deck. Then it opens Anki's own Add window, pre-filled. You finish the note there
 and click Add. The tool never adds, edits or deletes a note itself.
 
-It is built for one note type and one deck, but every field name and format lives in config, so
-it can be adapted.
+It is built for my own deck and note type, which `src/lib/note-type.ts` describes. To adapt it,
+edit that file.
 
 **Status:** early. The page is a placeholder for now.
 

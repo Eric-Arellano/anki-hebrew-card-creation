@@ -1,7 +1,7 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import { searchByFieldContainingKey, searchByNoteType } from '#lib/anki/search.ts';
-import type { Config } from '#lib/config.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
+import { DECK, FIELD_NAMES, FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
 import { type AnkiClient, AnkiError, type NoteInfo } from '#lib/server/anki.ts';
 
 export type FieldDrift = { missingFromAnki: string[]; unexpectedInAnki: string[] };
@@ -21,29 +21,29 @@ export type AnkiStatus =
     };
 
 export function findFieldDrift(
-  configuredFieldNames: readonly string[],
+  expectedFieldNames: readonly string[],
   liveFieldNames: readonly string[],
 ): FieldDrift {
   return {
-    missingFromAnki: configuredFieldNames.filter((name) => !liveFieldNames.includes(name)),
-    unexpectedInAnki: liveFieldNames.filter((name) => !configuredFieldNames.includes(name)),
+    missingFromAnki: expectedFieldNames.filter((name) => !liveFieldNames.includes(name)),
+    unexpectedInAnki: liveFieldNames.filter((name) => !expectedFieldNames.includes(name)),
   };
 }
 
-export async function getAnkiStatus(anki: AnkiClient, config: Config): Promise<AnkiStatus> {
+export async function getAnkiStatus(anki: AnkiClient): Promise<AnkiStatus> {
   try {
     const [ankiConnectVersion, deckNames, noteTypeNames] = await Promise.all([
       anki('version'),
       anki('deckNames'),
       anki('modelNames'),
     ]);
-    const deckFound = deckNames.includes(config.anki.deck);
-    if (!noteTypeNames.includes(config.anki.noteType)) {
+    const deckFound = deckNames.includes(DECK);
+    if (!noteTypeNames.includes(NOTE_TYPE)) {
       return { kind: 'connected', ankiConnectVersion, deckFound, noteType: { found: false } };
     }
 
-    const liveFieldNames = await anki('modelFieldNames', { modelName: config.anki.noteType });
-    const drift = findFieldDrift(Object.values(config.fields), liveFieldNames);
+    const liveFieldNames = await anki('modelFieldNames', { modelName: NOTE_TYPE });
+    const drift = findFieldDrift(FIELD_NAMES, liveFieldNames);
     return {
       kind: 'connected',
       ankiConnectVersion,
@@ -62,13 +62,12 @@ export type ExistingNotes = { exactMatches: ExistingNote[]; relatedMatches: Exis
 
 export function partitionByExactMatch(
   notes: readonly NoteInfo[],
-  config: Config,
   comparisonKey: string,
 ): ExistingNotes {
   const existingNotes = notes.map((note) => ({
     noteId: note.noteId,
-    unpointed: ankiFieldHtmlToText(note.fields[config.fields.unpointed]?.value ?? ''),
-    pointed: ankiFieldHtmlToText(note.fields[config.fields.pointed]?.value ?? ''),
+    unpointed: ankiFieldHtmlToText(note.fields[FIELDS.unpointed.name]?.value ?? ''),
+    pointed: ankiFieldHtmlToText(note.fields[FIELDS.pointed.name]?.value ?? ''),
   }));
   const exactMatches = existingNotes.filter(
     (note) => toComparisonKey(note.unpointed) === comparisonKey,
@@ -77,17 +76,13 @@ export function partitionByExactMatch(
   return { exactMatches, relatedMatches };
 }
 
-export async function findExistingNotes(
-  anki: AnkiClient,
-  config: Config,
-  word: string,
-): Promise<ExistingNotes> {
+export async function findExistingNotes(anki: AnkiClient, word: string): Promise<ExistingNotes> {
   const comparisonKey = toComparisonKey(word);
   if (comparisonKey === '') return { exactMatches: [], relatedMatches: [] };
 
-  const query = `${searchByNoteType(config.anki.noteType)} ${searchByFieldContainingKey(config.fields.unpointed, comparisonKey)}`;
+  const query = `${searchByNoteType(NOTE_TYPE)} ${searchByFieldContainingKey(FIELDS.unpointed.name, comparisonKey)}`;
   const noteIds = await anki('findNotes', { query });
   if (noteIds.length === 0) return { exactMatches: [], relatedMatches: [] };
 
-  return partitionByExactMatch(await anki('notesInfo', { notes: noteIds }), config, comparisonKey);
+  return partitionByExactMatch(await anki('notesInfo', { notes: noteIds }), comparisonKey);
 }
