@@ -2,7 +2,7 @@
 
 @theme {
   /* Fonts whose niqqud stays legible, before the system fallback. */
-  --font-hebrew: "Noto Sans Hebrew", "Arial Hebrew", "Times New Roman", sans-serif;
+  --font-hebrew: "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
 }
 
 @layer base {
@@ -44,4 +44,17 @@
 /* The one button that moves the work forward. */
 @utility button-primary {
   @apply border-blue-700 bg-blue-700 text-white hover:bg-blue-800;
+}
+
+/* A small pill: a lookup link, or a choice among a few options. */
+@utility chip {
+  @apply inline-flex items-center rounded-full border border-gray-300 px-3 py-0.5;
+}
+
+/* Marks the label of an input the human must fill. The input carries `required` too. */
+@utility required-mark {
+  &::after {
+    content: " *";
+    @apply text-red-700;
+  }
 }

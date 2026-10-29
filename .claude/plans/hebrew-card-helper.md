@@ -35,11 +35,11 @@ that shape the design:
   - Wiktionary answers 200 for a page that exists and 404 for one that doesn't.
   - Forvo answers 403 to anything that isn't a browser, whether the word exists or not.
   - Pealim's search page answers 200 for any query.
-- **The repo** is MIT and will be public. It has the SvelteKit skeleton with a placeholder page,
-  CI and the agent setup, and `AGENTS.md` carries the hard rules from § Decisions. Behind the page
-  sit `src/lib/note-type.ts`, the allowlisted AnkiConnect client, the request guard and three
-  endpoints (`/api/anki/status`, `/api/anki/existing`, `/api/anki/browse`), so the editor has
-  something to talk to.
+- **The repo** is MIT and will be public. It has CI, the agent setup, and `AGENTS.md` with the
+  hard rules from § Decisions. Behind the editor (§ The editor) sit `src/lib/note-type.ts`, the
+  allowlisted AnkiConnect client, the request guard and four endpoints (`/api/anki/status`,
+  `/api/anki/existing`, `/api/anki/browse`, `/api/anki/add`). The editor already works end to end
+  for words that are neither nouns nor verbs; nouns and verbs wait on their own composition.
 - **SvelteKit 3** postdates most of what an agent recalls. `$lib` is gone: `#lib` is a subpath
   import in `package.json`, imported with its `.ts` extension, and Node resolves it too, so
   `scripts/` can use it. The `$env/*` modules are deprecated: a variable is declared in
@@ -62,7 +62,9 @@ that shape the design:
     `src/lib/server/anki-connection.ts`.
 - **The hand-off always asks first.** `guiAddCards` opens Anki's Add window, pre-filled. Calling it
   again replaces that window and discards anything I typed there, so every hand-off confirms first
-  and says so.
+  and says so. Cmd+Enter only opens that confirmation, with focus on its button, so a second
+  key press is still a deliberate one. `/api/anki/add` takes `{fields}` and refuses any field
+  name `note-type.ts` doesn't know; the deck, note type and tags come from it, never the browser.
 - **Missing or ambiguous data leaves a field blank or shows choices; it is never guessed.**
   Homographs are never auto-picked.
 
@@ -79,10 +81,9 @@ that shape the design:
 - **Approved dependencies:** `svelte`, `@sveltejs/kit`, `@sveltejs/adapter-node`,
   `@sveltejs/vite-plugin-svelte`, `vite`, `typescript`, `svelte-check`, `@biomejs/biome`,
   `vitest`, `zod`, `@testing-library/svelte` and `jsdom`. Anything else asks first. First-party
-  code is preferred when it is simple to write. The toolchain and `zod` are installed;
-  `@testing-library/svelte` and `jsdom` arrive with the first PR that uses them.
+  code is preferred when it is simple to write. All of them are installed.
 - **Open:** `node:sqlite` needs `@types/node` to typecheck, since `$app/tsconfig` loads only
-  SvelteKit's types. It isn't on the list, so ask before PR 6.
+  SvelteKit's types. It isn't on the list, so ask before PR 5.
 - *Considered, not done: porting foodservice-insights' `test-rigor`, `prune-comments`,
   `writing-docs` and `svelte-file-editor`. Port them once there is enough code to need them; the
   core of `writing-docs` is already in `AGENTS.md`.*
@@ -122,7 +123,8 @@ one kind of request: a HEAD to tell me a link is a 404 before I click it.
   - a timeout.
   404 and 410 mean missing, 2xx and 3xx mean found, and anything else means unknown.
 - **No open proxy.** The browser sends a link id and a word, and the server builds the URL from
-  the link templates, which are code.
+  `LINKS` with `buildLinkUrl` in `src/lib/links.ts`, the same function the editor's link buttons
+  use, so the URL checked is the URL I click.
 - **Tests never reach the network.** `tests/setup.ts` replaces `fetch` with one that rejects
   unless a test stubs its own with `vi.stubGlobal`.
 - **Once the index exists,** it answers the Wiktionary check, and no request goes out.
@@ -131,23 +133,20 @@ one kind of request: a HEAD to tell me a link is a 404 before I click it.
 ### The note type is code
 
 - **Code, not config.** The tool is built for one deck and one note type, so their names, each
-  field's Anki name live in `src/lib/note-type.ts`.
+  field's Anki name and the parts of speech it is shown for live in `src/lib/note-type.ts`.
   Every later format (טוֹב forms, gender values, forms labels, the root separator, binyan
   aliases, prepositions, link-check settings, dictionary paths) lands as a typed constant in the
-  module that implements it, not up front.
+  module that implements it, not up front. Link templates live in `src/lib/links.ts`.
   *Rejected: a `config.json` validated with zod, because it split each field across JSON and TS
   and needed a schema to recover what types give for free.*
 - **Drift check.** On load, the server compares `FIELD_NAMES` with the live `modelFieldNames`.
   The UI names any field that has drifted, and the hand-off stays disabled until
-  `note-type.ts` and Anki match.
+  `note-type.ts` and Anki match. `ankiStatusProblem` in `src/lib/anki/status.ts` turns a status
+  into the one reason the hand-off is blocked, which the banner shows too.
 - **Values that land with their features** (the rest are in § Card conventions):
   - binyanim and the aliases that convert to them: `pa'al` (paal, qal, kal), `nif'al` (nifal),
     `pi'el` (piel), `pu'al` (pual), `hif'il` (hifil), `huf'al` (hof'al, hufal, hofal),
     `hitpa'el` (hitpael). No alias may name two binyanim.
-  - link templates: Wiktionary `https://en.wiktionary.org/wiki/{word}#Hebrew`, Pealim
-    `https://www.pealim.com/search/?q={word}`, Forvo `https://forvo.com/word/{word}/#he`, and
-    Google Images by `{gloss}` and by `{word}`
-    (`https://www.google.com/search?udm=2&q=…`). Only Wiktionary's is checked.
   - prepositions: ל, ב, על, עם, מ, אל, אחרי, בפני, מפני.
   - link check: at least 1000 ms between requests to a host, a 5000 ms timeout.
   - dictionary: `data/kaikki.org-dictionary-Hebrew.jsonl`, indexed into `data/hebrew.sqlite`.
@@ -194,40 +193,71 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
   NFC-normalizes both sides, because sources order combining marks differently.
 - **Anki field values are HTML.** They are compared after `ankiFieldHtmlToText` in `src/lib/anki/html.ts`
   strips tags and decodes entities. `&nbsp;` decodes to a real NBSP, which a key collapses
-  but displayed text keeps.
+  but displayed text keeps. Going the other way, composition passes what I typed through
+  `textToAnkiFieldHtml`, so a `<` or `&` shows as itself.
 - **Where it lives.** `toComparisonKey` and `isSamePointedText` are in `src/lib/hebrew/normalize.ts`. The defective
   key isn't written yet; it joins them with the index.
 
 ### The editor
 
-- **One page:**
-  - RTL word input, part of speech, English gloss, and a pointed form I paste in;
-  - composition controls for the part of speech;
-  - link buttons and copy chips;
-  - an "Already in deck?" panel;
-  - every note-type field as an editable textarea, in the note type's live field order.
-- **Display.** Hebrew is `dir="rtl" lang="he"`, in a system font stack that renders niqqud clearly
-  at a large size. Textareas hold raw Anki HTML.
-- **My edits stick.** Composition suggests values. Once I edit a field, nothing overwrites it, and
-  "reset to suggestion" brings the suggestion back.
+- **One page,** `src/routes/+page.svelte`, renders `CardEditor` from `src/lib/components/`. It
+  separates what I tell it, what helps me research, and what goes to Anki:
+  - a header with a quiet connection status and "Check again"; only a problem gets a banner;
+  - **Word:** the four inputs, all required: the Hebrew word without niqqud and with it (RTL),
+    the English meaning (the `{gloss}` placeholder), and the part of speech (`noun`, `verb` or
+    `other`), which starts unchosen rather than defaulted. Beneath them sit the deck check
+    (`ExistingNotesPanel`), and a "Look up" row of link chips; a chip whose placeholder is blank
+    is disabled, with the input to fill in its tooltip;
+  - **Card:** held back until every input is filled, since each one shapes composition. Then a
+    textarea per field worth editing for the part of speech (`NoteFields`), by the groups in
+    `src/lib/note-type.ts`, each group in the note type's live field order, or `FIELD_NAMES`'
+    order until Anki answers;
+  - the hand-off bar (`HandOffBar`), which names the inputs still needed.
+  Composition controls for nouns and verbs, and the copy chips, are still to come.
+- **Open:** a one-line hint per field that stays free text (the contexts, variants, examples and
+  notes), once PRs 1 and 2 show which fields keep a textarea.
+- **Display.** Hebrew is `dir="rtl" lang="he"`, and field textareas are `dir="auto"`, all in the
+  `font-hebrew` stack from `src/routes/layout.css`, which renders niqqud clearly at a large size.
+  Styling is Tailwind utilities, with the shared base styles in that file. Textareas hold raw Anki HTML.
+- **Composition** is `suggestFields(inputs)` in `src/lib/suggest-fields.ts`, a pure
+  function from `CardInputs` (`src/lib/card-inputs.ts`) to `FieldValues`, keyed by `FIELDS` key
+  so a typo can't name a field; Anki names appear only at the hand-off. It fills `Hebrew`,
+  `Pointed`, and `Definitions` from the gloss I typed. That is my own wording, unlike the
+  dictionary's glosses, which wait on the prefill decision below. For `other`, the production answer is
+  the word itself. For a noun or a verb it stays blank until that part of speech has its own
+  composition, rather than being guessed. New composition extends this function and `CardInputs`.
+- **Each field has a role,** in `src/lib/note-type.ts`, which says for which parts of speech the
+  editor shows it. `Hebrew` and `Pointed` are never shown, because the inputs are those fields;
+  neither are `Images` and `Audio`, which I paste in Anki. `Gender` is for nouns, `Binyan` and
+  `Root` for verbs, and a verb's `Forms` stays hidden while it is Open. A hidden field is sent
+  with only what composition gives it, so a stale edit from another part of speech never reaches
+  Anki. A field that a new input or control writes, such as the binyan dropdown, is hidden there
+  the same way, rather than shown twice.
+- **My edits stick.** `CardEditor` keeps an `edits` map holding only the fields I've typed in. A
+  field shows its edit, else its suggestion, so recomposition never overwrites an edit. Where a
+  non-blank suggestion differs from my edit, a `Use "…"` button deletes the edit; a field with
+  nothing suggested gets no button, since clearing it needs none.
 - **Copy chips** cover the pointed טוֹב forms and the prepositions. A click copies with a brief
   confirmation. There are no binyan chips, because the binyan dropdown writes the field itself.
-- **"Already in deck?"**
-  - It searches `"note:Hebrew" "Hebrew:*key*"`, then sorts the `notesInfo` results into exact
-    matches (equal after normalization) and related ones (`בית` → `בית ספר`). In the key, a
-    space becomes `*` and a geresh or gershayim `_`, so `&nbsp;` and ASCII quotes in old notes
-    still match.
+- **The deck check**
+  - Once typing pauses, it searches `"note:Hebrew" "Hebrew:*key*"`, then sorts the `notesInfo`
+    results into exact matches (equal after normalization) and related ones (`בית` → `בית ספר`).
+    In the key, a space becomes `*` and a geresh or gershayim `_`, so `&nbsp;` and ASCII quotes
+    in old notes still match.
   - Searches escape `\ " * _` and quote every term, so field names with spaces work
     (`src/lib/anki/search.ts`).
+  - An exact match is a warning, since I may want to update the old note instead; related
+    matches alone are a neutral note, and no match is one muted line.
   - A Browse button opens the matches through `guiBrowse` with `nid:…`.
-- **The endpoints the editor calls** already exist; their shapes are types in
-  `src/lib/server/deck.ts`.
+- **The endpoints the editor calls.** Their reply shapes are types in `src/lib/server/deck.ts`,
+  and the browser reaches them through `src/lib/api-client.ts`.
   - `GET /api/anki/status` answers `AnkiStatus`: an error message, or the version, whether the
     deck exists, and the note type's live fields and drift.
   - `GET /api/anki/existing?word=` answers `ExistingNotes`: `exactMatches` and `relatedMatches` lists of
     `{noteId, unpointed, pointed}`, as text.
   - `POST /api/anki/browse` takes `{noteIds}` and answers 204.
-- **Cmd+Enter** hands off.
+  - `POST /api/anki/add` takes `{fields}`, runs `guiAddCards`, and answers 204.
+- **Cmd+Enter** asks to hand off.
 
 ### Dictionary: kaikki.org's Wiktionary extract, indexed into SQLite
 
@@ -267,7 +297,7 @@ What I've seen in it, all to be verified before writing the parser:
 - `Forms` and the production answer.
 - Glosses go in a read-only panel. **Open:** whether `Definitions` is ever prefilled
   from them, since I write my own; it starts off.
-- "Already in deck?" also searches the lemma's title, which finds old past-tense verb notes.
+- The deck check also searches the lemma's title, which finds old past-tense verb notes.
 - The Wiktionary link points at the lemma's page.
 
 **Irregular-plural hint.** The tool suggests a variant card and I decide. It flags:
@@ -299,9 +329,12 @@ path point at one shared copy.
 - **Anki fixtures** in `tests/fixtures/anki/` are replies from my real AnkiConnect: `notesInfo`
   for כלב, חתול and דג and for the `בית` notes, and the note type's field names. Renaming a field in
   `note-type.ts` means re-recording them.
-- **Component tests** use `@testing-library/svelte` and jsdom, and cover:
-  - the confirm step coming before the hand-off;
-  - my edits surviving recomposition.
+- **Component tests** use `@testing-library/svelte` and jsdom. A test file opts into jsdom with a
+  `// @vitest-environment jsdom` comment, and `svelteTesting()` in `vite.config.ts` resolves
+  Svelte's browser build and unmounts after each test. `CardEditor.test.ts` stubs `fetch` with a
+  small fake of our own server that records every request. It covers the confirm step coming
+  before the hand-off and my edits surviving recomposition. New editor behaviour gets its tests
+  there.
 - **Fixtures are real JSONL lines** copied after inspection and never invented. They cover:
   - `ספר` (homographs);
   - `אב`/`אבות`, `שנה`/`שנים`, `עיר`/`ערים`;
@@ -328,21 +361,7 @@ used. The idea, to build only once I ask:
 2. Show the file for me to confirm.
 3. Attach it through `guiAddCards`' `audio` parameter (`path`, `filename`, `fields: ["Audio"]`).
 
-## PR 1 — the editor and the hand-off
-
-- **`src/routes/+page.svelte` and its components:**
-  - the inputs, link buttons and the fields as textareas;
-  - edits that stick, with reset to suggestion;
-  - a status banner from `/api/anki/status`;
-  - the "Already in deck?" panel.
-- **"Open in Anki"**, with the confirm step and Cmd+Enter. It calls `/api/anki/add`, which runs
-  `guiAddCards` with the configured deck, note type and tags.
-- **Component tests:** the confirm step comes before the call, and edits survive changes to the
-  inputs.
-
-After this PR, the tool already works for words that are neither nouns nor verbs.
-
-## PR 2 — nouns
+## PR 1 — nouns
 
 - **Composition:**
   - a gender selector;
@@ -352,11 +371,13 @@ After this PR, the tool already works for words that are neither nouns nor verbs
   - "Use feminine as Variant 1", which fills the answer with the pointed feminine and the prompt
     with `female {gloss}`.
 - **Copy chips** for the טוֹב forms and the prepositions.
-- **Modules:** `src/lib/hebrew/tov.ts` and `src/lib/compose.ts`.
+- **Modules:** `src/lib/hebrew/tov.ts`, plus the noun branch of `suggestFields` and the new
+  inputs on `CardInputs` in `src/lib/card-inputs.ts`. The gender selector reuses
+  `ui/ChoiceChips`, as the verb's preposition choice will.
 - **Tests:** composition against the כלב, חתול and דג notes, and agreement for `אָבוֹת`, `שָׁנִים`
   and `עֵינַיִם`.
 
-## PR 3 — verbs
+## PR 2 — verbs
 
 - A binyan dropdown.
 - A root input that accepts `דבר`, `ד.ב.ר`, `ד-ב-ר`, `ד ב ר` or `ד־ב־ר` and writes `ד־ב־ר`.
@@ -364,7 +385,7 @@ After this PR, the tool already works for words that are neither nouns nor verbs
 - The verb production answer.
 - Tests for root and binyan conversion, including the aliases.
 
-## PR 4 — link checks
+## PR 3 — link checks
 
 - **`src/lib/server/linkcheck.ts` and `/api/links/check`**, with a badge on the Wiktionary button once
   typing pauses.
@@ -374,9 +395,9 @@ After this PR, the tool already works for words that are neither nouns nor verbs
   - throttling;
   - an unknown link id.
 
-**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 5.
+**Then a pause.** I use the tool on real cards, and what I learn folds into this plan before PR 4.
 
-## PR 5 — inspect the dictionary
+## PR 4 — inspect the dictionary
 
 This PR needs the JSONL in `data/`.
 
@@ -394,7 +415,7 @@ This PR needs the JSONL in `data/`.
 
 No app code, and it stops for my review.
 
-## PR 6 — the index and lookup
+## PR 5 — the index and lookup
 
 - **`scripts/build-index.ts` and `npm run build-index`,** and `src/lib/server/dictionary.ts`
   (§ Dictionary).
@@ -405,14 +426,14 @@ No app code, and it stops for my review.
   - the male/haser fallback.
 - **README:** how to build the index.
 
-## PR 7 — lookup in the editor
+## PR 6 — lookup in the editor
 
 - **Lookup:** `/api/lookup` and a candidate picker.
 - **Prefill and hints:**
   - prefill after I pick a candidate;
   - the irregular-plural hint (`src/lib/hebrew/plural.ts`);
   - the glosses panel.
-- **Lemma awareness:** "Already in deck?" also finds lemma matches, and the Wiktionary link points
+- **Lemma awareness:** The deck check also finds lemma matches, and the Wiktionary link points
   at the lemma, checked offline.
 - **Without an index,** the editor still works.
 - **Heuristic tests:**
@@ -424,12 +445,12 @@ No app code, and it stops for my review.
 
 - **Every PR:** run `npm run lint && npm run check && npm test` and get CI green. Then run
   `git status` and read the diff for secrets, absolute home paths and anything from `data/`.
-- **PRs 1 to 4 and 7, by hand:**
+- **PRs 1 to 3 and 6, by hand:**
   - Run `npm run dev` with Anki open and drive `http://127.0.0.1:5173` (Playwright MCP works).
   - The status banner is green.
   - `כלב` finds its note as an exact match, and a nonsense word finds nothing.
   - The fields composed for כלב, חתול and דג match the real notes, field by field.
 - **The hand-off,** where `guiAddCards` opens the Add window, is tried by me. An agent tries it
   only after asking.
-- **PR 6:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
+- **PR 5:** `npm run build-index` on the real file, then spot-check the lookups from its tests in
   the UI.

@@ -8,7 +8,8 @@ and click Add. The tool never adds, edits or deletes a note itself.
 It is built for my own deck and note type, which `src/lib/note-type.ts` describes. To adapt it,
 edit that file.
 
-**Status:** early. The page is a placeholder for now.
+**Status:** early. The editor and the hand-off to Anki work, but nothing composes noun or verb
+fields yet, so those you fill in by hand.
 
 ## Requirements
 

@@ -1,5 +1,5 @@
-// Any website I visit can send requests to this server, and the server can open Add windows in
-// my Anki, so these checks are what keep the web out.
+// Any website the human visits can send requests to this server, and the server can open Add
+// windows in the human's Anki, so these checks are what keep the web out.
 
 // DNS rebinding points a hostile name at 127.0.0.1, which makes its pages same-origin with this
 // server. Their requests still carry that name as the Host, so only loopback names get in.

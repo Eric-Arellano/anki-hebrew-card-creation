@@ -1,8 +1,9 @@
+<script lang="ts">
+import CardEditor from '#lib/components/CardEditor.svelte';
+</script>
+
 <svelte:head>
   <title>Hebrew card helper</title>
 </svelte:head>
 
-<main>
-  <h1>Hebrew card helper</h1>
-  <p>Nothing here yet.</p>
-</main>
+<CardEditor />
