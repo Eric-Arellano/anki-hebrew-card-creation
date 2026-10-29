@@ -1,6 +1,6 @@
 import type { AnkiStatus, FieldDrift } from '#lib/api.ts';
 import { DECK, FIELD_NAMES, NOTE_TYPE } from '#lib/note-type.ts';
-import { type AnkiClient, AnkiError } from '#lib/server/anki.ts';
+import { type AnkiClient, AnkiError } from '#lib/server/anki-client.ts';
 
 function findFieldDrift(
   expectedFieldNames: readonly string[],
