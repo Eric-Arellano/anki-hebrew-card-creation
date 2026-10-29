@@ -296,7 +296,20 @@ describe('CardEditor', () => {
     });
 
     describe('when a field is hidden after being edited', () => {
-      test('sends it blank', async () => {
+      test('sends its suggestion instead', async () => {
+        const requests = await renderConnectedEditor();
+        await fillDag();
+        await typeInto(noteField('Other forms'), 'f: דָּגָה');
+        await chooseNoun('Masculine');
+        await typeInto(input('Masculine plural, with niqqud'), 'דָּגִים');
+
+        await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+        await screen.findByText(/Opened in Anki/);
+        expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Forms: 'pl: דָּגִים' } });
+      });
+
+      test('sends it blank when it has no suggestion', async () => {
         const requests = await renderConnectedEditor();
         await fillDag();
         await choosePartOfSpeech('Verb');
@@ -338,6 +351,19 @@ describe('CardEditor', () => {
           Forms: 'f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת',
         },
       });
+    });
+
+    test('requires only the pointed word of its forms', async () => {
+      await renderConnectedEditor();
+      await chooseNoun('Masculine');
+      expect(
+        [
+          'Hebrew word, with niqqud',
+          'Masculine plural, with niqqud',
+          'Feminine singular, with niqqud',
+          'Feminine plural, with niqqud',
+        ].map((label) => input(label).required),
+      ).toEqual([true, false, false, false]);
     });
 
     describe('of feminine gender', () => {

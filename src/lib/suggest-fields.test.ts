@@ -140,6 +140,16 @@ describe('suggestFields', () => {
       });
     });
 
+    describe('with a feminine counterpart of only spaces', () => {
+      test('labels its plural pl', () => {
+        expect(
+          suggestFields(
+            nounInputs({ ...masculine, plural: 'דָּגִים', feminine: ' ', femininePlural: ' ' }),
+          ).forms,
+        ).toBe('pl: דָּגִים');
+      });
+    });
+
     describe('with no forms', () => {
       test('leaves the forms blank', () => {
         expect(suggestFields(nounInputs(masculine)).forms).toBe('');

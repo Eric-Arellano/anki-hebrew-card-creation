@@ -40,6 +40,13 @@ describe('missingInputs', () => {
     test('requires a gender', () => {
       expect(missingInputs({ ...dagDraft, partOfSpeech: 'noun' })).toEqual(['gender']);
     });
+
+    test('lists the gender before the pointed word, as the editor shows them', () => {
+      expect(missingInputs({ ...dagDraft, partOfSpeech: 'noun', pointed: '' })).toEqual([
+        'gender',
+        'pointed',
+      ]);
+    });
   });
 });
 
