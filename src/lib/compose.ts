@@ -8,7 +8,7 @@ export type CardInputs = {
   pointed: string;
 };
 
-// The inputs as the editor holds them while I type: part of speech starts unchosen, so the
+// The inputs as the editor holds them while the human types: part of speech starts unchosen, so the
 // editor never guesses it.
 export type InputsDraft = Omit<CardInputs, 'partOfSpeech'> & {
   partOfSpeech: PartOfSpeech | undefined;
@@ -32,7 +32,7 @@ export function completeInputs(draft: InputsDraft): CardInputs | undefined {
 export function composeSuggestions(inputs: CardInputs): Record<string, string> {
   const word = textToAnkiFieldHtml(inputs.word.trim());
   return {
-    // What I typed, never derived from the pointed form: `דִּבֵּר` strips to `דבר`, not `דיבר`.
+    // What the human typed, never derived from the pointed form: `דִּבֵּר` strips to `דבר`, not `דיבר`.
     [FIELDS.unpointed.name]: word,
     [FIELDS.pointed.name]: textToAnkiFieldHtml(inputs.pointed.trim()),
     [FIELDS.definitions.name]: textToAnkiFieldHtml(inputs.gloss.trim()),

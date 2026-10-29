@@ -26,7 +26,7 @@ export function ankiFieldHtmlToText(html: string): string {
     .trim();
 }
 
-/** Plain text as Anki field HTML, so a `<` or `&` I typed shows as itself. */
+/** Plain text as Anki field HTML, so a `<` or `&` the human typed shows as itself. */
 export function textToAnkiFieldHtml(text: string): string {
   return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }

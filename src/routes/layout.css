@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Fonts whose niqqud stays legible, before the system fallback. Every entry is sans-serif:
-     a serif one such as Times New Roman is what English text fell through to when the
-     earlier names didn't match. Arial covers Hebrew, so it catches Chrome missing "Arial Hebrew". */
+  /* Fonts whose niqqud stays legible, before the system fallback. */
   --font-hebrew: "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
 }
 
@@ -53,7 +51,7 @@
   @apply inline-flex items-center rounded-full border border-gray-300 px-3 py-0.5;
 }
 
-/* Marks the label of an input I must fill. The input carries `required` too. */
+/* Marks the label of an input the human must fill. The input carries `required` too. */
 @utility required-mark {
   &::after {
     content: " *";

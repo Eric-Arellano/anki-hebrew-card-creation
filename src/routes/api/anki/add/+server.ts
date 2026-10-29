@@ -10,7 +10,7 @@ const addRequestBodySchema = z.strictObject({ fields: z.record(z.string(), z.str
 export const POST: RequestHandler = ({ request }) => _openAddWindow(anki, request);
 
 // `guiAddCards` only opens the Add window, pre-filled, and replaces whatever was in it. The editor
-// confirms before calling this; I click Add myself.
+// confirms before calling this; the human clicks Add.
 export async function _openAddWindow(anki: AnkiClient, request: Request): Promise<Response> {
   const parsedBody = addRequestBodySchema.safeParse(await request.json().catch(() => undefined));
   if (!parsedBody.success) error(400, 'fields must map field names to text');

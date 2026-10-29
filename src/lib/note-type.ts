@@ -1,9 +1,6 @@
-// The one deck and note type this tool makes cards for. They are code, not config: what the
-// editor does with each field depends on what the field means, so its name and its behaviour
-// belong side by side. Rename a field in Anki and this file follows, with the recorded fixtures
-// in `tests/fixtures/anki/`.
-// *Rejected: a config.json, because it split each field across JSON and TS and needed a schema to
-// recover what types give for free.*
+// The one deck and note type this tool makes cards for.
+// 
+// Renaming a field in Anki requires updating this file and `tests/fixtures/anki/`.
 
 export const DECK = 'עברית';
 export const NOTE_TYPE = 'Hebrew';
@@ -29,7 +26,7 @@ type Field = { name: string } & (
 // unless it comes from an input:
 // - `Hebrew` and `Pointed` are the inputs themselves, so a second place to edit them would only
 //   let the two drift apart.
-// - `Images` and `Audio` are media, which I paste into Anki's Add window myself.
+// - `Images` and `Audio` are media, which the human pastes into Anki's Add window.
 // - A verb's `Forms` is still undecided in the plan, so it stays blank rather than guessed.
 export const FIELDS = {
   unpointed: { name: 'Hebrew', shownFor: [] },

@@ -9,7 +9,7 @@ import {
   type InputsDraft,
   missingInputs,
 } from '#lib/compose.ts';
-import { blankPlaceholders, buildLinkUrl, LINKS } from '#lib/links.ts';
+import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import { FIELD_NAMES, type PartOfSpeech, shownFieldGroups } from '#lib/note-type.ts';
 import type { AnkiStatus } from '#lib/server/deck.ts';
 import ExistingNotesPanel from './ExistingNotesPanel.svelte';
@@ -86,7 +86,7 @@ async function checkAnki() {
 
 onMount(checkAnki);
 
-// `guiAddCards` replaces Anki's Add window and discards whatever I typed there, so every
+// `guiAddCards` replaces Anki's Add window and discards whatever the human typed there, so every
 // hand-off asks first.
 function askToHandOff() {
   if (handOffBlocker === undefined) handOff = { kind: 'confirming' };
@@ -176,14 +176,11 @@ function focus(element: HTMLElement) {
     <nav aria-label="Look up" class="flex flex-wrap items-center gap-2">
       <span class="text-sm text-gray-600">Look up</span>
       {#each LINKS as link (link.id)}
-        {@const url = buildLinkUrl(link.template, draft)}
+        {@const url = buildLinkUrl(link, draft)}
         {#if url === undefined}
-          {@const blankInputs = blankPlaceholders(link.template, draft).map(
-            (name) => INPUT_NAMES[name],
-          )}
           <span
             class="chip cursor-not-allowed text-gray-400"
-            title="Type the {blankInputs.join(' and ')} first"
+            title="Type the {INPUT_NAMES[link.input]} first"
           >
             {link.label}
           </span>

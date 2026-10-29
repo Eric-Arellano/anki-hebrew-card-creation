@@ -1,42 +1,51 @@
-export type LinkPlaceholder = 'word' | 'gloss';
+export type LinkInput = 'word' | 'gloss';
 
-export type LinkValues = Record<LinkPlaceholder, string>;
+export type LinkValues = Record<LinkInput, string>;
 
-type Link = { id: string; label: string; template: `https://${string}` };
+/** Each link is searched with one input, which the editor must have before it can link. */
+export type Link = {
+  id: string;
+  label: string;
+  input: LinkInput;
+  url: (encodedText: string) => `https://${string}`;
+};
 
 export const LINKS: readonly Link[] = [
   {
     id: 'wiktionary',
     label: 'Wiktionary',
-    template: 'https://en.wiktionary.org/wiki/{word}#Hebrew',
+    input: 'word',
+    url: (text) => `https://en.wiktionary.org/wiki/${text}#Hebrew`,
   },
-  { id: 'pealim', label: 'Pealim', template: 'https://www.pealim.com/search/?q={word}' },
-  { id: 'forvo', label: 'Forvo', template: 'https://forvo.com/word/{word}/#he' },
+  {
+    id: 'pealim',
+    label: 'Pealim',
+    input: 'word',
+    url: (text) => `https://www.pealim.com/search/?q=${text}`,
+  },
+  {
+    id: 'forvo',
+    label: 'Forvo',
+    input: 'word',
+    url: (text) => `https://forvo.com/word/${text}/#he`,
+  },
   {
     id: 'images-en',
     label: 'Images (EN)',
-    template: 'https://www.google.com/search?udm=2&q={gloss}',
+    input: 'gloss',
+    url: (text) => `https://www.google.com/search?udm=2&q=${text}`,
   },
   {
     id: 'images-he',
     label: 'Images (HE)',
-    template: 'https://www.google.com/search?udm=2&q={word}',
+    input: 'word',
+    url: (text) => `https://www.google.com/search?udm=2&q=${text}`,
   },
 ];
 
-const PLACEHOLDER = /\{(word|gloss)\}/g;
-
-/** The placeholders `template` uses that are still blank in `values`, in template order. */
-export function blankPlaceholders(template: string, values: LinkValues): LinkPlaceholder[] {
-  return [...template.matchAll(PLACEHOLDER)]
-    .map((match) => match[1] as LinkPlaceholder)
-    .filter((name) => values[name].trim() === '');
-}
-
-/** The link for these values, or `undefined` while a placeholder the template uses is blank. */
-export function buildLinkUrl(template: string, values: LinkValues): string | undefined {
-  if (blankPlaceholders(template, values).length > 0) return undefined;
-  return template.replace(PLACEHOLDER, (_, name: LinkPlaceholder) =>
-    encodeURIComponent(values[name].trim()),
-  );
+/** The link for these values, or `undefined` while the input the link searches with is blank. */
+export function buildLinkUrl(link: Link, values: LinkValues): string | undefined {
+  const text = values[link.input].trim();
+  if (text === '') return undefined;
+  return link.url(encodeURIComponent(text));
 }

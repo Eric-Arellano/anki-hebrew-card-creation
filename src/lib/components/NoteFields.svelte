@@ -10,7 +10,7 @@ let {
 }: {
   groups: ShownFieldGroup[];
   suggestions: Record<string, string>;
-  // Only the fields I've edited, which no suggestion overwrites.
+  // Only the fields the human has edited, which no suggestion overwrites.
   edits: Record<string, string>;
   onedit: (fieldName: string, value: string) => void;
   onreset: (fieldName: string) => void;

@@ -5,7 +5,7 @@ import { svelteTesting } from '@testing-library/svelte/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  // The server can open Add windows in my Anki, so nothing off this machine may reach it.
+  // The server can open Add windows in the human's Anki, so nothing off this machine may reach it.
   // `npm start` sets the same host for the built server, since adapter-node defaults to 0.0.0.0.
   server: { host: '127.0.0.1' },
   preview: { host: '127.0.0.1' },
