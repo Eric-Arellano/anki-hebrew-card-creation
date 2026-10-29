@@ -20,6 +20,11 @@ Dictionary lookups are still to come.
 
 ## Setup and running
 
+Download the dictionary, an extract of English Wiktionary's Hebrew entries: on
+[kaikki.org's Hebrew page](https://kaikki.org/dictionary/Hebrew/), download the postprocessed
+JSONL (about 60 MB) and save it as `data/kaikki.org-dictionary-Hebrew.jsonl`. Download it again
+to pick up a newer Wiktionary.
+
 ```sh
 npm install
 npm run dev      # http://127.0.0.1:5173
@@ -41,11 +46,6 @@ windows in your Anki.
   plus the calls that open the Add and Browse windows.
 - **To third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are only
   opened when you click them.
-
-## The dictionary
-
-Offline lookups come from [kaikki.org](https://kaikki.org/)'s machine-readable extract of
-English Wiktionary's Hebrew entries. Download it yourself into `data/`, which git ignores.
 
 ## Licenses
 

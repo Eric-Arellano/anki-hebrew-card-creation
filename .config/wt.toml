@@ -1,0 +1,5 @@
+# The dictionary in data/ is downloaded once, into the main worktree, and never committed, so each
+# new worktree copies it. Only what .worktreeinclude lists is copied: node_modules/ comes from
+# `npm install`, not from another worktree.
+[post-start]
+data = "wt step copy-ignored --require-include"
