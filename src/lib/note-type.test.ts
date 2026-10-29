@@ -3,7 +3,7 @@ import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with
 import { FIELD_NAMES, shownFieldGroups, toAnkiFields } from './note-type.ts';
 
 const answersAndContext = [
-  { group: 'Answers', fields: ['productionAnswer', 'definitions'] },
+  { group: 'Answers', fields: ['productionAnswer'] },
   { group: 'Context', fields: ['productionContext', 'readingContext'] },
 ];
 const variantsAndExtras = [
@@ -47,8 +47,8 @@ describe('shownFieldGroups', () => {
 
   describe('when Anki orders fields differently', () => {
     test('keeps its order within a group', () => {
-      expect(shownFieldGroups(['Notes', 'Definitions', 'Examples'], 'noun')).toEqual([
-        { group: 'Answers', fields: ['definitions'] },
+      expect(shownFieldGroups(['Notes', 'Reading context', 'Examples'], 'noun')).toEqual([
+        { group: 'Context', fields: ['readingContext'] },
         { group: 'Extras', fields: ['notes', 'examples'] },
       ]);
     });

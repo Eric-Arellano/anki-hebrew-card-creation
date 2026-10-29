@@ -1,23 +1,21 @@
 <script lang="ts">
 import { INPUT_NAMES } from '#lib/card-inputs.ts';
-import { buildLinkUrl, LINKS, type LinkValues } from '#lib/links.ts';
+import { buildLinkUrl, LINKS } from '#lib/links.ts';
+import LinkChip from './ui/LinkChip.svelte';
 
-let { values }: { values: LinkValues } = $props();
+let { word }: { word: string } = $props();
+
+// A link searched by a meaning sits on that meaning's own row instead.
+const wordLinks = LINKS.filter((link) => link.input === 'word');
 </script>
 
 <nav aria-label="Look up" class="flex flex-wrap items-center gap-2">
   <span class="text-sm text-gray-600">Look up</span>
-  {#each LINKS as link (link.id)}
-    {@const url = buildLinkUrl(link, values)}
-    {#if url === undefined}
-      <span
-        class="chip cursor-not-allowed text-gray-400"
-        title="Type the {INPUT_NAMES[link.input]} first"
-      >
-        {link.label}
-      </span>
-    {:else}
-      <a class="chip hover:bg-gray-50" href={url} target="_blank" rel="noreferrer">{link.label}</a>
-    {/if}
+  {#each wordLinks as link (link.id)}
+    <LinkChip
+      label={link.label}
+      url={buildLinkUrl(link, { word, gloss: '' })}
+      blankInput={INPUT_NAMES.word}
+    />
   {/each}
 </nav>
