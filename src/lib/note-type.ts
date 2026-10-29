@@ -53,23 +53,38 @@ export const FIELDS = {
   notes: { name: 'Notes', shownFor: EVERY_PART_OF_SPEECH, group: 'Extras' },
 } as const satisfies Record<string, Field>;
 
-export const FIELD_NAMES: readonly string[] = Object.values(FIELDS).map((field) => field.name);
+export type FieldKey = keyof typeof FIELDS;
 
-export type ShownFieldGroup = { group: FieldGroup; fieldNames: string[] };
+/** Field values keyed by `FIELDS` key; a field left out is blank. */
+export type FieldValues = Partial<Record<FieldKey, string>>;
 
-/** The fields among `fieldNames` the editor shows for `partOfSpeech`, by group, in their order. */
+const FIELD_KEYS = Object.keys(FIELDS) as FieldKey[];
+
+export const FIELD_NAMES: readonly string[] = FIELD_KEYS.map((key) => FIELDS[key].name);
+
+/** Every field, keyed by its Anki name as `guiAddCards` takes it, blank where `valueFor` has none. */
+export function toAnkiFields(
+  valueFor: (key: FieldKey) => string | undefined,
+): Record<string, string> {
+  return Object.fromEntries(FIELD_KEYS.map((key) => [FIELDS[key].name, valueFor(key) ?? '']));
+}
+
+export type ShownFieldGroup = { group: FieldGroup; fields: FieldKey[] };
+
+/** The fields the editor shows for `partOfSpeech`, by group, each in `liveFieldNames`' order. */
 export function shownFieldGroups(
-  fieldNames: readonly string[],
+  liveFieldNames: readonly string[],
   partOfSpeech: PartOfSpeech,
 ): ShownFieldGroup[] {
-  const fields: Field[] = Object.values(FIELDS);
-  const groupOf = new Map(
-    fields.flatMap((field): [string, FieldGroup][] =>
-      'group' in field && field.shownFor.includes(partOfSpeech) ? [[field.name, field.group]] : [],
-    ),
-  );
+  const keyByName = new Map<string, FieldKey>(FIELD_KEYS.map((key) => [FIELDS[key].name, key]));
+  const shown = liveFieldNames.flatMap((name): [FieldKey, FieldGroup][] => {
+    const key = keyByName.get(name);
+    if (key === undefined) return [];
+    const field: Field = FIELDS[key];
+    return 'group' in field && field.shownFor.includes(partOfSpeech) ? [[key, field.group]] : [];
+  });
   return FIELD_GROUPS.map((group) => ({
     group,
-    fieldNames: fieldNames.filter((name) => groupOf.get(name) === group),
-  })).filter(({ fieldNames: shown }) => shown.length > 0);
+    fields: shown.filter(([, fieldGroup]) => fieldGroup === group).map(([key]) => key),
+  })).filter(({ fields }) => fields.length > 0);
 }

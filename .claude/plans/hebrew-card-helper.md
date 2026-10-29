@@ -212,15 +212,16 @@ These come from כלב, חתול and דג, plus the decisions for verbs:
     textarea per field worth editing for the part of speech (`NoteFields`), by the groups in
     `src/lib/note-type.ts`, each group in the note type's live field order, or `FIELD_NAMES`'
     order until Anki answers;
-  - the hand-off bar, which names the inputs still needed.
+  - the hand-off bar (`HandOffBar`), which names the inputs still needed.
   Composition controls for nouns and verbs, and the copy chips, are still to come.
 - **Open:** a one-line hint per field that stays free text (the contexts, variants, examples and
   notes), once PRs 1 and 2 show which fields keep a textarea.
 - **Display.** Hebrew is `dir="rtl" lang="he"`, and field textareas are `dir="auto"`, all in the
   `font-hebrew` stack from `src/routes/layout.css`, which renders niqqud clearly at a large size.
   Styling is Tailwind utilities, with the shared base styles in that file. Textareas hold raw Anki HTML.
-- **Composition** is `composeSuggestions(inputs)` in `src/lib/compose.ts`, a pure
-  function from `CardInputs` to suggestions keyed by Anki field name. It fills `Hebrew`,
+- **Composition** is `suggestFields(inputs)` in `src/lib/suggest-fields.ts`, a pure
+  function from `CardInputs` (`src/lib/card-inputs.ts`) to `FieldValues`, keyed by `FIELDS` key
+  so a typo can't name a field; Anki names appear only at the hand-off. It fills `Hebrew`,
   `Pointed`, and `Definitions` from the gloss I typed. That is my own wording, unlike the
   dictionary's glosses, which wait on the prefill decision below. For `other`, the production answer is
   the word itself. For a noun or a verb it stays blank until that part of speech has its own
@@ -370,8 +371,9 @@ used. The idea, to build only once I ask:
   - "Use feminine as Variant 1", which fills the answer with the pointed feminine and the prompt
     with `female {gloss}`.
 - **Copy chips** for the טוֹב forms and the prepositions.
-- **Modules:** `src/lib/hebrew/tov.ts`, plus the noun branch of `composeSuggestions` and the new
-  inputs on `CardInputs` in `src/lib/compose.ts`.
+- **Modules:** `src/lib/hebrew/tov.ts`, plus the noun branch of `suggestFields` and the new
+  inputs on `CardInputs` in `src/lib/card-inputs.ts`. The gender selector reuses
+  `ui/ChoiceChips`, as the verb's preposition choice will.
 - **Tests:** composition against the כלב, חתול and דג notes, and agreement for `אָבוֹת`, `שָׁנִים`
   and `עֵינַיִם`.
 
