@@ -6,6 +6,7 @@ import {
   type FieldValues,
   fieldDisplay,
   GROUP_HELP,
+  type PartOfSpeech,
   quotedParts,
   type ShownFieldGroup,
 } from '#lib/note-type.ts';
@@ -16,10 +17,12 @@ const imagesLink = LINKS['images-en'];
 
 let {
   groups,
+  partOfSpeech,
   edits,
   onedit,
 }: {
   groups: ShownFieldGroup[];
+  partOfSpeech: PartOfSpeech;
   edits: FieldValues;
   onedit: (field: FieldKey, value: string) => void;
 } = $props();
@@ -37,7 +40,7 @@ let {
         <p class="hint mb-3 sm:col-span-2">{groupHelp}</p>
       {/if}
       {#each fields as field (field)}
-        {@const { label, help, searchesImages } = fieldDisplay(field)}
+        {@const { label, help, searchesImages } = fieldDisplay(field, partOfSpeech)}
         <div class="mb-3 grid gap-1 sm:row-span-3 sm:grid-rows-subgrid">
           <div class="flex items-end justify-between gap-2">
             <label for="field-{field}">{label}</label>

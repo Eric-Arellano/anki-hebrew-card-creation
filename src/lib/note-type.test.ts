@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { FIELD_NAMES, quotedParts, shownFieldGroups, toAnkiFields } from './note-type.ts';
+import {
+  FIELD_NAMES,
+  FIELDS,
+  fieldDisplay,
+  quotedParts,
+  shownFieldGroups,
+  toAnkiFields,
+} from './note-type.ts';
 
 const context = { group: 'Disambiguation hints', fields: ['productionContext', 'readingContext'] };
 const variantsAndExtras = [
@@ -13,18 +20,14 @@ const variantsAndExtras = [
 
 describe('shownFieldGroups', () => {
   describe('for a noun', () => {
-    test('shows neither the fields its inputs write nor binyan or root', () => {
+    test('shows none of the fields its inputs write', () => {
       expect(shownFieldGroups(fieldNames, 'noun')).toEqual([context, ...variantsAndExtras]);
     });
   });
 
   describe('for a verb', () => {
-    test('shows binyan and root, but not forms', () => {
-      expect(shownFieldGroups(fieldNames, 'verb')).toEqual([
-        { group: 'Grammar', fields: ['binyan', 'root'] },
-        context,
-        ...variantsAndExtras,
-      ]);
+    test('shows none of the fields its inputs write, nor forms', () => {
+      expect(shownFieldGroups(fieldNames, 'verb')).toEqual([context, ...variantsAndExtras]);
     });
   });
 
@@ -61,6 +64,28 @@ describe('toAnkiFields', () => {
     expect(toAnkiFields((key) => (key === 'definitions' ? 'fish' : undefined))).toEqual({
       ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
       Definitions: 'fish',
+    });
+  });
+});
+
+describe('fieldDisplay', () => {
+  test('gives a field the help for the part of speech', () => {
+    expect(fieldDisplay('variant1Answer', 'verb')).toEqual({
+      label: 'Variant 1: Hebrew answer, with niqqud',
+      help: FIELDS.variant1Answer.help.verb,
+      searchesImages: undefined,
+    });
+  });
+
+  describe('for a field with one help for every part of speech', () => {
+    test('gives it that help', () => {
+      expect(fieldDisplay('notes', 'noun').help).toBe(FIELDS.notes.help);
+    });
+  });
+
+  describe('for a field the editor never shows', () => {
+    test('gives only its name', () => {
+      expect(fieldDisplay('root', 'verb')).toEqual({ label: 'Root' });
     });
   });
 });

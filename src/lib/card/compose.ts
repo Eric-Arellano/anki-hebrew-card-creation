@@ -1,6 +1,7 @@
 import { textToAnkiFieldHtml } from '#lib/anki/html.ts';
 import type { CardInputs, Definitions } from '#lib/card/inputs.ts';
 import { composeNounFields } from '#lib/card/noun.ts';
+import { composeVerbFields } from '#lib/card/verb.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 
 /** Every field the editor can fill from `inputs`, as Anki field HTML. */
@@ -15,8 +16,8 @@ export function composeFields(inputs: CardInputs): FieldValues {
   switch (inputs.partOfSpeech) {
     case 'noun':
       return { ...shared, ...composeNounFields(word, inputs.noun) };
-    // A verb's will carry its preposition once verbs have their own composition.
     case 'verb':
+      return { ...shared, ...composeVerbFields(word, inputs.verb) };
     case 'other':
       return { ...shared, productionAnswer: word };
   }

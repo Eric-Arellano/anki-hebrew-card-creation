@@ -59,12 +59,50 @@ describe('composeFields', () => {
   });
 
   describe('for a verb', () => {
-    test('answers with the word itself', () => {
-      expect(composeFields({ ...dagInputs, partOfSpeech: 'verb' })).toEqual({
-        unpointed: 'דג',
-        pointed: 'דָּג',
-        definitions: 'fish',
-        productionAnswer: 'דג',
+    test('answers with its preposition, and writes its binyan and root', () => {
+      expect(
+        composeFields({
+          word: 'לדבר',
+          pointed: 'לְדַבֵּר',
+          definitions: ['to speak'],
+          partOfSpeech: 'verb',
+          verb: { binyan: "pi'el", root: 'ד־ב־ר', preposition: 'עם' },
+        }),
+      ).toEqual({
+        unpointed: 'לדבר',
+        pointed: 'לְדַבֵּר',
+        definitions: 'to speak',
+        productionAnswer: 'לדבר עם',
+        binyan: "pi'el",
+        root: 'ד־ב־ר',
+      });
+    });
+
+    describe('that takes a direct object', () => {
+      test('answers with את', () => {
+        expect(
+          composeFields({
+            word: 'לראות',
+            pointed: 'לִרְאוֹת',
+            definitions: ['to see'],
+            partOfSpeech: 'verb',
+            verb: { binyan: "pa'al", root: 'ר־א־ה', preposition: 'את' },
+          }).productionAnswer,
+        ).toBe('לראות את');
+      });
+    });
+
+    describe('that takes no preposition', () => {
+      test('answers with the word alone', () => {
+        expect(
+          composeFields({
+            word: 'ללכת',
+            pointed: 'לָלֶכֶת',
+            definitions: ['to go'],
+            partOfSpeech: 'verb',
+            verb: { binyan: "pa'al", root: 'ה־ל־ך', preposition: undefined },
+          }).productionAnswer,
+        ).toBe('ללכת');
       });
     });
   });

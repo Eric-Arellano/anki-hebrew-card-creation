@@ -12,7 +12,7 @@ export function handOffFields({
   shownFields: readonly FieldKey[];
 }): Record<string, string> {
   // A hidden field gets only what composition gives it, so an edit made under another part of
-  // speech, such as a binyan typed before switching to noun, never reaches Anki.
+  // speech, such as forms typed for an adjective before switching to noun, never reaches Anki.
   return toAnkiFields((field) => {
     const edit = shownFields.includes(field) ? edits[field] : undefined;
     return edit === undefined ? composed[field] : textareaToAnkiFieldHtml(edit);
