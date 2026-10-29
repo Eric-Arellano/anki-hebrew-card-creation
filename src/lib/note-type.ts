@@ -1,5 +1,5 @@
 // The one deck and note type this tool makes cards for.
-// 
+//
 // Renaming a field in Anki requires updating this file and `tests/fixtures/anki/`.
 
 export const DECK = 'עברית';
