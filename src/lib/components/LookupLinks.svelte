@@ -6,16 +6,12 @@ import LinkChip from './ui/LinkChip.svelte';
 let { word }: { word: string } = $props();
 
 // A link searched by a meaning sits on that meaning's own row instead.
-const wordLinks = LINKS.filter((link) => link.input === 'word');
+const wordLinks = Object.entries(LINKS).filter(([, link]) => link.input === 'hebrew');
 </script>
 
 <nav aria-label="Look up" class="flex flex-wrap items-center gap-2">
   <span class="text-sm text-gray-600">Look up</span>
-  {#each wordLinks as link (link.id)}
-    <LinkChip
-      label={link.label}
-      url={buildLinkUrl(link, { word, gloss: '' })}
-      blankInput={INPUT_NAMES.word}
-    />
+  {#each wordLinks as [id, link] (id)}
+    <LinkChip label={link.label} url={buildLinkUrl(link, word)} blankInput={INPUT_NAMES.word} />
   {/each}
 </nav>

@@ -12,7 +12,7 @@ import {
 import LinkChip from './ui/LinkChip.svelte';
 
 // The meanings' own image search, here searched with a variant's English prompt.
-const imagesLink = LINKS.find((link) => link.id === 'images-en');
+const imagesLink = LINKS['images-en'];
 
 let {
   groups,
@@ -41,13 +41,10 @@ let {
         <div class="mb-3 grid gap-1 sm:row-span-3 sm:grid-rows-subgrid">
           <div class="flex items-end justify-between gap-2">
             <label for="field-{field}">{label}</label>
-            {#if searchesImages && imagesLink !== undefined}
+            {#if searchesImages}
               <LinkChip
                 label={imagesLink.label}
-                url={buildLinkUrl(imagesLink, {
-                  word: '',
-                  gloss: ankiFieldHtmlToText(edits[field] ?? ''),
-                })}
+                url={buildLinkUrl(imagesLink, ankiFieldHtmlToText(edits[field] ?? ''))}
                 blankInput="prompt"
               />
             {/if}

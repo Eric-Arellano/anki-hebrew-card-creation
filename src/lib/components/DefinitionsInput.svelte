@@ -2,10 +2,10 @@
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import LinkChip from './ui/LinkChip.svelte';
 
-let { word, definitions = $bindable() }: { word: string; definitions: string[] } = $props();
+let { definitions = $bindable() }: { definitions: string[] } = $props();
 
 // A card usually has one image per meaning, so each meaning gets its own search.
-const meaningLinks = LINKS.filter((link) => link.input === 'gloss');
+const meaningLinks = Object.entries(LINKS).filter(([, link]) => link.input === 'english');
 </script>
 
 <!-- `grid-cols-1` lets a row shrink below its inputs' intrinsic width, which overflows a phone. -->
@@ -20,10 +20,10 @@ const meaningLinks = LINKS.filter((link) => link.input === 'gloss');
         required={index === 0}
         bind:value={definitions[index]}
       >
-      {#each meaningLinks as link (link.id)}
+      {#each meaningLinks as [id, link] (id)}
         <LinkChip
           label={link.label}
-          url={buildLinkUrl(link, { word, gloss: definitions[index] ?? '' })}
+          url={buildLinkUrl(link, definitions[index] ?? '')}
           blankInput="meaning"
         />
       {/each}

@@ -83,7 +83,7 @@ onMount(checkAnki);
   <section aria-label="Word" class="space-y-4">
     <div class="grid items-start gap-4 sm:grid-cols-2">
       <TextInput label="Hebrew word, without niqqud" lang="he" bind:value={draft.word} />
-      <DefinitionsInput word={draft.word} bind:definitions={draft.definitions} />
+      <DefinitionsInput bind:definitions={draft.definitions} />
     </div>
     <ExistingNotesPanel word={draft.word} />
     <LookupLinks word={draft.word} />

@@ -1,51 +1,44 @@
-export type LinkInput = 'word' | 'gloss';
+// What a link searches with: the Hebrew word, or English such as a meaning or a variant's prompt.
+export type LinkInput = 'hebrew' | 'english';
 
-export type LinkValues = Record<LinkInput, string>;
-
-/** Each link is searched with one input, which the editor must have before it can link. */
 export type Link = {
-  id: string;
   label: string;
   input: LinkInput;
   url: (encodedText: string) => `https://${string}`;
 };
 
-export const LINKS: readonly Link[] = [
-  {
-    id: 'wiktionary',
+// Keyed by id, in the order the editor shows them.
+export const LINKS = {
+  wiktionary: {
     label: 'Wiktionary',
-    input: 'word',
+    input: 'hebrew',
     url: (text) => `https://en.wiktionary.org/wiki/${text}#Hebrew`,
   },
-  {
-    id: 'pealim',
+  pealim: {
     label: 'Pealim',
-    input: 'word',
+    input: 'hebrew',
     url: (text) => `https://www.pealim.com/search/?q=${text}`,
   },
-  {
-    id: 'forvo',
+  forvo: {
     label: 'Forvo',
-    input: 'word',
+    input: 'hebrew',
     url: (text) => `https://forvo.com/word/${text}/#he`,
   },
-  {
-    id: 'images-en',
+  'images-en': {
     label: 'Images (EN)',
-    input: 'gloss',
+    input: 'english',
     url: (text) => `https://www.google.com/search?udm=2&q=${text}`,
   },
-  {
-    id: 'images-he',
+  'images-he': {
     label: 'Images (HE)',
-    input: 'word',
+    input: 'hebrew',
     url: (text) => `https://www.google.com/search?udm=2&q=${text}`,
   },
-];
+} satisfies Record<string, Link>;
 
-/** The link for these values, or `undefined` while the input the link searches with is blank. */
-export function buildLinkUrl(link: Link, values: LinkValues): string | undefined {
-  const text = values[link.input].trim();
-  if (text === '') return undefined;
-  return link.url(encodeURIComponent(text));
+/** The link that searches `text`, or `undefined` while `text` is blank. */
+export function buildLinkUrl(link: Link, text: string): string | undefined {
+  const trimmed = text.trim();
+  if (trimmed === '') return undefined;
+  return link.url(encodeURIComponent(trimmed));
 }
