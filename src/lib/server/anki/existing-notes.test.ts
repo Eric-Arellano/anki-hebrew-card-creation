@@ -4,7 +4,7 @@ import bayitNotes from '#tests/fixtures/anki/notes-info-bayit.json' with { type:
 import kelevChatulDagNotes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
-import type { NoteInfo } from './anki-client.ts';
+import type { NoteInfo } from './client.ts';
 import { findExistingNotes } from './existing-notes.ts';
 
 // `&nbsp;` in a field decodes to this, not to a space.

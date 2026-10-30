@@ -1,8 +1,8 @@
 // Converts what Wiktionary writes into the values the editor's inputs take. Anything without a
 // sure counterpart converts to nothing, so the input stays blank rather than guessed.
-import type { DictionaryNoun } from '#lib/api.ts';
-import { PREPOSITIONS, type Preposition } from '#lib/card/verb.ts';
+import type { DictionaryNoun } from '#lib/api/dictionary.ts';
 import { toLookupKey } from '#lib/hebrew/normalize.ts';
+import { PREPOSITIONS, type Preposition } from '#lib/hebrew/preposition.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 
 export function partOfSpeechOf(pos: string): PartOfSpeech {

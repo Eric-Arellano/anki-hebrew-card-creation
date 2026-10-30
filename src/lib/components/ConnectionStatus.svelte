@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { AnkiStatus } from '#lib/api.ts';
+import type { AnkiStatus } from '#lib/api/anki.ts';
 import { DECK, NOTE_TYPE } from '#lib/note-type.ts';
 
 let {

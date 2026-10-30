@@ -4,7 +4,7 @@
 //
 // The English meaning is left alone: the human writes their own, with the glosses beside them.
 // **Open:** whether it should ever start from the glosses.
-import type { DictionaryCandidate, DictionaryInfinitive } from '#lib/api.ts';
+import type { DictionaryCandidate, DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
 
 // Each list holds two or more values.

@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import type { DictionaryCandidate, DictionaryLookup } from '#lib/api.ts';
-import type { Preposition } from '#lib/card/verb.ts';
+import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
 import { toBinyan } from '#lib/hebrew/binyan.ts';
 import {
   hasNiqqud,
@@ -9,6 +8,7 @@ import {
   toDefectiveKey,
   toLookupKey,
 } from '#lib/hebrew/normalize.ts';
+import type { Preposition } from '#lib/hebrew/preposition.ts';
 import { governedPreposition, nounGender, partOfSpeechOf } from './convert.ts';
 import { type DictionaryPaths, INDEX_SCHEMA_VERSION, sourceStamp } from './files.ts';
 import type { EntryFacts } from './source.ts';

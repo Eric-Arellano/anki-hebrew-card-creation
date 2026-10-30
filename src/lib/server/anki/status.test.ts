@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { getAnkiStatus } from './anki-status.ts';
+import { getAnkiStatus } from './status.ts';
 
 describe('getAnkiStatus', () => {
   function connectedAnkiWithFields(liveFieldNames: string[]) {

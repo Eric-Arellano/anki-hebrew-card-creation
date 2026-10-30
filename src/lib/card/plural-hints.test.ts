@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { type NounDraft, pluralHints } from './noun.ts';
+import type { NounDraft } from './noun.ts';
+import { pluralHints } from './plural-hints.ts';
 
 const shulchan: NounDraft = {
   gender: 'm',

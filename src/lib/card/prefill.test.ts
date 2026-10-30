@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { DictionaryCandidate } from '#lib/api.ts';
+import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { type CardInputsDraft, emptyDraft } from './inputs.ts';
 import { prefillDraft } from './prefill.ts';
 

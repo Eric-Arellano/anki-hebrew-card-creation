@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { searchByNoteIds } from '#lib/anki/search.ts';
-import type { AnkiClient } from '#lib/server/anki-client.ts';
-import { anki } from '#lib/server/anki-connection.ts';
+import type { AnkiClient } from '#lib/server/anki/client.ts';
+import { anki } from '#lib/server/anki/connection.ts';
 import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/http.ts';
 import type { RequestHandler } from './$types';
 

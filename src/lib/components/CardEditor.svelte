@@ -1,13 +1,9 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import {
-  type AnkiStatus,
-  type DictionaryCandidate,
-  errorMessage,
-  fetchAnkiStatus,
-  lookUpWord,
-} from '#lib/api.ts';
+import { type AnkiStatus, fetchAnkiStatus } from '#lib/api/anki.ts';
+import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
+import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { handOffFields } from '#lib/card/hand-off.ts';
 import {
@@ -17,10 +13,8 @@ import {
   INPUT_NAMES,
   missingInputs,
 } from '#lib/card/inputs.ts';
-import { pluralHints } from '#lib/card/noun.ts';
 import { type PrefillChoices, prefillDraft } from '#lib/card/prefill.ts';
 import {
-  type FieldKey,
   type FieldValues,
   PARTS_OF_SPEECH,
   type PartOfSpeech,
@@ -50,11 +44,6 @@ const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
   value,
   label: PART_OF_SPEECH_LABELS[value],
 }));
-
-const VARIANT_ANSWERS = [
-  { field: 'variant1Answer', number: 1 },
-  { field: 'variant2Answer', number: 2 },
-] as const satisfies readonly { field: FieldKey; number: number }[];
 
 let draft: CardInputsDraft = $state(emptyDraft());
 // The dictionary entry the inputs were last filled from, until the human types another word.
@@ -88,21 +77,13 @@ const lookup = $derived(
     : afterTypingPauses(
         lookupWord,
         () => lookupWord,
-        () => lookUpWord(lookupWord),
+        () => fetchDictionaryLookup(lookupWord),
       ),
 );
 const wiktionaryEntry = $derived(
   picked !== undefined ? true : lookup?.then((result) => result?.titleHasEntry),
 );
 const choices = $derived(picked?.choices ?? {});
-
-const hints = $derived(draft.partOfSpeech === 'noun' ? pluralHints(draft.noun, draft.pointed) : []);
-const variantSlots = $derived(
-  VARIANT_ANSWERS.filter(({ field }) => shownFields.includes(field)).map((variant) => ({
-    ...variant,
-    answer: edits[variant.field] ?? '',
-  })),
-);
 
 function pick(candidate: DictionaryCandidate) {
   const prefill = prefillDraft($state.snapshot(draft), candidate);
@@ -175,8 +156,10 @@ onMount(checkAnki);
     {#if draft.partOfSpeech === 'noun'}
       <NounInputs bind:noun={draft.noun} {choices}> {@render pointedInput()} </NounInputs>
       <PluralHints
-        {hints}
-        variants={variantSlots}
+        noun={draft.noun}
+        pointed={draft.pointed}
+        {edits}
+        {shownFields}
         onuse={(field, answer) => {
           edits[field] = answer;
         }}

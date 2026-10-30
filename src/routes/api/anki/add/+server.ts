@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { DECK, FIELD_NAMES, NOTE_TYPE, TAGS } from '#lib/note-type.ts';
-import type { AnkiClient } from '#lib/server/anki-client.ts';
-import { anki } from '#lib/server/anki-connection.ts';
+import type { AnkiClient } from '#lib/server/anki/client.ts';
+import { anki } from '#lib/server/anki/connection.ts';
 import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/http.ts';
 import type { RequestHandler } from './$types';
 

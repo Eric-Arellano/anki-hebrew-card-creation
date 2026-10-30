@@ -1,5 +1,6 @@
 <script lang="ts">
-import { type DictionaryCandidate, type DictionaryLookup, errorMessage } from '#lib/api.ts';
+import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
+import { errorMessage } from '#lib/api/http.ts';
 
 let {
   lookup,

@@ -3,9 +3,9 @@ import {
   browseNotes,
   type ExistingNote,
   type ExistingNotes,
-  errorMessage,
   fetchExistingNotes,
-} from '#lib/api.ts';
+} from '#lib/api/anki.ts';
+import { errorMessage } from '#lib/api/http.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 
 // The word as typed, and once a dictionary entry is picked, its title too, which finds old notes
