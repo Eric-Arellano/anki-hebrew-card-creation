@@ -61,3 +61,7 @@ export function toDefectiveKey(text: string): string {
 export function isSamePointedText(a: string, b: string): boolean {
   return a.normalize('NFC') === b.normalize('NFC');
 }
+
+export function includesPointedText(text: string, part: string): boolean {
+  return text.normalize('NFC').includes(part.normalize('NFC'));
+}

@@ -10,7 +10,7 @@ edit that file.
 
 **Status:** early, but it works end to end. Type a word, pick the dictionary entry it is, and the
 pointed form, gender, plural, feminine forms, binyan, root and infinitive fill in from Wiktionary.
-It composes every production answer.
+It suggests a variant card for an irregular plural, and composes every production answer.
 
 ## Requirements
 
