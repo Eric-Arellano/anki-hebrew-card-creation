@@ -1,14 +1,7 @@
 import type { Binyan } from '#lib/hebrew/binyan.ts';
+import type { Preposition } from '#lib/hebrew/preposition.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import type { FieldValues } from '#lib/note-type.ts';
-
-// The prepositions (מילות יחס) a verb commonly governs, roughly by frequency. Hebrew grammar counts
-// את, which marks a definite direct object, among them, and the production answer keeps it:
-// `לראות את`. אל, אחרי, בפני and מפני are left out: after a verb they are rare or formal, and the
-// deck is a beginner's.
-export const PREPOSITIONS = ['את', 'ל', 'ב', 'על', 'עם', 'מ'] as const;
-
-export type Preposition = (typeof PREPOSITIONS)[number];
 
 // The root is as `formatRoot` writes it. A verb with no preposition takes no object at all, like
 // ללכת, and its production answer is the word alone.

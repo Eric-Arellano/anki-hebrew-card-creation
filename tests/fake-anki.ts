@@ -4,7 +4,7 @@ import {
   type AllowedAction,
   type AnkiClient,
   AnkiError,
-} from '#lib/server/anki-client.ts';
+} from '#lib/server/anki/client.ts';
 
 type FakeActionHandlers = {
   [A in AllowedAction]?: (params: ActionParams[A]) => ActionResult<A>;

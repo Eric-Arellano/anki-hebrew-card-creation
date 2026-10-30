@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { z } from 'zod';
-import { AnkiError } from '#lib/server/anki-client.ts';
+import { AnkiError } from '#lib/server/anki/client.ts';
 
 /** The request's JSON body as `schema` parses it, else a 400 that says `message`. */
 export async function parseJsonBody<T>(

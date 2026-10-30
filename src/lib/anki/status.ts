@@ -1,4 +1,4 @@
-import type { AnkiStatus } from '#lib/api.ts';
+import type { AnkiStatus } from '#lib/api/anki.ts';
 import { DECK, FIELD_NAMES, NOTE_TYPE } from '#lib/note-type.ts';
 
 /** The note type's fields in Anki's order, or in `FIELD_NAMES`' order until Anki gives one. */

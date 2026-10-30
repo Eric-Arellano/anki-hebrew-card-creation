@@ -1,7 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { PREPOSITIONS, type Preposition, type VerbDraft } from '#lib/card/verb.ts';
+import type { VerbDraft } from '#lib/card/verb.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
+import { PREPOSITIONS, type Preposition } from '#lib/hebrew/preposition.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
