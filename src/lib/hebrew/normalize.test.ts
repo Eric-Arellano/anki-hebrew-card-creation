@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   hasNiqqud,
+  includesPointedText,
   isSamePointedText,
   toComparisonKey,
   toDefectiveKey,
@@ -111,5 +112,19 @@ describe('isSamePointedText', () => {
 
   test('tells different points apart', () => {
     expect(isSamePointedText('טוֹב', 'טוּב')).toBe(false);
+  });
+});
+
+describe('includesPointedText', () => {
+  // בָּ with its qamats and dagesh in either order.
+  const qamatsFirst = String.fromCodePoint(0x5d1, 0x5b8, 0x5bc);
+  const dageshFirst = String.fromCodePoint(0x5d1, 0x5bc, 0x5b8);
+
+  test('ignores the order of combining marks', () => {
+    expect(includesPointedText(`${qamatsFirst}תִּים טוֹבִים`, `${dageshFirst}תִּים`)).toBe(true);
+  });
+
+  test('tells different points apart', () => {
+    expect(includesPointedText('שָׁנִים טוֹבוֹת', 'שָׁנוֹת')).toBe(false);
   });
 });
