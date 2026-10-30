@@ -27,6 +27,11 @@ export function searchByFieldContainingKey(fieldName: string, comparisonKey: str
   return quoteSearchTerm(`${escapeInsideQuotedTerm(fieldName)}:*${wildcardPattern}*`);
 }
 
+/** Notes any of `terms` finds. One term needs no grouping, which keeps the common query plain. */
+export function searchForAny(terms: readonly string[]): string {
+  return terms.length === 1 ? (terms[0] ?? '') : `(${terms.join(' OR ')})`;
+}
+
 export function searchByNoteIds(noteIds: readonly number[]): string {
   return `nid:${noteIds.join(',')}`;
 }

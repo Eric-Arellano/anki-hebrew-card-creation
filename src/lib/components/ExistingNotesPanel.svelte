@@ -8,9 +8,10 @@ import {
 import { errorMessage } from '#lib/api/http.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 
-let { word }: { word: string } = $props();
+let { words }: { words: string[] } = $props();
 
-const query = $derived(word.trim());
+const searchedWords = $derived(words.map((word) => word.trim()).filter((word) => word !== ''));
+const query = $derived(searchedWords.join('\n'));
 // `{#await}` shows only the latest promise, so an older search's reply never lands.
 const search = $derived(
   query === ''
@@ -18,7 +19,7 @@ const search = $derived(
     : afterTypingPauses(
         query,
         () => query,
-        () => fetchExistingNotes(query),
+        () => fetchExistingNotes(searchedWords),
       ),
 );
 let browseFailure: string | undefined = $state();

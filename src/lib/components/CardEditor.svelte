@@ -87,7 +87,7 @@ onMount(checkAnki);
       <TextInput label="Hebrew word, without niqqud" lang="he" bind:value={draft.word} />
       <DefinitionsInput bind:definitions={draft.definitions} />
     </div>
-    <ExistingNotesPanel word={draft.word} />
+    <ExistingNotesPanel words={[draft.word]} />
     <LookupLinks word={draft.word} />
   </section>
 
