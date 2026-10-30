@@ -24,6 +24,16 @@ describe('_findExisting', () => {
     });
   });
 
+  describe('with several words', () => {
+    test('searches for each', async () => {
+      const { anki, calls } = fakeAnki({ findNotes: () => [] });
+      await _findExisting(anki, existingUrl(`?word=${encodeURIComponent('לדבר')}&word=x`));
+      expect(calls[0]?.params).toEqual({
+        query: '"note:Hebrew" ("Hebrew:*לדבר*" OR "Hebrew:*x*")',
+      });
+    });
+  });
+
   describe('without a word', () => {
     test('answers 400 without calling Anki', async () => {
       const { anki, calls } = fakeAnki({});
