@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import type { NounDraft } from '#lib/card/noun.ts';
+import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import Checkbox from './ui/Checkbox.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
@@ -14,9 +15,11 @@ const GENDERS: readonly { value: Gender; label: string }[] = [
 
 let {
   noun = $bindable(),
+  choices,
   children,
 }: {
   noun: NounDraft;
+  choices: PrefillChoices;
   // The pointed word, which leads the forms so every pointed form copied from a dictionary
   // sits in one row.
   children: Snippet;
@@ -35,6 +38,7 @@ let {
         label={noun.gender === 'm' ? 'Masculine plural, with niqqud' : 'Plural, with niqqud'}
         lang="he"
         required={false}
+        choices={choices.plural}
         bind:value={noun.plural}
       />
     {/if}
@@ -44,12 +48,14 @@ let {
         label="Feminine singular, with niqqud"
         lang="he"
         required={false}
+        choices={choices.feminine}
         bind:value={noun.feminine}
       />
       <TextInput
         label="Feminine plural, with niqqud"
         lang="he"
         required={false}
+        choices={choices.femininePlural}
         bind:value={noun.femininePlural}
       />
     {/if}

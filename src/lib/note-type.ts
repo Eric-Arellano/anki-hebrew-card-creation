@@ -51,7 +51,9 @@ type Field = { name: string } & (
 //   Production card checks the typed answer against.
 // - A noun's `Gender` and `Forms`, and a verb's `Binyan` and `Root`, are written entirely by their
 //   inputs.
-// - A verb's `Forms` is still undecided in the plan, so it stays blank rather than guessed.
+// - A verb's `Forms` stays blank rather than guessed. **Open:** what it should hold. Wiktionary
+//   offers the future 3ms, the passive counterpart and every cell of the conjugation table,
+//   pointed, though the dictionary index keeps none of them yet.
 //
 // The help speaks of what the human sees when studying, never of Anki's card names: the
 // Production context shows beside the English, the Reading context under the Hebrew. Neither may
