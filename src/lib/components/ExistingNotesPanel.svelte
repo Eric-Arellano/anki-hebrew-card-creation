@@ -8,6 +8,8 @@ import {
 import { errorMessage } from '#lib/api/http.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 
+// The word as typed, and once a dictionary entry is picked, its title too, which finds old notes
+// that hold a verb's past tense rather than its infinitive.
 let { words }: { words: string[] } = $props();
 
 const searchedWords = $derived(words.map((word) => word.trim()).filter((word) => word !== ''));
