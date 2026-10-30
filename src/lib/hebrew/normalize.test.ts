@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import { isSamePointedText, toComparisonKey } from './normalize.ts';
+import {
+  hasNiqqud,
+  isSamePointedText,
+  toComparisonKey,
+  toDefectiveKey,
+  toLookupKey,
+} from './normalize.ts';
 
 describe('toComparisonKey', () => {
   test('strips points', () => {
@@ -30,6 +36,43 @@ describe('toComparisonKey', () => {
 
   test('leaves an empty string empty', () => {
     expect(toComparisonKey(' ')).toBe('');
+  });
+});
+
+describe('hasNiqqud', () => {
+  test.each([
+    ['כֶּלֶב', true],
+    ['כלב', false],
+    ['ד־ב־ר', false],
+  ])('answers %s with %s', (text, expected) => {
+    expect(hasNiqqud(text)).toBe(expected);
+  });
+});
+
+describe('toLookupKey', () => {
+  test('strips points like a comparison key', () => {
+    expect(toLookupKey(' שֻׁלְחָן ')).toBe('שלחן');
+  });
+
+  test('drops a maqaf at either end', () => {
+    expect(toLookupKey('שְׁנַת־')).toBe('שנת');
+    expect(toLookupKey('לְ־')).toBe('ל');
+  });
+
+  test('keeps a maqaf inside', () => {
+    expect(toLookupKey('ד־ב־ר')).toBe('ד־ב־ר');
+  });
+});
+
+describe('toDefectiveKey', () => {
+  test('gives ktiv male and ktiv haser one key', () => {
+    expect(toDefectiveKey('שולחן')).toBe('שלחן');
+    expect(toDefectiveKey('שֻׁלְחָן')).toBe('שלחן');
+    expect(toDefectiveKey('עיניים')).toBe(toDefectiveKey('עֵינַיִם'));
+  });
+
+  test('keeps ו and י at the start and end of each word', () => {
+    expect(toDefectiveKey('ויקרא ילדי')).toBe('וקרא ילדי');
   });
 });
 

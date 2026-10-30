@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import type { PrefillChoices } from '#lib/card/prefill.ts';
 import { PREPOSITIONS, type Preposition, type VerbDraft } from '#lib/card/verb.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
@@ -13,9 +14,14 @@ const PREPOSITION_OPTIONS: readonly { value: Preposition | 'none'; label: string
 
 let {
   verb = $bindable(),
+  choices,
+  suggestedPrepositions,
   children,
 }: {
   verb: VerbDraft;
+  choices: PrefillChoices;
+  // From the dictionary, which names one for few verbs.
+  suggestedPrepositions: readonly Preposition[];
   // The pointed infinitive, which leads the row as the pointed word leads a noun's forms.
   children: Snippet;
 } = $props();
@@ -34,8 +40,15 @@ function setBinyan(value: Binyan | '') {
     legend="Preposition it takes (מילת יחס)"
     name="preposition"
     options={PREPOSITION_OPTIONS}
+    suggested={suggestedPrepositions}
     bind:value={verb.preposition}
   />
+  {#if suggestedPrepositions.length > 0}
+    <p class="hint">
+      Wiktionary suggests
+      <bdi lang="he">{suggestedPrepositions.join(', ')}</bdi>. Check it's the one you'll use.
+    </p>
+  {/if}
   <div class="forms-row">
     {@render children()}
     <label class="grid gap-1">
@@ -47,7 +60,12 @@ function setBinyan(value: Binyan | '') {
         {/each}
       </select>
     </label>
-    <TextInput label="Root, like דבר or ד.ב.ר" lang="he" bind:value={verb.root} />
+    <TextInput
+      label="Root, like דבר or ד.ב.ר"
+      lang="he"
+      choices={choices.root}
+      bind:value={verb.root}
+    />
   </div>
   {#if verb.root.trim() !== ''}
     <p class="hint" aria-live="polite">

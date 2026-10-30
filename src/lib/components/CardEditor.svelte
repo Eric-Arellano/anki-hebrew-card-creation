@@ -1,7 +1,13 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { type AnkiStatus, errorMessage, fetchAnkiStatus } from '#lib/api.ts';
+import {
+  type AnkiStatus,
+  type DictionaryCandidate,
+  errorMessage,
+  fetchAnkiStatus,
+  lookUpWord,
+} from '#lib/api.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { handOffFields } from '#lib/card/hand-off.ts';
 import {
@@ -11,19 +17,25 @@ import {
   INPUT_NAMES,
   missingInputs,
 } from '#lib/card/inputs.ts';
+import { pluralHints } from '#lib/card/noun.ts';
+import { type PrefillChoices, prefillDraft } from '#lib/card/prefill.ts';
 import {
+  type FieldKey,
   type FieldValues,
   PARTS_OF_SPEECH,
   type PartOfSpeech,
   shownFieldGroups,
 } from '#lib/note-type.ts';
+import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import DefinitionsInput from './DefinitionsInput.svelte';
+import DictionaryPanel from './DictionaryPanel.svelte';
 import ExistingNotesPanel from './ExistingNotesPanel.svelte';
 import HandOffBar from './HandOffBar.svelte';
 import LookupLinks from './LookupLinks.svelte';
 import NoteFields from './NoteFields.svelte';
 import NounInputs from './NounInputs.svelte';
+import PluralHints from './PluralHints.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 import VerbInputs from './VerbInputs.svelte';
@@ -39,7 +51,14 @@ const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
   label: PART_OF_SPEECH_LABELS[value],
 }));
 
+const VARIANT_ANSWERS = [
+  { field: 'variant1Answer', number: 1 },
+  { field: 'variant2Answer', number: 2 },
+] as const satisfies readonly { field: FieldKey; number: number }[];
+
 let draft: CardInputsDraft = $state(emptyDraft());
+// The dictionary entry the inputs were last filled from, until the human types another word.
+let picked: { candidate: DictionaryCandidate; choices: PrefillChoices } | undefined = $state.raw();
 // `undefined` while the check is in flight.
 let status: AnkiStatus | undefined = $state.raw();
 let edits: FieldValues = $state({});
@@ -51,15 +70,51 @@ const composed = $derived(inputs === undefined ? {} : composeFields(inputs));
 const shownGroups = $derived(
   draft.partOfSpeech === undefined ? [] : shownFieldGroups(fieldOrder(status), draft.partOfSpeech),
 );
-const ankiFields = $derived(
-  handOffFields({ composed, edits, shownFields: shownGroups.flatMap((group) => group.fields) }),
-);
+const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
+const ankiFields = $derived(handOffFields({ composed, edits, shownFields }));
 const ankiProblem = $derived(status && ankiStatusProblem(status));
 const missingInputsMessage = $derived.by(() => {
   const missing = missingInputs(draft);
   if (missing.length === 0) return undefined;
   return `Still needed: ${missing.map((key) => INPUT_NAMES[key]).join(', ')}`;
 });
+
+// Once an entry is picked, the word it filled in isn't looked up again.
+const lookupWord = $derived(picked === undefined ? draft.word.trim() : '');
+// `{#await}` shows only the latest promise, so an older lookup's reply never lands.
+const lookup = $derived(
+  lookupWord === ''
+    ? undefined
+    : afterTypingPauses(
+        lookupWord,
+        () => lookupWord,
+        () => lookUpWord(lookupWord),
+      ),
+);
+const wiktionaryEntry = $derived(
+  picked !== undefined ? true : lookup?.then((result) => result?.titleHasEntry),
+);
+const choices = $derived(picked?.choices ?? {});
+
+const hints = $derived(draft.partOfSpeech === 'noun' ? pluralHints(draft.noun, draft.pointed) : []);
+const variantSlots = $derived(
+  VARIANT_ANSWERS.filter(({ field }) => shownFields.includes(field)).map((variant) => ({
+    ...variant,
+    answer: edits[variant.field] ?? '',
+  })),
+);
+
+function pick(candidate: DictionaryCandidate) {
+  const prefill = prefillDraft($state.snapshot(draft), candidate);
+  draft = prefill.draft;
+  picked = { candidate, choices: prefill.choices };
+}
+
+// An infinitive is chosen as a pair, so choosing its pointed spelling writes its unpointed one.
+function chooseInfinitive(pointed: string) {
+  const infinitive = picked?.choices.infinitives?.find((choice) => choice.pointed === pointed);
+  draft.word = infinitive?.unpointed ?? '';
+}
 
 async function checkAnki() {
   status = undefined;
@@ -83,11 +138,22 @@ onMount(checkAnki);
        lookups are where the niqqud, gender and forms below come from. -->
   <section aria-label="Word" class="space-y-4">
     <div class="grid items-start gap-4 sm:grid-cols-2">
-      <TextInput label="Hebrew word, without niqqud" lang="he" bind:value={draft.word} />
+      <TextInput
+        label="Hebrew word, without niqqud"
+        lang="he"
+        bind:value={draft.word}
+        oninput={() => (picked = undefined)}
+      />
       <DefinitionsInput bind:definitions={draft.definitions} />
     </div>
-    <ExistingNotesPanel word={draft.word} />
-    <LookupLinks word={draft.word} />
+    <DictionaryPanel
+      {lookup}
+      picked={picked?.candidate}
+      onpick={pick}
+      onunpick={() => (picked = undefined)}
+    />
+    <ExistingNotesPanel words={[draft.word, ...(picked ? [picked.candidate.title] : [])]} />
+    <LookupLinks word={draft.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
   </section>
 
   <section aria-label="Word forms" class="space-y-4 border-t border-gray-200 pt-8">
@@ -98,12 +164,33 @@ onMount(checkAnki);
       bind:value={draft.partOfSpeech}
     />
     {#snippet pointedInput()}
-      <TextInput label="Hebrew word, with niqqud" lang="he" bind:value={draft.pointed} />
+      <TextInput
+        label="Hebrew word, with niqqud"
+        lang="he"
+        choices={choices.infinitives?.map((infinitive) => infinitive.pointed)}
+        onchoose={chooseInfinitive}
+        bind:value={draft.pointed}
+      />
     {/snippet}
     {#if draft.partOfSpeech === 'noun'}
-      <NounInputs bind:noun={draft.noun}> {@render pointedInput()} </NounInputs>
+      <NounInputs bind:noun={draft.noun} {choices}> {@render pointedInput()} </NounInputs>
+      <PluralHints
+        {hints}
+        variants={variantSlots}
+        onuse={(field, answer) => {
+          edits[field] = answer;
+        }}
+      />
     {:else if draft.partOfSpeech === 'verb'}
-      <VerbInputs bind:verb={draft.verb}> {@render pointedInput()} </VerbInputs>
+      <VerbInputs
+        bind:verb={draft.verb}
+        {choices}
+        suggestedPrepositions={picked?.candidate.partOfSpeech === 'verb'
+          ? picked.candidate.verb.prepositions
+          : []}
+      >
+        {@render pointedInput()}
+      </VerbInputs>
     {:else}
       <div class="forms-row">{@render pointedInput()}</div>
     {/if}

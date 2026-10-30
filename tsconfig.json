@@ -8,7 +8,9 @@
     "noFallthroughCasesInSwitch": true,
     // Node runs `scripts/` and the `.ts` modules they import by stripping types, which can't
     // handle enums, namespaces or parameter properties.
-    "erasableSyntaxOnly": true
+    "erasableSyntaxOnly": true,
+    // SvelteKit's own types, and Node's for the server code and `scripts/`.
+    "types": ["$app/types", "node"]
   },
-  "include": ["src", "tests", "vite.config.ts"]
+  "include": ["src", "tests", "scripts", "vite.config.ts"]
 }

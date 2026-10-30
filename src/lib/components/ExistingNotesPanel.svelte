@@ -6,23 +6,25 @@ import {
   errorMessage,
   fetchExistingNotes,
 } from '#lib/api.ts';
+import { afterTypingPauses } from '#lib/typing-pause.ts';
 
-// Waits for typing to pause, so each keystroke doesn't search Anki.
-const SEARCH_DELAY_MS = 300;
+// The word as typed, and once a dictionary entry is picked, its title too, which finds old notes
+// that hold a verb's past tense rather than its infinitive.
+let { words }: { words: string[] } = $props();
 
-let { word }: { word: string } = $props();
-
-const query = $derived(word.trim());
+const searchedWords = $derived(words.map((word) => word.trim()).filter((word) => word !== ''));
+const query = $derived(searchedWords.join('\n'));
 // `{#await}` shows only the latest promise, so an older search's reply never lands.
-const search = $derived(query === '' ? undefined : searchAfterPause(query));
+const search = $derived(
+  query === ''
+    ? undefined
+    : afterTypingPauses(
+        query,
+        () => query,
+        () => fetchExistingNotes(searchedWords),
+      ),
+);
 let browseFailure: string | undefined = $state();
-
-async function searchAfterPause(searchedWord: string): Promise<ExistingNotes | undefined> {
-  await new Promise((resolve) => setTimeout(resolve, SEARCH_DELAY_MS));
-  // Typing went on, and the newer search replaces this one.
-  if (searchedWord !== query) return undefined;
-  return fetchExistingNotes(searchedWord);
-}
 
 async function browse(notes: ExistingNotes) {
   browseFailure = undefined;

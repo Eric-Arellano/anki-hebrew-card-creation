@@ -12,3 +12,12 @@ export function productionTov({
   if (pluralOnly) return gender === 'f' ? 'טובות' : 'טובים';
   return gender === 'f' ? 'טובה' : 'טוב';
 }
+
+/**
+ * A variant answer for the pointed `plural`, which agrees with the noun's grammatical gender, not
+ * with the plural's suffix: “אָבוֹת טוֹבִים”, “שָׁנִים טוֹבוֹת”. An `mf` noun can take either.
+ */
+export function pluralVariantAnswers(plural: string, gender: Gender): string[] {
+  const tovs = { m: ['טוֹבִים'], f: ['טוֹבוֹת'], mf: ['טוֹבִים', 'טוֹבוֹת'] }[gender];
+  return tovs.map((tov) => `${plural.trim()} ${tov}`);
+}

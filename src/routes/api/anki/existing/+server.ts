@@ -8,7 +8,7 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = ({ url }) => _findExisting(anki, url);
 
 export async function _findExisting(anki: AnkiClient, url: URL): Promise<Response> {
-  const word = url.searchParams.get('word');
-  if (word === null) error(400, 'word is required');
-  return Response.json(await withAnkiErrorsAs502(() => findExistingNotes(anki, word)));
+  const words = url.searchParams.getAll('word');
+  if (words.length === 0) error(400, 'word is required');
+  return Response.json(await withAnkiErrorsAs502(() => findExistingNotes(anki, words)));
 }
