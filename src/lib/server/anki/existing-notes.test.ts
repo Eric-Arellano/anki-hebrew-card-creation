@@ -24,7 +24,7 @@ describe('findExistingNotes', () => {
   describe('when the word has its own note', () => {
     test('finds it as an exact match', async () => {
       const { anki, calls } = ankiWithNotes(kelevNotes);
-      expect(await findExistingNotes(anki, 'כלב')).toEqual({
+      expect(await findExistingNotes(anki, ['כלב'])).toEqual({
         exactMatches: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
         relatedMatches: [],
       });
@@ -36,7 +36,7 @@ describe('findExistingNotes', () => {
 
     test('finds it from pointed input', async () => {
       const { anki, calls } = ankiWithNotes(kelevNotes);
-      expect((await findExistingNotes(anki, ' כֶּלֶב ')).exactMatches).toHaveLength(1);
+      expect((await findExistingNotes(anki, [' כֶּלֶב '])).exactMatches).toHaveLength(1);
       expect(calls[0]?.params).toEqual({ query: '"note:Hebrew" "Hebrew:*כלב*"' });
     });
   });
@@ -44,7 +44,7 @@ describe('findExistingNotes', () => {
   describe('when other notes contain the word', () => {
     test('lists them as related matches', async () => {
       const { anki } = ankiWithNotes(bayitNotes);
-      expect(await findExistingNotes(anki, 'בית')).toEqual({
+      expect(await findExistingNotes(anki, ['בית'])).toEqual({
         exactMatches: [
           { noteId: 1752114960166, unpointed: 'בית', pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים` },
         ],
@@ -62,10 +62,27 @@ describe('findExistingNotes', () => {
     });
   });
 
+  describe('for several words', () => {
+    test('finds the notes that hold any of them, each as an exact match', async () => {
+      const { anki, calls } = ankiWithNotes(kelevChatulDagNotes);
+      const found = await findExistingNotes(anki, ['כלב', 'חָתוּל']);
+      expect(found.exactMatches.map((note) => note.unpointed)).toEqual(['כלב', 'חתול']);
+      expect(calls[0]?.params).toEqual({
+        query: '"note:Hebrew" ("Hebrew:*כלב*" OR "Hebrew:*חתול*")',
+      });
+    });
+
+    test('searches for words with the same key once', async () => {
+      const { anki, calls } = ankiWithNotes(kelevNotes);
+      await findExistingNotes(anki, ['כלב', 'כֶּלֶב', ' ']);
+      expect(calls[0]?.params).toEqual({ query: '"note:Hebrew" "Hebrew:*כלב*"' });
+    });
+  });
+
   describe('when nothing matches', () => {
     test('does not ask for note details', async () => {
       const { anki, calls } = ankiWithNotes([]);
-      expect(await findExistingNotes(anki, 'זזזז')).toEqual({
+      expect(await findExistingNotes(anki, ['זזזז'])).toEqual({
         exactMatches: [],
         relatedMatches: [],
       });
@@ -76,7 +93,7 @@ describe('findExistingNotes', () => {
   describe('when the word is blank', () => {
     test('asks Anki nothing', async () => {
       const { anki, calls } = ankiWithNotes(kelevChatulDagNotes);
-      expect(await findExistingNotes(anki, ' ')).toEqual({
+      expect(await findExistingNotes(anki, [' '])).toEqual({
         exactMatches: [],
         relatedMatches: [],
       });

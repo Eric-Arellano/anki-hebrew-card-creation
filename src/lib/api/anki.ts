@@ -27,8 +27,10 @@ export function fetchAnkiStatus(): Promise<AnkiStatus> {
   return getJson('/api/anki/status');
 }
 
-export function fetchExistingNotes(word: string): Promise<ExistingNotes> {
-  return getJson(`/api/anki/existing?word=${encodeURIComponent(word)}`);
+/** The notes that hold any of `words`. */
+export function fetchExistingNotes(words: readonly string[]): Promise<ExistingNotes> {
+  const query = words.map((word) => `word=${encodeURIComponent(word)}`).join('&');
+  return getJson(`/api/anki/existing?${query}`);
 }
 
 export function browseNotes(noteIds: readonly number[]): Promise<void> {

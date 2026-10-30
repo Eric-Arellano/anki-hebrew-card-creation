@@ -4,6 +4,7 @@ import {
   searchByFieldContainingKey,
   searchByNoteIds,
   searchByNoteType,
+  searchForAny,
 } from './search.ts';
 
 describe('quoteSearchTerm', () => {
@@ -52,5 +53,17 @@ describe('searchByFieldContainingKey', () => {
 describe('searchByNoteIds', () => {
   test('joins ids with commas', () => {
     expect(searchByNoteIds([1751686072898, 1751714132957])).toBe('nid:1751686072898,1751714132957');
+  });
+});
+
+describe('searchForAny', () => {
+  test('joins terms with OR, grouped', () => {
+    expect(searchForAny(['"a"', '"b"'])).toBe('("a" OR "b")');
+  });
+
+  describe('for one term', () => {
+    test('leaves it as it is', () => {
+      expect(searchForAny(['"a"'])).toBe('"a"');
+    });
   });
 });
