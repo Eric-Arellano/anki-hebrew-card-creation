@@ -3,26 +3,25 @@ import {
   browseNotes,
   type ExistingNote,
   type ExistingNotes,
-  errorMessage,
   fetchExistingNotes,
-} from '#lib/api.ts';
-
-// Waits for typing to pause, so each keystroke doesn't search Anki.
-const SEARCH_DELAY_MS = 300;
+} from '#lib/api/anki.ts';
+import { errorMessage } from '#lib/api/http.ts';
+import { afterTypingPauses } from '#lib/typing-pause.ts';
 
 let { word }: { word: string } = $props();
 
 const query = $derived(word.trim());
 // `{#await}` shows only the latest promise, so an older search's reply never lands.
-const search = $derived(query === '' ? undefined : searchAfterPause(query));
+const search = $derived(
+  query === ''
+    ? undefined
+    : afterTypingPauses(
+        query,
+        () => query,
+        () => fetchExistingNotes(query),
+      ),
+);
 let browseFailure: string | undefined = $state();
-
-async function searchAfterPause(searchedWord: string): Promise<ExistingNotes | undefined> {
-  await new Promise((resolve) => setTimeout(resolve, SEARCH_DELAY_MS));
-  // Typing went on, and the newer search replaces this one.
-  if (searchedWord !== query) return undefined;
-  return fetchExistingNotes(searchedWord);
-}
 
 async function browse(notes: ExistingNotes) {
   browseFailure = undefined;

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { AnkiError, createAnkiClient } from './anki-client.ts';
+import { AnkiError, createAnkiClient } from './client.ts';
 
 const ANKI_URL = 'http://127.0.0.1:8765';
 

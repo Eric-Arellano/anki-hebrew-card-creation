@@ -37,7 +37,7 @@ Forvo answers 403 to anything that isn't a browser.*
 
 The note type lives in `src/lib/note-type.ts`; each other format lands as a typed constant beside
 the code that implements it, not up front. `BINYANIM` is in `src/lib/hebrew/binyan.ts` and
-`PREPOSITIONS` in `src/lib/card/verb.ts`. Still to land, with their features:
+`PREPOSITIONS` in `src/lib/hebrew/preposition.ts`. Still to land, with their features:
 
 - **The aliases that convert to a binyan**, joining `binyan.ts` with the prefill that first needs
   them: `pa'al` (paal, qal, kal), `nif'al` (nifal), `pi'el` (piel), `pu'al` (pual), `hif'il`
@@ -209,7 +209,7 @@ for a new `pronunciation_he_<word>.mp3`, show it for me to confirm, and attach i
 
 ## PR 2 — lookup in the editor
 
-- `/api/lookup`, with its reply type and call in `src/lib/api.ts`, and a candidate picker;
+- `/api/lookup`, with its reply type and call in `src/lib/api/`, and a candidate picker;
   prefill after I pick; the glosses panel; the suggested preposition chip.
 - The binyan aliases in `src/lib/hebrew/binyan.ts`, tested on every alias.
 - The irregular-plural hint (`src/lib/hebrew/plural.ts`), tested on flagged `עיר`/`ערים`,

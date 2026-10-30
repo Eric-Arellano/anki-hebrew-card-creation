@@ -1,9 +1,9 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import { searchByFieldContainingKey, searchByNoteType } from '#lib/anki/search.ts';
-import type { ExistingNotes } from '#lib/api.ts';
+import type { ExistingNotes } from '#lib/api/anki.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 import { FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
-import type { AnkiClient, NoteInfo } from '#lib/server/anki-client.ts';
+import type { AnkiClient, NoteInfo } from '#lib/server/anki/client.ts';
 
 function partitionByExactMatch(notes: readonly NoteInfo[], comparisonKey: string): ExistingNotes {
   const existingNotes = notes.map((note) => ({

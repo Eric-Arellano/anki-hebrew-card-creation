@@ -1,5 +1,6 @@
 <script lang="ts">
-import { errorMessage, openAddWindow } from '#lib/api.ts';
+import { openAddWindow } from '#lib/api/anki.ts';
+import { errorMessage } from '#lib/api/http.ts';
 
 let {
   fields,

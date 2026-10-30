@@ -1,7 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { type AnkiStatus, errorMessage, fetchAnkiStatus } from '#lib/api.ts';
+import { type AnkiStatus, fetchAnkiStatus } from '#lib/api/anki.ts';
+import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { handOffFields } from '#lib/card/hand-off.ts';
 import {
