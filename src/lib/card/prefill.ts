@@ -6,6 +6,7 @@
 // **Open:** whether it should ever start from the glosses.
 import type { DictionaryCandidate, DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
+import { toDefectiveKey } from '#lib/hebrew/normalize.ts';
 
 // Each list holds two or more values.
 export type PrefillChoices = {
@@ -64,6 +65,25 @@ export function prefillDraft(
     case 'other':
       return { draft: { ...draft, ...word, partOfSpeech: 'other' }, choices: {} };
   }
+}
+
+/** `draft` with each input `prefillDraft` writes back as it was in `before`, the draft it was given. */
+export function undoPrefill(draft: CardInputsDraft, before: CardInputsDraft): CardInputsDraft {
+  return {
+    ...draft,
+    word: before.word,
+    pointed: before.pointed,
+    partOfSpeech: before.partOfSpeech,
+    noun: before.noun,
+    verb: { ...draft.verb, binyan: before.verb.binyan, root: before.verb.root },
+  };
+}
+
+// Retyping keeps the entry while the word still spells it, ignoring ו and י, as when `אוירון` is
+// written `אווירון`. Typing into a word the entry left blank, like an infinitive it gives only
+// pointed, keeps it too.
+export function stillSpellsEntry(word: string, filledWord: string): boolean {
+  return filledWord === '' || toDefectiveKey(word) === toDefectiveKey(filledWord);
 }
 
 function onlyValue(values: readonly string[]): string {

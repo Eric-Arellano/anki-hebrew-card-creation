@@ -13,7 +13,12 @@ import {
   INPUT_NAMES,
   missingInputs,
 } from '#lib/card/inputs.ts';
-import { type PrefillChoices, prefillDraft } from '#lib/card/prefill.ts';
+import {
+  type PrefillChoices,
+  prefillDraft,
+  stillSpellsEntry,
+  undoPrefill,
+} from '#lib/card/prefill.ts';
 import {
   type FieldValues,
   PARTS_OF_SPEECH,
@@ -46,8 +51,16 @@ const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
 }));
 
 let draft: CardInputsDraft = $state(emptyDraft());
-// The dictionary entry the inputs were last filled from, until the human types another word.
-let picked: { candidate: DictionaryCandidate; choices: PrefillChoices } | undefined = $state.raw();
+// The dictionary entry the inputs were last filled from, until the human types another word. The
+// draft from before, and the word the entry filled in, are what undo it.
+let picked:
+  | {
+      candidate: DictionaryCandidate;
+      choices: PrefillChoices;
+      before: CardInputsDraft;
+      filledWord: string;
+    }
+  | undefined = $state.raw();
 // `undefined` while the check is in flight.
 let status: AnkiStatus | undefined = $state.raw();
 let edits: FieldValues = $state({});
@@ -86,9 +99,24 @@ const wiktionaryEntry = $derived(
 const choices = $derived(picked?.choices ?? {});
 
 function pick(candidate: DictionaryCandidate) {
-  const prefill = prefillDraft($state.snapshot(draft), candidate);
+  const before = $state.snapshot(draft);
+  const prefill = prefillDraft(before, candidate);
   draft = prefill.draft;
-  picked = { candidate, choices: prefill.choices };
+  picked = { candidate, choices: prefill.choices, before, filledWord: prefill.draft.word };
+}
+
+// Back to the word as typed, so its entries are offered again.
+function unpick() {
+  if (picked === undefined) return;
+  draft = undoPrefill($state.snapshot(draft), picked.before);
+  picked = undefined;
+}
+
+// Another word, which the entry's forms don't fit.
+function retype() {
+  if (picked === undefined || stillSpellsEntry(draft.word, picked.filledWord)) return;
+  draft = { ...undoPrefill($state.snapshot(draft), picked.before), word: draft.word };
+  picked = undefined;
 }
 
 // An infinitive is chosen as a pair, so choosing its pointed spelling writes its unpointed one.
@@ -123,16 +151,11 @@ onMount(checkAnki);
         label="Hebrew word, without niqqud"
         lang="he"
         bind:value={draft.word}
-        oninput={() => (picked = undefined)}
+        oninput={retype}
       />
       <DefinitionsInput bind:definitions={draft.definitions} />
     </div>
-    <DictionaryPanel
-      {lookup}
-      picked={picked?.candidate}
-      onpick={pick}
-      onunpick={() => (picked = undefined)}
-    />
+    <DictionaryPanel {lookup} picked={picked?.candidate} onpick={pick} onunpick={unpick} />
     <ExistingNotesPanel words={[draft.word, ...(picked ? [picked.candidate.title] : [])]} />
     <LookupLinks word={draft.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
   </section>

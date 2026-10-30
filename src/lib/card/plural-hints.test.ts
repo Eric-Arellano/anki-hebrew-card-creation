@@ -34,6 +34,15 @@ describe('pluralHints', () => {
     });
   });
 
+  describe('for the same plural typed under both genders', () => {
+    test('suggests it once', () => {
+      // A slip, but one that would otherwise show the hint twice.
+      expect(
+        pluralHints({ ...shulchan, feminine: 'כַּלְבָּה', femininePlural: 'שֻׁלְחָנוֹת' }, 'שֻׁלְחָן'),
+      ).toEqual([{ plural: 'שֻׁלְחָנוֹת', reason: 'masculine-with-ot', answers: ['שֻׁלְחָנוֹת טוֹבִים'] }]);
+    });
+  });
+
   describe('for a feminine noun', () => {
     test('ignores the counterpart typed under masculine', () => {
       expect(

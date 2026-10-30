@@ -1,12 +1,13 @@
 <script lang="ts">
 import type { NounDraft } from '#lib/card/noun.ts';
 import { pluralHints } from '#lib/card/plural-hints.ts';
+import { includesPointedText } from '#lib/hebrew/normalize.ts';
 import type { IrregularPlural } from '#lib/hebrew/plural.ts';
 import type { FieldKey, FieldValues } from '#lib/note-type.ts';
 
 const REASONS = {
-  'masculine-with-ot': 'a masculine noun, but its plural ends in ־וֹת',
-  'feminine-with-im': 'a feminine noun, but its plural ends in ־ִים',
+  'masculine-with-ot': 'a masculine noun, but its plural ends in ־ות',
+  'feminine-with-im': 'a feminine noun, but its plural ends in ־ים',
   'changed-stem': 'its plural changes the word itself',
 } satisfies Record<IrregularPlural, string>;
 
@@ -41,7 +42,7 @@ const freeVariant = $derived(variants.find((variant) => variant.answer.trim() ==
 </script>
 
 {#each hints as hint (hint.plural)}
-  {@const usedBy = variants.find((variant) => variant.answer.includes(hint.plural))}
+  {@const usedBy = variants.find((variant) => includesPointedText(variant.answer, hint.plural))}
   <section aria-label="Irregular plural" class="space-y-2 rounded-lg bg-amber-50 px-4 py-3">
     <p>
       <bdi lang="he" class="text-xl">{hint.plural}</bdi>

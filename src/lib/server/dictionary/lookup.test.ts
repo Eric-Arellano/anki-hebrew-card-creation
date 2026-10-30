@@ -22,6 +22,15 @@ function pointedCandidates(word: string): (string | undefined)[] {
   return look(word).candidates.map((candidate) => candidate.pointed);
 }
 
+/** A fixture index changed by `change`, for data the fixture's real lines don't have. */
+async function changedIndex(change: (db: DatabaseSync) => void) {
+  const changed = await buildFixtureIndex();
+  const db = new DatabaseSync(changed.index);
+  change(db);
+  db.close();
+  return changed;
+}
+
 function candidate(word: string, pointed: string): DictionaryCandidate {
   const found = look(word).candidates.find((other) => other.pointed === pointed);
   if (found === undefined) throw new Error(`${word} found no ${pointed}`);
@@ -107,6 +116,52 @@ describe('lookUp', () => {
     });
   });
 
+  describe('for a word typed with direction marks', () => {
+    test('finds it as if typed without them', () => {
+      expect(look('\u200Fהרשאה\u200F')).toMatchObject({
+        match: 'exact',
+        titleHasEntry: true,
+        candidates: [{ title: 'הרשאה', pointed: 'הַרְשָׁאָה' }],
+      });
+    });
+  });
+
+  describe('for a key many lemmas share', () => {
+    test('lists only the first twelve', async () => {
+      const changed = await changedIndex((db) => {
+        db.exec(`INSERT INTO keys (key, defective_key, entry_id, is_title)
+                 SELECT 'זזזז', 'זזזז', id, 0 FROM entries WHERE is_lemma = 1 LIMIT 13`);
+      });
+      expect(look('זזזז', changed).candidates).toHaveLength(12);
+      changed.remove();
+    });
+  });
+
+  describe('for a form-of target that leads back to itself', () => {
+    test('stops following it', async () => {
+      const changed = await changedIndex((db) => {
+        db.exec(`UPDATE entries SET facts = json_set(facts, '$.formOf', json('["ערים"]'))
+                 WHERE word = 'ערים'`);
+      });
+      expect(look('ערים', changed).candidates.map((found) => found.pointed)).toEqual(['עִיר']);
+      changed.remove();
+    });
+  });
+
+  describe('for a pointed form-of target no entry is pointed like', () => {
+    test('follows it to every entry with its title', async () => {
+      const changed = await changedIndex((db) => {
+        db.exec(`UPDATE entries SET facts = json_set(facts, '$.formOf', json('["עֵיר"]'))
+                 WHERE word = 'ערים'`);
+      });
+      expect(look('ערים', changed).candidates.map((found) => found.pointed)).toEqual([
+        'עִיר',
+        'עַיִר',
+      ]);
+      changed.remove();
+    });
+  });
+
   describe('for a word not in the dictionary', () => {
     test('finds nothing, and no Wiktionary entry', () => {
       expect(look('זזזז')).toEqual({
@@ -150,6 +205,21 @@ describe('lookUp', () => {
       expect(candidate('חתול', 'חָתוּל')).toMatchObject({
         noun: { feminines: ['חֲתוּלָה'], femininePlurals: ['חֲתוּלוֹת'] },
       });
+    });
+
+    test('gives a canonical form without niqqud no pointed spelling', () => {
+      expect(look('שמים').candidates.map((found) => [found.title, found.pointed])).toEqual([
+        ['שמים', undefined],
+      ]);
+    });
+
+    test('without a pointed spelling of its own, takes no feminine plural from the feminine', async () => {
+      const changed = await changedIndex((db) => {
+        db.exec("UPDATE entries SET pointed = NULL WHERE pointed = 'חָתוּל'");
+      });
+      const chatul = look('חתול', changed).candidates.find((found) => found.title === 'חתול');
+      expect(chatul).toMatchObject({ noun: { feminines: ['חֲתוּלָה'], femininePlurals: [] } });
+      changed.remove();
     });
 
     test('gives a dual as the plural of a noun without one', () => {

@@ -1,4 +1,6 @@
 <script lang="ts">
+import { isSamePointedText } from '#lib/hebrew/normalize.ts';
+
 let {
   label,
   lang,
@@ -47,7 +49,7 @@ function choose(choice: string) {
           type="button"
           class="chip text-lg aria-pressed:border-blue-700 aria-pressed:bg-blue-700 aria-pressed:text-white"
           {lang}
-          aria-pressed={value === choice}
+          aria-pressed={isSamePointedText(value, choice)}
           onclick={() => choose(choice)}
         >
           {choice}

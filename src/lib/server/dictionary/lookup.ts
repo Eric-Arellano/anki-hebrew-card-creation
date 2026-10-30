@@ -66,8 +66,7 @@ export function withDictionary<T>(
  */
 export function lookUp(db: DatabaseSync, word: string, staleIndex: boolean): DictionaryLookup {
   const key = toLookupKey(word);
-  const titleHasEntry =
-    key !== '' && db.prepare('SELECT 1 FROM entries WHERE word = ? LIMIT 1').get(key) !== undefined;
+  const titleHasEntry = key !== '' && entriesTitled(db, key).length > 0;
   const reply = { titleHasEntry, staleIndex };
   if (key === '') return { ...reply, match: 'exact', candidates: [] };
 
@@ -99,8 +98,15 @@ function entriesWithKey(db: DatabaseSync, column: 'key' | 'defective_key', key: 
     .map(toEntry);
 }
 
+// By the title's key, which a title with a maqaf or a direction control differs from.
 function entriesTitled(db: DatabaseSync, title: string): Entry[] {
-  return db.prepare('SELECT * FROM entries WHERE word = ? ORDER BY id').all(title).map(toEntry);
+  return db
+    .prepare(
+      `SELECT entries.* FROM keys JOIN entries ON entries.id = keys.entry_id
+       WHERE keys.key = ? AND keys.is_title = 1 ORDER BY entries.id`,
+    )
+    .all(toLookupKey(title))
+    .map(toEntry);
 }
 
 // The entries that are lemmas, then the lemmas their form-of and alt-of targets lead to, so that
@@ -126,7 +132,7 @@ function lemmasOf(db: DatabaseSync, entries: readonly Entry[], depth = 0): Entry
 // An alt-of target is a ktiv male title. A form-of target may be pointed, which tells `עִיר`
 // (city) from `עַיִר` (donkey foal), both titled `עיר`; a bare one leaves every entry so titled.
 function entriesForTarget(db: DatabaseSync, target: string): Entry[] {
-  const titled = entriesTitled(db, toLookupKey(target));
+  const titled = entriesTitled(db, target);
   if (!hasNiqqud(target)) return titled;
   const pointedAlike = titled.filter(
     (entry) => entry.pointed !== null && isSamePointedText(entry.pointed, target),

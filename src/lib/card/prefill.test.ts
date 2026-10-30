@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { type CardInputsDraft, emptyDraft } from './inputs.ts';
-import { prefillDraft } from './prefill.ts';
+import { prefillDraft, stillSpellsEntry, undoPrefill } from './prefill.ts';
 
 // As the lookup answers for the fixture dictionary.
 const kelev: DictionaryCandidate = {
@@ -35,6 +35,14 @@ const diber: DictionaryCandidate = {
   },
 };
 
+const kelevNoun = {
+  gender: 'm',
+  pluralOnly: false,
+  plural: 'כְּלָבִים',
+  feminine: 'כַּלְבָּה',
+  femininePlural: 'כְּלָבוֹת',
+} as const;
+
 // What the human typed before picking.
 const typed: CardInputsDraft = { ...emptyDraft(), word: 'כלבים', definitions: ['dog'] };
 
@@ -47,13 +55,7 @@ describe('prefillDraft', () => {
           pointed: 'כֶּלֶב',
           definitions: ['dog'],
           partOfSpeech: 'noun',
-          noun: {
-            gender: 'm',
-            pluralOnly: false,
-            plural: 'כְּלָבִים',
-            feminine: 'כַּלְבָּה',
-            femininePlural: 'כְּלָבוֹת',
-          },
+          noun: kelevNoun,
           verb: typed.verb,
         },
         choices: {},
@@ -95,7 +97,26 @@ describe('prefillDraft', () => {
             ...kelev,
             noun: { ...kelev.noun, gender: { gender: 'm', pluralOnly: true } },
           }).draft.noun,
-        ).toMatchObject({ gender: 'm', pluralOnly: true });
+        ).toEqual({ ...kelevNoun, pluralOnly: true });
+      });
+    });
+
+    describe('with two feminines and two feminine plurals', () => {
+      test('leaves both blank and offers each pair', () => {
+        const feminines = ['חֲתוּלָה', 'חֲתֻלָּה'];
+        const femininePlurals = ['חֲתוּלוֹת', 'חֲתֻלּוֹת'];
+        const { draft, choices } = prefillDraft(typed, {
+          ...kelev,
+          noun: { ...kelev.noun, feminines, femininePlurals },
+        });
+        expect([draft.noun.feminine, draft.noun.femininePlural]).toEqual(['', '']);
+        expect(choices).toEqual({ feminine: feminines, femininePlural: femininePlurals });
+      });
+    });
+
+    describe('without a pointed spelling', () => {
+      test('leaves the pointed word blank', () => {
+        expect(prefillDraft(typed, { ...kelev, pointed: undefined }).draft.pointed).toBe('');
       });
     });
   });
@@ -150,6 +171,16 @@ describe('prefillDraft', () => {
       });
     });
 
+    describe('with a binyan the deck lacks', () => {
+      test('unchooses the binyan chosen', () => {
+        const draft = { ...typed, verb: { ...typed.verb, binyan: "pi'el" as const } };
+        expect(
+          prefillDraft(draft, { ...diber, verb: { ...diber.verb, binyan: undefined } }).draft.verb
+            .binyan,
+        ).toBeUndefined();
+      });
+    });
+
     describe('with two roots', () => {
       test('leaves the root blank and offers both', () => {
         const { draft, choices } = prefillDraft(typed, { ...diber, roots: ['ד־ב־ר', 'ד־ב־ב'] });
@@ -176,5 +207,38 @@ describe('prefillDraft', () => {
         choices: {},
       });
     });
+  });
+});
+
+describe('undoPrefill', () => {
+  test('puts back every input the entry filled, and keeps the rest', () => {
+    const before: CardInputsDraft = {
+      ...typed,
+      pointed: 'כְּלָבִים',
+      verb: { binyan: undefined, root: '', preposition: 'עם' },
+    };
+    const filled = prefillDraft(before, diber).draft;
+    const edited = {
+      ...filled,
+      definitions: ['to speak'],
+      verb: { ...filled.verb, preposition: 'על' as const },
+    };
+    expect(undoPrefill(edited, before)).toEqual({
+      ...before,
+      definitions: ['to speak'],
+      verb: { ...before.verb, preposition: 'על' },
+    });
+  });
+});
+
+describe('stillSpellsEntry', () => {
+  test.each([
+    ['אווירון', 'אוירון', true],
+    ['שלחן', 'שולחן', true],
+    ['כל', 'כלב', false],
+    ['חתול', 'כלב', false],
+    ['ל', '', true],
+  ])('answers %s typed over %j with %s', (word, filledWord, expected) => {
+    expect(stillSpellsEntry(word, filledWord)).toBe(expected);
   });
 });

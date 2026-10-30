@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import {
   hasNiqqud,
+  includesPointedText,
   isSamePointedText,
   toComparisonKey,
   toDefectiveKey,
   toLookupKey,
+  withoutDirectionControls,
 } from './normalize.ts';
 
 describe('toComparisonKey', () => {
@@ -34,8 +36,23 @@ describe('toComparisonKey', () => {
     expect(toComparisonKey(`בית${String.fromCodePoint(0xa0)}\t ספר`)).toBe('בית ספר');
   });
 
+  test('strips direction controls', () => {
+    expect(toComparisonKey('\u202Bהַרְשָׁאָה\u202C\u200F')).toBe('הרשאה');
+  });
+
   test('leaves an empty string empty', () => {
     expect(toComparisonKey(' ')).toBe('');
+  });
+});
+
+describe('withoutDirectionControls', () => {
+  test.each([
+    ['an embedding', '\u202Bסקיני ג׳ינס\u202C', 'סקיני ג׳ינס'],
+    ['an override', '\u202Eיָשְׁפֵה\u202C', 'יָשְׁפֵה'],
+    ['an isolate', '\u2067זָוִית חַדָּה\u2069', 'זָוִית חַדָּה'],
+    ['a mark', '\u200Fכֶּלֶב\u200E\u061C', 'כֶּלֶב'],
+  ])('strips %s and keeps the points', (_, text, stripped) => {
+    expect(withoutDirectionControls(text)).toBe(stripped);
   });
 });
 
@@ -59,9 +76,12 @@ describe('toLookupKey', () => {
     expect(toLookupKey('לְ־')).toBe('ל');
   });
 
-  test('keeps a maqaf inside', () => {
-    expect(toLookupKey('ד־ב־ר')).toBe('ד־ב־ר');
-  });
+  test.each(['בֵּית־קָפֶה', 'בית קפה', 'בית-קפה', 'בֵּית ־קָפֶה'])(
+    'joins the words of %s with a space',
+    (compound) => {
+      expect(toLookupKey(compound)).toBe('בית קפה');
+    },
+  );
 });
 
 describe('toDefectiveKey', () => {
@@ -73,6 +93,10 @@ describe('toDefectiveKey', () => {
 
   test('keeps ו and י at the start and end of each word', () => {
     expect(toDefectiveKey('ויקרא ילדי')).toBe('וקרא ילדי');
+  });
+
+  test('counts a word after a maqaf as a word of its own', () => {
+    expect(toDefectiveKey('בית־ויטמין')).toBe('בת וטמן');
   });
 });
 
@@ -88,5 +112,19 @@ describe('isSamePointedText', () => {
 
   test('tells different points apart', () => {
     expect(isSamePointedText('טוֹב', 'טוּב')).toBe(false);
+  });
+});
+
+describe('includesPointedText', () => {
+  // בָּ with its qamats and dagesh in either order.
+  const qamatsFirst = String.fromCodePoint(0x5d1, 0x5b8, 0x5bc);
+  const dageshFirst = String.fromCodePoint(0x5d1, 0x5bc, 0x5b8);
+
+  test('ignores the order of combining marks', () => {
+    expect(includesPointedText(`${qamatsFirst}תִּים טוֹבִים`, `${dageshFirst}תִּים`)).toBe(true);
+  });
+
+  test('tells different points apart', () => {
+    expect(includesPointedText('שָׁנִים טוֹבוֹת', 'שָׁנוֹת')).toBe(false);
   });
 });

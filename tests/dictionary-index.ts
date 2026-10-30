@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { buildIndex } from '#lib/server/dictionary/build.ts';
 import type { DictionaryPaths } from '#lib/server/dictionary/files.ts';
 
-const FIXTURE = fileURLToPath(new URL('./fixtures/kaikki/hebrew.jsonl', import.meta.url));
+export const DICTIONARY_FIXTURE = fileURLToPath(
+  new URL('./fixtures/kaikki/hebrew.jsonl', import.meta.url),
+);
 
 /** An index built from the fixture dictionary, as from the real one, in a directory of its own. */
 export async function buildFixtureIndex(): Promise<DictionaryPaths & { remove: () => void }> {
@@ -14,7 +16,7 @@ export async function buildFixtureIndex(): Promise<DictionaryPaths & { remove: (
     source: join(directory, 'hebrew.jsonl'),
     index: join(directory, 'hebrew.sqlite'),
   };
-  copyFileSync(FIXTURE, paths.source);
+  copyFileSync(DICTIONARY_FIXTURE, paths.source);
   await buildIndex(paths);
   return { ...paths, remove: () => rmSync(directory, { recursive: true }) };
 }

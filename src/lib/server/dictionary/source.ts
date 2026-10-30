@@ -5,8 +5,16 @@
 // is to filter the 24.8 GB all-language raw extract for `lang_code == "he"`, whose format differs,
 // so this parser would need checking against it.
 import { z } from 'zod';
-import { hasNiqqud, isSamePointedText, toComparisonKey } from '#lib/hebrew/normalize.ts';
+import {
+  hasNiqqud,
+  isSamePointedText,
+  toComparisonKey,
+  withoutDirectionControls,
+} from '#lib/hebrew/normalize.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
+
+// A word or form, without the direction controls that wrap some of them.
+const hebrewText = z.string().transform((text) => withoutDirectionControls(text).trim());
 
 const templateSchema = z.object({
   name: z.string(),
@@ -14,22 +22,22 @@ const templateSchema = z.object({
 });
 
 const formSchema = z.object({
-  form: z.string(),
+  form: hebrewText,
   tags: z.array(z.string()).default([]),
   source: z.string().optional(),
-  links: z.array(z.array(z.string())).optional(),
+  links: z.array(z.array(hebrewText)).optional(),
 });
 
 const senseSchema = z.object({
   glosses: z.array(z.string()).default([]),
   raw_glosses: z.array(z.string()).optional(),
-  form_of: z.array(z.object({ word: z.string() })).default([]),
-  alt_of: z.array(z.object({ word: z.string() })).default([]),
+  form_of: z.array(z.object({ word: hebrewText })).default([]),
+  alt_of: z.array(z.object({ word: hebrewText })).default([]),
   categories: z.array(z.object({ name: z.string() })).default([]),
 });
 
 const lineSchema = z.object({
-  word: z.string(),
+  word: hebrewText,
   pos: z.string(),
   lang_code: z.string(),
   etymology_number: z.union([z.string(), z.number()]).optional(),
@@ -98,12 +106,14 @@ export function readEntry(json: unknown): SourceEntry | undefined {
   const glosses = glossSenses
     .map((sense) => (sense.raw_glosses ?? sense.glosses).at(-1) ?? '')
     .filter((gloss) => gloss !== '');
+  // Missing niqqud for a few words, like `שמיים`, which then has no pointed spelling.
+  const canonical = line.forms.find((form) => form.tags.includes('canonical'))?.form;
 
   return {
     word: line.word,
     pos: line.pos,
     etymologyNumber: line.etymology_number?.toString(),
-    pointed: line.forms.find((form) => form.tags.includes('canonical'))?.form,
+    pointed: canonical !== undefined && hasNiqqud(canonical) ? canonical : undefined,
     isLemma: !isFormEntry(line.head_templates) && glosses.length > 0,
     facts: {
       glosses,
@@ -197,20 +207,19 @@ function pointedFormsTagged(forms: readonly Form[], tags: readonly string[]): st
 
 // The head template names the infinitive for only a few verbs. The rest have it in the
 // conjugation table, which wiktextract fails to tag: there it is the one row tagged
-// `error-unrecognized-form` that starts with ל, or `-` for a verb with none, like a pu'al.
+// `error-unrecognized-form` that starts with ל, or `-` for a verb with none, like a pu'al. Either
+// way only a form with ל counts: the head template of `גווע` also names the biblical `גְּוֺעַ`.
 //
-// Either way, a form is followed by its pointed spelling when the two differ (`לספור`,
-// `לִסְפֹּר`), and otherwise is only pointed and links to its page (`לדבר#Hebrew`).
+// A form is followed by its pointed spelling when the two differ (`לספור`, `לִסְפֹּר`), and
+// otherwise is only pointed and links to its page (`לדבר#Hebrew`).
 function infinitives(forms: readonly Form[]): Infinitive[] {
+  const withLamed = forms.filter((form) => form.form.startsWith('ל'));
   const fromHead = pairInfinitives(
-    forms.filter((form) => form.source === undefined && form.tags.includes('infinitive')),
+    withLamed.filter((form) => form.source === undefined && form.tags.includes('infinitive')),
   );
   const fromTable = pairInfinitives(
-    forms.filter(
-      (form) =>
-        form.source === 'conjugation' &&
-        form.tags.includes('error-unrecognized-form') &&
-        form.form.startsWith('ל'),
+    withLamed.filter(
+      (form) => form.source === 'conjugation' && form.tags.includes('error-unrecognized-form'),
     ),
   );
   if (fromHead.length === 0) return fromTable;
@@ -223,6 +232,8 @@ function infinitives(forms: readonly Form[]): Infinitive[] {
   );
 }
 
+// One pointed spelling paired with two unpointed ones keeps neither, for the human to type: the
+// table gives `לִנְשֹׁר` after `לנשור` and again linking to `לנשר`.
 function pairInfinitives(forms: readonly Form[]): Infinitive[] {
   const pairs: Infinitive[] = [];
   let unpointed: string | undefined;
@@ -232,25 +243,28 @@ function pairInfinitives(forms: readonly Form[]): Infinitive[] {
       continue;
     }
     const linkTarget = form.links?.[0]?.[1]?.replace(/#.*$/, '');
-    const pair = { pointed: form.form, unpointed: linkTarget ?? unpointed };
-    if (
-      !pairs.some(
-        (other) =>
-          isSamePointedText(other.pointed, pair.pointed) && other.unpointed === pair.unpointed,
-      )
-    ) {
-      pairs.push(pair);
-    }
+    pairs.push({ pointed: form.form, unpointed: linkTarget ?? unpointed });
     unpointed = undefined;
   }
-  return pairs;
+  return pairs.flatMap((pair) => {
+    const samePointed = pairs.filter((other) => isSamePointedText(other.pointed, pair.pointed));
+    if (samePointed[0] !== pair) return [];
+    const spellings = unique(samePointed.flatMap((other) => other.unpointed ?? []));
+    return [
+      { pointed: pair.pointed, unpointed: spellings.length === 1 ? spellings[0] : undefined },
+    ];
+  });
 }
 
 // Not a romanization, a pattern like `קֶטֶל`, the table's bookkeeping, or `-` for a missing cell.
 const NOT_WORD_TAGS = ['romanization', 'class', 'table-tags', 'inflection-template'];
 
+// Hebrew letters, points and punctuation, and nothing else: not the table's notes, like
+// `form אחי` or `אַל + Second person future tense`.
+const WORD = /^[\u0590-\u05FF\s]*[א-ת][\u0590-\u05FF\s]*$/;
+
 function isWordForm(form: Form): boolean {
-  return /[א-ת]/.test(form.form) && !form.tags.some((tag) => NOT_WORD_TAGS.includes(tag));
+  return WORD.test(form.form) && !form.tags.some((tag) => NOT_WORD_TAGS.includes(tag));
 }
 
 function unique(values: readonly string[]): string[] {

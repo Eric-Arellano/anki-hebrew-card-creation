@@ -641,17 +641,51 @@ describe('CardEditor', () => {
       });
     });
 
-    test('looks the word up again only once the human types it', async () => {
-      const requests = await renderConnectedEditor(undefined, found(kelev));
-      await pick('כלבים', 'כֶּלֶב');
-      expect(lookups(requests)).toHaveLength(1);
+    describe('once another word is typed over the one it filled', () => {
+      test('looks that word up, and clears what the entry filled', async () => {
+        const requests = await renderConnectedEditor(undefined, found(kelev));
+        await pick('כלבים', 'כֶּלֶב');
+        expect(lookups(requests)).toHaveLength(1);
 
-      await typeInto(input('Hebrew word, without niqqud'), 'כלב');
-      expect(await screen.findByText('Which word is it?')).toBeTruthy();
-      expect(lookups(requests).map((request) => request.path)).toEqual([
-        `/api/lookup?word=${encodeURIComponent('כלבים')}`,
-        `/api/lookup?word=${encodeURIComponent('כלב')}`,
-      ]);
+        await typeInto(input('Hebrew word, without niqqud'), 'חתול');
+        expect(await screen.findByText('Which word is it?')).toBeTruthy();
+        expect(lookups(requests).map((request) => request.path)).toEqual([
+          `/api/lookup?word=${encodeURIComponent('כלבים')}`,
+          `/api/lookup?word=${encodeURIComponent('חתול')}`,
+        ]);
+        expect(input('Hebrew word, without niqqud').value).toBe('חתול');
+        expect(input('Hebrew word, with niqqud').value).toBe('');
+        expect(screen.queryByRole('radio', { name: 'Noun', checked: true })).toBeNull();
+      });
+    });
+
+    describe('once another spelling of the word it filled is typed', () => {
+      test('keeps the entry and what it filled', async () => {
+        const requests = await renderConnectedEditor(
+          undefined,
+          found({ ...kelev, title: 'שולחן', pointed: 'שֻׁלְחָן' }),
+        );
+        await pick('שולחנות', 'שֻׁלְחָן');
+        await typeInto(input('Hebrew word, without niqqud'), 'שלחן');
+
+        expect(screen.getByText('Filled in from Wiktionary:')).toBeTruthy();
+        expect(input('Hebrew word, with niqqud').value).toBe('שֻׁלְחָן');
+        expect(lookups(requests)).toHaveLength(1);
+      });
+    });
+
+    describe('after choosing another', () => {
+      test('offers the entries for the word as typed, and clears what the entry filled', async () => {
+        await renderConnectedEditor(undefined, found(kelev));
+        await pick('כלבים', 'כֶּלֶב');
+        await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
+
+        expect(input('Hebrew word, without niqqud').value).toBe('כלבים');
+        expect(input('Hebrew word, with niqqud').value).toBe('');
+        expect(await screen.findByText('Which word is it?')).toBeTruthy();
+        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+        expect(within(dictionary).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
+      });
     });
 
     test('fills a verb’s infinitive, binyan and root, and only suggests its preposition', async () => {
@@ -741,11 +775,26 @@ describe('CardEditor', () => {
       await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'שֻׁלְחָן');
 
       const hint = screen.getByRole('region', { name: 'Irregular plural' });
-      expect(hint.textContent).toContain('a masculine noun, but its plural ends in ־וֹת');
+      expect(hint.textContent).toContain('a masculine noun, but its plural ends in ־ות');
       await fireEvent.click(within(hint).getByRole('button', { name: /as Variant 2/ }));
 
       expect(noteField('Variant 2: Hebrew answer, with niqqud').value).toBe('שֻׁלְחָנוֹת טוֹבִים');
       expect(hint.textContent).toContain('Variant 2 has it.');
+    });
+
+    describe('once both variants hold other answers', () => {
+      test('says so, and offers nothing', async () => {
+        await renderConnectedEditor();
+        await fillInputs({ word: 'שולחן', pointed: 'שֻׁלְחָן', gloss: 'table' });
+        await chooseNoun('Masculine');
+        await typeInto(input('Masculine plural, with niqqud'), 'שֻׁלְחָנוֹת');
+        await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'שֻׁלְחָן');
+        await typeInto(noteField('Variant 2: Hebrew answer, with niqqud'), 'שֻׁלְחָן גָּדוֹל');
+
+        const hint = screen.getByRole('region', { name: 'Irregular plural' });
+        expect(hint.textContent).toContain('Both variants are in use.');
+        expect(within(hint).queryByRole('button')).toBeNull();
+      });
     });
 
     describe('for a regular plural', () => {

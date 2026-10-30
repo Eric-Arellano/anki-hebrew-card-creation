@@ -7,9 +7,18 @@ const POINTS_AND_CANTILLATION = /[֑-ׇֽֿׁׂׅׄ]/g;
 const GERESH_STAND_INS = /['’]/g;
 const GERSHAYIM_STAND_INS = /"/g;
 
+// Invisible, and never part of a word: Wiktionary wraps some forms in embeddings and isolates
+// (U+202A–U+202E, U+2066–U+2069), and text copied from a web page can carry the marks U+200E,
+// U+200F and U+061C. An override, U+202E, would even show a word's letters reversed in Anki.
+const DIRECTION_CONTROLS = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
+
+export function withoutDirectionControls(text: string): string {
+  return text.replace(DIRECTION_CONTROLS, '');
+}
+
 /** The form two spellings of a word share when they differ only in points or punctuation. */
 export function toComparisonKey(text: string): string {
-  return text
+  return withoutDirectionControls(text)
     .normalize('NFC')
     .replaceAll('&nbsp;', ' ')
     .replace(POINTS_AND_CANTILLATION, '')
@@ -28,8 +37,14 @@ export function hasNiqqud(text: string): boolean {
 
 /** The key the dictionary index files `text` under: `שְׁנַת־` and `שנת` share one. */
 export function toLookupKey(text: string): string {
-  // A construct form or a prefix ends in a maqaf, which no one types: `שְׁנַת־`, `לְ־`.
-  return toComparisonKey(text).replace(/^־+|־+$/g, '');
+  return (
+    toComparisonKey(text)
+      // A construct form or a prefix ends in a maqaf, which no one types: `שְׁנַת־`, `לְ־`.
+      .replace(/^[־-]+|[־-]+$/g, '')
+      // Inside a compound, Wiktionary writes a maqaf or a space, and people type a hyphen too:
+      // `בֵּית־קָפֶה`, `בית קפה`, `בית-קפה`.
+      .replace(/\s*[־-]\s*/g, ' ')
+  );
 }
 
 /**
@@ -45,4 +60,8 @@ export function toDefectiveKey(text: string): string {
 // after NFC.
 export function isSamePointedText(a: string, b: string): boolean {
   return a.normalize('NFC') === b.normalize('NFC');
+}
+
+export function includesPointedText(text: string, part: string): boolean {
+  return text.normalize('NFC').includes(part.normalize('NFC'));
 }

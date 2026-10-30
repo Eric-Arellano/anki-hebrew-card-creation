@@ -39,6 +39,6 @@ export function nounGender(codes: readonly string[]): DictionaryNoun['gender'] {
  */
 export function governedPreposition(text: string): Preposition | undefined {
   if (text === 'direct') return 'את';
-  const letters = toLookupKey(text).replaceAll('־', '');
-  return PREPOSITIONS.find((preposition) => preposition === letters);
+  const key = toLookupKey(text);
+  return PREPOSITIONS.find((preposition) => preposition === key);
 }
