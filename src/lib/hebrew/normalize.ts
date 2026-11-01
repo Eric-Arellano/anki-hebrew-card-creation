@@ -4,7 +4,7 @@ const POINTS_AND_CANTILLATION = /[֑-ׇֽֿׁׂׅׄ]/g;
 
 // Typed Hebrew uses ASCII quotes and the apostrophe for geresh and gershayim as often as the
 // real characters, so a key folds them together: ג'ירפה and ג׳ירפה are the same word.
-const GERESH_STAND_INS = /['’]/g;
+export const GERESH_STAND_INS = /['’]/g;
 const GERSHAYIM_STAND_INS = /"/g;
 
 // Invisible, and never part of a word: Wiktionary wraps some forms in embeddings and isolates

@@ -2,8 +2,9 @@
 
 ## Context
 
-The editor knows all seven parts of speech, and each note stores which one it is. What remains is
-to fill in more of each form.
+The editor knows all seven parts of speech, each note stores which one it is, and nouns, verbs and
+adjectives all take a root. What remains is to put those roots to use and to fill in a verb's
+principal parts.
 
 The goal is a form that fits the word, with less typing. Each new input is filled from Wiktionary.
 Storing the part of speech also prepares for editing existing notes: with seven of them, the app
@@ -20,10 +21,20 @@ no new AnkiConnect actions.
   holds the lowercase `PartOfSpeech` value, as `Binyan` and `Gender` do.
   *Rejected: a `pos::` tag, because the app reads and drift-checks fields; a saved search gives the
   same one-click filter.*
-- **Roots go on nouns and adjectives too,** optional there and still required for verbs. These are
-  the three kinds Hebrew builds from a root and a pattern. Adverbs have a root in Wiktionary only
-  about 12% of the time and phrases almost never, so neither shows it.
-- **Several values stay choices,** per the Never guess rule.
+- **Roots go on nouns, verbs and adjectives, and are optional on all three.** These are the kinds
+  Hebrew builds from a root and a pattern. Wiktionary gives one for about 45% of nouns, 52% of
+  adjectives and 96% of verbs, and the blanks include native words like כלב, so a blank `Root` says
+  nothing about the word. Only a mistyped root blocks. Adverbs have a root about 16% of the time
+  and phrases almost never, so neither shows it.
+  *Rejected: requiring a verb's root. Nearly every verb has one, but the human shouldn't have to
+  work one out for the 4% Wiktionary lacks, like פנצ׳ר, just to save a card.*
+- **A root is spelled one way,** by `formatRoot`: maqafs, its last letter final and no other, and
+  no shin or sin dot, so the same root is the same text. The same-root panel will therefore group
+  שׁ־כ־ר, “drunk”, with שׂ־כ־ר, “wage”: a false match the human can see at a glance, which `root.ts`
+  accepts so that a typed root still finds a dictionary one.
+- **Several values stay choices,** per the Never guess rule. For roots that includes a blend's two,
+  like רמקול's, and a Wiktionary category that disagrees with a conjugation's stem; `build.ts` says
+  which source wins when.
 - **A new part of speech announces its own gaps.** `PlainPartOfSpeech` in `note-type.ts` names its
   members, so adding to `PARTS_OF_SPEECH` breaks the switches over it until each case exists, and
   the `FIELD_HELP` test fails until the variants, `productionContext`, `readingContext` and
@@ -40,27 +51,19 @@ suggestions beyond plurals.*
 |---|---|---|---|---|
 | Adjective | three forms, optional root | word | composed | yes |
 | Noun | gender, forms, optional root | `כלב טוב` | composed | yes |
-| Verb | preposition, binyan, root, principal parts | `לדבר עם` | composed | yes |
+| Verb | preposition, binyan, optional root, principal parts | `לדבר עם` | composed | yes |
 
-## PR 1 — Roots on nouns and adjectives
-
-- `RootInput` joins both forms, gaining a `required` prop, prefilled from `candidate.roots`, with choices when there are
-  several. Wiktionary gives one for roughly 40–50% of them; the rest are often loanwords.
-- Blank is fine; a non-blank root that isn't only letters still blocks.
-- `AdjectiveInputs` serves as both draft and complete inputs today, so the formatted root needs a
-  place beside it, as `VerbInputs` has one.
-- `undoPrefill` restores it. The card templates already show `Root` when it is filled.
-
-## PR 2 — Same-root panel
+## PR 1 — Same-root panel
 
 - `searchByFieldEqualing` in `src/lib/anki/search.ts`, and `findNotesWithRoot` beside
   `findExistingNotes` in `src/lib/server/anki/existing-notes.ts`, using `findNotes` and `notesInfo`.
 - A new `/api/anki/same-root` route, shaped like `/api/anki/existing`.
 - A panel listing other notes in the deck with that root, first extracting `ExistingNotesPanel`'s
-  list and its Browse link so both can use them. The maqafs make this search awkward to type in Anki, so this is where roots pay
-  off.
+  list and its Browse link so both can use them. The maqafs make this search awkward to type in
+  Anki, so this is where roots pay off. A note's blank `Root` matches nothing, and a blend's note
+  holds only the root the human chose.
 
-## PR 3 — Verb principal parts
+## PR 2 — Verb principal parts
 
 - `source-forms.ts`: `presents` and `futures` from conjugation rows tagged exactly
   `masculine present singular` and `future masculine singular third-person`. About 95% of verbs give
@@ -78,4 +81,3 @@ suggestions beyond plurals.*
   covers which inputs and groups appear.
 - By hand in the running app, without handing off to real Anki unless you agree: גדול, כתובת and
   לדבר.
-- Hold off re-entering the deck until PR 1, so those notes carry both the part of speech and a root.

@@ -48,8 +48,18 @@ describe('CardEditor', () => {
           'Masculine plural, with niqqud',
           'Feminine singular, with niqqud',
           'Feminine plural, with niqqud',
+          'Root, like דבר or ד.ב.ר',
         ].map((label) => input(label).required),
-      ).toEqual([true, false, false, false]);
+      ).toEqual([true, false, false, false, false]);
+    });
+
+    test('sends its root', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'כתובת', pointed: 'כְּתֹבֶת', gloss: 'address' });
+      await chooseNoun('Feminine');
+      await typeInto(input('Root, like דבר or ד.ב.ר'), 'כתב');
+
+      expect(await handOff(requests)).toMatchObject({ fields: { Root: 'כ־ת־ב' } });
     });
 
     describe('of feminine gender', () => {
@@ -152,14 +162,25 @@ describe('CardEditor', () => {
       });
     });
 
-    test('starts with nothing chosen, and needs its preposition, binyan and root', async () => {
+    test('starts with nothing chosen, and needs its preposition and binyan', async () => {
       await renderConnectedEditor();
       await fillInputs({ word: 'לראות', pointed: 'לִרְאוֹת', gloss: 'to see' });
       await choosePartOfSpeech('Verb');
       expect(
         screen.getAllByRole('radio', { checked: true }).map((radio) => radio.getAttribute('name')),
       ).toEqual(['part-of-speech']);
-      expect(screen.getByText('Still needed: preposition, binyan, root')).toBeTruthy();
+      expect(screen.getByText('Still needed: preposition, binyan')).toBeTruthy();
+    });
+
+    describe('with a blank root', () => {
+      test('sends it blank', async () => {
+        const requests = await renderConnectedEditor();
+        await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to speak' });
+        await fillVerb("pi'el", '');
+        await fireEvent.click(screen.getByRole('radio', { name: 'עם' }));
+
+        expect(await handOff(requests)).toMatchObject({ fields: { Root: '' } });
+      });
     });
 
     describe('with a root that is not only letters', () => {
@@ -204,6 +225,25 @@ describe('CardEditor', () => {
       });
     });
 
+    test('sends its root', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'גדול', pointed: 'גָּדוֹל', gloss: 'big' });
+      await choosePartOfSpeech('Adjective');
+      await typeInto(input('Root, like דבר or ד.ב.ר'), 'גדל');
+
+      expect(await handOff(requests)).toMatchObject({ fields: { Root: 'ג־ד־ל' } });
+    });
+
+    describe('with a root that is not only letters', () => {
+      test('still needs the root', async () => {
+        await renderConnectedEditor();
+        await fillInputs({ word: 'גדול', pointed: 'גָּדוֹל', gloss: 'big' });
+        await choosePartOfSpeech('Adjective');
+        await typeInto(input('Root, like דבר or ד.ב.ר'), 'gdl');
+        expect(screen.getByText('Still needed: root')).toBeTruthy();
+      });
+    });
+
     test('asks for variants', async () => {
       await renderConnectedEditor();
       await choosePartOfSpeech('Adjective');
@@ -228,6 +268,7 @@ describe('CardEditor', () => {
       await fillInputs({ word: 'מהר', pointed: 'מַהֵר', gloss: 'quickly' });
       await choosePartOfSpeech('Adverb');
       expect(screen.queryByLabelText('Other forms')).toBeNull();
+      expect(screen.queryByLabelText(/^Root/)).toBeNull();
       expect(screen.queryByText('Unusual variants')).toBeNull();
 
       expect(await handOff(requests)).toEqual({

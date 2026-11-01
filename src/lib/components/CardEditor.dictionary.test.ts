@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import {
+  choosePartOfSpeech,
   handOff,
   input,
   renderConnectedEditor,
@@ -188,6 +189,18 @@ describe('CardEditor', () => {
         await fireEvent.click(screen.getByRole('button', { name: 'לַחְדֹּר' }));
         expect(input('Hebrew word, with niqqud').value).toBe('לַחְדֹּר');
         expect(input('Hebrew word, without niqqud').value).toBe('לחדור');
+      });
+    });
+
+    describe('for a noun with a root', () => {
+      test('fills the root, and undoes it with the rest', async () => {
+        await renderConnectedEditor(undefined, found({ ...kelev, roots: ['כ־ל־ב'] }));
+        await pick('כלבים', 'כֶּלֶב');
+        expect(input('Root, like דבר or ד.ב.ר').value).toBe('כ־ל־ב');
+
+        await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
+        await choosePartOfSpeech('Noun');
+        expect(input('Root, like דבר or ד.ב.ר').value).toBe('');
       });
     });
 

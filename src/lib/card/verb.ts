@@ -1,13 +1,11 @@
 import type { Binyan } from '#lib/hebrew/binyan.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
-import { formatRoot } from '#lib/hebrew/root.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 
-// The root is as `formatRoot` writes it. A verb with no preposition takes no object at all, like
-// ללכת, and its production answer is the word alone.
+// A verb with no preposition takes no object at all, like ללכת, and its production answer is the
+// word alone.
 export type VerbInputs = {
   binyan: Binyan;
-  root: string;
   preposition: GovernedPreposition | undefined;
 };
 
@@ -22,27 +20,9 @@ export function emptyVerbDraft(): VerbDraft {
   return { binyan: undefined, preposition: undefined };
 }
 
-// A root that isn't only letters is as missing as a blank one.
-export function missingVerbInputs({ binyan }: VerbDraft, root: string): ('binyan' | 'root')[] {
-  return [
-    ...(binyan === undefined ? (['binyan'] as const) : []),
-    ...(formatRoot(root) === undefined ? (['root'] as const) : []),
-  ];
-}
-
-export function completeVerb(
-  { binyan, preposition }: VerbDraft,
-  root: string,
-): VerbInputs | undefined {
-  const formattedRoot = formatRoot(root);
-  if (binyan === undefined || formattedRoot === undefined || preposition === undefined) {
-    return undefined;
-  }
-  return {
-    binyan,
-    root: formattedRoot,
-    preposition: preposition === 'none' ? undefined : preposition,
-  };
+export function completeVerb({ binyan, preposition }: VerbDraft): VerbInputs | undefined {
+  if (binyan === undefined || preposition === undefined) return undefined;
+  return { binyan, preposition: preposition === 'none' ? undefined : preposition };
 }
 
 /** The fields a verb's inputs write, given `word` as Anki field HTML. */
@@ -50,6 +30,5 @@ export function composeVerbFields(word: string, verb: VerbInputs): FieldValues {
   return {
     productionAnswer: verb.preposition === undefined ? word : `${word} ${verb.preposition}`,
     binyan: verb.binyan,
-    root: verb.root,
   };
 }

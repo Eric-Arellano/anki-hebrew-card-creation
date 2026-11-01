@@ -3,6 +3,7 @@ import type { Snippet } from 'svelte';
 import type { NounDraft } from '#lib/card/noun.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
+import RootInput from './RootInput.svelte';
 import Checkbox from './ui/Checkbox.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
@@ -15,10 +16,12 @@ const GENDERS: readonly { value: Gender; label: string }[] = [
 
 let {
   noun = $bindable(),
+  root = $bindable(),
   choices,
   children,
 }: {
   noun: NounDraft;
+  root: string;
   choices: PrefillChoices;
   // The pointed word, which leads the forms so every pointed form copied from a dictionary
   // sits in one row.
@@ -59,5 +62,6 @@ let {
         bind:value={noun.femininePlural}
       />
     {/if}
+    <RootInput choices={choices.root} bind:root />
   </div>
 </fieldset>

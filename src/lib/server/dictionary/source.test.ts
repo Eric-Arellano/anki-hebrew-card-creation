@@ -48,6 +48,20 @@ describe('readEntry', () => {
     });
   });
 
+  describe('for a conjugation stem that is not the root', () => {
+    test('keeps the rootbox apart from it', () => {
+      const { facts, conjugationRoots } = entry('הוציא', 'verb');
+      expect(facts.roots).toEqual(['י־צ־א']);
+      expect(conjugationRoots).toEqual(['ו־צ־א']);
+    });
+  });
+
+  describe('for a conjugation stem split across arguments', () => {
+    test('takes no root from it', () => {
+      expect(entry('טלגרף', 'verb').conjugationRoots).toEqual([]);
+    });
+  });
+
   describe('for a root category with a sense label', () => {
     test('drops the label and the shin dot', () => {
       expect(entry('חירשות', 'noun').categoryRoots).toEqual(['ח־ר־ש']);

@@ -78,7 +78,9 @@ function chooseInfinitive(pointed: string) {
     />
   {/snippet}
   {#if draft.partOfSpeech === 'noun'}
-    <NounInputs bind:noun={draft.noun} {choices}> {@render pointedInput()} </NounInputs>
+    <NounInputs bind:noun={draft.noun} bind:root={draft.root} {choices}>
+      {@render pointedInput()}
+    </NounInputs>
     <PluralHints noun={draft.noun} pointed={draft.pointed} {edits} {shownFields} onuse={onedit} />
   {:else if draft.partOfSpeech === 'verb'}
     <VerbInputs
@@ -90,7 +92,7 @@ function chooseInfinitive(pointed: string) {
       {@render pointedInput()}
     </VerbInputs>
   {:else if draft.partOfSpeech === 'adjective'}
-    <AdjectiveInputs bind:adjective={draft.adjective} {choices}>
+    <AdjectiveInputs bind:adjective={draft.adjective} bind:root={draft.root} {choices}>
       {@render pointedInput()}
     </AdjectiveInputs>
   {:else}

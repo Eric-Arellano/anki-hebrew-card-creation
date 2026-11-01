@@ -58,7 +58,8 @@ type Template = z.infer<typeof templateSchema>;
 export type EntryFacts = {
   // The first line of each sense, skipping the generated ones of a form-of or alt-of sense.
   glosses: string[];
-  // Joined with maqafs, without shin and sin dots. The index adds roots from categories.
+  // Joined with maqafs, without shin and sin dots. Those of the entry's `he-rootbox`, to which the
+  // index adds others for an entry without one.
   roots: string[];
   // `m` or `f`, with `-p` for a noun that is only plural and `-d` for one only dual.
   genders: string[];
@@ -88,6 +89,7 @@ export type SourceEntry = {
   isLemma: boolean;
   facts: EntryFacts;
   categoryRoots: string[];
+  conjugationRoots: string[];
   // Every spelling that should find this entry: its title and each of its forms.
   keyForms: string[];
 };
@@ -117,7 +119,7 @@ export function readEntry(json: unknown): SourceEntry | undefined {
     isLemma: !isFormEntry(line.head_templates) && glosses.length > 0,
     facts: {
       glosses,
-      roots: templateRoots(line.etymology_templates, line.inflection_templates),
+      roots: rootboxRoots(line.etymology_templates),
       genders: line.head_templates
         .flatMap((template) => [stringArg(template, 'g') ?? '', stringArg(template, 'g2') ?? ''])
         .filter((gender) => gender !== ''),
@@ -149,6 +151,7 @@ export function readEntry(json: unknown): SourceEntry | undefined {
         }),
       ),
     ),
+    conjugationRoots: conjugationRoots(line.inflection_templates),
     keyForms: [line.word, ...line.forms.filter(isWordForm).map((form) => form.form)],
   };
 }
@@ -172,17 +175,23 @@ function isFormEntry(headTemplates: readonly Template[]): boolean {
   );
 }
 
-// `he-rootbox` in the etymology holds the root joined (`שׁ־נ־ה`), and sometimes a second one;
-// `he-conj`'s second argument holds it unjoined (`שׁמשׁ`).
-function templateRoots(
-  etymologyTemplates: readonly Template[],
-  inflectionTemplates: readonly Template[],
-): string[] {
+// `he-rootbox` in the etymology holds the root joined (`שׁ־נ־ה`), and a blend's second one.
+function rootboxRoots(etymologyTemplates: readonly Template[]): string[] {
   const rootboxes = etymologyTemplates.filter((template) => template.name === 'he-rootbox');
-  return storedRoots([
-    ...rootboxes.flatMap((template) => [stringArg(template, '1'), stringArg(template, '2')]),
-    stringArg(templateNamed(inflectionTemplates, 'he-conj'), '2'),
-  ]);
+  return storedRoots(
+    rootboxes.flatMap((template) => [stringArg(template, '1'), stringArg(template, '2')]),
+  );
+}
+
+// `he-conj`'s second argument is the stem it conjugates, which is usually the root (`שׁמשׁ`) but
+// not always: `וצא` for י־צ־א and `בני` for ב־נ־ה. A third argument means the stem is split across
+// them for an irregular conjugation, and the second alone is then only its start, like `ק` for
+// `קיווה`, so it says nothing.
+function conjugationRoots(inflectionTemplates: readonly Template[]): string[] {
+  const conjugation = templateNamed(inflectionTemplates, 'he-conj');
+  return stringArg(conjugation, '3') === undefined
+    ? storedRoots([stringArg(conjugation, '2')])
+    : [];
 }
 
 // A root category may add a sense label: `ע־ב־ר (pregnancy)`.

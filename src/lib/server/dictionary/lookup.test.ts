@@ -299,6 +299,26 @@ describe('lookUp', () => {
       expect(candidate(word, pointed)).toMatchObject({ verb: { prepositions: [preposition] } });
     });
 
+    test('takes the rootbox’s root over the conjugation’s stem', () => {
+      expect(candidate('הוציא', 'הוֹצִיא').roots).toEqual(['י־צ־א']);
+    });
+
+    test('takes a category’s root over a stem spelling its י with ו', () => {
+      expect(candidate('נולד', 'נוֹלַד').roots).toEqual(['י־ל־ד']);
+    });
+
+    test('offers both a category’s root and a stem that disagrees with it', () => {
+      expect(candidate('קעקע', 'קִעְקֵעַ').roots).toEqual(['ק־ו־ע', 'ק־ע־ק־ע']);
+    });
+
+    test('writes a stem’s last letter in its final form', () => {
+      expect(candidate('התעלם', 'הִתְעַלֵּם').roots).toEqual(['ע־ל־ם']);
+    });
+
+    test('gives no root for a stem split across arguments', () => {
+      expect(candidate('טלגרף', 'טִלְגְּרֵף').roots).toEqual([]);
+    });
+
     test('converts hit to hitpa’el and drops dots from an unjoined root', () => {
       expect(candidate('השתמש', 'הִשְׁתַּמֵּשׁ')).toMatchObject({
         verb: { binyan: "hitpa'el" },
