@@ -12,6 +12,7 @@ export function composeFields(inputs: CardInputs): FieldValues {
   const shared = {
     // What the human typed, never derived from the pointed form: `דִּבֵּר` strips to `דבר`, not `דיבר`.
     unpointed: word,
+    partOfSpeech: inputs.partOfSpeech,
     pointed: textToAnkiFieldHtml(inputs.pointed.trim()),
     definitions: definitionsHtml(inputs.definitions),
   };
