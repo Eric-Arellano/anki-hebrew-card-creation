@@ -765,4 +765,46 @@ describe('CardEditor', () => {
       });
     });
   });
+
+  describe('an irregular plural', () => {
+    test('offers to fill the first free variant with it', async () => {
+      await renderConnectedEditor();
+      await fillInputs({ word: 'שולחן', pointed: 'שֻׁלְחָן', gloss: 'table' });
+      await chooseNoun('Masculine');
+      await typeInto(input('Masculine plural, with niqqud'), 'שֻׁלְחָנוֹת');
+      await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'שֻׁלְחָן');
+
+      const hint = screen.getByRole('region', { name: 'Irregular plural' });
+      expect(hint.textContent).toContain('a masculine noun, but its plural ends in ־ות');
+      await fireEvent.click(within(hint).getByRole('button', { name: /as Variant 2/ }));
+
+      expect(noteField('Variant 2: Hebrew answer, with niqqud').value).toBe('שֻׁלְחָנוֹת טוֹבִים');
+      expect(hint.textContent).toContain('Variant 2 has it.');
+    });
+
+    describe('once both variants hold other answers', () => {
+      test('says so, and offers nothing', async () => {
+        await renderConnectedEditor();
+        await fillInputs({ word: 'שולחן', pointed: 'שֻׁלְחָן', gloss: 'table' });
+        await chooseNoun('Masculine');
+        await typeInto(input('Masculine plural, with niqqud'), 'שֻׁלְחָנוֹת');
+        await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'שֻׁלְחָן');
+        await typeInto(noteField('Variant 2: Hebrew answer, with niqqud'), 'שֻׁלְחָן גָּדוֹל');
+
+        const hint = screen.getByRole('region', { name: 'Irregular plural' });
+        expect(hint.textContent).toContain('Both variants are in use.');
+        expect(within(hint).queryByRole('button')).toBeNull();
+      });
+    });
+
+    describe('for a regular plural', () => {
+      test('offers nothing', async () => {
+        await renderConnectedEditor();
+        await fillInputs({ word: 'כלב', pointed: 'כֶּלֶב', gloss: 'dog' });
+        await chooseNoun('Masculine');
+        await typeInto(input('Masculine plural, with niqqud'), 'כְּלָבִים');
+        expect(screen.queryByRole('region', { name: 'Irregular plural' })).toBeNull();
+      });
+    });
+  });
 });

@@ -34,6 +34,7 @@ import HandOffBar from './HandOffBar.svelte';
 import LookupLinks from './LookupLinks.svelte';
 import NoteFields from './NoteFields.svelte';
 import NounInputs from './NounInputs.svelte';
+import PluralHints from './PluralHints.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 import VerbInputs from './VerbInputs.svelte';
@@ -71,9 +72,8 @@ const composed = $derived(inputs === undefined ? {} : composeFields(inputs));
 const shownGroups = $derived(
   draft.partOfSpeech === undefined ? [] : shownFieldGroups(fieldOrder(status), draft.partOfSpeech),
 );
-const ankiFields = $derived(
-  handOffFields({ composed, edits, shownFields: shownGroups.flatMap((group) => group.fields) }),
-);
+const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
+const ankiFields = $derived(handOffFields({ composed, edits, shownFields }));
 const ankiProblem = $derived(status && ankiStatusProblem(status));
 const missingInputsMessage = $derived.by(() => {
   const missing = missingInputs(draft);
@@ -178,6 +178,15 @@ onMount(checkAnki);
     {/snippet}
     {#if draft.partOfSpeech === 'noun'}
       <NounInputs bind:noun={draft.noun} {choices}> {@render pointedInput()} </NounInputs>
+      <PluralHints
+        noun={draft.noun}
+        pointed={draft.pointed}
+        {edits}
+        {shownFields}
+        onuse={(field, answer) => {
+          edits[field] = answer;
+        }}
+      />
     {:else if draft.partOfSpeech === 'verb'}
       <VerbInputs
         bind:verb={draft.verb}
