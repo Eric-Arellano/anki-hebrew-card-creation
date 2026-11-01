@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { FIELDS, type FieldKey } from '#lib/note-type.ts';
 import notes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with { type: 'json' };
+import type { AdjectiveInputs } from './adjective.ts';
 import { composeFields } from './compose.ts';
 import type { CardInputs } from './inputs.ts';
 import type { NounInputs } from './noun.ts';
@@ -124,6 +125,42 @@ describe('composeFields', () => {
             verb: { binyan: "pa'al", root: 'ה־ל־ך', preposition: undefined },
           }).productionAnswer,
         ).toBe('ללכת');
+      });
+    });
+  });
+
+  describe('for an adjective', () => {
+    function adjectiveFields(adjective: AdjectiveInputs) {
+      return composeFields({
+        word: 'גדול',
+        pointed: 'גָּדוֹל',
+        definitions: ['big'],
+        partOfSpeech: 'adjective',
+        adjective,
+      });
+    }
+
+    test('answers with the word alone, and labels its forms', () => {
+      expect(
+        adjectiveFields({
+          feminine: 'גְּדוֹלָה',
+          masculinePlural: 'גְּדוֹלִים',
+          femininePlural: 'גְּדוֹלוֹת',
+        }),
+      ).toEqual({
+        unpointed: 'גדול',
+        pointed: 'גָּדוֹל',
+        definitions: 'big',
+        productionAnswer: 'גדול',
+        forms: 'f: גְּדוֹלָה<br>m.pl: גְּדוֹלִים<br>f.pl: גְּדוֹלוֹת',
+      });
+    });
+
+    describe('with a blank form', () => {
+      test('leaves its line out', () => {
+        expect(
+          adjectiveFields({ feminine: 'גְּדוֹלָה', masculinePlural: ' ', femininePlural: '' }).forms,
+        ).toBe('f: גְּדוֹלָה');
       });
     });
   });

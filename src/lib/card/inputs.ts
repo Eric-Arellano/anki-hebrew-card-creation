@@ -1,3 +1,4 @@
+import { type AdjectiveInputs, emptyAdjectiveInputs } from '#lib/card/adjective.ts';
 import {
   completeNoun,
   emptyNounDraft,
@@ -22,6 +23,7 @@ export type Definitions = readonly [string, ...string[]];
 export type CardInputs = WordInputs & { definitions: Definitions } & (
     | { partOfSpeech: 'noun'; noun: NounInputs }
     | { partOfSpeech: 'verb'; verb: VerbInputs }
+    | { partOfSpeech: 'adjective'; adjective: AdjectiveInputs }
     | { partOfSpeech: PlainPartOfSpeech }
   );
 
@@ -35,6 +37,7 @@ export type CardInputsDraft = WordInputs & {
   root: string;
   noun: NounDraft;
   verb: VerbDraft;
+  adjective: AdjectiveInputs;
 };
 
 export function emptyDraft(): CardInputsDraft {
@@ -46,6 +49,7 @@ export function emptyDraft(): CardInputsDraft {
     root: '',
     noun: emptyNounDraft(),
     verb: emptyVerbDraft(),
+    adjective: emptyAdjectiveInputs(),
   };
 }
 
@@ -97,7 +101,7 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
 
 /** `draft` as `CardInputs` once every required input is filled, else `undefined`. */
 export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
-  const { partOfSpeech, noun, verb, root, definitions: definitionRows, ...word } = draft;
+  const { partOfSpeech, noun, verb, adjective, root, definitions: definitionRows, ...word } = draft;
   const [first, ...rest] = filledDefinitions(definitionRows);
   if (partOfSpeech === undefined || first === undefined || missingInputs(draft).length > 0) {
     return undefined;
@@ -112,6 +116,8 @@ export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
       const verbInputs = completeVerb(verb, root);
       return verbInputs && { ...card, partOfSpeech, verb: verbInputs };
     }
+    case 'adjective':
+      return { ...card, partOfSpeech, adjective };
     case 'adverb':
     case 'phrase':
     case 'other':

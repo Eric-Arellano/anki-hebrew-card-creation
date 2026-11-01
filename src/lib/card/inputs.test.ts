@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import type { AdjectiveInputs } from './adjective.ts';
 import { type CardInputsDraft, completeInputs, missingInputs } from './inputs.ts';
 import type { NounDraft } from './noun.ts';
 import type { VerbDraft } from './verb.ts';
@@ -13,6 +14,12 @@ const noun: NounDraft = {
 
 const verb: VerbDraft = { binyan: "pi'el", preposition: 'עם' };
 
+const adjective: AdjectiveInputs = {
+  feminine: 'גְּדוֹלָה',
+  masculinePlural: 'גְּדוֹלִים',
+  femininePlural: 'גְּדוֹלוֹת',
+};
+
 const dagDraft: CardInputsDraft = {
   word: 'דג',
   partOfSpeech: 'other',
@@ -21,6 +28,7 @@ const dagDraft: CardInputsDraft = {
   root: 'ד.ב.ר',
   noun,
   verb,
+  adjective,
 };
 
 const ledaberDraft: CardInputsDraft = {
@@ -115,6 +123,18 @@ describe('completeInputs', () => {
       });
     },
   );
+
+  describe('for an adjective', () => {
+    test('returns its forms', () => {
+      expect(completeInputs({ ...dagDraft, partOfSpeech: 'adjective' })).toEqual({
+        word: 'דג',
+        partOfSpeech: 'adjective',
+        definitions: ['fish'],
+        pointed: 'דָּג',
+        adjective,
+      });
+    });
+  });
 
   describe('for a masculine noun', () => {
     test('returns its feminine counterpart too', () => {

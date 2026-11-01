@@ -66,6 +66,8 @@ export type EntryFacts = {
   plurals: string[];
   duals: string[];
   feminines: string[];
+  // An adjective's. A noun's are `plurals`, however it spells them.
+  masculinePlurals: string[];
   femininePlurals: string[];
   // On a feminine noun, the masculine it is the counterpart of.
   masculines: string[];
@@ -123,6 +125,7 @@ export function readEntry(json: unknown): SourceEntry | undefined {
       plurals: pointedFormsTagged(headForms, ['indefinite', 'plural']),
       duals: pointedFormsTagged(headForms, ['dual', 'indefinite']),
       feminines: pointedFormsTagged(headForms, ['feminine']),
+      masculinePlurals: pointedFormsTagged(headForms, ['masculine', 'plural']),
       femininePlurals: pointedFormsTagged(headForms, ['feminine', 'plural']),
       masculines: pointedFormsTagged(headForms, ['masculine']),
       infinitives: infinitives(line.forms),

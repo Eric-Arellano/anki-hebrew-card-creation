@@ -9,6 +9,7 @@ import {
   PARTS_OF_SPEECH,
   type PartOfSpeech,
 } from '#lib/note-type.ts';
+import AdjectiveInputs from './AdjectiveInputs.svelte';
 import NounInputs from './NounInputs.svelte';
 import PluralHints from './PluralHints.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
@@ -19,6 +20,7 @@ import VerbInputs from './VerbInputs.svelte';
 const PART_OF_SPEECH_LABELS = {
   noun: 'Noun',
   verb: 'Verb',
+  adjective: 'Adjective',
   adverb: 'Adverb',
   phrase: 'Phrase',
   other: 'Other',
@@ -86,6 +88,10 @@ function chooseInfinitive(pointed: string) {
     >
       {@render pointedInput()}
     </VerbInputs>
+  {:else if draft.partOfSpeech === 'adjective'}
+    <AdjectiveInputs bind:adjective={draft.adjective} {choices}>
+      {@render pointedInput()}
+    </AdjectiveInputs>
   {:else}
     <div class="forms-row">{@render pointedInput()}</div>
   {/if}

@@ -307,6 +307,36 @@ describe('lookUp', () => {
     });
   });
 
+  describe('for an adjective', () => {
+    test('takes its three forms', () => {
+      expect(candidate('גדול', 'גָּדוֹל')).toMatchObject({
+        wiktionaryPartOfSpeech: 'adj',
+        partOfSpeech: 'adjective',
+        adjective: {
+          feminineSingulars: ['גְּדוֹלָה'],
+          masculinePlurals: ['גְּדוֹלִים'],
+          femininePlurals: ['גְּדוֹלוֹת'],
+        },
+      });
+    });
+
+    test('takes an irregular feminine', () => {
+      expect(candidate('אחר', 'אַחֵר')).toMatchObject({
+        adjective: { feminineSingulars: ['אַחֶרֶת'] },
+      });
+    });
+
+    test('offers each masculine plural', () => {
+      expect(candidate('ישראלי', 'יִשְׂרְאֵלִי')).toMatchObject({
+        adjective: { masculinePlurals: ['יִשְׂרְאֵלִים', 'יִשְׂרְאֵלִיִּים'] },
+      });
+    });
+
+    test('is found by a form', () => {
+      expect(pointedCandidates('גדולות')).toEqual(['גָּדוֹל']);
+    });
+  });
+
   describe('for an adverb', () => {
     test('gives it the deck’s part of speech, keeping Wiktionary’s label', () => {
       expect(look('אדרבא').candidates).toMatchObject([

@@ -170,6 +170,53 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('an adjective', () => {
+    test('sends its word and composed forms, and requires none of them', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'גדול', pointed: 'גָּדוֹל', gloss: 'big' });
+      await choosePartOfSpeech('Adjective');
+      expect(screen.queryByLabelText('Other forms')).toBeNull();
+      expect(
+        [
+          'Feminine singular, with niqqud',
+          'Masculine plural, with niqqud',
+          'Feminine plural, with niqqud',
+        ].map((label) => input(label).required),
+      ).toEqual([false, false, false]);
+      await typeInto(input('Feminine singular, with niqqud'), 'גְּדוֹלָה');
+      await typeInto(input('Masculine plural, with niqqud'), 'גְּדוֹלִים');
+      await typeInto(input('Feminine plural, with niqqud'), 'גְּדוֹלוֹת');
+
+      expect(await handOff(requests)).toEqual({
+        fields: {
+          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+          Hebrew: 'גדול',
+          Pointed: 'גָּדוֹל',
+          Definitions: 'big',
+          'Production answer': 'גדול',
+          Forms: 'f: גְּדוֹלָה<br>m.pl: גְּדוֹלִים<br>f.pl: גְּדוֹלוֹת',
+        },
+      });
+    });
+
+    test('asks for variants', async () => {
+      await renderConnectedEditor();
+      await choosePartOfSpeech('Adjective');
+      expect(screen.getByText('Unusual variants')).toBeTruthy();
+    });
+
+    describe('after switching away and back', () => {
+      test('keeps its inputs', async () => {
+        await renderConnectedEditor();
+        await choosePartOfSpeech('Adjective');
+        await typeInto(input('Feminine singular, with niqqud'), 'גְּדוֹלָה');
+        await choosePartOfSpeech('Other');
+        await choosePartOfSpeech('Adjective');
+        expect(input('Feminine singular, with niqqud').value).toBe('גְּדוֹלָה');
+      });
+    });
+  });
+
   describe('an adverb', () => {
     test('sends only its word, and asks for neither forms nor variants', async () => {
       const requests = await renderConnectedEditor();

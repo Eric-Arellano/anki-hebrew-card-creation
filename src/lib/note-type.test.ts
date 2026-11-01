@@ -25,6 +25,12 @@ describe('shownFieldGroups', () => {
     });
   });
 
+  describe('for an adjective', () => {
+    test('shows variants but not forms, which its inputs write', () => {
+      expect(shownFieldGroups(fieldNames, 'adjective')).toEqual([context, ...variantsAndExtras]);
+    });
+  });
+
   describe('for an adverb', () => {
     test('shows neither forms nor variants', () => {
       expect(shownFieldGroups(fieldNames, 'adverb')).toEqual([context, extras]);
