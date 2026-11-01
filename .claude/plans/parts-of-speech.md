@@ -10,8 +10,8 @@ The goal is a form that fits the word, with less typing. Each new input is fille
 and each part of speech gets its own help. Storing the part of speech also prepares for editing
 existing notes: with seven of them, the app can no longer infer one from `Gender` and `Binyan`.
 
-Builds on the `dictionary-lookup` branch once it lands. No new dependencies, and no new AnkiConnect
-actions.
+Builds on dictionary lookup, prefill and plural hints, which have landed. No new dependencies, and
+no new AnkiConnect actions.
 
 ## Decisions
 
@@ -74,12 +74,14 @@ everything else.
 
 ## PR 1 — Adverbs and phrases
 
-- `src/lib/note-type.ts`: add both to `PARTS_OF_SPEECH`. Variant fields leave out adverb.
+- `src/lib/note-type.ts`: add both to `PARTS_OF_SPEECH`. Variant fields leave out adverb. Their
+  `help` is already a per-part-of-speech record, so add phrase entries and leave adverb out.
 - `partOfSpeechOf` in `src/lib/server/dictionary/convert.ts` gets the new mapping.
 - `src/lib/card/inputs.ts`, `compose.ts`, `prefill.ts`, `src/lib/api/dictionary.ts`: the `'other'`
   cases cover any part of speech with no inputs of its own.
 - `CardEditor.svelte`: add the labels, and show a one-line `PART_OF_SPEECH_HELP` under the chips.
-  Extract the “quoted example” markup from `NoteFields.svelte` so both can use it.
+  Extract the “quoted example” markup that `NoteFields.svelte` builds from `quotedParts` so both can
+  use it.
 - Per-POS help (below), plus a `note-type.test.ts` check that a field with per-POS help has one
   for every part of speech in its `shownFor`.
 
@@ -137,7 +139,7 @@ the root as…” hint. Verbs behave exactly as before.
 ## PR 8 — Same-root panel
 
 - `searchByFieldEqualing` in `src/lib/anki/search.ts`, and `findNotesWithRoot` beside
-  `findExistingNotes`, using `findNotes` and `notesInfo`.
+  `findExistingNotes` in `src/lib/server/anki/existing-notes.ts`, using `findNotes` and `notesInfo`.
 - A new `/api/anki/same-root` route, shaped like `/api/anki/existing`.
 - A panel listing other notes in the deck with that root, reusing `ExistingNotesPanel`'s list and
   its Browse link. The maqafs make this search awkward to type in Anki, so this is where roots pay
