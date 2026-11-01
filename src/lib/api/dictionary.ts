@@ -4,7 +4,7 @@
 import { getJson } from '#lib/api/http.ts';
 import type { Binyan } from '#lib/hebrew/binyan.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
-import type { Preposition } from '#lib/hebrew/preposition.ts';
+import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 
 // Pointed forms throughout, as the dictionary spells them. A list may hold several, for the human
@@ -24,7 +24,7 @@ export type DictionaryVerb = {
   binyan: Binyan | undefined;
   infinitives: DictionaryInfinitive[];
   // Only a suggestion: the dictionary names one for few verbs, and not always the usual one.
-  prepositions: Preposition[];
+  prepositions: GovernedPreposition[];
 };
 
 // A lemma: never a plural, an infinitive or a spelling that only points at one.

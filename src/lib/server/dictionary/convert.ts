@@ -2,7 +2,7 @@
 // sure counterpart converts to nothing, so the input stays blank rather than guessed.
 import type { DictionaryNoun } from '#lib/api/dictionary.ts';
 import { toLookupKey } from '#lib/hebrew/normalize.ts';
-import { PREPOSITIONS, type Preposition } from '#lib/hebrew/preposition.ts';
+import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 
 export function partOfSpeechOf(wiktionaryPartOfSpeech: string): PartOfSpeech {
@@ -39,8 +39,8 @@ export function nounGender(codes: readonly string[]): DictionaryNoun['gender'] {
  * The preposition a gloss's `[with לְ־ ‘for’]` names. Wiktionary spells one pointed or not, with
  * or without a maqaf, and a direct object as `אֵת` or `direct`.
  */
-export function governedPreposition(text: string): Preposition | undefined {
+export function governedPreposition(text: string): GovernedPreposition | undefined {
   if (text === 'direct') return 'את';
   const key = toLookupKey(text);
-  return PREPOSITIONS.find((preposition) => preposition === key);
+  return GOVERNED_PREPOSITIONS.find((preposition) => preposition === key);
 }

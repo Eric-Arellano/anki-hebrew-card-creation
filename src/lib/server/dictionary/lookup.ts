@@ -8,7 +8,7 @@ import {
   toDefectiveKey,
   toLookupKey,
 } from '#lib/hebrew/normalize.ts';
-import type { Preposition } from '#lib/hebrew/preposition.ts';
+import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import { governedPreposition, nounGender, partOfSpeechOf } from './convert.ts';
 import { type DictionaryPaths, INDEX_SCHEMA_VERSION, sourceStamp } from './files.ts';
 import type { EntryFacts } from './source.ts';
@@ -176,7 +176,7 @@ function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
           infinitives: facts.infinitives,
           prepositions: [
             ...new Set(
-              facts.prepositions.flatMap((text): Preposition[] => {
+              facts.prepositions.flatMap((text): GovernedPreposition[] => {
                 const preposition = governedPreposition(text);
                 return preposition === undefined ? [] : [preposition];
               }),
