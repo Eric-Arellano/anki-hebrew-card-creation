@@ -4,6 +4,7 @@ let {
   name,
   options,
   value = $bindable(),
+  suggested = [],
 }: {
   legend: string;
   // Distinguishes this group's radios from any other group's on the page.
@@ -11,14 +12,21 @@ let {
   options: readonly { value: T; label: string }[];
   // `undefined` until the human chooses, so nothing is chosen for them.
   value: T | undefined;
+  // Options the dictionary suggests, marked but never chosen.
+  suggested?: readonly T[];
 } = $props();
 </script>
 
 <fieldset class="flex flex-wrap items-center gap-2">
   <legend class="required-mark mb-1">{legend}</legend>
   {#each options as option (option.value)}
+    {@const isSuggested = suggested.includes(option.value)}
     <label
-      class="chip cursor-pointer has-checked:border-blue-700 has-checked:bg-blue-700 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-blue-600/30"
+      class={[
+        'chip cursor-pointer has-checked:border-blue-700 has-checked:bg-blue-700 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-blue-600/30',
+        isSuggested && 'border-dashed border-blue-700',
+      ]}
+      title={isSuggested ? 'Suggested by Wiktionary' : undefined}
     >
       <input type="radio" class="sr-only" {name} value={option.value} required bind:group={value}>
       {option.label}

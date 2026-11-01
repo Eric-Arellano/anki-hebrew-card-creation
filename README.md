@@ -8,9 +8,9 @@ and click Add. The tool never adds, edits or deletes a note itself.
 It is built for my own deck and note type, which `src/lib/note-type.ts` describes. To adapt it,
 edit that file.
 
-**Status:** early. The editor and the hand-off to Anki work. A noun's gender and forms, a verb's
-binyan, root and preposition, and every production answer are filled in from what you choose.
-Dictionary lookups are still to come.
+**Status:** early, but it works end to end. Type a word, pick the dictionary entry it is, and the
+pointed form, gender, plural, feminine forms, binyan, root and infinitive fill in from Wiktionary.
+It composes every production answer.
 
 ## Requirements
 
@@ -22,11 +22,12 @@ Dictionary lookups are still to come.
 
 Download the dictionary, an extract of English Wiktionary's Hebrew entries: on
 [kaikki.org's Hebrew page](https://kaikki.org/dictionary/Hebrew/), download the postprocessed
-JSONL (about 60 MB) and save it as `data/kaikki.org-dictionary-Hebrew.jsonl`. Download it again
-to pick up a newer Wiktionary.
+JSONL (about 60 MB) and save it as `data/kaikki.org-dictionary-Hebrew.jsonl`. Then index it, which
+takes a few seconds; lookups fail until you do:
 
 ```sh
 npm install
+npm run build-index
 npm run dev      # http://127.0.0.1:5173
 ```
 
@@ -36,6 +37,9 @@ Or build it once and run that:
 npm run build
 npm start        # http://127.0.0.1:3000
 ```
+
+To pick up a newer Wiktionary, download the file again and rerun `npm run build-index`. The editor
+says when the index is older than the file.
 
 The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can open Add
 windows in your Anki.
