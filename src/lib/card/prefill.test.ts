@@ -8,14 +8,14 @@ const kelev: DictionaryCandidate = {
   id: 1,
   title: 'כלב',
   pointed: 'כֶּלֶב',
-  pos: 'noun',
-  glosses: ['dog'],
+  wiktionaryPartOfSpeech: 'noun',
+  definitions: ['dog'],
   roots: [],
   partOfSpeech: 'noun',
   noun: {
     gender: { gender: 'm', pluralOnly: false },
     plurals: ['כְּלָבִים'],
-    feminines: ['כַּלְבָּה'],
+    feminineSingulars: ['כַּלְבָּה'],
     femininePlurals: ['כְּלָבוֹת'],
   },
 };
@@ -24,8 +24,8 @@ const diber: DictionaryCandidate = {
   id: 30,
   title: 'דיבר',
   pointed: 'דִּבֵּר',
-  pos: 'verb',
-  glosses: ['to speak (say words)'],
+  wiktionaryPartOfSpeech: 'verb',
+  definitions: ['to speak (say words)'],
   roots: ['ד־ב־ר'],
   partOfSpeech: 'verb',
   verb: {
@@ -78,7 +78,7 @@ describe('prefillDraft', () => {
         expect(
           prefillDraft(typed, {
             ...kelev,
-            noun: { gender: undefined, plurals: [], feminines: [], femininePlurals: [] },
+            noun: { gender: undefined, plurals: [], feminineSingulars: [], femininePlurals: [] },
           }).draft.noun,
         ).toEqual({
           gender: undefined,
@@ -103,14 +103,14 @@ describe('prefillDraft', () => {
 
     describe('with two feminines and two feminine plurals', () => {
       test('leaves both blank and offers each pair', () => {
-        const feminines = ['חֲתוּלָה', 'חֲתֻלָּה'];
+        const feminineSingulars = ['חֲתוּלָה', 'חֲתֻלָּה'];
         const femininePlurals = ['חֲתוּלוֹת', 'חֲתֻלּוֹת'];
         const { draft, choices } = prefillDraft(typed, {
           ...kelev,
-          noun: { ...kelev.noun, feminines, femininePlurals },
+          noun: { ...kelev.noun, feminineSingulars, femininePlurals },
         });
         expect([draft.noun.feminine, draft.noun.femininePlural]).toEqual(['', '']);
-        expect(choices).toEqual({ feminine: feminines, femininePlural: femininePlurals });
+        expect(choices).toEqual({ feminine: feminineSingulars, femininePlural: femininePlurals });
       });
     });
 
@@ -197,8 +197,8 @@ describe('prefillDraft', () => {
           id: 2,
           title: 'כלב',
           pointed: 'כָּלֵב',
-          pos: 'name',
-          glosses: ['a male given name, Caleb'],
+          wiktionaryPartOfSpeech: 'name',
+          definitions: ['a male given name, Caleb'],
           roots: [],
           partOfSpeech: 'other',
         }),

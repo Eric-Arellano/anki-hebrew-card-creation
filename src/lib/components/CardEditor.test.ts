@@ -576,14 +576,14 @@ describe('CardEditor', () => {
       id: 1,
       title: 'כלב',
       pointed: 'כֶּלֶב',
-      pos: 'noun',
-      glosses: ['dog', '(derogatory) scoundrel, bitch'],
+      wiktionaryPartOfSpeech: 'noun',
+      definitions: ['dog', '(derogatory) scoundrel, bitch'],
       roots: [],
       partOfSpeech: 'noun',
       noun: {
         gender: { gender: 'm', pluralOnly: false },
         plurals: ['כְּלָבִים'],
-        feminines: ['כַּלְבָּה'],
+        feminineSingulars: ['כַּלְבָּה'],
         femininePlurals: ['כְּלָבוֹת'],
       },
     };
@@ -592,8 +592,8 @@ describe('CardEditor', () => {
       id: 42,
       title: 'חיכה',
       pointed: 'חִכָּה',
-      pos: 'verb',
-      glosses: ['to wait, wait for [with לְ־ ‘for’]'],
+      wiktionaryPartOfSpeech: 'verb',
+      definitions: ['to wait, wait for [with לְ־ ‘for’]'],
       roots: ['ח־כ־ה'],
       partOfSpeech: 'verb',
       verb: {

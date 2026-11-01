@@ -20,7 +20,7 @@ let {
   candidate: DictionaryCandidate,
 )}
   <span class="text-2xl" lang="he" dir="rtl">{candidate.pointed ?? candidate.title}</span>
-  <span class="text-sm text-gray-600">{candidate.pos}</span>
+  <span class="text-sm text-gray-600">{candidate.wiktionaryPartOfSpeech}</span>
   {#if candidate.roots.length > 0}
     <span class="text-sm text-gray-600">
       root <bdi lang="he">{candidate.roots.join(', ')}</bdi>
@@ -42,8 +42,8 @@ let {
       </div>
       <!-- Read-only: the human writes their own meaning, with these beside it. -->
       <ol aria-label="Wiktionary's meanings" class="list-decimal space-y-0.5 ps-6">
-        {#each picked.glosses as gloss, index (index)}
-          <li>{gloss}</li>
+        {#each picked.definitions as definition, index (index)}
+          <li>{definition}</li>
         {/each}
       </ol>
     </div>
@@ -79,8 +79,8 @@ let {
                   <span class="flex flex-wrap items-baseline gap-x-3">
                     {@render headline(candidate)}
                   </span>
-                  {#if candidate.glosses[0] !== undefined}
-                    <span class="line-clamp-2 text-sm">{candidate.glosses[0]}</span>
+                  {#if candidate.definitions[0] !== undefined}
+                    <span class="line-clamp-2 text-sm">{candidate.definitions[0]}</span>
                   {/if}
                 </button>
               </li>

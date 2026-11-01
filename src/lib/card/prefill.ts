@@ -2,8 +2,8 @@
 // inputs compose. An input the entry gives one value fills with it; one it gives several stays
 // blank, with the values offered as choices; one it gives none stays blank.
 //
-// The English meaning is left alone: the human writes their own, with the glosses beside them.
-// **Open:** whether it should ever start from the glosses.
+// The English meaning is left alone: the human writes their own, with the definitions beside them.
+// **Open:** whether it should ever start from the definitions.
 import type { DictionaryCandidate, DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
 import { toDefectiveKey } from '#lib/hebrew/normalize.ts';
@@ -25,7 +25,7 @@ export function prefillDraft(
   const word = { word: candidate.title, pointed: candidate.pointed ?? '' };
   switch (candidate.partOfSpeech) {
     case 'noun': {
-      const { gender, plurals, feminines, femininePlurals } = candidate.noun;
+      const { gender, plurals, feminineSingulars, femininePlurals } = candidate.noun;
       return {
         draft: {
           ...draft,
@@ -35,13 +35,13 @@ export function prefillDraft(
             gender: gender?.gender,
             pluralOnly: gender?.pluralOnly ?? false,
             plural: onlyValue(plurals),
-            feminine: onlyValue(feminines),
+            feminine: onlyValue(feminineSingulars),
             femininePlural: onlyValue(femininePlurals),
           },
         },
         choices: {
           plural: choicesAmong(plurals),
-          feminine: choicesAmong(feminines),
+          feminine: choicesAmong(feminineSingulars),
           femininePlural: choicesAmong(femininePlurals),
         },
       };
