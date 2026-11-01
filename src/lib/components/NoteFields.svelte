@@ -1,15 +1,8 @@
 <script lang="ts">
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
+import { fieldDisplay, GROUP_HELP, quotedParts } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
-import {
-  type FieldKey,
-  type FieldValues,
-  fieldDisplay,
-  GROUP_HELP,
-  type PartOfSpeech,
-  quotedParts,
-  type ShownFieldGroup,
-} from '#lib/note-type.ts';
+import type { FieldKey, FieldValues, PartOfSpeech, ShownFieldGroup } from '#lib/note-type.ts';
 import LinkChip from './ui/LinkChip.svelte';
 
 // The meanings' own image search, here searched with a variant's English prompt.

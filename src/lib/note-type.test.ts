@@ -1,13 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import {
-  FIELD_NAMES,
-  FIELDS,
-  fieldDisplay,
-  quotedParts,
-  shownFieldGroups,
-  toAnkiFields,
-} from './note-type.ts';
+import { FIELD_NAMES, shownFieldGroups, toAnkiFields } from './note-type.ts';
 
 const context = { group: 'Disambiguation hints', fields: ['productionContext', 'readingContext'] };
 const variantsAndExtras = [
@@ -68,55 +61,9 @@ describe('toAnkiFields', () => {
   });
 });
 
-describe('fieldDisplay', () => {
-  test('gives a field the help for the part of speech', () => {
-    expect(fieldDisplay('variant1Answer', 'verb')).toEqual({
-      label: 'Variant 1: Hebrew answer, with niqqud',
-      help: FIELDS.variant1Answer.help.verb,
-      searchesImages: undefined,
-    });
-  });
-
-  describe('for a field with one help for every part of speech', () => {
-    test('gives it that help', () => {
-      expect(fieldDisplay('notes', 'noun').help).toBe(FIELDS.notes.help);
-    });
-  });
-
-  describe('for a field the editor never shows', () => {
-    test('gives only its name', () => {
-      expect(fieldDisplay('root', 'verb')).toEqual({ label: 'Root' });
-    });
-  });
-});
-
 describe('FIELD_NAMES', () => {
   // Two keys naming one field would make composition a guess about which one it fills.
   test('names each field once', () => {
     expect(new Set(FIELD_NAMES).size).toBe(FIELD_NAMES.length);
-  });
-});
-
-describe('quotedParts', () => {
-  test('splits out each quoted example', () => {
-    expect(quotedParts('For example, “ד־ב־ר” for לְדַבֵּר, or “a b”.')).toEqual([
-      { text: 'For example, ', quoted: false },
-      { text: 'ד־ב־ר', quoted: true },
-      { text: ' for לְדַבֵּר, or ', quoted: false },
-      { text: 'a b', quoted: true },
-      { text: '.', quoted: false },
-    ]);
-  });
-
-  describe('when a quote starts the text', () => {
-    test('leaves out the empty part before it', () => {
-      expect(quotedParts('“a”')).toEqual([{ text: 'a', quoted: true }]);
-    });
-  });
-
-  describe('without quotes', () => {
-    test('returns the whole text', () => {
-      expect(quotedParts('plain')).toEqual([{ text: 'plain', quoted: false }]);
-    });
   });
 });
