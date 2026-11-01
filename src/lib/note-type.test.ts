@@ -37,6 +37,16 @@ describe('shownFieldGroups', () => {
     });
   });
 
+  describe('for a preposition', () => {
+    test('shows forms and variants', () => {
+      expect(shownFieldGroups(fieldNames, 'preposition')).toEqual([
+        { group: 'Grammar', fields: ['forms'] },
+        context,
+        ...variantsAndExtras,
+      ]);
+    });
+  });
+
   describe('for a phrase', () => {
     test('shows variants but not forms', () => {
       expect(shownFieldGroups(fieldNames, 'phrase')).toEqual([context, ...variantsAndExtras]);

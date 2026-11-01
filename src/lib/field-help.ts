@@ -22,6 +22,9 @@ export const PART_OF_SPEECH_HELP: Record<PartOfSpeech, string> = {
     'An adjective goes by its masculine singular, and agrees with its noun, like “בַּיִת גָּדוֹל” and ' +
     '“עִיר גְּדוֹלָה”.',
   adverb: 'An adverb says how, when or where, and never changes, like “מַהֵר”, “עַכְשָׁו” or “פֹּה”.',
+  preposition:
+    'A preposition links a word to the sentence, like “עַל” or “לִפְנֵי”, and many take pronoun ' +
+    'endings, like “לְפָנַי”, “before me”.',
   phrase: 'A phrase is said as a whole, like “מַה נִּשְׁמַע” or “תּוֹדָה”.',
   other: 'Other is everything else, like “אֲנִי” or “אֲבָל”.',
 };
@@ -76,6 +79,9 @@ export const FIELD_HELP = {
     adverb: productionContextHelp(
       '“more” could be יותר or עוד, so for יותר write “comparing, as in ‘more expensive’”.',
     ),
+    preposition: productionContextHelp(
+      "“at” could be ב or אצל, so for אצל write “at a person's home”.",
+    ),
     phrase: productionContextHelp(
       '“how are you?” could be “מה שלומך” or “מה נשמע”, so for “מה נשמע” write “casual”.',
     ),
@@ -88,12 +94,20 @@ export const FIELD_HELP = {
       'ישן could be “old” or “sleeping”, so for “old” write “בית ישן”.',
     ),
     adverb: BOOK_READING_CONTEXT,
+    preposition: readingContextHelp(
+      'עם could be “with” or “a people”, so for “with” write “באתי עם חבר”.',
+    ),
     phrase: BOOK_READING_CONTEXT,
     other: BOOK_READING_CONTEXT,
   },
-  forms:
-    "The word's other forms, one per line, each with a short label first. For example, for the " +
-    'number שְׁנַיִם: “f: שְׁתַּיִם”, then “before a noun: שְׁנֵי” on the next line.',
+  forms: {
+    preposition:
+      'Any pronoun endings you want to remember, one per line, each with a short label first. For ' +
+      'example, for לִפְנֵי: “me: לְפָנַי”, then “us: לְפָנֵינוּ” on the next line.',
+    other:
+      "The word's other forms, one per line, each with a short label first. For example, for the " +
+      'number שְׁנַיִם: “f: שְׁתַּיִם”, then “before a noun: שְׁנֵי” on the next line.',
+  },
   variant1Prompt: {
     noun:
       "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
@@ -105,6 +119,9 @@ export const FIELD_HELP = {
     adjective:
       "What you'll be shown. For example, “other (feminine)” for אחר's irregular feminine. Find " +
       'an image with Images (EN), then paste it into this field in Anki.',
+    preposition:
+      "What you'll be shown. For example, “with me” for עם's irregular form. Find an image with " +
+      'Images (EN), then paste it into this field in Anki.',
     phrase:
       "What you'll be shown, for wording that changes with who you address. For example, " +
       '“welcome (to a woman)” for “ברוך הבא”. Find an image with Images (EN), then paste it ' +
@@ -119,6 +136,7 @@ export const FIELD_HELP = {
       '“כַּלְבָּה” for “female dog”.',
     verb: 'The Hebrew you should recall. For example, “אֵלֵךְ” for “I will go”.',
     adjective: 'The Hebrew you should recall. For example, “אַחֶרֶת” for “other (feminine)”.',
+    preposition: 'The Hebrew you should recall. For example, “אִתִּי” for “with me”.',
     phrase: 'The Hebrew you should recall. For example, “בְּרוּכָה הַבָּאָה” for “welcome (to a woman)”.',
     other: 'The Hebrew you should recall, copied from the forms above.',
   },
@@ -127,6 +145,7 @@ export const FIELD_HELP = {
     verb: examplesHelp("“אני הולך הביתה (I'm going home)” for ללכת."),
     adjective: examplesHelp('“בית גדול (a big house)” or “העיר גדולה (the city is big)” for גדול.'),
     adverb: examplesHelp('“הוא רץ מהר (he runs fast)” for מהר.'),
+    preposition: examplesHelp('“הספר על השולחן (the book is on the table)” for על.'),
     // Not “תודה! (thanks!)”: a `!` ending the Hebrew jumps to the wrong side of the left-to-right
     // field, in Anki as here.
     phrase: examplesHelp('“תודה על העזרה (thanks for the help)” for תודה.'),

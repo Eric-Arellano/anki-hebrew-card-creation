@@ -7,6 +7,7 @@ describe('partOfSpeechOf', () => {
     ['verb', 'verb'],
     ['adj', 'adjective'],
     ['adv', 'adverb'],
+    ['prep', 'preposition'],
     ['phrase', 'phrase'],
     ['proverb', 'phrase'],
     ['prep_phrase', 'phrase'],

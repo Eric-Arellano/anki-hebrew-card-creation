@@ -254,6 +254,7 @@ describe('prefillDraft', () => {
     test.each([
       ['name', 'other', 'כלב', 'כָּלֵב'],
       ['adv', 'adverb', 'מהר', 'מַהֵר'],
+      ['prep', 'preposition', 'חוץ מ־', 'חוּץ מִ־'],
       ['intj', 'phrase', 'תודה', 'תּוֹדָה'],
     ] as const)(
       'fills only the word of a %s, as %s',

@@ -3,6 +3,7 @@ import { composeAdjectiveFields } from '#lib/card/adjective.ts';
 import type { CardInputs, Definitions } from '#lib/card/inputs.ts';
 import { composeNounFields } from '#lib/card/noun.ts';
 import { composeVerbFields } from '#lib/card/verb.ts';
+import { withoutTrailingMaqaf } from '#lib/hebrew/preposition.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 
 /** Every field the editor can fill from `inputs`, as Anki field HTML. */
@@ -21,6 +22,8 @@ export function composeFields(inputs: CardInputs): FieldValues {
       return { ...shared, ...composeVerbFields(word, inputs.verb) };
     case 'adjective':
       return { ...shared, ...composeAdjectiveFields(word, inputs.adjective) };
+    case 'preposition':
+      return { ...shared, productionAnswer: withoutTrailingMaqaf(word) };
     case 'adverb':
     case 'phrase':
     case 'other':

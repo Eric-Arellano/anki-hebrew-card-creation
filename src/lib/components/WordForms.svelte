@@ -22,6 +22,7 @@ const PART_OF_SPEECH_LABELS = {
   verb: 'Verb',
   adjective: 'Adjective',
   adverb: 'Adverb',
+  preposition: 'Preposition',
   phrase: 'Phrase',
   other: 'Other',
 } satisfies Record<PartOfSpeech, string>;
