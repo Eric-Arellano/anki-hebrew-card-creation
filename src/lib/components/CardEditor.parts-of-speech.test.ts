@@ -32,6 +32,7 @@ describe('CardEditor', () => {
           Pointed: 'כֶּלֶב',
           Definitions: 'dog',
           'Production answer': 'כלב טוב',
+          'Part of speech': 'noun',
           Gender: 'm',
           Forms: 'f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת',
         },
@@ -68,6 +69,7 @@ describe('CardEditor', () => {
             Pointed: 'שָׁנָה',
             Definitions: 'year',
             'Production answer': 'שנה טובה',
+            'Part of speech': 'noun',
             Gender: 'f',
             Forms: 'pl: שָׁנִים',
           },
@@ -91,6 +93,7 @@ describe('CardEditor', () => {
             Pointed: 'מַיִם',
             Definitions: 'water',
             'Production answer': 'מים טובים',
+            'Part of speech': 'noun',
             Gender: 'm',
           },
         });
@@ -142,6 +145,7 @@ describe('CardEditor', () => {
           Pointed: 'לְדַבֵּר',
           Definitions: 'to speak',
           'Production answer': 'לדבר עם',
+          'Part of speech': 'verb',
           Binyan: "pi'el",
           Root: 'ד־ב־ר',
         },
@@ -194,6 +198,7 @@ describe('CardEditor', () => {
           Pointed: 'גָּדוֹל',
           Definitions: 'big',
           'Production answer': 'גדול',
+          'Part of speech': 'adjective',
           Forms: 'f: גְּדוֹלָה<br>m.pl: גְּדוֹלִים<br>f.pl: גְּדוֹלוֹת',
         },
       });
@@ -232,6 +237,7 @@ describe('CardEditor', () => {
           Pointed: 'מַהֵר',
           Definitions: 'quickly',
           'Production answer': 'מהר',
+          'Part of speech': 'adverb',
         },
       });
     });
@@ -265,6 +271,7 @@ describe('CardEditor', () => {
           Pointed: 'עִם',
           Definitions: 'with',
           'Production answer': 'עם',
+          'Part of speech': 'preposition',
           Forms: 'me: אִתִּי',
           'Variant 1 prompt': 'with me',
           'Variant 1 answer': 'אִתִּי',
@@ -278,7 +285,7 @@ describe('CardEditor', () => {
       await choosePartOfSpeech('Preposition');
 
       expect(await handOff(requests)).toMatchObject({
-        fields: { Hebrew: 'חוץ מ־', 'Production answer': 'חוץ מ' },
+        fields: { Hebrew: 'חוץ מ־', 'Production answer': 'חוץ מ', 'Part of speech': 'preposition' },
       });
     });
   });
@@ -299,6 +306,7 @@ describe('CardEditor', () => {
           Pointed: 'בָּרוּךְ הַבָּא',
           Definitions: 'welcome',
           'Production answer': 'ברוך הבא',
+          'Part of speech': 'phrase',
           'Variant 1 prompt': 'welcome (to a woman)',
           'Variant 1 answer': 'בְּרוּכָה הַבָּאָה',
         },

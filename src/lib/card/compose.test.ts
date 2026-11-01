@@ -38,6 +38,7 @@ function realFields(word: string, fields: readonly FieldKey[]) {
   return Object.fromEntries(fields.map((field) => [field, realField(word, field)]));
 }
 
+// Without `partOfSpeech`, which the real notes predate.
 const NOUN_FIELDS = [
   'unpointed',
   'pointed',
@@ -52,6 +53,7 @@ describe('composeFields', () => {
     test('fills the word, its pointed form, its definition and its production answer', () => {
       expect(composeFields(dagInputs)).toEqual({
         unpointed: 'דג',
+        partOfSpeech: 'other',
         pointed: 'דָּג',
         definitions: 'fish',
         productionAnswer: 'דג',
@@ -72,6 +74,7 @@ describe('composeFields', () => {
           }),
         ).toEqual({
           unpointed: 'מה נשמע',
+          partOfSpeech,
           pointed: 'מַה נִּשְׁמַע',
           definitions: 'how are you?',
           productionAnswer: 'מה נשמע',
@@ -91,6 +94,7 @@ describe('composeFields', () => {
         }),
       ).toEqual({
         unpointed: 'חוץ מ־',
+        partOfSpeech: 'preposition',
         pointed: 'חוּץ מִ־',
         definitions: 'except for',
         productionAnswer: 'חוץ מ',
@@ -110,6 +114,7 @@ describe('composeFields', () => {
         }),
       ).toEqual({
         unpointed: 'לדבר',
+        partOfSpeech: 'verb',
         pointed: 'לְדַבֵּר',
         definitions: 'to speak',
         productionAnswer: 'לדבר עם',
@@ -167,6 +172,7 @@ describe('composeFields', () => {
         }),
       ).toEqual({
         unpointed: 'גדול',
+        partOfSpeech: 'adjective',
         pointed: 'גָּדוֹל',
         definitions: 'big',
         productionAnswer: 'גדול',
@@ -185,9 +191,10 @@ describe('composeFields', () => {
 
   describe('for the real noun notes', () => {
     test('composes דג, which has only a plural', () => {
-      expect(composeFields(nounInputs({ ...masculine, plural: 'דָּגִים' }))).toEqual(
-        realFields('דג', NOUN_FIELDS),
-      );
+      expect(composeFields(nounInputs({ ...masculine, plural: 'דָּגִים' }))).toEqual({
+        ...realFields('דג', NOUN_FIELDS),
+        partOfSpeech: 'noun',
+      });
     });
 
     test('composes חתול, which has a feminine counterpart', () => {
@@ -205,7 +212,10 @@ describe('composeFields', () => {
             femininePlural: 'חֲתוּלוֹת',
           },
         }),
-      ).toEqual(realFields('חתול', NOUN_FIELDS));
+      ).toEqual({
+        ...realFields('חתול', NOUN_FIELDS),
+        partOfSpeech: 'noun',
+      });
     });
   });
 
@@ -217,6 +227,7 @@ describe('composeFields', () => {
       test(`answers ${productionAnswer} and labels its plural pl`, () => {
         expect(composeFields(nounInputs({ pluralOnly: false, gender, plural: 'דָּגִים' }))).toEqual({
           unpointed: 'דג',
+          partOfSpeech: 'noun',
           pointed: 'דָּג',
           definitions: 'fish',
           productionAnswer,
@@ -238,6 +249,7 @@ describe('composeFields', () => {
           }),
         ).toEqual({
           unpointed: 'מים',
+          partOfSpeech: 'noun',
           pointed: 'מַיִם',
           definitions: 'water',
           productionAnswer: 'מים טובים',
@@ -291,6 +303,7 @@ describe('composeFields', () => {
         }),
       ).toEqual({
         unpointed: 'דג',
+        partOfSpeech: 'other',
         pointed: 'דָּג',
         definitions: 'fish &amp; chips',
         productionAnswer: 'דג',
@@ -322,6 +335,7 @@ describe('composeFields', () => {
         composeFields({ word: '', partOfSpeech: 'other', definitions: [''], pointed: '' }),
       ).toEqual({
         unpointed: '',
+        partOfSpeech: 'other',
         pointed: '',
         definitions: '',
         productionAnswer: '',

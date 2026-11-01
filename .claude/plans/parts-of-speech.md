@@ -2,12 +2,12 @@
 
 ## Context
 
-The editor knows all seven parts of speech. What remains is to store which one a note is, and to
-fill in more of each form.
+The editor knows all seven parts of speech, and each note stores which one it is. What remains is
+to fill in more of each form.
 
 The goal is a form that fits the word, with less typing. Each new input is filled from Wiktionary.
 Storing the part of speech also prepares for editing existing notes: with seven of them, the app
-can no longer infer one from `Gender` and `Binyan`.
+cannot infer one from `Gender` and `Binyan`. Notes made before the field existed have it blank.
 
 Builds on dictionary lookup, prefill and plural hints, which have landed. No new dependencies, and
 no new AnkiConnect actions.
@@ -16,7 +16,8 @@ no new AnkiConnect actions.
 
 - **Seven parts of speech:** Noun, Verb, Adjective, Adverb, Preposition, Phrase, Other. Lookup
   picks one from the dictionary entry, so the human rarely chooses.
-- **`Part of speech` is a hidden field,** not a tag. It is composed, like `Production answer`.
+- **`Part of speech` is a hidden field,** not a tag. It is composed, like `Production answer`, and
+  holds the lowercase `PartOfSpeech` value, as `Binyan` and `Gender` do.
   *Rejected: a `pos::` tag, because the app reads and drift-checks fields; a saved search gives the
   same one-click filter.*
 - **Roots go on nouns and adjectives too,** optional there and still required for verbs. These are
@@ -41,15 +42,7 @@ suggestions beyond plurals.*
 | Noun | gender, forms, optional root | `כלב טוב` | composed | yes |
 | Verb | preposition, binyan, root, principal parts | `לדבר עם` | composed | yes |
 
-## PR 1 — `Part of speech` field
-
-**Needs you first:** add the field in Anki, before `Gender`. Until then the drift check correctly
-blocks the hand-off.
-
-- `FIELDS` gets `partOfSpeech` with `shownFor: []`, and `composeFields` writes `inputs.partOfSpeech`.
-- Re-fetch `tests/fixtures/anki/` with `modelFieldNames` and `notesInfo`.
-
-## PR 2 — Roots on nouns and adjectives
+## PR 1 — Roots on nouns and adjectives
 
 - `RootInput` joins both forms, gaining a `required` prop, prefilled from `candidate.roots`, with choices when there are
   several. Wiktionary gives one for roughly 40–50% of them; the rest are often loanwords.
@@ -58,7 +51,7 @@ blocks the hand-off.
   place beside it, as `VerbInputs` has one.
 - `undoPrefill` restores it. The card templates already show `Root` when it is filled.
 
-## PR 3 — Same-root panel
+## PR 2 — Same-root panel
 
 - `searchByFieldEqualing` in `src/lib/anki/search.ts`, and `findNotesWithRoot` beside
   `findExistingNotes` in `src/lib/server/anki/existing-notes.ts`, using `findNotes` and `notesInfo`.
@@ -67,7 +60,7 @@ blocks the hand-off.
   list and its Browse link so both can use them. The maqafs make this search awkward to type in Anki, so this is where roots pay
   off.
 
-## PR 4 — Verb principal parts
+## PR 3 — Verb principal parts
 
 - `source-forms.ts`: `presents` and `futures` from conjugation rows tagged exactly
   `masculine present singular` and `future masculine singular third-person`. About 95% of verbs give
@@ -85,4 +78,4 @@ blocks the hand-off.
   covers which inputs and groups appear.
 - By hand in the running app, without handing off to real Anki unless you agree: גדול, כתובת and
   לדבר.
-- Hold off re-entering the deck until PR 1, ideally PR 2, so those notes carry both new fields.
+- Hold off re-entering the deck until PR 1, so those notes carry both the part of speech and a root.

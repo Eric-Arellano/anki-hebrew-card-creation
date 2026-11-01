@@ -57,6 +57,8 @@ export type Field = { name: string } & (
 // - `Hebrew`, `Pointed` and `Definitions` are written by the inputs, so a second place to edit
 //   them would only let the two drift apart.
 // - `Images` and `Audio` are media, which the human pastes into Anki's Add window.
+// - `Part of speech` is the `PartOfSpeech` value, lowercase as the type spells it, so the app can
+//   tell what kind of word a note is without inferring it from `Gender` and `Binyan`.
 // - `Production answer` is composed entirely, so the human can't drift from the form the
 //   Production card checks the typed answer against.
 // - A noun's `Gender` and `Forms`, an adjective's `Forms`, and a verb's `Binyan` and `Root`, are
@@ -83,6 +85,7 @@ export const FIELDS = {
   },
   images: { name: 'Images', shownFor: [] },
   audio: { name: 'Audio', shownFor: [] },
+  partOfSpeech: { name: 'Part of speech', shownFor: [] },
   gender: { name: 'Gender', shownFor: [] },
   forms: {
     name: 'Forms',

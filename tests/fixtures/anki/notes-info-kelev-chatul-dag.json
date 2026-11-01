@@ -36,49 +36,53 @@
         "value": "[sound:pronunciation_he_כלב.mp3]",
         "order": 7
       },
+      "Part of speech": {
+        "value": "",
+        "order": 8
+      },
       "Gender": {
         "value": "m",
-        "order": 8
+        "order": 9
       },
       "Forms": {
         "value": "f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת",
-        "order": 9
+        "order": 10
       },
       "Binyan": {
         "value": "",
-        "order": 10
+        "order": 11
       },
       "Root": {
         "value": "",
-        "order": 11
+        "order": 12
       },
       "Variant 1 prompt": {
         "value": "female dog<br><br><div><img alt=\"Top Girl Dog Names | Unique Ideas for Your Female Puppy Dog\" src=\"shutterstock_628340135-cute-siberian-husky-puppy-with-flowers-on-a-pink-background-background-1.jpg\"><br></div>",
-        "order": 12
+        "order": 13
       },
       "Variant 1 answer": {
         "value": "כַּלְבָּה",
-        "order": 13
+        "order": 14
       },
       "Variant 2 prompt": {
         "value": "",
-        "order": 14
+        "order": 15
       },
       "Variant 2 answer": {
         "value": "",
-        "order": 15
+        "order": 16
       },
       "Examples": {
         "value": "",
-        "order": 16
+        "order": 17
       },
       "Notes": {
         "value": "",
-        "order": 17
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793099191,
+    "mod": 1793575634,
     "cards": [1751686072899, 1751686072900, 1751819396650, 1793066688067]
   },
   {
@@ -118,49 +122,53 @@
         "value": "[sound:pronunciation_he_חתול.mp3]",
         "order": 7
       },
+      "Part of speech": {
+        "value": "",
+        "order": 8
+      },
       "Gender": {
         "value": "m",
-        "order": 8
+        "order": 9
       },
       "Forms": {
         "value": "f:&nbsp;חֲתוּלָה<br>m.pl:&nbsp;חֲתוּלִים<br>f.pl: חֲתוּלוֹת",
-        "order": 9
+        "order": 10
       },
       "Binyan": {
         "value": "",
-        "order": 10
+        "order": 11
       },
       "Root": {
         "value": "",
-        "order": 11
+        "order": 12
       },
       "Variant 1 prompt": {
         "value": "",
-        "order": 12
+        "order": 13
       },
       "Variant 1 answer": {
         "value": "",
-        "order": 13
+        "order": 14
       },
       "Variant 2 prompt": {
         "value": "",
-        "order": 14
+        "order": 15
       },
       "Variant 2 answer": {
         "value": "",
-        "order": 15
+        "order": 16
       },
       "Examples": {
         "value": "",
-        "order": 16
+        "order": 17
       },
       "Notes": {
         "value": "",
-        "order": 17
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793068186,
+    "mod": 1793575634,
     "cards": [1751714132958, 1751714132959, 1751819372766]
   },
   {
@@ -200,49 +208,53 @@
         "value": "[sound:pronunciation_he_דג.mp3]",
         "order": 7
       },
+      "Part of speech": {
+        "value": "",
+        "order": 8
+      },
       "Gender": {
         "value": "m",
-        "order": 8
+        "order": 9
       },
       "Forms": {
         "value": "pl:&nbsp;דָּגִים",
-        "order": 9
+        "order": 10
       },
       "Binyan": {
         "value": "",
-        "order": 10
+        "order": 11
       },
       "Root": {
         "value": "",
-        "order": 11
+        "order": 12
       },
       "Variant 1 prompt": {
         "value": "",
-        "order": 12
+        "order": 13
       },
       "Variant 1 answer": {
         "value": "",
-        "order": 13
+        "order": 14
       },
       "Variant 2 prompt": {
         "value": "",
-        "order": 14
+        "order": 15
       },
       "Variant 2 answer": {
         "value": "",
-        "order": 15
+        "order": 16
       },
       "Examples": {
         "value": "",
-        "order": 16
+        "order": 17
       },
       "Notes": {
         "value": "",
-        "order": 17
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793098728,
+    "mod": 1793575634,
     "cards": [1751714182456, 1751714182457, 1751819347909]
   }
 ]

@@ -92,6 +92,7 @@ describe('CardEditor', () => {
           Pointed: 'כֶּלֶב',
           Definitions: 'dog',
           'Production answer': 'כלב טוב',
+          'Part of speech': 'noun',
           Gender: 'm',
           Forms: 'f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת',
         },

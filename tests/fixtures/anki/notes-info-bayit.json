@@ -36,49 +36,53 @@
         "value": "[sound:pronunciation_he_בית.mp3]",
         "order": 7
       },
-      "Gender": {
+      "Part of speech": {
         "value": "",
         "order": 8
       },
-      "Forms": {
+      "Gender": {
         "value": "",
         "order": 9
       },
-      "Binyan": {
+      "Forms": {
         "value": "",
         "order": 10
       },
-      "Root": {
+      "Binyan": {
         "value": "",
         "order": 11
       },
-      "Variant 1 prompt": {
+      "Root": {
         "value": "",
         "order": 12
       },
-      "Variant 1 answer": {
+      "Variant 1 prompt": {
         "value": "",
         "order": 13
       },
-      "Variant 2 prompt": {
+      "Variant 1 answer": {
         "value": "",
         "order": 14
       },
-      "Variant 2 answer": {
+      "Variant 2 prompt": {
         "value": "",
         "order": 15
       },
-      "Examples": {
+      "Variant 2 answer": {
         "value": "",
         "order": 16
       },
-      "Notes": {
+      "Examples": {
         "value": "",
         "order": 17
+      },
+      "Notes": {
+        "value": "",
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793066671,
+    "mod": 1793575634,
     "cards": [1752114960166, 1752114960167, 1752114960168]
   },
   {
@@ -118,49 +122,53 @@
         "value": "[sound:pronunciation_he_בית_משפט.mp3]",
         "order": 7
       },
-      "Gender": {
+      "Part of speech": {
         "value": "",
         "order": 8
       },
-      "Forms": {
+      "Gender": {
         "value": "",
         "order": 9
       },
-      "Binyan": {
+      "Forms": {
         "value": "",
         "order": 10
       },
-      "Root": {
+      "Binyan": {
         "value": "",
         "order": 11
       },
-      "Variant 1 prompt": {
+      "Root": {
         "value": "",
         "order": 12
       },
-      "Variant 1 answer": {
+      "Variant 1 prompt": {
         "value": "",
         "order": 13
       },
-      "Variant 2 prompt": {
+      "Variant 1 answer": {
         "value": "",
         "order": 14
       },
-      "Variant 2 answer": {
+      "Variant 2 prompt": {
         "value": "",
         "order": 15
       },
-      "Examples": {
+      "Variant 2 answer": {
         "value": "",
         "order": 16
       },
-      "Notes": {
+      "Examples": {
         "value": "",
         "order": 17
+      },
+      "Notes": {
+        "value": "",
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793066671,
+    "mod": 1793575634,
     "cards": [1752426864218, 1752426864219, 1752426864220]
   },
   {
@@ -200,49 +208,53 @@
         "value": "[sound:pronunciation_he_בית_ספר.mp3]",
         "order": 7
       },
-      "Gender": {
+      "Part of speech": {
         "value": "",
         "order": 8
       },
-      "Forms": {
+      "Gender": {
         "value": "",
         "order": 9
       },
-      "Binyan": {
+      "Forms": {
         "value": "",
         "order": 10
       },
-      "Root": {
+      "Binyan": {
         "value": "",
         "order": 11
       },
-      "Variant 1 prompt": {
+      "Root": {
         "value": "",
         "order": 12
       },
-      "Variant 1 answer": {
+      "Variant 1 prompt": {
         "value": "",
         "order": 13
       },
-      "Variant 2 prompt": {
+      "Variant 1 answer": {
         "value": "",
         "order": 14
       },
-      "Variant 2 answer": {
+      "Variant 2 prompt": {
         "value": "",
         "order": 15
       },
-      "Examples": {
+      "Variant 2 answer": {
         "value": "",
         "order": 16
       },
-      "Notes": {
+      "Examples": {
         "value": "",
         "order": 17
+      },
+      "Notes": {
+        "value": "",
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793066671,
+    "mod": 1793575634,
     "cards": [1752427043637, 1752427043638, 1752427043639]
   },
   {
@@ -282,49 +294,53 @@
         "value": "[sound:pronunciation_he_בית_חולים.mp3]",
         "order": 7
       },
-      "Gender": {
+      "Part of speech": {
         "value": "",
         "order": 8
       },
-      "Forms": {
+      "Gender": {
         "value": "",
         "order": 9
       },
-      "Binyan": {
+      "Forms": {
         "value": "",
         "order": 10
       },
-      "Root": {
+      "Binyan": {
         "value": "",
         "order": 11
       },
-      "Variant 1 prompt": {
+      "Root": {
         "value": "",
         "order": 12
       },
-      "Variant 1 answer": {
+      "Variant 1 prompt": {
         "value": "",
         "order": 13
       },
-      "Variant 2 prompt": {
+      "Variant 1 answer": {
         "value": "",
         "order": 14
       },
-      "Variant 2 answer": {
+      "Variant 2 prompt": {
         "value": "",
         "order": 15
       },
-      "Examples": {
+      "Variant 2 answer": {
         "value": "",
         "order": 16
       },
+      "Examples": {
+        "value": "",
+        "order": 17
+      },
       "Notes": {
         "value": "חולים = patients",
-        "order": 17
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793066671,
+    "mod": 1793575634,
     "cards": [1752428275815, 1752428275816, 1752428275817]
   },
   {
@@ -364,49 +380,53 @@
         "value": "[sound:pronunciation_he_בית_כנסת.mp3]",
         "order": 7
       },
-      "Gender": {
+      "Part of speech": {
         "value": "",
         "order": 8
       },
-      "Forms": {
+      "Gender": {
         "value": "",
         "order": 9
       },
-      "Binyan": {
+      "Forms": {
         "value": "",
         "order": 10
       },
-      "Root": {
+      "Binyan": {
         "value": "",
         "order": 11
       },
-      "Variant 1 prompt": {
+      "Root": {
         "value": "",
         "order": 12
       },
-      "Variant 1 answer": {
+      "Variant 1 prompt": {
         "value": "",
         "order": 13
       },
-      "Variant 2 prompt": {
+      "Variant 1 answer": {
         "value": "",
         "order": 14
       },
-      "Variant 2 answer": {
+      "Variant 2 prompt": {
         "value": "",
         "order": 15
       },
-      "Examples": {
+      "Variant 2 answer": {
         "value": "",
         "order": 16
       },
-      "Notes": {
+      "Examples": {
         "value": "",
         "order": 17
+      },
+      "Notes": {
+        "value": "",
+        "order": 18
       }
     },
     "modelName": "Hebrew",
-    "mod": 1793066671,
+    "mod": 1793575634,
     "cards": [1752428348888, 1752428348889, 1752428348890]
   }
 ]

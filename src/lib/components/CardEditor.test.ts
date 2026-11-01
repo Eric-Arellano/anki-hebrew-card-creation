@@ -41,6 +41,7 @@ describe('CardEditor', () => {
               Pointed: 'דָּג',
               Definitions: 'fish',
               'Production answer': 'דג',
+              'Part of speech': 'other',
             },
           },
         },
