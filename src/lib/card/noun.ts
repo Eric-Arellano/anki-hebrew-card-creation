@@ -1,4 +1,4 @@
-import { textToAnkiFieldHtml } from '#lib/anki/html.ts';
+import { type FormLine, formsHtml } from '#lib/card/forms.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import { productionTov } from '#lib/hebrew/tov.ts';
 import type { FieldValues } from '#lib/note-type.ts';
@@ -48,21 +48,13 @@ export function composeNounFields(word: string, noun: NounInputs): FieldValues {
   return {
     productionAnswer: `${word} ${productionTov(noun)}`,
     gender: noun.gender,
-    forms: formsHtml(noun),
+    forms: formsHtml(formLines(noun)),
   };
 }
 
 // `pl: דָּגִים` alone, or `f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת` once a masculine noun has a
-// feminine counterpart. A blank form is left out rather than labelled with nothing.
-function formsHtml(noun: NounInputs): string {
-  return formLines(noun)
-    .map(([label, form]): [string, string] => [label, form.trim()])
-    .filter(([, form]) => form !== '')
-    .map(([label, form]) => `${label}: ${textToAnkiFieldHtml(form)}`)
-    .join('<br>');
-}
-
-function formLines(noun: NounInputs): [label: string, form: string][] {
+// feminine counterpart.
+function formLines(noun: NounInputs): FormLine[] {
   if (noun.pluralOnly) return [];
   if (noun.gender !== 'm' || (noun.feminine.trim() === '' && noun.femininePlural.trim() === '')) {
     return [['pl', noun.plural]];
