@@ -3,13 +3,13 @@ import type { Snippet } from 'svelte';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { VerbDraft } from '#lib/card/verb.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
-import { PREPOSITIONS, type Preposition } from '#lib/hebrew/preposition.ts';
+import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
 
-const PREPOSITION_OPTIONS: readonly { value: Preposition | 'none'; label: string }[] = [
-  ...PREPOSITIONS.map((value) => ({ value, label: value })),
+const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label: string }[] = [
+  ...GOVERNED_PREPOSITIONS.map((value) => ({ value, label: value })),
   { value: 'none', label: 'None' },
 ];
 
@@ -22,7 +22,7 @@ let {
   verb: VerbDraft;
   choices: PrefillChoices;
   // From the dictionary, which names one for few verbs.
-  suggestedPrepositions: readonly Preposition[];
+  suggestedPrepositions: readonly GovernedPreposition[];
   // The pointed infinitive, which leads the row as the pointed word leads a noun's forms.
   children: Snippet;
 } = $props();

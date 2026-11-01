@@ -1,5 +1,5 @@
 import type { Binyan } from '#lib/hebrew/binyan.ts';
-import type { Preposition } from '#lib/hebrew/preposition.ts';
+import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 
@@ -8,7 +8,7 @@ import type { FieldValues } from '#lib/note-type.ts';
 export type VerbInputs = {
   binyan: Binyan;
   root: string;
-  preposition: Preposition | undefined;
+  preposition: GovernedPreposition | undefined;
 };
 
 // The root is as the human typed it. The preposition starts unchosen, like the binyan: it is part of
@@ -16,7 +16,7 @@ export type VerbInputs = {
 export type VerbDraft = {
   binyan: Binyan | undefined;
   root: string;
-  preposition: Preposition | 'none' | undefined;
+  preposition: GovernedPreposition | 'none' | undefined;
 };
 
 export function emptyVerbDraft(): VerbDraft {
