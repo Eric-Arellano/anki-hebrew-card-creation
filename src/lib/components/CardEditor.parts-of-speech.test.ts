@@ -170,6 +170,73 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('an adverb', () => {
+    test('sends only its word, and asks for neither forms nor variants', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'מהר', pointed: 'מַהֵר', gloss: 'quickly' });
+      await choosePartOfSpeech('Adverb');
+      expect(screen.queryByLabelText('Other forms')).toBeNull();
+      expect(screen.queryByText('Unusual variants')).toBeNull();
+
+      expect(await handOff(requests)).toEqual({
+        fields: {
+          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+          Hebrew: 'מהר',
+          Pointed: 'מַהֵר',
+          Definitions: 'quickly',
+          'Production answer': 'מהר',
+        },
+      });
+    });
+
+    describe('after variants were typed under another part of speech', () => {
+      test('sends them blank', async () => {
+        const requests = await renderConnectedEditor();
+        await fillInputs({ word: 'מהר', pointed: 'מַהֵר', gloss: 'quickly' });
+        await choosePartOfSpeech('Other');
+        await typeInto(noteField('Variant 1: English prompt'), 'quick');
+        await choosePartOfSpeech('Adverb');
+
+        expect(await handOff(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
+      });
+    });
+  });
+
+  describe('a phrase', () => {
+    test('sends its word and variants, and asks for no forms', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'ברוך הבא', pointed: 'בָּרוּךְ הַבָּא', gloss: 'welcome' });
+      await choosePartOfSpeech('Phrase');
+      expect(screen.queryByLabelText('Other forms')).toBeNull();
+      await typeInto(noteField('Variant 1: English prompt'), 'welcome (to a woman)');
+      await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'בְּרוּכָה הַבָּאָה');
+
+      expect(await handOff(requests)).toEqual({
+        fields: {
+          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+          Hebrew: 'ברוך הבא',
+          Pointed: 'בָּרוּךְ הַבָּא',
+          Definitions: 'welcome',
+          'Production answer': 'ברוך הבא',
+          'Variant 1 prompt': 'welcome (to a woman)',
+          'Variant 1 answer': 'בְּרוּכָה הַבָּאָה',
+        },
+      });
+    });
+  });
+
+  describe('the help under the part of speech', () => {
+    test('waits for a choice, then follows it', async () => {
+      await renderConnectedEditor();
+      const forms = screen.getByRole('region', { name: 'Word forms' });
+      expect(forms.querySelector('p.hint')).toBeNull();
+      await choosePartOfSpeech('Adverb');
+      expect(forms.querySelector('p.hint')?.textContent).toContain('never changes');
+      await choosePartOfSpeech('Phrase');
+      expect(forms.querySelector('p.hint')?.textContent).toContain('said as a whole');
+    });
+  });
+
   describe('an irregular plural', () => {
     test('offers to fill the first free variant with it', async () => {
       await renderConnectedEditor();

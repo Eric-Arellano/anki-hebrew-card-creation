@@ -5,6 +5,12 @@ describe('partOfSpeechOf', () => {
   test.each([
     ['noun', 'noun'],
     ['verb', 'verb'],
+    ['adv', 'adverb'],
+    ['phrase', 'phrase'],
+    ['proverb', 'phrase'],
+    ['prep_phrase', 'phrase'],
+    ['adv_phrase', 'phrase'],
+    ['intj', 'phrase'],
     ['adj', 'other'],
     ['name', 'other'],
   ])('converts %s to %s', (wiktionaryPartOfSpeech, partOfSpeech) => {

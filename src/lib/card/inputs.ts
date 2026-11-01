@@ -12,7 +12,7 @@ import {
   type VerbDraft,
   type VerbInputs,
 } from '#lib/card/verb.ts';
-import type { PartOfSpeech } from '#lib/note-type.ts';
+import type { PartOfSpeech, PlainPartOfSpeech } from '#lib/note-type.ts';
 
 type WordInputs = { word: string; pointed: string };
 
@@ -22,7 +22,7 @@ export type Definitions = readonly [string, ...string[]];
 export type CardInputs = WordInputs & { definitions: Definitions } & (
     | { partOfSpeech: 'noun'; noun: NounInputs }
     | { partOfSpeech: 'verb'; verb: VerbInputs }
-    | { partOfSpeech: 'other' }
+    | { partOfSpeech: PlainPartOfSpeech }
   );
 
 // The inputs as the editor holds them while the human types: the part of speech starts unchosen,
@@ -112,6 +112,8 @@ export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
       const verbInputs = completeVerb(verb, root);
       return verbInputs && { ...card, partOfSpeech, verb: verbInputs };
     }
+    case 'adverb':
+    case 'phrase':
     case 'other':
       return { ...card, partOfSpeech };
   }

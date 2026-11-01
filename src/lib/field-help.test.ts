@@ -1,5 +1,19 @@
 import { describe, expect, test } from 'vitest';
+import { FIELDS, type FieldKey } from '#lib/note-type.ts';
 import { FIELD_HELP, fieldDisplay, quotedParts } from './field-help.ts';
+
+describe('FIELD_HELP', () => {
+  const helpByPartOfSpeech = Object.entries(FIELD_HELP).flatMap(([key, help]) =>
+    typeof help === 'object' ? [[key as FieldKey, help] as const] : [],
+  );
+
+  test.each(helpByPartOfSpeech)(
+    'gives %s help for exactly the parts of speech showing it',
+    (key, help) => {
+      expect(Object.keys(help).sort()).toEqual([...FIELDS[key].shownFor].sort());
+    },
+  );
+});
 
 describe('fieldDisplay', () => {
   test('gives a field the help for the part of speech', () => {

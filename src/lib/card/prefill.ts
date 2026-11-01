@@ -63,8 +63,10 @@ export function prefillDraft(
         choices: { infinitives: choicesAmong(infinitives), root: choicesAmong(candidate.roots) },
       };
     }
+    case 'adverb':
+    case 'phrase':
     case 'other':
-      return { draft: { ...draft, ...word, partOfSpeech: 'other' }, choices: {} };
+      return { draft: { ...draft, ...word, partOfSpeech: candidate.partOfSpeech }, choices: {} };
   }
 }
 

@@ -3,12 +3,13 @@ import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with
 import { FIELD_NAMES, shownFieldGroups, toAnkiFields } from './note-type.ts';
 
 const context = { group: 'Disambiguation hints', fields: ['productionContext', 'readingContext'] };
+const extras = { group: 'Extras', fields: ['examples', 'notes'] };
 const variantsAndExtras = [
   {
     group: 'Unusual variants',
     fields: ['variant1Prompt', 'variant1Answer', 'variant2Prompt', 'variant2Answer'],
   },
-  { group: 'Extras', fields: ['examples', 'notes'] },
+  extras,
 ];
 
 describe('shownFieldGroups', () => {
@@ -21,6 +22,18 @@ describe('shownFieldGroups', () => {
   describe('for a verb', () => {
     test('shows none of the fields its inputs write, nor forms', () => {
       expect(shownFieldGroups(fieldNames, 'verb')).toEqual([context, ...variantsAndExtras]);
+    });
+  });
+
+  describe('for an adverb', () => {
+    test('shows neither forms nor variants', () => {
+      expect(shownFieldGroups(fieldNames, 'adverb')).toEqual([context, extras]);
+    });
+  });
+
+  describe('for a phrase', () => {
+    test('shows variants but not forms', () => {
+      expect(shownFieldGroups(fieldNames, 'phrase')).toEqual([context, ...variantsAndExtras]);
     });
   });
 

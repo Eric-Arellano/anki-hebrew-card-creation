@@ -58,6 +58,27 @@ describe('composeFields', () => {
     });
   });
 
+  describe.each(['adverb', 'phrase'] as const)(
+    'for a word of part of speech %s',
+    (partOfSpeech) => {
+      test('answers with the word alone', () => {
+        expect(
+          composeFields({
+            word: 'מה נשמע',
+            pointed: 'מַה נִּשְׁמַע',
+            definitions: ['how are you?'],
+            partOfSpeech,
+          }),
+        ).toEqual({
+          unpointed: 'מה נשמע',
+          pointed: 'מַה נִּשְׁמַע',
+          definitions: 'how are you?',
+          productionAnswer: 'מה נשמע',
+        });
+      });
+    },
+  );
+
   describe('for a verb', () => {
     test('answers with its preposition, and writes its binyan and root', () => {
       expect(

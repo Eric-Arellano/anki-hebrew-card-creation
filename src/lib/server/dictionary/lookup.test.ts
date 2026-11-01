@@ -306,6 +306,14 @@ describe('lookUp', () => {
       });
     });
   });
+
+  describe('for an adverb', () => {
+    test('gives it the deck’s part of speech, keeping Wiktionary’s label', () => {
+      expect(look('אדרבא').candidates).toMatchObject([
+        { wiktionaryPartOfSpeech: 'adv', partOfSpeech: 'adverb' },
+      ]);
+    });
+  });
 });
 
 describe('withDictionary', () => {
