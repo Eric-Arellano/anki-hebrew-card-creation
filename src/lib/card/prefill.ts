@@ -32,6 +32,7 @@ export function prefillDraft(
           ...draft,
           ...word,
           partOfSpeech: 'noun',
+          root: onlyValue(candidate.roots),
           noun: {
             gender: gender?.gender,
             pluralOnly: gender?.pluralOnly ?? false,
@@ -44,6 +45,7 @@ export function prefillDraft(
           plural: choicesAmong(plurals),
           feminine: choicesAmong(feminineSingulars),
           femininePlural: choicesAmong(femininePlurals),
+          root: choicesAmong(candidate.roots),
         },
       };
     }
@@ -71,6 +73,7 @@ export function prefillDraft(
           ...draft,
           ...word,
           partOfSpeech: 'adjective',
+          root: onlyValue(candidate.roots),
           adjective: {
             feminine: onlyValue(feminineSingulars),
             masculinePlural: onlyValue(masculinePlurals),
@@ -81,6 +84,7 @@ export function prefillDraft(
           feminine: choicesAmong(feminineSingulars),
           masculinePlural: choicesAmong(masculinePlurals),
           femininePlural: choicesAmong(femininePlurals),
+          root: choicesAmong(candidate.roots),
         },
       };
     }

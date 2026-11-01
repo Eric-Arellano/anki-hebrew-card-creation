@@ -72,7 +72,7 @@ describe('missingInputs', () => {
   });
 
   describe('for a verb', () => {
-    test('requires a preposition before the pointed word, and a binyan and root after it', () => {
+    test('requires a preposition before the pointed word, and a binyan after it', () => {
       expect(
         missingInputs({
           ...ledaberDraft,
@@ -80,11 +80,25 @@ describe('missingInputs', () => {
           root: '',
           verb: { binyan: undefined, preposition: undefined },
         }),
-      ).toEqual(['preposition', 'pointed', 'binyan', 'root']);
+      ).toEqual(['preposition', 'pointed', 'binyan']);
+    });
+  });
+
+  describe.each(['noun', 'verb', 'adjective'] as const)('for a %s', (partOfSpeech) => {
+    const draft = { ...ledaberDraft, partOfSpeech, noun: { ...noun, gender: 'm' as const } };
+
+    test('allows a blank root', () => {
+      expect(missingInputs({ ...draft, root: ' ' })).toEqual([]);
     });
 
     test('counts a root that is not only letters as missing', () => {
-      expect(missingInputs({ ...ledaberDraft, root: 'דִּבֵּר' })).toEqual(['root']);
+      expect(missingInputs({ ...draft, root: 'דִּבֵּר' })).toEqual(['root']);
+    });
+  });
+
+  describe('for a part of speech that shows no root', () => {
+    test('ignores one left over from another', () => {
+      expect(missingInputs({ ...dagDraft, root: 'דִּבֵּר' })).toEqual([]);
     });
   });
 });
@@ -131,6 +145,7 @@ describe('completeInputs', () => {
         partOfSpeech: 'adjective',
         definitions: ['fish'],
         pointed: 'דָּג',
+        root: 'ד־ב־ר',
         adjective,
       });
     });
@@ -145,6 +160,7 @@ describe('completeInputs', () => {
         partOfSpeech: 'noun',
         definitions: ['fish'],
         pointed: 'דָּג',
+        root: 'ד־ב־ר',
         noun: { ...noun, gender: 'm' },
       });
     });
@@ -159,6 +175,7 @@ describe('completeInputs', () => {
         partOfSpeech: 'noun',
         definitions: ['fish'],
         pointed: 'דָּג',
+        root: 'ד־ב־ר',
         noun: { pluralOnly: false, gender: 'f', plural: 'כְּלָבִים' },
       });
     });
@@ -177,6 +194,7 @@ describe('completeInputs', () => {
         partOfSpeech: 'noun',
         definitions: ['fish'],
         pointed: 'דָּג',
+        root: 'ד־ב־ר',
         noun: { pluralOnly: true, gender: 'm' },
       });
     });
@@ -189,8 +207,15 @@ describe('completeInputs', () => {
         partOfSpeech: 'verb',
         definitions: ['to speak'],
         pointed: 'לְדַבֵּר',
-        verb: { binyan: "pi'el", root: 'ד־ב־ר', preposition: 'עם' },
+        root: 'ד־ב־ר',
+        verb: { binyan: "pi'el", preposition: 'עם' },
       });
+    });
+  });
+
+  describe('for a verb with a blank root', () => {
+    test('returns a blank root', () => {
+      expect(completeInputs({ ...ledaberDraft, root: '' })).toMatchObject({ root: '' });
     });
   });
 

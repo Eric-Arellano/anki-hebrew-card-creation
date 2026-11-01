@@ -10,8 +10,47 @@ describe('formatRoot', () => {
   );
 
   describe('with a final letter', () => {
-    test('keeps it as typed', () => {
+    test('keeps it at the end', () => {
       expect(formatRoot('שלם')).toBe('ש־ל־ם');
+    });
+
+    test('moves it from elsewhere', () => {
+      expect(formatRoot('םלך')).toBe('מ־ל־ך');
+    });
+  });
+
+  describe('with a letter that has a final form at the end', () => {
+    test.each([
+      ['עלמ', 'ע־ל־ם'],
+      ['קנ', 'ק־ן'],
+      ['חרפ', 'ח־ר־ף'],
+    ])('writes %s as %s', (text, root) => {
+      expect(formatRoot(text)).toBe(root);
+    });
+  });
+
+  describe('with a shin or sin dot', () => {
+    test.each([
+      ['שׁ־מ־ר', 'ש־מ־ר'],
+      ['שׂמח', 'ש־מ־ח'],
+    ])('writes %s as %s', (text, root) => {
+      expect(formatRoot(text)).toBe(root);
+    });
+  });
+
+  describe('with a geresh', () => {
+    test.each([
+      ['פנצ׳ר', 'פ־נ־צ׳־ר'],
+      ["פנצ'ר", 'פ־נ־צ׳־ר'],
+      ['ג׳.נ.ג׳.ל', 'ג׳־נ־ג׳־ל'],
+      ['קוצ׳ץ׳', 'ק־ו־צ׳־ץ׳'],
+      ['קוצ׳צ׳', 'ק־ו־צ׳־ץ׳'],
+    ])('writes %s as %s', (text, root) => {
+      expect(formatRoot(text)).toBe(root);
+    });
+
+    test('rejects one on a letter that never takes it', () => {
+      expect(formatRoot('ד׳בר')).toBeUndefined();
     });
   });
 

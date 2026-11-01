@@ -61,8 +61,10 @@ export type Field = { name: string } & (
 //   tell what kind of word a note is without inferring it from `Gender` and `Binyan`.
 // - `Production answer` is composed entirely, so the human can't drift from the form the
 //   Production card checks the typed answer against.
-// - A noun's `Gender` and `Forms`, an adjective's `Forms`, and a verb's `Binyan` and `Root`, are
-//   written entirely by their inputs.
+// - A noun's `Gender` and `Forms`, an adjective's `Forms`, a verb's `Binyan`, and the `Root` of all
+//   three, are written entirely by their inputs. Wiktionary gives a root for about half of nouns
+//   and adjectives: the rest are loanwords, but also native words like כלב and ספר, so a blank
+//   `Root` says nothing about the word.
 // - A verb's `Forms` stays blank rather than guessed. **Open:** what it should hold. Wiktionary
 //   offers the future 3ms, the passive counterpart and every cell of the conjugation table,
 //   pointed, though the dictionary index keeps none of them yet.

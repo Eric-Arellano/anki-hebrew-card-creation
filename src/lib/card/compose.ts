@@ -18,11 +18,11 @@ export function composeFields(inputs: CardInputs): FieldValues {
   };
   switch (inputs.partOfSpeech) {
     case 'noun':
-      return { ...shared, ...composeNounFields(word, inputs.noun) };
+      return { ...shared, root: inputs.root, ...composeNounFields(word, inputs.noun) };
     case 'verb':
-      return { ...shared, ...composeVerbFields(word, inputs.verb) };
+      return { ...shared, root: inputs.root, ...composeVerbFields(word, inputs.verb) };
     case 'adjective':
-      return { ...shared, ...composeAdjectiveFields(word, inputs.adjective) };
+      return { ...shared, root: inputs.root, ...composeAdjectiveFields(word, inputs.adjective) };
     case 'preposition':
       return { ...shared, productionAnswer: withoutTrailingMaqaf(word) };
     case 'adverb':

@@ -14,7 +14,13 @@ const formattedRoot = $derived(formatRoot(root));
 </script>
 
 <div class="grid content-start gap-1">
-  <TextInput label="Root, like דבר or ד.ב.ר" lang="he" {choices} bind:value={root} />
+  <TextInput
+    label="Root, like דבר or ד.ב.ר"
+    lang="he"
+    required={false}
+    {choices}
+    bind:value={root}
+  />
   {#if root.trim() !== ''}
     <p class="hint" aria-live="polite">
       {#if formattedRoot === undefined}

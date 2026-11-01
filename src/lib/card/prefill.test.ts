@@ -90,6 +90,27 @@ describe('prefillDraft', () => {
       });
     });
 
+    describe('with a root', () => {
+      test('fills it', () => {
+        expect(prefillDraft(typed, { ...kelev, roots: ['כ־ל־ב'] }).draft.root).toBe('כ־ל־ב');
+      });
+    });
+
+    describe('with two roots, like a blend', () => {
+      test('leaves the root blank and offers both', () => {
+        const roots = ['ק־ו־ל', 'ר־ו־ם'];
+        const { draft, choices } = prefillDraft(typed, { ...kelev, roots });
+        expect(draft.root).toBe('');
+        expect(choices).toEqual({ root: roots });
+      });
+    });
+
+    describe('without a root', () => {
+      test('clears the root typed before', () => {
+        expect(prefillDraft({ ...typed, root: 'כ־ל־ב' }, kelev).draft.root).toBe('');
+      });
+    });
+
     describe('without a gender the deck has', () => {
       test('leaves the gender unchosen and the forms blank', () => {
         expect(
@@ -216,6 +237,7 @@ describe('prefillDraft', () => {
           word: 'גדול',
           pointed: 'גָּדוֹל',
           partOfSpeech: 'adjective',
+          root: 'ג־ד־ל',
           adjective: {
             feminine: 'גְּדוֹלָה',
             masculinePlural: 'גְּדוֹלִים',
@@ -235,6 +257,15 @@ describe('prefillDraft', () => {
         });
         expect(draft.adjective.masculinePlural).toBe('');
         expect(choices).toEqual({ masculinePlural: masculinePlurals });
+      });
+    });
+
+    describe('with two roots', () => {
+      test('leaves the root blank and offers both', () => {
+        const roots = ['ג־ד־ל', 'ג־ד־ד'];
+        const { draft, choices } = prefillDraft(typed, { ...gadol, roots });
+        expect(draft.root).toBe('');
+        expect(choices).toEqual({ root: roots });
       });
     });
 
@@ -302,6 +333,11 @@ describe('undoPrefill', () => {
         adjective: { ...typed.adjective, feminine: 'טוֹבָה' },
       };
       expect(undoPrefill(prefillDraft(before, gadol).draft, before)).toEqual(before);
+    });
+
+    test('puts back the root typed before', () => {
+      const before: CardInputsDraft = { ...typed, root: 'ג.ד.ל' };
+      expect(undoPrefill(prefillDraft(before, gadol).draft, before).root).toBe('ג.ד.ל');
     });
   });
 });

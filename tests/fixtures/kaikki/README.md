@@ -1,6 +1,6 @@
 # Dictionary fixtures
 
-`hebrew.jsonl` is 55 lines copied unchanged, in their original order, from kaikki.org's
+`hebrew.jsonl` is 60 lines copied unchanged, in their original order, from kaikki.org's
 [Hebrew extract](https://kaikki.org/dictionary/Hebrew/) of English Wiktionary
 (`kaikki.org-dictionary-Hebrew.jsonl`, extracted on 2026-10-25 from the 2026-10-01 dump). Because it
 has the real file's format, the index can be built from it as if it were the real file.
@@ -25,6 +25,9 @@ It holds every entry with these titles, except where a word is given:
   template naming biblical infinitives without ל.
 - שמים: a canonical form without niqqud. הרשאה: a canonical form wrapped in a direction control.
 - חירשות: a root category with a sense label. רמקול: a blend, with two roots.
+- הוציא, נולד: verbs whose conjugation stem isn't their root, against a `he-rootbox` and a root
+  category. טלגרף: a stem split across arguments. התעלם: a stem that doesn't write a final letter.
+  קעקע: a stem that is the root, against a category that isn't.
 - אדרבא: senses with glosses beside an alt-of sense.
 - חוץ מ־: a preposition whose title ends in a maqaf.
 - גדול (only the adjective): an adjective whose forms are generated from a stem. אחר (only the

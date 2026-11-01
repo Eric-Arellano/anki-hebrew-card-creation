@@ -66,8 +66,13 @@ function parseJson(line: string): unknown {
 // kaikki gives an etymology section's categories to just one of its entries: the construct form
 // `אַב` carries the root that belongs to `אָב`, "father". So a root category counts for every entry
 // in its section, which is the entries with the same title and etymology number. It is used only
-// where an entry's own templates name no root, since categories agree with them 98% of the time,
-// and only once every line is read, since the category may come on a later entry.
+// where an entry has no `he-rootbox`, and only once every line is read, since the category may come
+// on a later entry.
+//
+// A conjugation's stem isn't always the root, and it disagrees with the category on 46 verbs. A
+// leading ו is how `he-conj` spells a י, so there the category wins: י־ל־ד, not `ולד`. Otherwise
+// either may be right, since a category can name a word's origin instead, as ק־ו־ע does for
+// `קעקע`, whose root is its stem. So both are offered.
 async function writeEntries(db: DatabaseSync, source: string): Promise<BuildSummary> {
   const insertEntry = db.prepare(
     'INSERT INTO entries (id, word, pos, pointed, is_lemma, facts) VALUES (?, ?, ?, ?, ?, ?)',
@@ -76,7 +81,7 @@ async function writeEntries(db: DatabaseSync, source: string): Promise<BuildSumm
     'INSERT INTO keys (key, defective_key, entry_id, is_title) VALUES (?, ?, ?, ?)',
   );
   const categoryRootsBySection = new Map<string, string[]>();
-  const rootless: { id: number; section: string }[] = [];
+  const rootless: { id: number; section: string; conjugationRoots: string[] }[] = [];
   let entries = 0;
   let unreadableLines = 0;
 
@@ -107,14 +112,19 @@ async function writeEntries(db: DatabaseSync, source: string): Promise<BuildSumm
     const roots = categoryRootsBySection.get(section) ?? [];
     const newRoots = entry.categoryRoots.filter((root) => !roots.includes(root));
     categoryRootsBySection.set(section, [...roots, ...newRoots]);
-    if (entry.facts.roots.length === 0) rootless.push({ id, section });
+    if (entry.facts.roots.length === 0) {
+      rootless.push({ id, section, conjugationRoots: entry.conjugationRoots });
+    }
   }
 
   const setRoots = db.prepare(
     "UPDATE entries SET facts = json_set(facts, '$.roots', json(?)) WHERE id = ?",
   );
-  for (const { id, section } of rootless) {
-    const roots = categoryRootsBySection.get(section) ?? [];
+  for (const { id, section, conjugationRoots } of rootless) {
+    const categoryRoots = categoryRootsBySection.get(section) ?? [];
+    const stems = conjugationRoots.filter((root) => !root.startsWith('ו'));
+    const roots =
+      categoryRoots.length > 0 ? [...new Set([...categoryRoots, ...stems])] : conjugationRoots;
     if (roots.length > 0) setRoots.run(JSON.stringify(roots), id);
   }
   return { entries, unreadableLines };

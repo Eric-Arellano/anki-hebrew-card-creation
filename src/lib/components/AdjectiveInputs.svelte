@@ -2,14 +2,17 @@
 import type { Snippet } from 'svelte';
 import type { AdjectiveInputs } from '#lib/card/adjective.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
+import RootInput from './RootInput.svelte';
 import TextInput from './ui/TextInput.svelte';
 
 let {
   adjective = $bindable(),
+  root = $bindable(),
   choices,
   children,
 }: {
   adjective: AdjectiveInputs;
+  root: string;
   choices: PrefillChoices;
   // The pointed word, which leads the row as the pointed word leads a noun's forms.
   children: Snippet;
@@ -41,5 +44,6 @@ let {
       choices={choices.femininePlural}
       bind:value={adjective.femininePlural}
     />
+    <RootInput choices={choices.root} bind:root />
   </div>
 </fieldset>

@@ -22,7 +22,7 @@ const masculine: NounInputs = {
 };
 
 function nounInputs(noun: NounInputs): CardInputs {
-  return { ...dagInputs, partOfSpeech: 'noun', noun };
+  return { ...dagInputs, partOfSpeech: 'noun', noun, root: '' };
 }
 
 /** A field of the real note for `word`, read through `FIELDS` so a renamed field fails here. */
@@ -46,6 +46,7 @@ const NOUN_FIELDS = [
   'productionAnswer',
   'gender',
   'forms',
+  'root',
 ] as const;
 
 describe('composeFields', () => {
@@ -110,7 +111,8 @@ describe('composeFields', () => {
           pointed: 'לְדַבֵּר',
           definitions: ['to speak'],
           partOfSpeech: 'verb',
-          verb: { binyan: "pi'el", root: 'ד־ב־ר', preposition: 'עם' },
+          root: 'ד־ב־ר',
+          verb: { binyan: "pi'el", preposition: 'עם' },
         }),
       ).toEqual({
         unpointed: 'לדבר',
@@ -131,7 +133,8 @@ describe('composeFields', () => {
             pointed: 'לִרְאוֹת',
             definitions: ['to see'],
             partOfSpeech: 'verb',
-            verb: { binyan: "pa'al", root: 'ר־א־ה', preposition: 'את' },
+            root: 'ר־א־ה',
+            verb: { binyan: "pa'al", preposition: 'את' },
           }).productionAnswer,
         ).toBe('לראות את');
       });
@@ -145,7 +148,8 @@ describe('composeFields', () => {
             pointed: 'לָלֶכֶת',
             definitions: ['to go'],
             partOfSpeech: 'verb',
-            verb: { binyan: "pa'al", root: 'ה־ל־ך', preposition: undefined },
+            root: 'ה־ל־ך',
+            verb: { binyan: "pa'al", preposition: undefined },
           }).productionAnswer,
         ).toBe('ללכת');
       });
@@ -159,11 +163,12 @@ describe('composeFields', () => {
         pointed: 'גָּדוֹל',
         definitions: ['big'],
         partOfSpeech: 'adjective',
+        root: 'ג־ד־ל',
         adjective,
       });
     }
 
-    test('answers with the word alone, and labels its forms', () => {
+    test('answers with the word alone, labels its forms, and writes its root', () => {
       expect(
         adjectiveFields({
           feminine: 'גְּדוֹלָה',
@@ -177,6 +182,7 @@ describe('composeFields', () => {
         definitions: 'big',
         productionAnswer: 'גדול',
         forms: 'f: גְּדוֹלָה<br>m.pl: גְּדוֹלִים<br>f.pl: גְּדוֹלוֹת',
+        root: 'ג־ד־ל',
       });
     });
 
@@ -204,6 +210,7 @@ describe('composeFields', () => {
           pointed: 'חָתוּל',
           definitions: ['cat'],
           partOfSpeech: 'noun',
+          root: '',
           noun: {
             pluralOnly: false,
             gender: 'm',
@@ -233,7 +240,16 @@ describe('composeFields', () => {
           productionAnswer,
           gender,
           forms: 'pl: דָּגִים',
+          root: '',
         });
+      });
+    });
+
+    describe('with a root', () => {
+      test('writes it', () => {
+        expect(composeFields({ ...nounInputs(masculine), root: 'כ־ת־ב' } as CardInputs).root).toBe(
+          'כ־ת־ב',
+        );
       });
     });
 
@@ -245,6 +261,7 @@ describe('composeFields', () => {
             pointed: 'מַיִם',
             definitions: ['water'],
             partOfSpeech: 'noun',
+            root: 'מ־י־ם',
             noun: { pluralOnly: true, gender: 'm' },
           }),
         ).toEqual({
@@ -255,6 +272,7 @@ describe('composeFields', () => {
           productionAnswer: 'מים טובים',
           gender: 'm',
           forms: '',
+          root: 'מ־י־ם',
         });
       });
     });
@@ -317,6 +335,7 @@ describe('composeFields', () => {
           partOfSpeech: 'noun',
           definitions: ['fish & chips'],
           pointed: 'דָּג',
+          root: '',
           noun: {
             pluralOnly: false,
             gender: 'm',
