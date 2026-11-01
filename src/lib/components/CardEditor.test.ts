@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
-import { FIELDS } from '#lib/note-type.ts';
+import { FIELD_HELP } from '#lib/field-help.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import {
   addRequests,
@@ -159,7 +159,7 @@ describe('CardEditor', () => {
       expect(readingContext.placeholder).toBe('');
       expect(
         document.getElementById(readingContext.getAttribute('aria-describedby') ?? '')?.textContent,
-      ).toBe(FIELDS.readingContext.help);
+      ).toBe(FIELD_HELP.readingContext);
     });
 
     test('send an edit under its name in Anki', async () => {
@@ -195,7 +195,7 @@ describe('CardEditor', () => {
         const answer = noteField('Variant 1: Hebrew answer, with niqqud');
         expect(
           document.getElementById(answer.getAttribute('aria-describedby') ?? '')?.textContent,
-        ).toBe(FIELDS.variant1Answer.help.verb);
+        ).toBe(FIELD_HELP.variant1Answer.verb);
       });
     });
 
