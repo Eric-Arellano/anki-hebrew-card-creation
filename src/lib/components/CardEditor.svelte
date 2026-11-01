@@ -19,12 +19,7 @@ import {
   stillSpellsEntry,
   undoPrefill,
 } from '#lib/card/prefill.ts';
-import {
-  type FieldValues,
-  PARTS_OF_SPEECH,
-  type PartOfSpeech,
-  shownFieldGroups,
-} from '#lib/note-type.ts';
+import { type FieldKey, type FieldValues, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import DefinitionsInput from './DefinitionsInput.svelte';
@@ -33,22 +28,8 @@ import ExistingNotesPanel from './ExistingNotesPanel.svelte';
 import HandOffBar from './HandOffBar.svelte';
 import LookupLinks from './LookupLinks.svelte';
 import NoteFields from './NoteFields.svelte';
-import NounInputs from './NounInputs.svelte';
-import PluralHints from './PluralHints.svelte';
-import ChoiceChips from './ui/ChoiceChips.svelte';
 import TextInput from './ui/TextInput.svelte';
-import VerbInputs from './VerbInputs.svelte';
-
-const PART_OF_SPEECH_LABELS = {
-  noun: 'Noun',
-  verb: 'Verb',
-  other: 'Other',
-} satisfies Record<PartOfSpeech, string>;
-
-const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
-  value,
-  label: PART_OF_SPEECH_LABELS[value],
-}));
+import WordForms from './WordForms.svelte';
 
 let draft: CardInputsDraft = $state(emptyDraft());
 // The dictionary entry the inputs were last filled from, until the human types another word. The
@@ -119,10 +100,8 @@ function retype() {
   picked = undefined;
 }
 
-// An infinitive is chosen as a pair, so choosing its pointed spelling writes its unpointed one.
-function chooseInfinitive(pointed: string) {
-  const infinitive = picked?.choices.infinitives?.find((choice) => choice.pointed === pointed);
-  draft.word = infinitive?.unpointed ?? '';
+function setEdit(field: FieldKey, value: string) {
+  edits[field] = value;
 }
 
 async function checkAnki() {
@@ -160,57 +139,17 @@ onMount(checkAnki);
     <LookupLinks word={draft.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
   </section>
 
-  <section aria-label="Word forms" class="space-y-4 border-t border-gray-200 pt-8">
-    <ChoiceChips
-      legend="Part of speech"
-      name="part-of-speech"
-      options={partOfSpeechOptions}
-      bind:value={draft.partOfSpeech}
-    />
-    {#snippet pointedInput()}
-      <TextInput
-        label="Hebrew word, with niqqud"
-        lang="he"
-        choices={choices.infinitives?.map((infinitive) => infinitive.pointed)}
-        onchoose={chooseInfinitive}
-        bind:value={draft.pointed}
-      />
-    {/snippet}
-    {#if draft.partOfSpeech === 'noun'}
-      <NounInputs bind:noun={draft.noun} {choices}> {@render pointedInput()} </NounInputs>
-      <PluralHints
-        noun={draft.noun}
-        pointed={draft.pointed}
-        {edits}
-        {shownFields}
-        onuse={(field, answer) => {
-          edits[field] = answer;
-        }}
-      />
-    {:else if draft.partOfSpeech === 'verb'}
-      <VerbInputs
-        bind:verb={draft.verb}
-        {choices}
-        suggestedPrepositions={picked?.candidate.partOfSpeech === 'verb'
-          ? picked.candidate.verb.prepositions
-          : []}
-      >
-        {@render pointedInput()}
-      </VerbInputs>
-    {:else}
-      <div class="forms-row">{@render pointedInput()}</div>
-    {/if}
-  </section>
+  <WordForms
+    bind:draft
+    {choices}
+    candidate={picked?.candidate}
+    {edits}
+    {shownFields}
+    onedit={setEdit}
+  />
 
   {#if draft.partOfSpeech !== undefined}
-    <NoteFields
-      groups={shownGroups}
-      partOfSpeech={draft.partOfSpeech}
-      {edits}
-      onedit={(field, value) => {
-        edits[field] = value;
-      }}
-    />
+    <NoteFields groups={shownGroups} partOfSpeech={draft.partOfSpeech} {edits} onedit={setEdit} />
   {/if}
 
   <HandOffBar
