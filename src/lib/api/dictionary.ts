@@ -17,6 +17,12 @@ export type DictionaryNoun = {
   femininePlurals: string[];
 };
 
+export type DictionaryAdjective = {
+  feminineSingulars: string[];
+  masculinePlurals: string[];
+  femininePlurals: string[];
+};
+
 // The unpointed spelling is the source's own, never derived from the pointed one, and is missing
 // where the source gives none.
 export type DictionaryInfinitive = { pointed: string; unpointed?: string };
@@ -43,6 +49,7 @@ export type DictionaryCandidate = {
 } & (
   | { partOfSpeech: 'noun'; noun: DictionaryNoun }
   | { partOfSpeech: 'verb'; verb: DictionaryVerb }
+  | { partOfSpeech: 'adjective'; adjective: DictionaryAdjective }
   | { partOfSpeech: PlainPartOfSpeech }
 );
 

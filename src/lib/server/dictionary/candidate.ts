@@ -53,6 +53,16 @@ function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
           ],
         },
       };
+    case 'adjective':
+      return {
+        ...shared,
+        partOfSpeech,
+        adjective: {
+          feminineSingulars: facts.feminines,
+          masculinePlurals: facts.masculinePlurals,
+          femininePlurals: facts.femininePlurals,
+        },
+      };
     case 'adverb':
     case 'phrase':
     case 'other':

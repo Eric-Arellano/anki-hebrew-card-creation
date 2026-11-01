@@ -6,7 +6,7 @@ export const DECK = 'עברית';
 export const NOTE_TYPE = 'Hebrew';
 export const TAGS: readonly string[] = [];
 
-export const PARTS_OF_SPEECH = ['noun', 'verb', 'adverb', 'phrase', 'other'] as const;
+export const PARTS_OF_SPEECH = ['noun', 'verb', 'adjective', 'adverb', 'phrase', 'other'] as const;
 
 export type PartOfSpeech = (typeof PARTS_OF_SPEECH)[number];
 
@@ -48,8 +48,8 @@ export type Field = { name: string } & (
 // - `Images` and `Audio` are media, which the human pastes into Anki's Add window.
 // - `Production answer` is composed entirely, so the human can't drift from the form the
 //   Production card checks the typed answer against.
-// - A noun's `Gender` and `Forms`, and a verb's `Binyan` and `Root`, are written entirely by their
-//   inputs.
+// - A noun's `Gender` and `Forms`, an adjective's `Forms`, and a verb's `Binyan` and `Root`, are
+//   written entirely by their inputs.
 // - A verb's `Forms` stays blank rather than guessed. **Open:** what it should hold. Wiktionary
 //   offers the future 3ms, the passive counterpart and every cell of the conjugation table,
 //   pointed, though the dictionary index keeps none of them yet.

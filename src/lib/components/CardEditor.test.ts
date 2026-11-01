@@ -159,7 +159,7 @@ describe('CardEditor', () => {
       expect(readingContext.placeholder).toBe('');
       expect(
         document.getElementById(readingContext.getAttribute('aria-describedby') ?? '')?.textContent,
-      ).toBe(FIELD_HELP.readingContext);
+      ).toBe(FIELD_HELP.readingContext.other);
     });
 
     test('send an edit under its name in Anki', async () => {

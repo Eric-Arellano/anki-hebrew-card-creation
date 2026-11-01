@@ -45,6 +45,21 @@ describe('CardEditor', () => {
       },
     };
 
+    const yisraeli: DictionaryCandidate = {
+      id: 53,
+      title: 'ישראלי',
+      pointed: 'יִשְׂרְאֵלִי',
+      wiktionaryPartOfSpeech: 'adj',
+      definitions: ['Israeli: of or pertaining to the State of Israel.'],
+      roots: [],
+      partOfSpeech: 'adjective',
+      adjective: {
+        feminineSingulars: ['יִשְׂרְאֵלִית'],
+        masculinePlurals: ['יִשְׂרְאֵלִים', 'יִשְׂרְאֵלִיִּים'],
+        femininePlurals: ['יִשְׂרְאֵלִיּוֹת'],
+      },
+    };
+
     function found(...candidates: DictionaryCandidate[]): DictionaryLookup {
       return { match: 'exact', candidates, titleHasEntry: true, staleIndex: false };
     }
@@ -172,6 +187,20 @@ describe('CardEditor', () => {
         await fireEvent.click(screen.getByRole('button', { name: 'לַחְדֹּר' }));
         expect(input('Hebrew word, with niqqud').value).toBe('לַחְדֹּר');
         expect(input('Hebrew word, without niqqud').value).toBe('לחדור');
+      });
+    });
+
+    describe('for an adjective with two masculine plurals', () => {
+      test('fills its forms, and choosing one fills that form', async () => {
+        await renderConnectedEditor(undefined, found(yisraeli));
+        await pick('ישראלית', 'יִשְׂרְאֵלִי');
+        expect(screen.getByRole('radio', { name: 'Adjective', checked: true })).toBeTruthy();
+        expect(input('Feminine singular, with niqqud').value).toBe('יִשְׂרְאֵלִית');
+        expect(input('Feminine plural, with niqqud').value).toBe('יִשְׂרְאֵלִיּוֹת');
+        expect(input('Masculine plural, with niqqud').value).toBe('');
+
+        await fireEvent.click(screen.getByRole('button', { name: 'יִשְׂרְאֵלִים' }));
+        expect(input('Masculine plural, with niqqud').value).toBe('יִשְׂרְאֵלִים');
       });
     });
 

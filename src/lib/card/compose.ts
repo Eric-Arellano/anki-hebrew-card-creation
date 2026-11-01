@@ -1,4 +1,5 @@
 import { textToAnkiFieldHtml } from '#lib/anki/html.ts';
+import { composeAdjectiveFields } from '#lib/card/adjective.ts';
 import type { CardInputs, Definitions } from '#lib/card/inputs.ts';
 import { composeNounFields } from '#lib/card/noun.ts';
 import { composeVerbFields } from '#lib/card/verb.ts';
@@ -18,6 +19,8 @@ export function composeFields(inputs: CardInputs): FieldValues {
       return { ...shared, ...composeNounFields(word, inputs.noun) };
     case 'verb':
       return { ...shared, ...composeVerbFields(word, inputs.verb) };
+    case 'adjective':
+      return { ...shared, ...composeAdjectiveFields(word, inputs.adjective) };
     case 'adverb':
     case 'phrase':
     case 'other':

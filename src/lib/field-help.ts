@@ -18,6 +18,9 @@ type FieldHelp = string | Partial<Record<PartOfSpeech, string>>;
 export const PART_OF_SPEECH_HELP: Record<PartOfSpeech, string> = {
   noun: 'A noun has a gender and usually a plural, like “כֶּלֶב”, plural “כְּלָבִים”.',
   verb: 'A verb goes by its infinitive, like “לְדַבֵּר”.',
+  adjective:
+    'An adjective goes by its masculine singular, and agrees with its noun, like “בַּיִת גָּדוֹל” and ' +
+    '“עִיר גְּדוֹלָה”.',
   adverb: 'An adverb says how, when or where, and never changes, like “מַהֵר”, “עַכְשָׁו” or “פֹּה”.',
   phrase: 'A phrase is said as a whole, like “מַה נִּשְׁמַע” or “תּוֹדָה”.',
   other: 'Other is everything else, like “אֲנִי” or “אֲבָל”.',
@@ -41,6 +44,17 @@ const TO_ASK_PRODUCTION_CONTEXT = productionContextHelp(
   '“to ask” could be לשאול or לבקש, so for לשאול write “a question, not a favor”.',
 );
 
+function readingContextHelp(example: string): string {
+  return (
+    'Use this if the Hebrew without niqqud could be read as more than one word. Write a short ' +
+    `Hebrew phrase that shows which one, without translating it. For example, ${example}`
+  );
+}
+
+const BOOK_READING_CONTEXT = readingContextHelp(
+  'ספר could be “book”, “barber” or “he counted”, so for “book” write “קראתי ספר”.',
+);
+
 function examplesHelp(example: string): string {
   return `Phrases or sentences that use the word, each with its English. For example, ${example}`;
 }
@@ -56,6 +70,9 @@ export const FIELD_HELP = {
       '“time” could be זמן or פעם, so for פעם write “an occasion, not a duration”.',
     ),
     verb: TO_ASK_PRODUCTION_CONTEXT,
+    adjective: productionContextHelp(
+      '“old” could be זקן or ישן, so for זקן write “a person, not a thing”.',
+    ),
     adverb: productionContextHelp(
       '“more” could be יותר or עוד, so for יותר write “comparing, as in ‘more expensive’”.',
     ),
@@ -64,13 +81,19 @@ export const FIELD_HELP = {
     ),
     other: TO_ASK_PRODUCTION_CONTEXT,
   },
-  readingContext:
-    'Use this if the Hebrew without niqqud could be read as more than one word. Write a short ' +
-    'Hebrew phrase that shows which one, without translating it. For example, ספר could be ' +
-    '“book”, “barber” or “he counted”, so for “book” write “קראתי ספר”.',
+  readingContext: {
+    noun: BOOK_READING_CONTEXT,
+    verb: BOOK_READING_CONTEXT,
+    adjective: readingContextHelp(
+      'ישן could be “old” or “sleeping”, so for “old” write “בית ישן”.',
+    ),
+    adverb: BOOK_READING_CONTEXT,
+    phrase: BOOK_READING_CONTEXT,
+    other: BOOK_READING_CONTEXT,
+  },
   forms:
     "The word's other forms, one per line, each with a short label first. For example, for the " +
-    'adjective גָּדוֹל: “f: גְּדוֹלָה”, then “m.pl: גְּדוֹלִים” on the next line.',
+    'number שְׁנַיִם: “f: שְׁתַּיִם”, then “before a noun: שְׁנֵי” on the next line.',
   variant1Prompt: {
     noun:
       "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
@@ -79,6 +102,9 @@ export const FIELD_HELP = {
     verb:
       "What you'll be shown. For example, “I will go” for ללכת's irregular future. Find an " +
       'image with Images (EN), then paste it into this field in Anki.',
+    adjective:
+      "What you'll be shown. For example, “other (feminine)” for אחר's irregular feminine. Find " +
+      'an image with Images (EN), then paste it into this field in Anki.',
     phrase:
       "What you'll be shown, for wording that changes with who you address. For example, " +
       '“welcome (to a woman)” for “ברוך הבא”. Find an image with Images (EN), then paste it ' +
@@ -92,12 +118,14 @@ export const FIELD_HELP = {
       'The Hebrew you should recall. For example, “שֻׁלְחָנוֹת טוֹבִים” for “good tables”, or ' +
       '“כַּלְבָּה” for “female dog”.',
     verb: 'The Hebrew you should recall. For example, “אֵלֵךְ” for “I will go”.',
+    adjective: 'The Hebrew you should recall. For example, “אַחֶרֶת” for “other (feminine)”.',
     phrase: 'The Hebrew you should recall. For example, “בְּרוּכָה הַבָּאָה” for “welcome (to a woman)”.',
     other: 'The Hebrew you should recall, copied from the forms above.',
   },
   examples: {
     noun: TRAIN_EXAMPLES,
     verb: examplesHelp("“אני הולך הביתה (I'm going home)” for ללכת."),
+    adjective: examplesHelp('“בית גדול (a big house)” or “העיר גדולה (the city is big)” for גדול.'),
     adverb: examplesHelp('“הוא רץ מהר (he runs fast)” for מהר.'),
     // Not “תודה! (thanks!)”: a `!` ending the Hebrew jumps to the wrong side of the left-to-right
     // field, in Anki as here.

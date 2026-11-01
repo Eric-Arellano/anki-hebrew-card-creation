@@ -68,6 +68,16 @@ describe('readEntry', () => {
     });
   });
 
+  describe('for an adjective with two masculine plurals', () => {
+    test('takes both, and only its one feminine and feminine plural', () => {
+      expect(entry('ישראלי', 'adj').facts).toMatchObject({
+        feminines: ['יִשְׂרְאֵלִית'],
+        masculinePlurals: ['יִשְׂרְאֵלִים', 'יִשְׂרְאֵלִיִּים'],
+        femininePlurals: ['יִשְׂרְאֵלִיּוֹת'],
+      });
+    });
+  });
+
   describe('for a line it can’t read', () => {
     test.each([
       ['one that isn’t JSON', undefined],

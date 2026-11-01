@@ -10,6 +10,8 @@ export function partOfSpeechOf(wiktionaryPartOfSpeech: string): PartOfSpeech {
     case 'noun':
     case 'verb':
       return wiktionaryPartOfSpeech;
+    case 'adj':
+      return 'adjective';
     case 'adv':
       return 'adverb';
     case 'phrase':

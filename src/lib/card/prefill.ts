@@ -13,6 +13,7 @@ export type PrefillChoices = {
   infinitives?: DictionaryInfinitive[];
   plural?: string[];
   feminine?: string[];
+  masculinePlural?: string[];
   femininePlural?: string[];
   root?: string[];
 };
@@ -63,6 +64,26 @@ export function prefillDraft(
         choices: { infinitives: choicesAmong(infinitives), root: choicesAmong(candidate.roots) },
       };
     }
+    case 'adjective': {
+      const { feminineSingulars, masculinePlurals, femininePlurals } = candidate.adjective;
+      return {
+        draft: {
+          ...draft,
+          ...word,
+          partOfSpeech: 'adjective',
+          adjective: {
+            feminine: onlyValue(feminineSingulars),
+            masculinePlural: onlyValue(masculinePlurals),
+            femininePlural: onlyValue(femininePlurals),
+          },
+        },
+        choices: {
+          feminine: choicesAmong(feminineSingulars),
+          masculinePlural: choicesAmong(masculinePlurals),
+          femininePlural: choicesAmong(femininePlurals),
+        },
+      };
+    }
     case 'adverb':
     case 'phrase':
     case 'other':
@@ -79,6 +100,7 @@ export function undoPrefill(draft: CardInputsDraft, before: CardInputsDraft): Ca
     partOfSpeech: before.partOfSpeech,
     root: before.root,
     noun: before.noun,
+    adjective: before.adjective,
     verb: { ...draft.verb, binyan: before.verb.binyan },
   };
 }

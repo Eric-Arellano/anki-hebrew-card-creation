@@ -2,9 +2,8 @@
 
 ## Context
 
-The editor knows noun, verb, adverb, phrase and other. Adjectives and prepositions still land in
-Other, so an adjective's four forms are typed by hand (the `Forms` help literally says to), while
-Wiktionary has them.
+The editor knows noun, verb, adjective, adverb, phrase and other. Prepositions still land in Other,
+so their suffixed forms are typed by hand, while Wiktionary has them.
 
 The goal is a form that fits the word, with less typing. Each new input is filled from Wiktionary,
 and each part of speech gets its own help. Storing the part of speech also prepares for editing
@@ -26,7 +25,8 @@ no new AnkiConnect actions.
 - **Several values stay choices,** per the Never guess rule, including every cell of a preposition.
 - **A new part of speech announces its own gaps.** `PlainPartOfSpeech` in `note-type.ts` names its
   members, so adding to `PARTS_OF_SPEECH` breaks the switches over it until each case exists, and
-  the `FIELD_HELP` test fails until the variants, `productionContext` and `examples` have its help.
+  the `FIELD_HELP` test fails until the variants, `productionContext`, `readingContext` and
+  `examples` have its help.
   `PARTS_OF_SPEECH_WITH_VARIANTS` includes it without asking.
 
 *Rejected for now: a noun's construct form, because it is mostly predictable and adds a line to
@@ -42,8 +42,8 @@ suggestions beyond plurals.*
 | Preposition | ten suffixed forms | word, no trailing maqaf | composed | yes |
 | Verb | preposition, binyan, root, principal parts | `לדבר עם` | composed | yes |
 
-`partOfSpeechOf` maps `adj` → adjective and `prep` → preposition, leaving the rest as they are. No
-`prep_phrase` entry has an inflection table, so nothing is lost by those staying phrases.
+`partOfSpeechOf` maps `prep` → preposition. No `prep_phrase` entry has an inflection table, so
+nothing is lost by those staying phrases.
 
 ## Help text
 
@@ -55,26 +55,12 @@ there jumps to the wrong side.
 
 | | Production context | Examples | Variant prompt → answer |
 |---|---|---|---|
-| Adjective | “old” could be זקן or ישן; for זקן, “a person, not a thing” | “בית גדול (a big house)”, “העיר גדולה (the city is big)” | “other (feminine)” → “אַחֶרֶת” |
 | Preposition | “at” could be ב or אצל; for אצל, “at a person's home” | “הספר על השולחן (the book is on the table)” | “with me” → “אִתִּי” |
 
-Adjectives also get their own `Reading context` help: ישן could be “old” or “sleeping”, so for
-“old” write “בית ישן”.
+`Reading context` help can reuse `BOOK_READING_CONTEXT`. `PART_OF_SPEECH_HELP`, the line under the
+chips, says with pointed examples that a preposition takes pronoun endings.
 
-`PART_OF_SPEECH_HELP`, the line under the chips, each with pointed examples: an adjective agrees
-with its noun; a preposition takes pronoun endings.
-
-## PR 1 — Adjectives
-
-- `src/lib/server/dictionary/source.ts`: a new `masculinePlurals` fact. `feminines` and
-  `femininePlurals` already match. Bump `INDEX_SCHEMA_VERSION`.
-- `DictionaryAdjective` and its case in `candidate.ts`, `src/lib/card/adjective.ts`, `AdjectiveInputs.svelte`, and prefill and undo
-  through `onlyValue`/`choicesAmong`. About two-thirds of adjective entries give all three forms.
-- `Forms` composes through `formsHtml`, as a noun's does: `f: …<br>m.pl: …<br>f.pl: …`.
-- Fixtures: real lines for גדול, אחר (irregular feminine) and ישראלי (two masculine plurals).
-- `Forms` help for Other moves to a number example.
-
-## PR 2 — Prepositions
+## PR 1 — Prepositions
 
 - `source-forms.ts`: a `suffixedForms` fact from rows with `source: 'inflection'`, keyed by person
   from the tags, pointed forms only. The common prepositions have all ten; 35 of 184 entries have a
@@ -90,7 +76,7 @@ with its noun; a preposition takes pronoun endings.
   as `ל`, the way verbs already write it. `Hebrew` and `Pointed` keep the dictionary's spelling.
 - Fixtures: real lines for ל־, עם and של.
 
-## PR 3 — `Part of speech` field
+## PR 2 — `Part of speech` field
 
 **Needs you first:** add the field in Anki, before `Gender`. Until then the drift check correctly
 blocks the hand-off.
@@ -98,14 +84,16 @@ blocks the hand-off.
 - `FIELDS` gets `partOfSpeech` with `shownFor: []`, and `composeFields` writes `inputs.partOfSpeech`.
 - Re-fetch `tests/fixtures/anki/` with `modelFieldNames` and `notesInfo`.
 
-## PR 4 — Roots on nouns and adjectives
+## PR 3 — Roots on nouns and adjectives
 
 - `RootInput` joins both forms, gaining a `required` prop, prefilled from `candidate.roots`, with choices when there are
   several. Wiktionary gives one for roughly 40–50% of them; the rest are often loanwords.
 - Blank is fine; a non-blank root that isn't only letters still blocks.
+- `AdjectiveInputs` serves as both draft and complete inputs today, so the formatted root needs a
+  place beside it, as `VerbInputs` has one.
 - `undoPrefill` restores it. The card templates already show `Root` when it is filled.
 
-## PR 5 — Same-root panel
+## PR 4 — Same-root panel
 
 - `searchByFieldEqualing` in `src/lib/anki/search.ts`, and `findNotesWithRoot` beside
   `findExistingNotes` in `src/lib/server/anki/existing-notes.ts`, using `findNotes` and `notesInfo`.
@@ -114,7 +102,7 @@ blocks the hand-off.
   list and its Browse link so both can use them. The maqafs make this search awkward to type in Anki, so this is where roots pay
   off.
 
-## PR 6 — Verb principal parts
+## PR 5 — Verb principal parts
 
 - `source-forms.ts`: `presents` and `futures` from conjugation rows tagged exactly
   `masculine present singular` and `future masculine singular third-person`. About 95% of verbs give
@@ -132,4 +120,4 @@ blocks the hand-off.
   covers which inputs and groups appear.
 - By hand in the running app, without handing off to real Anki unless you agree: גדול, עם, ל־,
   כתובת and לדבר.
-- Hold off re-entering the deck until PR 3, ideally PR 4, so those notes carry both new fields.
+- Hold off re-entering the deck until PR 2, ideally PR 3, so those notes carry both new fields.

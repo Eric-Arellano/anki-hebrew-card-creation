@@ -35,6 +35,21 @@ const diber: DictionaryCandidate = {
   },
 };
 
+const gadol: DictionaryCandidate = {
+  id: 52,
+  title: 'גדול',
+  pointed: 'גָּדוֹל',
+  wiktionaryPartOfSpeech: 'adj',
+  definitions: ['big, large'],
+  roots: ['ג־ד־ל'],
+  partOfSpeech: 'adjective',
+  adjective: {
+    feminineSingulars: ['גְּדוֹלָה'],
+    masculinePlurals: ['גְּדוֹלִים'],
+    femininePlurals: ['גְּדוֹלוֹת'],
+  },
+};
+
 const kelevNoun = {
   gender: 'm',
   pluralOnly: false,
@@ -58,6 +73,7 @@ describe('prefillDraft', () => {
           root: '',
           noun: kelevNoun,
           verb: typed.verb,
+          adjective: typed.adjective,
         },
         choices: {},
       });
@@ -192,6 +208,48 @@ describe('prefillDraft', () => {
     });
   });
 
+  describe('for an adjective', () => {
+    test('fills the word and its forms, and keeps the meaning', () => {
+      expect(prefillDraft(typed, gadol)).toEqual({
+        draft: {
+          ...typed,
+          word: 'גדול',
+          pointed: 'גָּדוֹל',
+          partOfSpeech: 'adjective',
+          adjective: {
+            feminine: 'גְּדוֹלָה',
+            masculinePlural: 'גְּדוֹלִים',
+            femininePlural: 'גְּדוֹלוֹת',
+          },
+        },
+        choices: {},
+      });
+    });
+
+    describe('with two masculine plurals', () => {
+      test('leaves that form blank and offers both', () => {
+        const masculinePlurals = ['יִשְׂרְאֵלִים', 'יִשְׂרְאֵלִיִּים'];
+        const { draft, choices } = prefillDraft(typed, {
+          ...gadol,
+          adjective: { ...gadol.adjective, masculinePlurals },
+        });
+        expect(draft.adjective.masculinePlural).toBe('');
+        expect(choices).toEqual({ masculinePlural: masculinePlurals });
+      });
+    });
+
+    describe('without forms', () => {
+      test('leaves them blank', () => {
+        expect(
+          prefillDraft(typed, {
+            ...gadol,
+            adjective: { feminineSingulars: [], masculinePlurals: [], femininePlurals: [] },
+          }).draft.adjective,
+        ).toEqual({ feminine: '', masculinePlural: '', femininePlural: '' });
+      });
+    });
+  });
+
   describe('for another part of speech', () => {
     test.each([
       ['name', 'other', 'כלב', 'כָּלֵב'],
@@ -233,6 +291,16 @@ describe('undoPrefill', () => {
       ...before,
       definitions: ['to speak'],
       verb: { ...before.verb, preposition: 'על' },
+    });
+  });
+
+  describe('for an adjective', () => {
+    test('puts back the forms typed before', () => {
+      const before: CardInputsDraft = {
+        ...typed,
+        adjective: { ...typed.adjective, feminine: 'טוֹבָה' },
+      };
+      expect(undoPrefill(prefillDraft(before, gadol).draft, before)).toEqual(before);
     });
   });
 });
