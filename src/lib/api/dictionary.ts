@@ -5,7 +5,7 @@ import { getJson } from '#lib/api/http.ts';
 import type { Binyan } from '#lib/hebrew/binyan.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
-import type { PartOfSpeech } from '#lib/note-type.ts';
+import type { PlainPartOfSpeech } from '#lib/note-type.ts';
 
 // Pointed forms throughout, as the dictionary spells them. A list may hold several, for the human
 // to choose between, or none.
@@ -43,7 +43,7 @@ export type DictionaryCandidate = {
 } & (
   | { partOfSpeech: 'noun'; noun: DictionaryNoun }
   | { partOfSpeech: 'verb'; verb: DictionaryVerb }
-  | { partOfSpeech: Exclude<PartOfSpeech, 'noun' | 'verb'> }
+  | { partOfSpeech: PlainPartOfSpeech }
 );
 
 export type DictionaryLookup = {

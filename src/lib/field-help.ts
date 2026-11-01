@@ -14,6 +14,15 @@ import {
 // Given per part of speech where its examples differ.
 type FieldHelp = string | Partial<Record<PartOfSpeech, string>>;
 
+// What sets each part of speech apart, shown once one is chosen.
+export const PART_OF_SPEECH_HELP: Record<PartOfSpeech, string> = {
+  noun: 'A noun has a gender and usually a plural, like “כֶּלֶב”, plural “כְּלָבִים”.',
+  verb: 'A verb goes by its infinitive, like “לְדַבֵּר”.',
+  adverb: 'An adverb says how, when or where, and never changes, like “מַהֵר”, “עַכְשָׁו” or “פֹּה”.',
+  phrase: 'A phrase is said as a whole, like “מַה נִּשְׁמַע” or “תּוֹדָה”.',
+  other: 'Other is everything else, like “אֲנִי” or “אֲבָל”.',
+};
+
 // Help for a whole group, where help on each field would repeat itself.
 export const GROUP_HELP: Partial<Record<FieldGroup, string>> = {
   'Unusual variants':
@@ -21,12 +30,40 @@ export const GROUP_HELP: Partial<Record<FieldGroup, string>> = {
     'separately.',
 };
 
+function productionContextHelp(example: string): string {
+  return (
+    'Use this if more than one Hebrew word could mean the English. Say which one you want, ' +
+    `without giving it away. For example, ${example}`
+  );
+}
+
+const TO_ASK_PRODUCTION_CONTEXT = productionContextHelp(
+  '“to ask” could be לשאול or לבקש, so for לשאול write “a question, not a favor”.',
+);
+
+function examplesHelp(example: string): string {
+  return `Phrases or sentences that use the word, each with its English. For example, ${example}`;
+}
+
+const TRAIN_EXAMPLES = examplesHelp(
+  '“כרטיס רכבת (train ticket)” or “הרכבת מאחרת (the train is late)” for רכבת.',
+);
+
 // Variant 1's help sits right above Variant 2, so Variant 2 needs none.
 export const FIELD_HELP = {
-  productionContext:
-    'Use this if more than one Hebrew word could mean the English. Say which one you want, ' +
-    'without giving it away. For example, “to ask” could be לשאול or לבקש, so for לשאול write ' +
-    '“a question, not a favor”.',
+  productionContext: {
+    noun: productionContextHelp(
+      '“time” could be זמן or פעם, so for פעם write “an occasion, not a duration”.',
+    ),
+    verb: TO_ASK_PRODUCTION_CONTEXT,
+    adverb: productionContextHelp(
+      '“more” could be יותר or עוד, so for יותר write “comparing, as in ‘more expensive’”.',
+    ),
+    phrase: productionContextHelp(
+      '“how are you?” could be “מה שלומך” or “מה נשמע”, so for “מה נשמע” write “casual”.',
+    ),
+    other: TO_ASK_PRODUCTION_CONTEXT,
+  },
   readingContext:
     'Use this if the Hebrew without niqqud could be read as more than one word. Write a short ' +
     'Hebrew phrase that shows which one, without translating it. For example, ספר could be ' +
@@ -42,6 +79,10 @@ export const FIELD_HELP = {
     verb:
       "What you'll be shown. For example, “I will go” for ללכת's irregular future. Find an " +
       'image with Images (EN), then paste it into this field in Anki.',
+    phrase:
+      "What you'll be shown, for wording that changes with who you address. For example, " +
+      '“welcome (to a woman)” for “ברוך הבא”. Find an image with Images (EN), then paste it ' +
+      'into this field in Anki.',
     other:
       "What you'll be shown, for a form that doesn't follow the usual pattern. Find an image " +
       'with Images (EN), then paste it into this field in Anki.',
@@ -51,11 +92,18 @@ export const FIELD_HELP = {
       'The Hebrew you should recall. For example, “שֻׁלְחָנוֹת טוֹבִים” for “good tables”, or ' +
       '“כַּלְבָּה” for “female dog”.',
     verb: 'The Hebrew you should recall. For example, “אֵלֵךְ” for “I will go”.',
+    phrase: 'The Hebrew you should recall. For example, “בְּרוּכָה הַבָּאָה” for “welcome (to a woman)”.',
     other: 'The Hebrew you should recall, copied from the forms above.',
   },
-  examples:
-    'Phrases or sentences that use the word, each with its English. For example, ' +
-    '“כרטיס רכבת (train ticket)” or “הרכבת מאחרת (the train is late)” for רכבת.',
+  examples: {
+    noun: TRAIN_EXAMPLES,
+    verb: examplesHelp("“אני הולך הביתה (I'm going home)” for ללכת."),
+    adverb: examplesHelp('“הוא רץ מהר (he runs fast)” for מהר.'),
+    // Not “תודה! (thanks!)”: a `!` ending the Hebrew jumps to the wrong side of the left-to-right
+    // field, in Anki as here.
+    phrase: examplesHelp('“תודה על העזרה (thanks for the help)” for תודה.'),
+    other: TRAIN_EXAMPLES,
+  },
   notes:
     'Anything else worth remembering about the word. For example, ' +
     '“homophone with קרה (to happen)” for קרא.',

@@ -193,22 +193,26 @@ describe('prefillDraft', () => {
   });
 
   describe('for another part of speech', () => {
-    test('fills only the word', () => {
-      expect(
-        prefillDraft(typed, {
-          id: 2,
-          title: 'כלב',
-          pointed: 'כָּלֵב',
-          wiktionaryPartOfSpeech: 'name',
-          definitions: ['a male given name, Caleb'],
-          roots: [],
-          partOfSpeech: 'other',
-        }),
-      ).toEqual({
-        draft: { ...typed, word: 'כלב', pointed: 'כָּלֵב', partOfSpeech: 'other' },
-        choices: {},
-      });
-    });
+    test.each([
+      ['name', 'other', 'כלב', 'כָּלֵב'],
+      ['adv', 'adverb', 'מהר', 'מַהֵר'],
+      ['intj', 'phrase', 'תודה', 'תּוֹדָה'],
+    ] as const)(
+      'fills only the word of a %s, as %s',
+      (wiktionaryPartOfSpeech, partOfSpeech, title, pointed) => {
+        expect(
+          prefillDraft(typed, {
+            id: 2,
+            title,
+            pointed,
+            wiktionaryPartOfSpeech,
+            definitions: [],
+            roots: [],
+            partOfSpeech,
+          }),
+        ).toEqual({ draft: { ...typed, word: title, pointed, partOfSpeech }, choices: {} });
+      },
+    );
   });
 });
 

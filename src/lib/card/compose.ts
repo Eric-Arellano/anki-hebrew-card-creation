@@ -18,6 +18,8 @@ export function composeFields(inputs: CardInputs): FieldValues {
       return { ...shared, ...composeNounFields(word, inputs.noun) };
     case 'verb':
       return { ...shared, ...composeVerbFields(word, inputs.verb) };
+    case 'adverb':
+    case 'phrase':
     case 'other':
       return { ...shared, productionAnswer: word };
   }

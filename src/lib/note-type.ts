@@ -6,9 +6,17 @@ export const DECK = 'עברית';
 export const NOTE_TYPE = 'Hebrew';
 export const TAGS: readonly string[] = [];
 
-export const PARTS_OF_SPEECH = ['noun', 'verb', 'other'] as const;
+export const PARTS_OF_SPEECH = ['noun', 'verb', 'adverb', 'phrase', 'other'] as const;
 
 export type PartOfSpeech = (typeof PARTS_OF_SPEECH)[number];
+
+// The ones with no inputs of their own, beyond the word and its meanings.
+export type PlainPartOfSpeech = Extract<PartOfSpeech, 'adverb' | 'phrase' | 'other'>;
+
+// An adverb never changes form, so it has no unusual one to quiz.
+const PARTS_OF_SPEECH_WITH_VARIANTS = PARTS_OF_SPEECH.filter(
+  (partOfSpeech) => partOfSpeech !== 'adverb',
+);
 
 // The editor shows fields by what they are for, in this order, rather than in Anki's flat order.
 export const FIELD_GROUPS = [
@@ -75,27 +83,27 @@ export const FIELDS = {
   root: { name: 'Root', shownFor: [] },
   variant1Prompt: {
     name: 'Variant 1 prompt',
-    shownFor: PARTS_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH_WITH_VARIANTS,
     group: 'Unusual variants',
     label: 'Variant 1: English prompt',
     searchesImages: true,
   },
   variant1Answer: {
     name: 'Variant 1 answer',
-    shownFor: PARTS_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH_WITH_VARIANTS,
     group: 'Unusual variants',
     label: 'Variant 1: Hebrew answer, with niqqud',
   },
   variant2Prompt: {
     name: 'Variant 2 prompt',
-    shownFor: PARTS_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH_WITH_VARIANTS,
     group: 'Unusual variants',
     label: 'Variant 2: English prompt',
     searchesImages: true,
   },
   variant2Answer: {
     name: 'Variant 2 answer',
-    shownFor: PARTS_OF_SPEECH,
+    shownFor: PARTS_OF_SPEECH_WITH_VARIANTS,
     group: 'Unusual variants',
     label: 'Variant 2: Hebrew answer, with niqqud',
   },

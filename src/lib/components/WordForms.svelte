@@ -2,6 +2,7 @@
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
+import { PART_OF_SPEECH_HELP } from '#lib/field-help.ts';
 import {
   type FieldKey,
   type FieldValues,
@@ -11,12 +12,15 @@ import {
 import NounInputs from './NounInputs.svelte';
 import PluralHints from './PluralHints.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
+import QuotedText from './ui/QuotedText.svelte';
 import TextInput from './ui/TextInput.svelte';
 import VerbInputs from './VerbInputs.svelte';
 
 const PART_OF_SPEECH_LABELS = {
   noun: 'Noun',
   verb: 'Verb',
+  adverb: 'Adverb',
+  phrase: 'Phrase',
   other: 'Other',
 } satisfies Record<PartOfSpeech, string>;
 
@@ -50,12 +54,17 @@ function chooseInfinitive(pointed: string) {
 </script>
 
 <section aria-label="Word forms" class="space-y-4 border-t border-gray-200 pt-8">
-  <ChoiceChips
-    legend="Part of speech"
-    name="part-of-speech"
-    options={partOfSpeechOptions}
-    bind:value={draft.partOfSpeech}
-  />
+  <div class="space-y-1">
+    <ChoiceChips
+      legend="Part of speech"
+      name="part-of-speech"
+      options={partOfSpeechOptions}
+      bind:value={draft.partOfSpeech}
+    />
+    {#if draft.partOfSpeech !== undefined}
+      <p class="hint"><QuotedText text={PART_OF_SPEECH_HELP[draft.partOfSpeech]} /></p>
+    {/if}
+  </div>
   {#snippet pointedInput()}
     <TextInput
       label="Hebrew word, with niqqud"

@@ -6,9 +6,22 @@ import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/pre
 import type { PartOfSpeech } from '#lib/note-type.ts';
 
 export function partOfSpeechOf(wiktionaryPartOfSpeech: string): PartOfSpeech {
-  return wiktionaryPartOfSpeech === 'noun' || wiktionaryPartOfSpeech === 'verb'
-    ? wiktionaryPartOfSpeech
-    : 'other';
+  switch (wiktionaryPartOfSpeech) {
+    case 'noun':
+    case 'verb':
+      return wiktionaryPartOfSpeech;
+    case 'adv':
+      return 'adverb';
+    case 'phrase':
+    case 'proverb':
+    case 'prep_phrase':
+    case 'adv_phrase':
+    // `תודה` and `בבקשה` are things you say, and don't inflect.
+    case 'intj':
+      return 'phrase';
+    default:
+      return 'other';
+  }
 }
 
 // Gender codes are `m` or `f`, with `-p` for a noun only ever plural (`מוניטין`), `-d` for one only

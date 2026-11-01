@@ -2,9 +2,9 @@
 
 ## Context
 
-The editor knows three parts of speech: noun, verb and other. Everything else lands in Other, so
-an adjective's four forms are typed by hand (the `Forms` help literally says to), while Wiktionary
-has them. An adverb also sees `Forms` and variants, though it never changes form.
+The editor knows noun, verb, adverb, phrase and other. Adjectives and prepositions still land in
+Other, so an adjective's four forms are typed by hand (the `Forms` help literally says to), while
+Wiktionary has them.
 
 The goal is a form that fits the word, with less typing. Each new input is filled from Wiktionary,
 and each part of speech gets its own help. Storing the part of speech also prepares for editing
@@ -23,9 +23,11 @@ no new AnkiConnect actions.
 - **Roots go on nouns and adjectives too,** optional there and still required for verbs. These are
   the three kinds Hebrew builds from a root and a pattern. Adverbs have a root in Wiktionary only
   about 12% of the time and phrases almost never, so neither shows it.
-- **Phrases keep Unusual variants,** with help about wording that changes with who you address.
-  Adverbs hide them.
 - **Several values stay choices,** per the Never guess rule, including every cell of a preposition.
+- **A new part of speech announces its own gaps.** `PlainPartOfSpeech` in `note-type.ts` names its
+  members, so adding to `PARTS_OF_SPEECH` breaks the switches over it until each case exists, and
+  the `FIELD_HELP` test fails until the variants, `productionContext` and `examples` have its help.
+  `PARTS_OF_SPEECH_WITH_VARIANTS` includes it without asking.
 
 *Rejected for now: a noun's construct form, because it is mostly predictable and adds a line to
 every noun card. Storing the pattern (משקל), because it is advanced for a beginner. Variant
@@ -35,59 +37,34 @@ suggestions beyond plurals.*
 
 | | Inputs beyond the word | Production answer | `Forms` | Variants |
 |---|---|---|---|---|
-| Noun | gender, forms, optional root | `כלב טוב` | composed | yes |
-| Verb | preposition, binyan, root, principal parts | `לדבר עם` | composed | yes |
 | Adjective | three forms, optional root | word | composed | yes |
-| Adverb | none | word | none | no |
+| Noun | gender, forms, optional root | `כלב טוב` | composed | yes |
 | Preposition | ten suffixed forms | word, no trailing maqaf | composed | yes |
-| Phrase | none | word | none | yes |
-| Other | none | word | typed | yes |
+| Verb | preposition, binyan, root, principal parts | `לדבר עם` | composed | yes |
 
-Hints, `Examples` and `Notes` stay on every part of speech.
-
-Wiktionary maps as: `adj` → adjective, `adv` → adverb, `prep` → preposition; `phrase`, `proverb`,
-`prep_phrase`, `adv_phrase` and `intj` → phrase; everything else → other. Interjections join
-phrases because `תודה` and `בבקשה` are things you say and don't inflect. No `prep_phrase` entry has
-an inflection table, so nothing is lost by treating those as phrases.
+`partOfSpeechOf` maps `adj` → adjective and `prep` → preposition, leaving the rest as they are. No
+`prep_phrase` entry has an inflection table, so nothing is lost by those staying phrases.
 
 ## Help text
 
 Examples below are checked against Wiktionary where they name its entries. Please still skim them.
 
+In `field-help.ts`, write Hebrew of several words “in quotes”, which keeps it on one line. In an
+example, end the Hebrew without punctuation before the English: in the left-to-right fields, a `!`
+there jumps to the wrong side.
+
 | | Production context | Examples | Variant prompt → answer |
 |---|---|---|---|
-| Noun | “time” could be זמן or פעם; for פעם, “an occasion, not a duration” | unchanged | unchanged |
-| Verb | unchanged | “אני הולך הביתה (I'm going home)” | unchanged |
 | Adjective | “old” could be זקן or ישן; for זקן, “a person, not a thing” | “בית גדול (a big house)”, “העיר גדולה (the city is big)” | “other (feminine)” → “אַחֶרֶת” |
-| Adverb | “more” could be יותר or עוד; for יותר, “comparing, as in ‘more expensive’” | “הוא רץ מהר (he runs fast)” | none |
 | Preposition | “at” could be ב or אצל; for אצל, “at a person's home” | “הספר על השולחן (the book is on the table)” | “with me” → “אִתִּי” |
-| Phrase | “how are you?” could be מה שלומך or מה נשמע; for מה נשמע, “casual” | “תודה! בבקשה! (Thanks! You're welcome!)” | “welcome (to a woman)” → “בְּרוּכָה הַבָּאָה” |
-| Other | unchanged | unchanged | unchanged |
 
 Adjectives also get their own `Reading context` help: ישן could be “old” or “sleeping”, so for
 “old” write “בית ישן”.
 
-The line under the chips, each with pointed examples: a noun has a gender and usually a plural; a
-verb goes by its infinitive; an adjective agrees with its noun; an adverb says how, when or where
-and never changes; a preposition takes pronoun endings; a phrase is said as a whole; Other is
-everything else.
+`PART_OF_SPEECH_HELP`, the line under the chips, each with pointed examples: an adjective agrees
+with its noun; a preposition takes pronoun endings.
 
-## PR 1 — Adverbs and phrases
-
-- `src/lib/note-type.ts`: add both to `PARTS_OF_SPEECH`, and name the group with no inputs of its
-  own `PlainPartOfSpeech`, replacing the `Exclude` in `src/lib/api/dictionary.ts`. Variant fields
-  leave out adverb.
-- `src/lib/field-help.ts`: `FIELD_HELP`'s variant entries are already per part of speech, so add
-  phrase entries and leave adverb out.
-- `partOfSpeechOf` in `src/lib/server/dictionary/convert.ts` gets the new mapping.
-- `src/lib/card/inputs.ts`, `compose.ts`, `prefill.ts`,
-  `src/lib/server/dictionary/candidate.ts`: the `'other'` cases cover `PlainPartOfSpeech`.
-- `WordForms.svelte`: add the labels, and show a one-line `PART_OF_SPEECH_HELP` under the chips
-  through `QuotedText.svelte`.
-- Per-POS help (below), plus a `field-help.test.ts` check that a field with per-POS help has one
-  for every part of speech in its `shownFor`.
-
-## PR 2 — Adjectives
+## PR 1 — Adjectives
 
 - `src/lib/server/dictionary/source.ts`: a new `masculinePlurals` fact. `feminines` and
   `femininePlurals` already match. Bump `INDEX_SCHEMA_VERSION`.
@@ -97,7 +74,7 @@ everything else.
 - Fixtures: real lines for גדול, אחר (irregular feminine) and ישראלי (two masculine plurals).
 - `Forms` help for Other moves to a number example.
 
-## PR 3 — Prepositions
+## PR 2 — Prepositions
 
 - `source-forms.ts`: a `suffixedForms` fact from rows with `source: 'inflection'`, keyed by person
   from the tags, pointed forms only. The common prepositions have all ten; 35 of 184 entries have a
@@ -113,7 +90,7 @@ everything else.
   as `ל`, the way verbs already write it. `Hebrew` and `Pointed` keep the dictionary's spelling.
 - Fixtures: real lines for ל־, עם and של.
 
-## PR 4 — `Part of speech` field
+## PR 3 — `Part of speech` field
 
 **Needs you first:** add the field in Anki, before `Gender`. Until then the drift check correctly
 blocks the hand-off.
@@ -121,14 +98,14 @@ blocks the hand-off.
 - `FIELDS` gets `partOfSpeech` with `shownFor: []`, and `composeFields` writes `inputs.partOfSpeech`.
 - Re-fetch `tests/fixtures/anki/` with `modelFieldNames` and `notesInfo`.
 
-## PR 5 — Roots on nouns and adjectives
+## PR 4 — Roots on nouns and adjectives
 
 - `RootInput` joins both forms, gaining a `required` prop, prefilled from `candidate.roots`, with choices when there are
   several. Wiktionary gives one for roughly 40–50% of them; the rest are often loanwords.
 - Blank is fine; a non-blank root that isn't only letters still blocks.
 - `undoPrefill` restores it. The card templates already show `Root` when it is filled.
 
-## PR 6 — Same-root panel
+## PR 5 — Same-root panel
 
 - `searchByFieldEqualing` in `src/lib/anki/search.ts`, and `findNotesWithRoot` beside
   `findExistingNotes` in `src/lib/server/anki/existing-notes.ts`, using `findNotes` and `notesInfo`.
@@ -137,7 +114,7 @@ blocks the hand-off.
   list and its Browse link so both can use them. The maqafs make this search awkward to type in Anki, so this is where roots pay
   off.
 
-## PR 7 — Verb principal parts
+## PR 6 — Verb principal parts
 
 - `source-forms.ts`: `presents` and `futures` from conjugation rows tagged exactly
   `masculine present singular` and `future masculine singular third-person`. About 95% of verbs give
@@ -153,6 +130,6 @@ blocks the hand-off.
   clean, and `npm run build-index` where the schema version changes.
 - Each PR adds tests for its conversion, prefill, undo and composition, and `CardEditor.test.ts`
   covers which inputs and groups appear.
-- By hand in the running app, without handing off to real Anki unless you agree: גדול, מהר, עם,
-  ל־, מה נשמע, תודה, כתובת and לדבר.
-- Hold off re-entering the deck until PR 4, ideally PR 5, so those notes carry both new fields.
+- By hand in the running app, without handing off to real Anki unless you agree: גדול, עם, ל־,
+  כתובת and לדבר.
+- Hold off re-entering the deck until PR 3, ideally PR 4, so those notes carry both new fields.
