@@ -1,7 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { toBinyan } from '#lib/hebrew/binyan.ts';
-import { isSamePointedText, toLookupKey } from '#lib/hebrew/normalize.ts';
+import { isSamePointedText, toLookupKey, uniquePointedText } from '#lib/hebrew/normalize.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import { governedPreposition, nounGender, partOfSpeechOf } from './convert.ts';
 import { type Entry, entriesWithKey } from './entries.ts';
@@ -30,10 +30,10 @@ function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
           // A noun used in pairs, like `עַיִן`, may list only its dual.
           plurals: facts.plurals.length > 0 ? facts.plurals : facts.duals,
           feminineSingulars: facts.feminines,
-          femininePlurals: [...facts.femininePlurals, ...counterpartPlurals(db, lemma)].filter(
-            (plural, index, all) =>
-              all.findIndex((other) => isSamePointedText(other, plural)) === index,
-          ),
+          femininePlurals: uniquePointedText([
+            ...facts.femininePlurals,
+            ...counterpartPlurals(db, lemma),
+          ]),
         },
       };
     case 'verb':

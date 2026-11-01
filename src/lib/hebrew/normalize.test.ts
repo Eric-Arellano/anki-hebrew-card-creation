@@ -6,6 +6,7 @@ import {
   toComparisonKey,
   toDefectiveKey,
   toLookupKey,
+  uniquePointedText,
   withoutDirectionControls,
 } from './normalize.ts';
 
@@ -112,6 +113,16 @@ describe('isSamePointedText', () => {
 
   test('tells different points apart', () => {
     expect(isSamePointedText('טוֹב', 'טוּב')).toBe(false);
+  });
+});
+
+describe('uniquePointedText', () => {
+  // בָּ with its qamats and dagesh in either order.
+  const qamatsFirst = String.fromCodePoint(0x5d1, 0x5b8, 0x5bc);
+  const dageshFirst = String.fromCodePoint(0x5d1, 0x5bc, 0x5b8);
+
+  test('keeps the first spelling of text that differs only in the order of marks', () => {
+    expect(uniquePointedText([qamatsFirst, 'טוֹב', dageshFirst])).toEqual([qamatsFirst, 'טוֹב']);
   });
 });
 

@@ -17,6 +17,8 @@ export type DictionaryNoun = {
   femininePlurals: string[];
 };
 
+// The unpointed spelling is the source's own, never derived from the pointed one, and is missing
+// where the source gives none.
 export type DictionaryInfinitive = { pointed: string; unpointed?: string };
 
 export type DictionaryVerb = {

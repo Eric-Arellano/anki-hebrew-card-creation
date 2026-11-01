@@ -5,13 +5,15 @@
 // is to filter the 24.8 GB all-language raw extract for `lang_code == "he"`, whose format differs,
 // so this parser would need checking against it.
 import { z } from 'zod';
+import type { DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import {
   hasNiqqud,
-  isSamePointedText,
   toComparisonKey,
+  uniquePointedText,
   withoutDirectionControls,
 } from '#lib/hebrew/normalize.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
+import { infinitives, isWordForm, pointedFormsTagged } from './source-forms.ts';
 
 // A word or form, without the direction controls that wrap some of them.
 const hebrewText = z.string().transform((text) => withoutDirectionControls(text).trim());
@@ -48,12 +50,8 @@ const lineSchema = z.object({
   senses: z.array(senseSchema).default([]),
 });
 
-type Form = z.infer<typeof formSchema>;
+export type Form = z.infer<typeof formSchema>;
 type Template = z.infer<typeof templateSchema>;
-
-// The unpointed spelling is the source's own, never derived from the pointed one, and is missing
-// where the source gives none.
-export type Infinitive = { pointed: string; unpointed?: string };
 
 // As the source spells them: codes and prepositions are converted only at lookup, so a change to
 // a conversion needs no rebuild. Forms are pointed.
@@ -71,7 +69,7 @@ export type EntryFacts = {
   femininePlurals: string[];
   // On a feminine noun, the masculine it is the counterpart of.
   masculines: string[];
-  infinitives: Infinitive[];
+  infinitives: DictionaryInfinitive[];
   // From a gloss's `[with לְ־ ‘for’]`, like `לְ־`, `עַל` or `direct`.
   prepositions: string[];
   // As written, pointed or not.
@@ -133,10 +131,14 @@ export function readEntry(json: unknown): SourceEntry | undefined {
           [...gloss.matchAll(/\[with ([^\]\s‘(]+)/g)].map((match) => match[1] ?? ''),
         ),
       ),
-      formOf: unique(line.senses.flatMap((sense) => sense.form_of.map((target) => target.word))),
-      altOf: unique(line.senses.flatMap((sense) => sense.alt_of.map((target) => target.word))),
+      formOf: uniquePointedText(
+        line.senses.flatMap((sense) => sense.form_of.map((target) => target.word)),
+      ),
+      altOf: uniquePointedText(
+        line.senses.flatMap((sense) => sense.alt_of.map((target) => target.word)),
+      ),
     },
-    categoryRoots: unique(
+    categoryRoots: uniquePointedText(
       line.senses.flatMap((sense) =>
         sense.categories.flatMap((category) => {
           const root = /^Hebrew terms belonging to the root (.+)$/.exec(category.name)?.[1];
@@ -182,93 +184,10 @@ function templateRoots(
 
 // A root category may add a sense label: `ע־ב־ר (pregnancy)`.
 function storedRoots(roots: readonly (string | undefined)[]): string[] {
-  return unique(
+  return uniquePointedText(
     roots.flatMap((root) => {
       const formatted = formatRoot(toComparisonKey((root ?? '').replace(/\s*\(.*\)$/, '')));
       return formatted === undefined ? [] : [formatted];
     }),
-  );
-}
-
-// A `wv` head template lists each form only pointed; a `dwv` one lists the ktiv male spelling and
-// then the pointed one. Only the pointed ones are kept.
-function pointedFormsTagged(forms: readonly Form[], tags: readonly string[]): string[] {
-  return unique(
-    forms
-      .filter(
-        (form) =>
-          form.tags.length === tags.length &&
-          tags.every((tag) => form.tags.includes(tag)) &&
-          hasNiqqud(form.form),
-      )
-      .map((form) => form.form),
-  );
-}
-
-// The head template names the infinitive for only a few verbs. The rest have it in the
-// conjugation table, which wiktextract fails to tag: there it is the one row tagged
-// `error-unrecognized-form` that starts with ל, or `-` for a verb with none, like a pu'al. Either
-// way only a form with ל counts: the head template of `גווע` also names the biblical `גְּוֺעַ`.
-//
-// A form is followed by its pointed spelling when the two differ (`לספור`, `לִסְפֹּר`), and
-// otherwise is only pointed and links to its page (`לדבר#Hebrew`).
-function infinitives(forms: readonly Form[]): Infinitive[] {
-  const withLamed = forms.filter((form) => form.form.startsWith('ל'));
-  const fromHead = pairInfinitives(
-    withLamed.filter((form) => form.source === undefined && form.tags.includes('infinitive')),
-  );
-  const fromTable = pairInfinitives(
-    withLamed.filter(
-      (form) => form.source === 'conjugation' && form.tags.includes('error-unrecognized-form'),
-    ),
-  );
-  if (fromHead.length === 0) return fromTable;
-  // The head template's `inf` gives no unpointed spelling when the pointed one has no other.
-  return fromHead.map((infinitive) =>
-    infinitive.unpointed === undefined
-      ? (fromTable.find((other) => isSamePointedText(other.pointed, infinitive.pointed)) ??
-        infinitive)
-      : infinitive,
-  );
-}
-
-// One pointed spelling paired with two unpointed ones keeps neither, for the human to type: the
-// table gives `לִנְשֹׁר` after `לנשור` and again linking to `לנשר`.
-function pairInfinitives(forms: readonly Form[]): Infinitive[] {
-  const pairs: Infinitive[] = [];
-  let unpointed: string | undefined;
-  for (const form of forms) {
-    if (!hasNiqqud(form.form)) {
-      unpointed = form.form;
-      continue;
-    }
-    const linkTarget = form.links?.[0]?.[1]?.replace(/#.*$/, '');
-    pairs.push({ pointed: form.form, unpointed: linkTarget ?? unpointed });
-    unpointed = undefined;
-  }
-  return pairs.flatMap((pair) => {
-    const samePointed = pairs.filter((other) => isSamePointedText(other.pointed, pair.pointed));
-    if (samePointed[0] !== pair) return [];
-    const spellings = unique(samePointed.flatMap((other) => other.unpointed ?? []));
-    return [
-      { pointed: pair.pointed, unpointed: spellings.length === 1 ? spellings[0] : undefined },
-    ];
-  });
-}
-
-// Not a romanization, a pattern like `קֶטֶל`, the table's bookkeeping, or `-` for a missing cell.
-const NOT_WORD_TAGS = ['romanization', 'class', 'table-tags', 'inflection-template'];
-
-// Hebrew letters, points and punctuation, and nothing else: not the table's notes, like
-// `form אחי` or `אַל + Second person future tense`.
-const WORD = /^[\u0590-\u05FF\s]*[א-ת][\u0590-\u05FF\s]*$/;
-
-function isWordForm(form: Form): boolean {
-  return WORD.test(form.form) && !form.tags.some((tag) => NOT_WORD_TAGS.includes(tag));
-}
-
-function unique(values: readonly string[]): string[] {
-  return values.filter(
-    (value, index) => values.findIndex((other) => isSamePointedText(other, value)) === index,
   );
 }

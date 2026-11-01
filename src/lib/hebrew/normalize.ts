@@ -65,3 +65,10 @@ export function isSamePointedText(a: string, b: string): boolean {
 export function includesPointedText(text: string, part: string): boolean {
   return text.normalize('NFC').includes(part.normalize('NFC'));
 }
+
+/** `values` without any that repeat an earlier one, spelled as each was first given. */
+export function uniquePointedText(values: readonly string[]): string[] {
+  return values.filter(
+    (value, index) => values.findIndex((other) => isSamePointedText(other, value)) === index,
+  );
+}
