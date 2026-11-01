@@ -1,9 +1,10 @@
 <script lang="ts">
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
-import { fieldDisplay, GROUP_HELP, quotedParts } from '#lib/field-help.ts';
+import { fieldDisplay, GROUP_HELP } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import type { FieldKey, FieldValues, PartOfSpeech, ShownFieldGroup } from '#lib/note-type.ts';
 import LinkChip from './ui/LinkChip.svelte';
+import QuotedText from './ui/QuotedText.svelte';
 
 // The meanings' own image search, here searched with a variant's English prompt.
 const imagesLink = LINKS['images-en'];
@@ -46,18 +47,7 @@ let {
             {/if}
           </div>
           {#if help !== undefined}
-            <!-- An example stays on one line, and `<bdi>` keeps a Hebrew one from reordering the
-                 English around it. `ltr`, as Anki shows these fields, so “כרטיס רכבת (train
-                 ticket)” keeps its English on the right. -->
-            <p id="help-{field}" class="hint">
-              {#each quotedParts(help) as part, index (index)}
-                {#if part.quoted}
-                  <span class="whitespace-nowrap">“<bdi dir="ltr">{part.text}</bdi>”</span>
-                {:else}
-                  {part.text}
-                {/if}
-              {/each}
-            </p>
+            <p id="help-{field}" class="hint"><QuotedText text={help} /></p>
           {/if}
           <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML, except
                that a new line becomes `<br>` at the hand-off. -->
