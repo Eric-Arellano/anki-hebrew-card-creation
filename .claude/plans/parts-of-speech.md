@@ -74,39 +74,36 @@ everything else.
 
 ## PR 1 — Adverbs and phrases
 
-- `src/lib/note-type.ts`: add both to `PARTS_OF_SPEECH`. Variant fields leave out adverb. Their
-  `help` is already a per-part-of-speech record, so add phrase entries and leave adverb out.
+- `src/lib/note-type.ts`: add both to `PARTS_OF_SPEECH`, and name the group with no inputs of its
+  own `PlainPartOfSpeech`, replacing the `Exclude` in `src/lib/api/dictionary.ts`. Variant fields
+  leave out adverb.
+- `src/lib/field-help.ts`: `FIELD_HELP`'s variant entries are already per part of speech, so add
+  phrase entries and leave adverb out.
 - `partOfSpeechOf` in `src/lib/server/dictionary/convert.ts` gets the new mapping.
-- `src/lib/card/inputs.ts`, `compose.ts`, `prefill.ts`, `src/lib/api/dictionary.ts`: the `'other'`
-  cases cover any part of speech with no inputs of its own.
-- `CardEditor.svelte`: add the labels, and show a one-line `PART_OF_SPEECH_HELP` under the chips.
-  Extract the “quoted example” markup that `NoteFields.svelte` builds from `quotedParts` so both can
-  use it.
-- Per-POS help (below), plus a `note-type.test.ts` check that a field with per-POS help has one
+- `src/lib/card/inputs.ts`, `compose.ts`, `prefill.ts`,
+  `src/lib/server/dictionary/candidate.ts`: the `'other'` cases cover `PlainPartOfSpeech`.
+- `WordForms.svelte`: add the labels, and show a one-line `PART_OF_SPEECH_HELP` under the chips
+  through `QuotedText.svelte`.
+- Per-POS help (below), plus a `field-help.test.ts` check that a field with per-POS help has one
   for every part of speech in its `shownFor`.
 
-## PR 2 — Prefactor: shared `Forms` formatting
-
-Move `formsHtml` from `src/lib/card/noun.ts` to `src/lib/card/forms.ts`, taking labelled lines.
-
-## PR 3 — Adjectives
+## PR 2 — Adjectives
 
 - `src/lib/server/dictionary/source.ts`: a new `masculinePlurals` fact. `feminines` and
   `femininePlurals` already match. Bump `INDEX_SCHEMA_VERSION`.
-- `DictionaryAdjective`, `src/lib/card/adjective.ts`, `AdjectiveInputs.svelte`, and prefill and undo
+- `DictionaryAdjective` and its case in `candidate.ts`, `src/lib/card/adjective.ts`, `AdjectiveInputs.svelte`, and prefill and undo
   through `onlyValue`/`choicesAmong`. About two-thirds of adjective entries give all three forms.
-- `Forms` composes as a noun's does: `f: …<br>m.pl: …<br>f.pl: …`.
+- `Forms` composes through `formsHtml`, as a noun's does: `f: …<br>m.pl: …<br>f.pl: …`.
 - Fixtures: real lines for גדול, אחר (irregular feminine) and ישראלי (two masculine plurals).
 - `Forms` help for Other moves to a number example.
 
-## PR 4 — Prepositions
+## PR 3 — Prepositions
 
-- `source.ts`: a `suffixedForms` fact from rows with `source: 'inflection'`, keyed by person from
-  the tags, pointed forms only. The common prepositions have all ten; 35 of 184 entries have a
+- `source-forms.ts`: a `suffixedForms` fact from rows with `source: 'inflection'`, keyed by person
+  from the tags, pointed forms only. The common prepositions have all ten; 35 of 184 entries have a
   table. Bump the schema version.
-- `src/lib/hebrew/preposition.ts` gains the person type. Its `Preposition` means what a verb
-  governs, so the new draft key is `suffixed`.
-- `src/lib/card/preposition-forms.ts` and `PrepositionInputs.svelte`: a grid of five rows by
+- `src/lib/hebrew/preposition.ts` gains the person type.
+- `src/lib/card/preposition.ts`, under draft key `preposition`, and `PrepositionInputs.svelte`: a grid of five rows by
   singular and plural, each cell taking choices. A **Use first choices** button fills them in one
   click, since ל־ has a choice in every cell and Wiktionary tends to list the everyday form first.
   The click is the human's choice, so it keeps the Never guess rule.
@@ -116,7 +113,7 @@ Move `formsHtml` from `src/lib/card/noun.ts` to `src/lib/card/forms.ts`, taking 
   as `ל`, the way verbs already write it. `Hebrew` and `Pointed` keep the dictionary's spelling.
 - Fixtures: real lines for ל־, עם and של.
 
-## PR 5 — `Part of speech` field
+## PR 4 — `Part of speech` field
 
 **Needs you first:** add the field in Anki, before `Gender`. Until then the drift check correctly
 blocks the hand-off.
@@ -124,30 +121,25 @@ blocks the hand-off.
 - `FIELDS` gets `partOfSpeech` with `shownFor: []`, and `composeFields` writes `inputs.partOfSpeech`.
 - Re-fetch `tests/fixtures/anki/` with `modelFieldNames` and `notesInfo`.
 
-## PR 6 — Prefactor: root becomes a shared input
+## PR 5 — Roots on nouns and adjectives
 
-Move `root` from `VerbDraft` to `CardInputsDraft`, and extract `RootInput.svelte` with its “Writes
-the root as…” hint. Verbs behave exactly as before.
-
-## PR 7 — Roots on nouns and adjectives
-
-- `RootInput` joins both forms, prefilled from `candidate.roots`, with choices when there are
+- `RootInput` joins both forms, gaining a `required` prop, prefilled from `candidate.roots`, with choices when there are
   several. Wiktionary gives one for roughly 40–50% of them; the rest are often loanwords.
 - Blank is fine; a non-blank root that isn't only letters still blocks.
 - `undoPrefill` restores it. The card templates already show `Root` when it is filled.
 
-## PR 8 — Same-root panel
+## PR 6 — Same-root panel
 
 - `searchByFieldEqualing` in `src/lib/anki/search.ts`, and `findNotesWithRoot` beside
   `findExistingNotes` in `src/lib/server/anki/existing-notes.ts`, using `findNotes` and `notesInfo`.
 - A new `/api/anki/same-root` route, shaped like `/api/anki/existing`.
-- A panel listing other notes in the deck with that root, reusing `ExistingNotesPanel`'s list and
-  its Browse link. The maqafs make this search awkward to type in Anki, so this is where roots pay
+- A panel listing other notes in the deck with that root, first extracting `ExistingNotesPanel`'s
+  list and its Browse link so both can use them. The maqafs make this search awkward to type in Anki, so this is where roots pay
   off.
 
-## PR 9 — Verb principal parts
+## PR 7 — Verb principal parts
 
-- `source.ts`: `presents` and `futures` from conjugation rows tagged exactly
+- `source-forms.ts`: `presents` and `futures` from conjugation rows tagged exactly
   `masculine present singular` and `future masculine singular third-person`. About 95% of verbs give
   one of each and almost all the rest several. Past is the entry's pointed lemma. Bump the schema
   version.
@@ -163,4 +155,4 @@ the root as…” hint. Verbs behave exactly as before.
   covers which inputs and groups appear.
 - By hand in the running app, without handing off to real Anki unless you agree: גדול, מהר, עם,
   ל־, מה נשמע, תודה, כתובת and לדבר.
-- Hold off re-entering the deck until PR 5, ideally PR 7, so those notes carry both new fields.
+- Hold off re-entering the deck until PR 4, ideally PR 5, so those notes carry both new fields.
