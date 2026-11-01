@@ -1,17 +1,15 @@
 import { existsSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
-import { toBinyan } from '#lib/hebrew/binyan.ts';
+import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import {
   hasNiqqud,
   isSamePointedText,
   toDefectiveKey,
   toLookupKey,
 } from '#lib/hebrew/normalize.ts';
-import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
-import { governedPreposition, nounGender, partOfSpeechOf } from './convert.ts';
+import { toCandidates } from './candidate.ts';
+import { type Entry, entriesTitled, entriesWithKey } from './entries.ts';
 import { type DictionaryPaths, INDEX_SCHEMA_VERSION, sourceStamp } from './files.ts';
-import type { EntryFacts } from './source.ts';
 
 /** The index is missing or was built by older code; the message says how to fix it. */
 export class DictionaryUnavailableError extends Error {
@@ -20,16 +18,9 @@ export class DictionaryUnavailableError extends Error {
 
 const BUILD_COMMAND = 'npm run build-index';
 
-// A form shared by many words, like a common possessive, shouldn't list them all.
-const MAX_CANDIDATES = 12;
-
 // Following form-of and alt-of targets this deep finds every lemma in the dictionary; a cycle in
 // the data must not loop.
 const MAX_TARGET_DEPTH = 3;
-
-type EntryRow = { id: number; word: string; pos: string; pointed: string | null; is_lemma: number };
-
-type Entry = EntryRow & { facts: EntryFacts };
 
 /** What `read` returns, given the index at `paths.index`, which it then closes. */
 export function withDictionary<T>(
@@ -76,39 +67,6 @@ export function lookUp(db: DatabaseSync, word: string, staleIndex: boolean): Dic
   return { ...reply, match: 'possible', candidates: toCandidates(db, possible) };
 }
 
-function toEntry(row: Record<string, unknown>): Entry {
-  return {
-    id: Number(row.id),
-    word: String(row.word),
-    pos: String(row.pos),
-    pointed: row.pointed === null ? null : String(row.pointed),
-    is_lemma: Number(row.is_lemma),
-    facts: JSON.parse(String(row.facts)) as EntryFacts,
-  };
-}
-
-// Entries filed under `key` by their title come first, in the dictionary's order.
-function entriesWithKey(db: DatabaseSync, column: 'key' | 'defective_key', key: string): Entry[] {
-  return db
-    .prepare(
-      `SELECT entries.* FROM keys JOIN entries ON entries.id = keys.entry_id
-       WHERE keys.${column} = ? GROUP BY entries.id ORDER BY MAX(keys.is_title) DESC, entries.id`,
-    )
-    .all(key)
-    .map(toEntry);
-}
-
-// By the title's key, which a title with a maqaf or a direction control differs from.
-function entriesTitled(db: DatabaseSync, title: string): Entry[] {
-  return db
-    .prepare(
-      `SELECT entries.* FROM keys JOIN entries ON entries.id = keys.entry_id
-       WHERE keys.key = ? AND keys.is_title = 1 ORDER BY entries.id`,
-    )
-    .all(toLookupKey(title))
-    .map(toEntry);
-}
-
 // The entries that are lemmas, then the lemmas their form-of and alt-of targets lead to, so that
 // `בית`'s own homographs come before what its abbreviations stand for.
 function lemmasOf(db: DatabaseSync, entries: readonly Entry[], depth = 0): Entry[] {
@@ -138,74 +96,4 @@ function entriesForTarget(db: DatabaseSync, target: string): Entry[] {
     (entry) => entry.pointed !== null && isSamePointedText(entry.pointed, target),
   );
   return pointedAlike.length > 0 ? pointedAlike : titled;
-}
-
-function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
-  const { facts } = lemma;
-  const shared = {
-    id: lemma.id,
-    title: lemma.word,
-    pointed: lemma.pointed ?? undefined,
-    wiktionaryPartOfSpeech: lemma.pos,
-    definitions: facts.glosses,
-    roots: facts.roots,
-  };
-  const partOfSpeech = partOfSpeechOf(lemma.pos);
-  switch (partOfSpeech) {
-    case 'noun':
-      return {
-        ...shared,
-        partOfSpeech,
-        noun: {
-          gender: nounGender(facts.genders),
-          // A noun used in pairs, like `עַיִן`, may list only its dual.
-          plurals: facts.plurals.length > 0 ? facts.plurals : facts.duals,
-          feminineSingulars: facts.feminines,
-          femininePlurals: [...facts.femininePlurals, ...counterpartPlurals(db, lemma)].filter(
-            (plural, index, all) =>
-              all.findIndex((other) => isSamePointedText(other, plural)) === index,
-          ),
-        },
-      };
-    case 'verb':
-      return {
-        ...shared,
-        partOfSpeech,
-        verb: {
-          binyan: facts.binyanCode === undefined ? undefined : toBinyan(facts.binyanCode),
-          infinitives: facts.infinitives,
-          prepositions: [
-            ...new Set(
-              facts.prepositions.flatMap((text): GovernedPreposition[] => {
-                const preposition = governedPreposition(text);
-                return preposition === undefined ? [] : [preposition];
-              }),
-            ),
-          ],
-        },
-      };
-    case 'other':
-      return { ...shared, partOfSpeech };
-  }
-}
-
-function toCandidates(db: DatabaseSync, lemmas: readonly Entry[]): DictionaryCandidate[] {
-  return lemmas.slice(0, MAX_CANDIDATES).map((lemma) => toCandidate(db, lemma));
-}
-
-// A masculine noun almost never lists its feminine counterpart's plural: that is on the
-// feminine's own entry, the one whose `m` names this noun. `חתולה` has two entries, and only
-// `חֲתוּלָה` names `חָתוּל`.
-function counterpartPlurals(db: DatabaseSync, masculine: Entry): string[] {
-  const { pointed } = masculine;
-  if (pointed === null) return [];
-  return masculine.facts.feminines.flatMap((feminine) =>
-    entriesWithKey(db, 'key', toLookupKey(feminine))
-      .filter(
-        (entry) =>
-          entry.pos === 'noun' &&
-          entry.facts.masculines.some((named) => isSamePointedText(named, pointed)),
-      )
-      .flatMap((entry) => entry.facts.plurals),
-  );
 }
