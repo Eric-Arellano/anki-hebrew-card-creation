@@ -71,6 +71,7 @@ function chooseInfinitive(pointed: string) {
   {:else if draft.partOfSpeech === 'verb'}
     <VerbInputs
       bind:verb={draft.verb}
+      bind:root={draft.root}
       {choices}
       suggestedPrepositions={candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : []}
     >

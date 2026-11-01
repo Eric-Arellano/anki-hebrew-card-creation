@@ -27,10 +27,12 @@ export type CardInputs = WordInputs & { definitions: Definitions } & (
 
 // The inputs as the editor holds them while the human types: the part of speech starts unchosen,
 // so the editor never guesses it. Each part of speech keeps its inputs under its own key while
-// another is chosen, so switching back loses nothing. A meaning row may be blank.
+// another is chosen, so switching back loses nothing. A meaning row may be blank, and the root is
+// as the human typed it.
 export type CardInputsDraft = WordInputs & {
   definitions: string[];
   partOfSpeech: PartOfSpeech | undefined;
+  root: string;
   noun: NounDraft;
   verb: VerbDraft;
 };
@@ -41,6 +43,7 @@ export function emptyDraft(): CardInputsDraft {
     pointed: '',
     definitions: [''],
     partOfSpeech: undefined,
+    root: '',
     noun: emptyNounDraft(),
     verb: emptyVerbDraft(),
   };
@@ -88,13 +91,13 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
     ...(draft.partOfSpeech === 'noun' ? missingNounInputs(draft.noun) : []),
     ...(draft.partOfSpeech === 'verb' ? ifBlank('preposition', draft.verb.preposition) : []),
     ...ifBlank('pointed', draft.pointed),
-    ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb) : []),
+    ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb, draft.root) : []),
   ];
 }
 
 /** `draft` as `CardInputs` once every required input is filled, else `undefined`. */
 export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
-  const { partOfSpeech, noun, verb, definitions: definitionRows, ...word } = draft;
+  const { partOfSpeech, noun, verb, root, definitions: definitionRows, ...word } = draft;
   const [first, ...rest] = filledDefinitions(definitionRows);
   if (partOfSpeech === undefined || first === undefined || missingInputs(draft).length > 0) {
     return undefined;
@@ -106,7 +109,7 @@ export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
       return nounInputs && { ...card, partOfSpeech, noun: nounInputs };
     }
     case 'verb': {
-      const verbInputs = completeVerb(verb);
+      const verbInputs = completeVerb(verb, root);
       return verbInputs && { ...card, partOfSpeech, verb: verbInputs };
     }
     case 'other':

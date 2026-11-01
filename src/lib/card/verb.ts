@@ -11,27 +11,29 @@ export type VerbInputs = {
   preposition: GovernedPreposition | undefined;
 };
 
-// The root is as the human typed it. The preposition starts unchosen, like the binyan: it is part of
-// the answer the Production card checks, and את and none are easy to mix up.
+// The preposition starts unchosen, like the binyan: it is part of the answer the Production card
+// checks, and את and none are easy to mix up.
 export type VerbDraft = {
   binyan: Binyan | undefined;
-  root: string;
   preposition: GovernedPreposition | 'none' | undefined;
 };
 
 export function emptyVerbDraft(): VerbDraft {
-  return { binyan: undefined, root: '', preposition: undefined };
+  return { binyan: undefined, preposition: undefined };
 }
 
 // A root that isn't only letters is as missing as a blank one.
-export function missingVerbInputs({ binyan, root }: VerbDraft): ('binyan' | 'root')[] {
+export function missingVerbInputs({ binyan }: VerbDraft, root: string): ('binyan' | 'root')[] {
   return [
     ...(binyan === undefined ? (['binyan'] as const) : []),
     ...(formatRoot(root) === undefined ? (['root'] as const) : []),
   ];
 }
 
-export function completeVerb({ binyan, root, preposition }: VerbDraft): VerbInputs | undefined {
+export function completeVerb(
+  { binyan, preposition }: VerbDraft,
+  root: string,
+): VerbInputs | undefined {
   const formattedRoot = formatRoot(root);
   if (binyan === undefined || formattedRoot === undefined || preposition === undefined) {
     return undefined;
