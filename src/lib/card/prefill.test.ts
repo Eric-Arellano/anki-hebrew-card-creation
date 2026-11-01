@@ -55,6 +55,7 @@ describe('prefillDraft', () => {
           pointed: 'כֶּלֶב',
           definitions: ['dog'],
           partOfSpeech: 'noun',
+          root: '',
           noun: kelevNoun,
           verb: typed.verb,
         },
@@ -123,14 +124,15 @@ describe('prefillDraft', () => {
 
   describe('for a verb', () => {
     test('fills the infinitive, binyan and root, and keeps the preposition chosen', () => {
-      const draft = { ...typed, verb: { binyan: undefined, root: '', preposition: 'עם' as const } };
+      const draft = { ...typed, verb: { binyan: undefined, preposition: 'עם' as const } };
       expect(prefillDraft(draft, diber)).toEqual({
         draft: {
           ...typed,
           word: 'לדבר',
           pointed: 'לְדַבֵּר',
           partOfSpeech: 'verb',
-          verb: { binyan: "pi'el", root: 'ד־ב־ר', preposition: 'עם' },
+          root: 'ד־ב־ר',
+          verb: { binyan: "pi'el", preposition: 'עם' },
         },
         choices: {},
       });
@@ -184,7 +186,7 @@ describe('prefillDraft', () => {
     describe('with two roots', () => {
       test('leaves the root blank and offers both', () => {
         const { draft, choices } = prefillDraft(typed, { ...diber, roots: ['ד־ב־ר', 'ד־ב־ב'] });
-        expect(draft.verb.root).toBe('');
+        expect(draft.root).toBe('');
         expect(choices).toEqual({ root: ['ד־ב־ר', 'ד־ב־ב'] });
       });
     });
@@ -215,7 +217,7 @@ describe('undoPrefill', () => {
     const before: CardInputsDraft = {
       ...typed,
       pointed: 'כְּלָבִים',
-      verb: { binyan: undefined, root: '', preposition: 'עם' },
+      verb: { binyan: undefined, preposition: 'עם' },
     };
     const filled = prefillDraft(before, diber).draft;
     const edited = {

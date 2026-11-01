@@ -56,8 +56,9 @@ export function prefillDraft(
           word: infinitive?.unpointed ?? '',
           pointed: infinitive?.pointed ?? '',
           partOfSpeech: 'verb',
+          root: onlyValue(candidate.roots),
           // The preposition is only ever suggested, so it stays as the human chose it.
-          verb: { ...draft.verb, binyan, root: onlyValue(candidate.roots) },
+          verb: { ...draft.verb, binyan },
         },
         choices: { infinitives: choicesAmong(infinitives), root: choicesAmong(candidate.roots) },
       };
@@ -74,8 +75,9 @@ export function undoPrefill(draft: CardInputsDraft, before: CardInputsDraft): Ca
     word: before.word,
     pointed: before.pointed,
     partOfSpeech: before.partOfSpeech,
+    root: before.root,
     noun: before.noun,
-    verb: { ...draft.verb, binyan: before.verb.binyan, root: before.verb.root },
+    verb: { ...draft.verb, binyan: before.verb.binyan },
   };
 }
 

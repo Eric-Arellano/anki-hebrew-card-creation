@@ -11,13 +11,14 @@ const noun: NounDraft = {
   femininePlural: 'כְּלָבוֹת',
 };
 
-const verb: VerbDraft = { binyan: "pi'el", root: 'ד.ב.ר', preposition: 'עם' };
+const verb: VerbDraft = { binyan: "pi'el", preposition: 'עם' };
 
 const dagDraft: CardInputsDraft = {
   word: 'דג',
   partOfSpeech: 'other',
   definitions: ['fish'],
   pointed: 'דָּג',
+  root: 'ד.ב.ר',
   noun,
   verb,
 };
@@ -68,13 +69,14 @@ describe('missingInputs', () => {
         missingInputs({
           ...ledaberDraft,
           pointed: '',
-          verb: { binyan: undefined, root: '', preposition: undefined },
+          root: '',
+          verb: { binyan: undefined, preposition: undefined },
         }),
       ).toEqual(['preposition', 'pointed', 'binyan', 'root']);
     });
 
     test('counts a root that is not only letters as missing', () => {
-      expect(missingInputs({ ...ledaberDraft, verb: { ...verb, root: 'דִּבֵּר' } })).toEqual(['root']);
+      expect(missingInputs({ ...ledaberDraft, root: 'דִּבֵּר' })).toEqual(['root']);
     });
   });
 });

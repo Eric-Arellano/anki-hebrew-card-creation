@@ -4,9 +4,8 @@ import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { VerbDraft } from '#lib/card/verb.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
-import { formatRoot } from '#lib/hebrew/root.ts';
+import RootInput from './RootInput.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
-import TextInput from './ui/TextInput.svelte';
 
 const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label: string }[] = [
   ...GOVERNED_PREPOSITIONS.map((value) => ({ value, label: value })),
@@ -15,19 +14,19 @@ const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label
 
 let {
   verb = $bindable(),
+  root = $bindable(),
   choices,
   suggestedPrepositions,
   children,
 }: {
   verb: VerbDraft;
+  root: string;
   choices: PrefillChoices;
   // From the dictionary, which names one for few verbs.
   suggestedPrepositions: readonly GovernedPreposition[];
   // The pointed infinitive, which leads the row as the pointed word leads a noun's forms.
   children: Snippet;
 } = $props();
-
-const formattedRoot = $derived(formatRoot(verb.root));
 
 // The blank option is there only to start unchosen, so the editor never guesses the binyan.
 function setBinyan(value: Binyan | '') {
@@ -61,20 +60,6 @@ function setBinyan(value: Binyan | '') {
         {/each}
       </select>
     </label>
-    <TextInput
-      label="Root, like דבר or ד.ב.ר"
-      lang="he"
-      choices={choices.root}
-      bind:value={verb.root}
-    />
+    <RootInput choices={choices.root} bind:root />
   </div>
-  {#if verb.root.trim() !== ''}
-    <p class="hint" aria-live="polite">
-      {#if formattedRoot === undefined}
-        Type only the root's Hebrew letters, without niqqud.
-      {:else}
-        Writes the root as <bdi lang="he">{formattedRoot}</bdi>.
-      {/if}
-    </p>
-  {/if}
 </fieldset>
