@@ -110,7 +110,7 @@ describe('completeInputs', () => {
     });
   });
 
-  describe.each(['adverb', 'phrase'] as const)(
+  describe.each(['adverb', 'preposition', 'phrase'] as const)(
     'for a word of part of speech %s',
     (partOfSpeech) => {
       test('returns only the word and its meanings', () => {

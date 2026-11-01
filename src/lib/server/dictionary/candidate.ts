@@ -64,6 +64,7 @@ function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
         },
       };
     case 'adverb':
+    case 'preposition':
     case 'phrase':
     case 'other':
       return { ...shared, partOfSpeech };

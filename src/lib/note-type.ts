@@ -6,12 +6,23 @@ export const DECK = 'עברית';
 export const NOTE_TYPE = 'Hebrew';
 export const TAGS: readonly string[] = [];
 
-export const PARTS_OF_SPEECH = ['noun', 'verb', 'adjective', 'adverb', 'phrase', 'other'] as const;
+export const PARTS_OF_SPEECH = [
+  'noun',
+  'verb',
+  'adjective',
+  'adverb',
+  'preposition',
+  'phrase',
+  'other',
+] as const;
 
 export type PartOfSpeech = (typeof PARTS_OF_SPEECH)[number];
 
 // The ones with no inputs of their own, beyond the word and its meanings.
-export type PlainPartOfSpeech = Extract<PartOfSpeech, 'adverb' | 'phrase' | 'other'>;
+export type PlainPartOfSpeech = Extract<
+  PartOfSpeech,
+  'adverb' | 'preposition' | 'phrase' | 'other'
+>;
 
 // An adverb never changes form, so it has no unusual one to quiz.
 const PARTS_OF_SPEECH_WITH_VARIANTS = PARTS_OF_SPEECH.filter(
@@ -75,7 +86,10 @@ export const FIELDS = {
   gender: { name: 'Gender', shownFor: [] },
   forms: {
     name: 'Forms',
-    shownFor: ['other'],
+    // A preposition's are typed by hand, only where the human wants them.
+    // *Rejected: a grid filled from Wiktionary's suffix tables, because the deck grows vocabulary
+    // while those endings are grammar learned elsewhere, and most prepositions have no table.*
+    shownFor: ['preposition', 'other'],
     group: 'Grammar',
     label: 'Other forms',
   },

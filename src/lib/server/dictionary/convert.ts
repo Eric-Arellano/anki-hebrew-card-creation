@@ -14,6 +14,8 @@ export function partOfSpeechOf(wiktionaryPartOfSpeech: string): PartOfSpeech {
       return 'adjective';
     case 'adv':
       return 'adverb';
+    case 'prep':
+      return 'preposition';
     case 'phrase':
     case 'proverb':
     case 'prep_phrase':

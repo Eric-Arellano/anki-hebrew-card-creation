@@ -249,6 +249,40 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('a preposition', () => {
+    test('sends the forms and variants typed for it', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'עם', pointed: 'עִם', gloss: 'with' });
+      await choosePartOfSpeech('Preposition');
+      await typeInto(noteField('Other forms'), 'me: אִתִּי');
+      await typeInto(noteField('Variant 1: English prompt'), 'with me');
+      await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'אִתִּי');
+
+      expect(await handOff(requests)).toEqual({
+        fields: {
+          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+          Hebrew: 'עם',
+          Pointed: 'עִם',
+          Definitions: 'with',
+          'Production answer': 'עם',
+          Forms: 'me: אִתִּי',
+          'Variant 1 prompt': 'with me',
+          'Variant 1 answer': 'אִתִּי',
+        },
+      });
+    });
+
+    test('answers without a trailing maqaf', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'חוץ מ־', pointed: 'חוּץ מִ־', gloss: 'except for' });
+      await choosePartOfSpeech('Preposition');
+
+      expect(await handOff(requests)).toMatchObject({
+        fields: { Hebrew: 'חוץ מ־', 'Production answer': 'חוץ מ' },
+      });
+    });
+  });
+
   describe('a phrase', () => {
     test('sends its word and variants, and asks for no forms', async () => {
       const requests = await renderConnectedEditor();

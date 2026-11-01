@@ -85,6 +85,7 @@ export function prefillDraft(
       };
     }
     case 'adverb':
+    case 'preposition':
     case 'phrase':
     case 'other':
       return { draft: { ...draft, ...word, partOfSpeech: candidate.partOfSpeech }, choices: {} };

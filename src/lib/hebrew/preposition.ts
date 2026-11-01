@@ -5,3 +5,9 @@
 export const GOVERNED_PREPOSITIONS = ['את', 'ל', 'ב', 'על', 'עם', 'מ'] as const;
 
 export type GovernedPreposition = (typeof GOVERNED_PREPOSITIONS)[number];
+
+// Wiktionary titles a preposition that joins the next word with a maqaf: `ל־`, `חוץ מ־`. The
+// Production card's typed answer leaves it out, the way a verb writes its preposition: `לחכות ל`.
+export function withoutTrailingMaqaf(word: string): string {
+  return word.replace(/[־-]+$/, '');
+}

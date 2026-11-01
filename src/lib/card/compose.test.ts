@@ -80,6 +80,24 @@ describe('composeFields', () => {
     },
   );
 
+  describe('for a preposition', () => {
+    test('answers without a trailing maqaf, and keeps it in the word', () => {
+      expect(
+        composeFields({
+          word: 'חוץ מ־',
+          pointed: 'חוּץ מִ־',
+          definitions: ['except for'],
+          partOfSpeech: 'preposition',
+        }),
+      ).toEqual({
+        unpointed: 'חוץ מ־',
+        pointed: 'חוּץ מִ־',
+        definitions: 'except for',
+        productionAnswer: 'חוץ מ',
+      });
+    });
+  });
+
   describe('for a verb', () => {
     test('answers with its preposition, and writes its binyan and root', () => {
       expect(

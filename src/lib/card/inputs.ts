@@ -119,6 +119,7 @@ export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
     case 'adjective':
       return { ...card, partOfSpeech, adjective };
     case 'adverb':
+    case 'preposition':
     case 'phrase':
     case 'other':
       return { ...card, partOfSpeech };

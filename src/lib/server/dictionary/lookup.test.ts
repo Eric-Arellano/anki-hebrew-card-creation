@@ -344,6 +344,14 @@ describe('lookUp', () => {
       ]);
     });
   });
+
+  describe('for a preposition', () => {
+    test('finds it without its maqaf, which the title keeps', () => {
+      expect(look('חוץ מ').candidates).toMatchObject([
+        { title: 'חוץ מ־', wiktionaryPartOfSpeech: 'prep', partOfSpeech: 'preposition' },
+      ]);
+    });
+  });
 });
 
 describe('withDictionary', () => {
