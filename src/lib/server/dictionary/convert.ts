@@ -5,8 +5,10 @@ import { toLookupKey } from '#lib/hebrew/normalize.ts';
 import { PREPOSITIONS, type Preposition } from '#lib/hebrew/preposition.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 
-export function partOfSpeechOf(pos: string): PartOfSpeech {
-  return pos === 'noun' || pos === 'verb' ? pos : 'other';
+export function partOfSpeechOf(wiktionaryPartOfSpeech: string): PartOfSpeech {
+  return wiktionaryPartOfSpeech === 'noun' || wiktionaryPartOfSpeech === 'verb'
+    ? wiktionaryPartOfSpeech
+    : 'other';
 }
 
 // Gender codes are `m` or `f`, with `-p` for a noun only ever plural (`מוניטין`), `-d` for one only

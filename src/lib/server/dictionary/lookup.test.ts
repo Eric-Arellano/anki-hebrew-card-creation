@@ -48,8 +48,8 @@ describe('lookUp', () => {
           id: expect.any(Number),
           title: 'כלב',
           pointed: 'כֶּלֶב',
-          pos: 'noun',
-          glosses: [
+          wiktionaryPartOfSpeech: 'noun',
+          definitions: [
             'dog (the species Canis familiaris (sometimes designated Canis lupus familiaris), domesticated for thousands of years and of highly variable appearance because of human breeding)',
             '(derogatory) scoundrel, bitch',
           ],
@@ -58,7 +58,7 @@ describe('lookUp', () => {
           noun: {
             gender: { gender: 'm', pluralOnly: false },
             plurals: ['כְּלָבִים'],
-            feminines: ['כַּלְבָּה'],
+            feminineSingulars: ['כַּלְבָּה'],
             // From כלבה's own entry.
             femininePlurals: ['כְּלָבוֹת'],
           },
@@ -203,7 +203,7 @@ describe('lookUp', () => {
     test('takes the feminine plural only from the feminine that names it', () => {
       // Not חֲתֻלּוֹת, the plural of חֲתֻלָּה, “swaddling band”.
       expect(candidate('חתול', 'חָתוּל')).toMatchObject({
-        noun: { feminines: ['חֲתוּלָה'], femininePlurals: ['חֲתוּלוֹת'] },
+        noun: { feminineSingulars: ['חֲתוּלָה'], femininePlurals: ['חֲתוּלוֹת'] },
       });
     });
 
@@ -218,7 +218,7 @@ describe('lookUp', () => {
         db.exec("UPDATE entries SET pointed = NULL WHERE pointed = 'חָתוּל'");
       });
       const chatul = look('חתול', changed).candidates.find((found) => found.title === 'חתול');
-      expect(chatul).toMatchObject({ noun: { feminines: ['חֲתוּלָה'], femininePlurals: [] } });
+      expect(chatul).toMatchObject({ noun: { feminineSingulars: ['חֲתוּלָה'], femininePlurals: [] } });
       changed.remove();
     });
 
@@ -245,8 +245,8 @@ describe('lookUp', () => {
         id: expect.any(Number),
         title: 'דיבר',
         pointed: 'דִּבֵּר',
-        pos: 'verb',
-        glosses: ['to speak (say words)'],
+        wiktionaryPartOfSpeech: 'verb',
+        definitions: ['to speak (say words)'],
         roots: ['ד־ב־ר'],
         partOfSpeech: 'verb',
         verb: {

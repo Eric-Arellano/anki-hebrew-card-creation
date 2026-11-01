@@ -7,8 +7,8 @@ describe('partOfSpeechOf', () => {
     ['verb', 'verb'],
     ['adj', 'other'],
     ['name', 'other'],
-  ])('converts %s to %s', (pos, partOfSpeech) => {
-    expect(partOfSpeechOf(pos)).toBe(partOfSpeech);
+  ])('converts %s to %s', (wiktionaryPartOfSpeech, partOfSpeech) => {
+    expect(partOfSpeechOf(wiktionaryPartOfSpeech)).toBe(partOfSpeech);
   });
 });
 

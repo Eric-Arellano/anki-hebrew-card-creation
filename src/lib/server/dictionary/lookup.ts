@@ -146,8 +146,8 @@ function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
     id: lemma.id,
     title: lemma.word,
     pointed: lemma.pointed ?? undefined,
-    pos: lemma.pos,
-    glosses: facts.glosses,
+    wiktionaryPartOfSpeech: lemma.pos,
+    definitions: facts.glosses,
     roots: facts.roots,
   };
   const partOfSpeech = partOfSpeechOf(lemma.pos);
@@ -160,7 +160,7 @@ function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
           gender: nounGender(facts.genders),
           // A noun used in pairs, like `עַיִן`, may list only its dual.
           plurals: facts.plurals.length > 0 ? facts.plurals : facts.duals,
-          feminines: facts.feminines,
+          feminineSingulars: facts.feminines,
           femininePlurals: [...facts.femininePlurals, ...counterpartPlurals(db, lemma)].filter(
             (plural, index, all) =>
               all.findIndex((other) => isSamePointedText(other, plural)) === index,

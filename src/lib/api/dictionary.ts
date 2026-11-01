@@ -13,7 +13,7 @@ export type DictionaryNoun = {
   // `undefined` where the dictionary's gender is missing or isn't one the deck has.
   gender: { gender: Gender; pluralOnly: boolean } | undefined;
   plurals: string[];
-  feminines: string[];
+  feminineSingulars: string[];
   femininePlurals: string[];
 };
 
@@ -33,9 +33,9 @@ export type DictionaryCandidate = {
   // The page's unpointed title, as Wiktionary spells it.
   title: string;
   pointed: string | undefined;
-  // Wiktionary's own, like `adj` or `name`.
-  pos: string;
-  glosses: string[];
+  // Wiktionary's own label, like `adj` or `name`, of which `partOfSpeech` is the deck's coarser view.
+  wiktionaryPartOfSpeech: string;
+  definitions: string[];
   // Joined with maqafs.
   roots: string[];
 } & (
