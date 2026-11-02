@@ -178,11 +178,14 @@ the terms themselves went unread.
 - Field strings that `updateNoteFields` and `addNote` can take unchanged.
 - `mediaReferences` and the serving route, to load a note's media into the editor. It still has to
   split a variant prompt into its text and its images.
+- All 103 notes have a blank `Part of speech` and `Root`, because they predate those fields.
 - **Open:** whether `addNote` and `updateNoteFields` join the allowlist. That is the larger change
   to the hard rule, and this plan doesn't make it.
 - **Open:** offer Wiktionary's recording as a link for a word Forvo lacks. About 15% of dictionary
   entries carry a Wikimedia Commons `mp3_url`, which `source.ts` doesn't read yet. It stays a link
   under Never reach a third-party site.
+- **Open:** once the deck has roots, search for a note's root in `findExistingNotes`, so its word
+  family lands in Related. The substring search can't find למד from תלמיד.
 
 ## Verification
 
