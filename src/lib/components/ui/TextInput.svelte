@@ -5,6 +5,7 @@ let {
   label,
   lang,
   required = true,
+  takesFocus = false,
   value = $bindable(),
   choices = [],
   onchoose,
@@ -13,6 +14,7 @@ let {
   label: string;
   lang: 'he' | 'en';
   required?: boolean;
+  takesFocus?: boolean;
   value: string;
   // Values the dictionary offers when it has more than one, for the human to choose between.
   choices?: readonly string[];
@@ -21,6 +23,10 @@ let {
   // Called when the human types, but not when a choice or the dictionary fills the input.
   oninput?: () => void;
 } = $props();
+
+function focus(element: HTMLElement) {
+  element.focus();
+}
 
 function choose(choice: string) {
   value = choice;
@@ -36,6 +42,7 @@ function choose(choice: string) {
       {lang}
       dir={lang === 'he' ? 'rtl' : 'ltr'}
       {required}
+      {@attach takesFocus ? focus : undefined}
       bind:value
       {oninput}
     >

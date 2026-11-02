@@ -4,11 +4,15 @@ import { errorMessage } from '#lib/api/http.ts';
 
 let {
   fields,
+  onnextcard,
   ankiBlocker,
   inputsBlocker,
 }: {
   // Keyed by Anki field name, as `/api/anki/add` takes them.
   fields: Record<string, string>;
+  // Called when the human moves on. Nothing clears by itself at the hand-off, because they may
+  // still fix something and open the Add window again.
+  onnextcard?: () => void;
   // Why Anki can't take the note yet. The header already shows it, so here it is only a tooltip.
   ankiBlocker: string | undefined;
   // Which inputs are still blank, spelled out in the bar.
@@ -81,6 +85,8 @@ function focus(element: HTMLElement) {
     <kbd>⌘↵</kbd>
     {#if handOff.kind === 'opened'}
       <p>Opened in Anki. Finish the note there and click Add.</p>
+      <!-- Focused, so coming back from Anki, Enter is all the next word takes. -->
+      <button type="button" {@attach focus} onclick={onnextcard}>Next word</button>
     {:else if handOff.kind === 'failed'}
       <p role="alert" class="text-red-700">{handOff.message}</p>
     {:else if inputsBlocker !== undefined}
