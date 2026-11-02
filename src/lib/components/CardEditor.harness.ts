@@ -30,6 +30,8 @@ export function stubServer(
   status: AnkiStatus = connectedStatus,
   existing: ExistingNotes = { exactMatches: [], relatedMatches: [] },
   lookup: DictionaryLookup | Response = notInDictionary,
+  storeMedia: (body: { filename: string }) => Response = ({ filename }) =>
+    Response.json({ filename }),
 ) {
   const requests: ServerRequest[] = [];
   vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
@@ -43,9 +45,14 @@ export function stubServer(
       return lookup instanceof Response ? lookup : Response.json(lookup);
     }
     if (input === '/api/anki/add') return new Response(null, { status: 204 });
+    if (input === '/api/anki/media') return storeMedia(body);
     return new Response(null, { status: 404 });
   });
   return requests;
+}
+
+export function mediaRequests(requests: ServerRequest[]) {
+  return requests.filter((request) => request.path === '/api/anki/media');
 }
 
 export function addRequests(requests: ServerRequest[]) {

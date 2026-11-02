@@ -2,12 +2,13 @@
 
 ## Context
 
-The goal is to run the deck from this app, with Anki's window at most a final click. Media is the
-one thing the editor can't do: it leaves `Images` and `Audio` blank, and the human pastes them into
-Anki's Add window. A follow-up plan will update existing notes, and it builds on this one.
+The goal is to run the deck from this app, with Anki's window at most a final click. Media is what
+still keeps the human there: the editor attaches and stores a word's `Images`, but a variant
+prompt's images and `Audio` are pasted into Anki's Add window. A follow-up plan will update existing
+notes, and it builds on this one.
 
-Here the editor gains images and audio for new notes: it shows them, and stores them so Anki loads
-them. The human still finds the media, and still clicks Add.
+Here the editor gains the rest of the images and audio for new notes: it shows them, and stores them
+so Anki loads them. The human still finds the media, and still clicks Add.
 
 What the deck holds (103 notes, read 2026-11-01):
 
@@ -29,12 +30,16 @@ opens the Add window as it does today.
   bytes get a new one, like the deck's `pronunciation_he_מכונית-adf6a331….mp3`, so fields must use
   the name Anki returns, never the one requested. It accepts only `.jpg` and `.mp3`, because card
   webviews load from the media folder and those are all the editor sends.
-- **`retrieveMediaFile` is the one action still to join,** in PR 5. Nothing creates, edits or
+- **`retrieveMediaFile` is the one action still to join,** in PR 4. Nothing creates, edits or
   deletes a note. That PR updates the AGENTS.md rule, `client.ts` and `anki-guard.sh`.
 - **Files are stored at hand-off, not on attach.** Until then they are blobs in the browser, gone on
   reload like the rest of the draft, so an abandoned draft leaves nothing in Anki. Handing off twice
   is harmless, since the same bytes keep the same name. Only what reaches the note is stored, which
   leaves out a hidden variant's images.
+- **`HandOffBar` stores, then composes.** `storeImages` sends one file at a time, and a failure stops
+  before the window opens. The names it gets back go through `fieldsWith`, `CardEditor`'s wrapper
+  around `handOffFields`, because the fields can't exist until the names do. Variants and audio join
+  that same step, through `storeMedia` in `src/lib/api/anki.ts`.
 - **Bytes travel as base64 inside JSON,** because `request-guard.ts` refuses every other content
   type, and that refusal is part of what keeps the web out. adapter-node also refuses bodies over
   512K, but only under `npm start`: `vite dev` and `vite preview` never enforce it. So `start` sets
@@ -55,19 +60,28 @@ would have to loosen.*
 
 ## Getting media in
 
-- **One intake for every source.** Paste, drop and the file picker feed one function, so a new
-  source needs no code. Google, DuckDuckGo and Image Playground differ only in how the bytes arrive.
+- **One intake for every source.** Paste, drop and the file picker all feed `attach` in
+  `ImagesInput.svelte`, so a new source needs no code. Google, DuckDuckGo and Image Playground differ
+  only in how the bytes arrive.
 - **Paste is the main path,** because Copy Image is what the human does today. An image pasted
   anywhere on the page goes to the variant prompt holding focus, otherwise to `Images`. A paste with
-  no image behaves as usual.
+  no image behaves as usual. An image always beats text on the same clipboard, because the focus
+  usually sits in a text field when the human comes back with Copy Image.
+- **The whole page takes a drop,** not just the Media section, because one that misses would
+  navigate to the file or link and lose the draft. A word or link dragged onto a text field still
+  lands in the field.
+- **One image is attached once.** Its name is the hash of its bytes, so `attach` drops a repeat. That
+  covers a second paste and a clipboard offering the same image in two formats.
 - **Images are re-encoded in the browser:** drawn to a canvas with the long edge capped (1000 px to
   start), then saved as JPEG over white, since transparent clip art would otherwise turn black. Copy
   Image tends to hand over a PNG whatever the original was, and media syncs to the phone. Decoding
-  doubles as validation: what the browser can't decode is refused with a message. The name is
-  `paste-<sha1>.jpg`, Anki's own convention.
+  doubles as validation: what the browser can't decode is refused with a message, an SVG included.
+  The name is `paste-<sha1>.jpg`, Anki's own convention. All of it is `encodeImage` in
+  `src/lib/card/image.ts`.
 - **A drop that carries only a URL is refused,** with a prompt to copy the image instead. Dragging
   from a web page can do this, and the tool never fetches.
-- **Variant prompts take images through the same widget,** on the two fields `searchesImages` marks.
+- **Variant prompts take images through the same widget, `ImagesInput`,** on the two fields
+  `searchesImages` marks.
   The images stay apart from the textarea's text and follow it at hand-off, under the rule that a
   hidden field gets nothing from the human.
 - **Audio has the same intake,** so any source works. Forvo just has a shortcut, below.
@@ -86,7 +100,7 @@ changes and whenever the tab regains focus, and only while the note has no audio
 - **One match attaches itself,** shown with a player and a remove button. Several become choices,
   per Never guess. None shows nothing, and drop still works.
 - **A found file becomes an ordinary attachment.** The browser fetches it from this server, so
-  everything after that is PR 3's code. It is stored under its name without the browser's suffix.
+  everything after that is PR 2's code. It is stored under its name without the browser's suffix.
 - **The server reads one directory and never writes to it.** It lists names matching the pattern
   and serves only a name from that list, so no request path ever reaches the filesystem. The
   directory is `Downloads` under `os.homedir()`, overridable by an environment variable. macOS can
@@ -117,50 +131,37 @@ making no third-party request, and handles only bytes the human brought to it.
 *Rejected: a browser extension or script that clicks Forvo's download, and scraping add-ons like
 `anki-forvo-dl`, because either is the systematic use the license rules out.*
 
-**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 4.
+**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 3.
 Both pages answer 403 to anything else, so the license quote above comes from a search excerpt, and
 the terms themselves went unread.
 
-## PR 1 — Images on a word
+## PR 1 — Images on variants
 
-- A Media section under `LookupLinks`, with thumbnails, remove, paste, drop and pick.
-- `HandOffBar` stores one file at a time, then opens the Add window. A failed store stops before the
-  window opens and says so. It stops telling the human to finish the note there.
-- `handOffFields` already takes the stored names as `media: StoredMedia`, but `CardEditor` derives
-  `ankiFields` before anything is stored, so composing the fields has to move to after the store.
-- `src/lib/api/anki.ts` gains the browser's call to `/api/anki/media`. `postJson` returns nothing, so
-  it needs a way to hand back the reply.
-- `note-type.ts` no longer says the human pastes media, and the README describes the hand-off.
-- Canvas is the one thing here jsdom lacks, so the sizing is a pure function with tests, and the
-  draw itself is mocked and checked by hand.
-- From `cfa-web-app`'s `file-drop-zone.svelte.ts`, take the idea of paste through
-  `clipboardData.items` and `getAsFile()`, a `<label>` around a hidden input, resetting `input.value`
-  so a file can be picked twice, revoking object URLs, and saying why a file was refused. Leave its
-  class, context and crop dialog.
-
-## PR 2 — Images on variants
-
-- The widget beside each variant prompt, and the pasted-image routing by focus.
+- The widget beside each variant prompt, and the pasted-image routing by focus. `ImagesInput` holds
+  the window's paste and drop listeners today, so each copy would catch every paste: they have to
+  move up to one owner that picks the widget. A drop on a widget goes to that widget.
+- `field-help.ts` stops telling the human to paste a variant's image into Anki.
 - A hint when a variant has an image but no answer, since no card would show it.
 - Switching to a part of speech that hides variants keeps its images out of the hand-off.
 
-## PR 3 — Audio by hand
+## PR 2 — Audio by hand
 
 - One attachment with `<audio controls>`, its filename and remove, through the same intake and
   store. Audio bytes pass through unchanged.
 - A hint when a note has no audio, because it gets no Listening card, and with Anki's window on its
   way out, the editor is where that gets noticed.
+- `note-type.ts` and the README stop saying `Audio` is added in the Add window.
 - **Open:** which extensions to accept beyond `.mp3`, once checked on the phone. `STORABLE_FILENAME`
   in the media route is what to widen.
 
-## PR 4 — Find Forvo downloads
+## PR 3 — Find Forvo downloads
 
 - A server module and two `GET` routes, for the names matching a word and for one file's bytes.
 - The focus check, choices for several matches, and dropping found audio when the word changes.
 - The key function lives in `src/lib/hebrew/`, per the Hebrew text rules.
 - The README gains what the tool reads on this machine.
 
-## PR 5 — Show the deck's own media
+## PR 4 — Show the deck's own media
 
 - `retrieveMediaFile` on the allowlist, read-only in `anki-guard.sh`. It answers `false` for a
   missing file.
@@ -191,10 +192,10 @@ the terms themselves went unread.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   until clean.
-- Hand-off tests, through `fakeAnki`: a field uses the returned name rather than the requested one,
-  a hidden variant's images are never stored, and a failed store never reaches `guiAddCards`.
+- Hand-off test: a hidden variant's images are never stored.
 - `request-guard.ts` and its tests stay unchanged.
-- Under `npm start`, not only `npm run dev`: attach an image whose base64 passes 512K.
+- Under `npm start`, not only `npm run dev`: attach audio whose base64 passes 512K. An image already
+  has, but audio's bytes aren't re-encoded down.
 - By hand in real Anki, only with the human's go-ahead: a noun with two images, audio and a variant
   with an image. The Add window shows them, Preview shows the Production front, the Listening front
   plays, Variant 1 shows its image, and Tools → Check Media reports nothing missing. Then sync and

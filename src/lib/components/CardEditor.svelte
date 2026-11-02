@@ -5,7 +5,8 @@ import { type AnkiStatus, fetchAnkiStatus } from '#lib/api/anki.ts';
 import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
-import { handOffFields } from '#lib/card/hand-off.ts';
+import { handOffFields, type StoredMedia } from '#lib/card/hand-off.ts';
+import type { ImageAttachment } from '#lib/card/image.ts';
 import {
   type CardInputsDraft,
   completeInputs,
@@ -26,6 +27,7 @@ import DefinitionsInput from './DefinitionsInput.svelte';
 import DictionaryPanel from './DictionaryPanel.svelte';
 import ExistingNotesPanel from './ExistingNotesPanel.svelte';
 import HandOffBar from './HandOffBar.svelte';
+import ImagesInput from './ImagesInput.svelte';
 import LookupLinks from './LookupLinks.svelte';
 import NoteFields from './NoteFields.svelte';
 import TextInput from './ui/TextInput.svelte';
@@ -47,6 +49,7 @@ let picked:
 // `undefined` while the check is in flight.
 let status: AnkiStatus | undefined = $state.raw();
 let edits: FieldValues = $state({});
+let images: ImageAttachment[] = $state.raw([]);
 
 // Composition waits for every input, since each one shapes it. The fields shown depend only on
 // the part of speech.
@@ -56,7 +59,6 @@ const shownGroups = $derived(
   draft.partOfSpeech === undefined ? [] : shownFieldGroups(fieldOrder(status), draft.partOfSpeech),
 );
 const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
-const ankiFields = $derived(handOffFields({ composed, edits, shownFields }));
 const ankiProblem = $derived(status && ankiStatusProblem(status));
 const missingInputsMessage = $derived.by(() => {
   const missing = missingInputs(draft);
@@ -106,6 +108,10 @@ function setEdit(field: FieldKey, value: string) {
   edits[field] = value;
 }
 
+function ankiFields(media: StoredMedia) {
+  return handOffFields({ composed, edits, shownFields, media });
+}
+
 async function checkAnki() {
   status = undefined;
   try {
@@ -140,6 +146,7 @@ onMount(checkAnki);
     <DictionaryPanel {lookup} picked={picked?.candidate} onpick={pick} onunpick={unpick} />
     <ExistingNotesPanel words={[draft.word, ...(picked ? [picked.candidate.title] : [])]} />
     <LookupLinks word={draft.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
+    <section aria-label="Media"><ImagesInput bind:images /></section>
   </section>
 
   <WordForms
@@ -156,7 +163,8 @@ onMount(checkAnki);
   {/if}
 
   <HandOffBar
-    fields={ankiFields}
+    {images}
+    fieldsWith={ankiFields}
     {onnextcard}
     ankiBlocker={status === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={missingInputsMessage}

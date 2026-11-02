@@ -1,15 +1,20 @@
 <script lang="ts">
-import { openAddWindow } from '#lib/api/anki.ts';
+import { openAddWindow, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage } from '#lib/api/http.ts';
+import type { StoredMedia } from '#lib/card/hand-off.ts';
+import type { ImageAttachment } from '#lib/card/image.ts';
 
 let {
-  fields,
+  images,
+  fieldsWith,
   onnextcard,
   ankiBlocker,
   inputsBlocker,
 }: {
-  // Keyed by Anki field name, as `/api/anki/add` takes them.
-  fields: Record<string, string>;
+  images: readonly ImageAttachment[];
+  // Keyed by Anki field name, as `/api/anki/add` takes them. Fields need the names Anki stored the
+  // media under, which only exist once it has been stored.
+  fieldsWith: (media: StoredMedia) => Record<string, string>;
   // Called when the human moves on. Nothing clears by itself at the hand-off, because they may
   // still fix something and open the Add window again.
   onnextcard?: () => void;
@@ -36,10 +41,23 @@ function askToHandOff() {
   if (blocker === undefined) handOff = { kind: 'confirming' };
 }
 
+// One at a time, because each body can be megabytes and AnkiConnect handles one request at a time.
+// Stored here rather than on attach, so an abandoned draft leaves nothing in Anki. Handing off
+// twice is harmless, since the same bytes keep the same name.
+async function storeImages(): Promise<string[]> {
+  const stored: string[] = [];
+  try {
+    for (const { filename, blob } of images) stored.push(await storeMedia(filename, blob));
+  } catch (error) {
+    throw new Error(`Add window not opened: storing an image failed. ${errorMessage(error)}`);
+  }
+  return stored;
+}
+
 async function handOffToAnki() {
   handOff = { kind: 'opening' };
   try {
-    await openAddWindow(fields);
+    await openAddWindow(fieldsWith({ images: await storeImages() }));
     handOff = { kind: 'opened' };
   } catch (error) {
     handOff = { kind: 'failed', message: errorMessage(error) };
@@ -84,7 +102,7 @@ function focus(element: HTMLElement) {
     </button>
     <kbd>⌘↵</kbd>
     {#if handOff.kind === 'opened'}
-      <p>Opened in Anki. Finish the note there and click Add.</p>
+      <p>Opened in Anki. Click Add there.</p>
       <!-- Focused, so coming back from Anki, Enter is all the next word takes. -->
       <button type="button" {@attach focus} onclick={onnextcard}>Next word</button>
     {:else if handOff.kind === 'failed'}

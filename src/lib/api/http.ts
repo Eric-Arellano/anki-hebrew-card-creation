@@ -18,11 +18,20 @@ export async function getJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function postJson(path: string, body: unknown): Promise<void> {
+async function post(path: string, body: unknown): Promise<Response> {
   const response = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Error(await failureMessage(response));
+  return response;
+}
+
+export async function postJson(path: string, body: unknown): Promise<void> {
+  await post(path, body);
+}
+
+export async function postJsonForReply<T>(path: string, body: unknown): Promise<T> {
+  return (await (await post(path, body)).json()) as T;
 }
