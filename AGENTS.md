@@ -14,9 +14,11 @@ those two facts.
 
 - **Call only the allowlisted AnkiConnect actions**: `version`, `deckNames`, `modelNames`,
   `modelFieldNames`, `modelFieldDescriptions`, `modelTemplates`, `findNotes`, `notesInfo`,
-  `guiAddCards` and `guiBrowse` — from code and from `curl` alike. Nothing here creates, edits or deletes a note; I click Add myself.
-- **Don't call `guiAddCards` or `guiBrowse` against my real Anki without asking.** `guiAddCards`
-  replaces the open Add window and discards whatever I had typed there.
+  `guiAddCards`, `guiBrowse` and `storeMediaFile` — from code and from `curl` alike. Nothing here
+  creates, edits or deletes a note; I click Add myself.
+- **Don't call `guiAddCards`, `guiBrowse` or `storeMediaFile` against my real Anki without
+  asking.** `guiAddCards` replaces the open Add window and discards whatever I had typed there, and
+  `storeMediaFile` writes into my media folder.
 - **Never reach a third-party site.** No module calls `fetch` on an outside host; the tool only
   builds links I click. No test reaches the network or a real Anki.
 - **Never download the dictionary, and never load it whole.** I put the kaikki.org JSONL in

@@ -42,12 +42,13 @@ To pick up a newer Wiktionary, download the file again and rerun `npm run build-
 says when the index is older than the file.
 
 The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can open Add
-windows in your Anki.
+windows in your Anki and add files to its media folder.
 
 ## What it sends over the network
 
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
-  plus the calls that open the Add and Browse windows.
+  plus the calls that open the Add and Browse windows and store images and audio in your media
+  folder.
 - **To third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are only
   opened when you click them.
 

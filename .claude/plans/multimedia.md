@@ -24,15 +24,13 @@ The human brings bytes to the editor, which previews them. At hand-off the serve
 with `storeMediaFile`, the editor composes the fields from the names Anki returns, and `guiAddCards`
 opens the Add window as it does today.
 
-- **Two new AnkiConnect actions, which changes a hard rule.** `storeMediaFile` joins in PR 1 and
-  `retrieveMediaFile` in PR 6. Nothing still creates, edits or deletes a note. Each PR updates the
-  AGENTS.md rule, `client.ts` and `anki-guard.sh`.
-- **`storeMediaFile` is typed as `{ filename, data, deleteExisting: false }` and nothing else.** The
-  add-on defaults to replacing, so a second recording under one name would silently change another
-  note's audio. With `false`, identical bytes return the same name and different bytes get a new
-  one, like the deck's `pronunciation_he_מכונית-adf6a331….mp3`. Fields must therefore use the name
-  Anki returns, never the one requested. `url` stays out because it has Anki fetch a third-party
-  site on the tool's behalf.
+- **`POST /api/anki/media` stores one file.** It takes `{ filename, data }` and answers with the
+  name Anki used. With `deleteExisting: false`, identical bytes return the same name and different
+  bytes get a new one, like the deck's `pronunciation_he_מכונית-adf6a331….mp3`, so fields must use
+  the name Anki returns, never the one requested. It accepts only `.jpg` and `.mp3`, because card
+  webviews load from the media folder and those are all the editor sends.
+- **`retrieveMediaFile` is the one action still to join,** in PR 5. Nothing creates, edits or
+  deletes a note. That PR updates the AGENTS.md rule, `client.ts` and `anki-guard.sh`.
 - **Files are stored at hand-off, not on attach.** Until then they are blobs in the browser, gone on
   reload like the rest of the draft, so an abandoned draft leaves nothing in Anki. Handing off twice
   is harmless, since the same bytes keep the same name. Only what reaches the note is stored, which
@@ -40,9 +38,11 @@ opens the Add window as it does today.
 - **Bytes travel as base64 inside JSON,** because `request-guard.ts` refuses every other content
   type, and that refusal is part of what keeps the web out. adapter-node also refuses bodies over
   512K, but only under `npm start`: `vite dev` and `vite preview` never enforce it. So `start` sets
-  `BODY_SIZE_LIMIT=8M`, well under AnkiConnect's own 16 MiB.
-- **The app owns the field HTML:** a `<div><img src="…"></div>` per image, and `[sound:…]`, all in
-  `src/lib/anki/media.ts`. `alt` is dropped: the deck's are page titles that no card shows.
+  `BODY_SIZE_LIMIT=8M`, well under AnkiConnect's own 16 MiB, which leaves about 6 MiB of file. A
+  larger body gets the route's 400, whose message says so.
+- **The app owns the field HTML:** `imagesToAnkiFieldHtml` gives a `<div><img src="…"></div>` per
+  image and `soundToAnkiField` gives `[sound:…]`, both in `src/lib/anki/media.ts`. `alt` is dropped:
+  the deck's are page titles that no card shows.
 - **Several images, one sound.** `Images` holds a list, with no cap. `Audio` holds at most one, as
   in every note today.
 
@@ -86,7 +86,7 @@ changes and whenever the tab regains focus, and only while the note has no audio
 - **One match attaches itself,** shown with a player and a remove button. Several become choices,
   per Never guess. None shows nothing, and drop still works.
 - **A found file becomes an ordinary attachment.** The browser fetches it from this server, so
-  everything after that is PR 4's code. It is stored under its name without the browser's suffix.
+  everything after that is PR 3's code. It is stored under its name without the browser's suffix.
 - **The server reads one directory and never writes to it.** It lists names matching the pattern
   and serves only a name from that list, so no request path ever reaches the filesystem. The
   directory is `Downloads` under `os.homedir()`, overridable by an environment variable. macOS can
@@ -117,27 +117,19 @@ making no third-party request, and handles only bytes the human brought to it.
 *Rejected: a browser extension or script that clicks Forvo's download, and scraping add-ons like
 `anki-forvo-dl`, because either is the systematic use the license rules out.*
 
-**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 5.
+**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 4.
 Both pages answer 403 to anything else, so the license quote above comes from a search excerpt, and
 the terms themselves went unread.
 
-## PR 1 — Store media in Anki
-
-No UI yet.
-
-- `storeMediaFile` on the allowlist, typed as above. AGENTS.md also adds it to the actions not to
-  call against real Anki without asking, and `anki-guard.sh` prompts on it.
-- `POST /api/anki/media` takes `{ filename, data }` and answers with the name Anki used. It refuses
-  anything but image and audio extensions, because card webviews load from the media folder.
-- `src/lib/anki/media.ts` composes the HTML, and `handOffFields` gains the stored names, keeping its
-  hidden-field rule.
-- `BODY_SIZE_LIMIT` in the `start` script.
-
-## PR 2 — Images on a word
+## PR 1 — Images on a word
 
 - A Media section under `LookupLinks`, with thumbnails, remove, paste, drop and pick.
 - `HandOffBar` stores one file at a time, then opens the Add window. A failed store stops before the
   window opens and says so. It stops telling the human to finish the note there.
+- `handOffFields` already takes the stored names as `media: StoredMedia`, but `CardEditor` derives
+  `ankiFields` before anything is stored, so composing the fields has to move to after the store.
+- `src/lib/api/anki.ts` gains the browser's call to `/api/anki/media`. `postJson` returns nothing, so
+  it needs a way to hand back the reply.
 - `note-type.ts` no longer says the human pastes media, and the README describes the hand-off.
 - Canvas is the one thing here jsdom lacks, so the sizing is a pure function with tests, and the
   draw itself is mocked and checked by hand.
@@ -146,28 +138,29 @@ No UI yet.
   so a file can be picked twice, revoking object URLs, and saying why a file was refused. Leave its
   class, context and crop dialog.
 
-## PR 3 — Images on variants
+## PR 2 — Images on variants
 
 - The widget beside each variant prompt, and the pasted-image routing by focus.
 - A hint when a variant has an image but no answer, since no card would show it.
 - Switching to a part of speech that hides variants keeps its images out of the hand-off.
 
-## PR 4 — Audio by hand
+## PR 3 — Audio by hand
 
 - One attachment with `<audio controls>`, its filename and remove, through the same intake and
   store. Audio bytes pass through unchanged.
 - A hint when a note has no audio, because it gets no Listening card, and with Anki's window on its
   way out, the editor is where that gets noticed.
-- **Open:** which extensions to accept beyond `.mp3`, once checked on the phone.
+- **Open:** which extensions to accept beyond `.mp3`, once checked on the phone. `STORABLE_FILENAME`
+  in the media route is what to widen.
 
-## PR 5 — Find Forvo downloads
+## PR 4 — Find Forvo downloads
 
 - A server module and two `GET` routes, for the names matching a word and for one file's bytes.
 - The focus check, choices for several matches, and dropping found audio when the word changes.
 - The key function lives in `src/lib/hebrew/`, per the Hebrew text rules.
 - The README gains what the tool reads on this machine.
 
-## PR 6 — Show the deck's own media
+## PR 5 — Show the deck's own media
 
 - `retrieveMediaFile` on the allowlist, read-only in `anki-guard.sh`. It answers `false` for a
   missing file.
@@ -195,9 +188,8 @@ No UI yet.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   until clean.
-- Hand-off tests, through `fakeAnki`: `storeMediaFile` gets `deleteExisting: false`, a field uses the
-  returned name rather than the requested one, a hidden variant's images are never stored, and a
-  failed store never reaches `guiAddCards`.
+- Hand-off tests, through `fakeAnki`: a field uses the returned name rather than the requested one,
+  a hidden variant's images are never stored, and a failed store never reaches `guiAddCards`.
 - `request-guard.ts` and its tests stay unchanged.
 - Under `npm start`, not only `npm run dev`: attach an image whose base64 passes 512K.
 - By hand in real Anki, only with the human's go-ahead: a noun with two images, audio and a variant

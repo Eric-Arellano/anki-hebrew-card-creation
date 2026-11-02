@@ -34,4 +34,57 @@ describe('handOffFields', () => {
       ).toEqual({ ...blankFields, Forms: 'pl: דָּגִים' });
     });
   });
+
+  describe('with stored media', () => {
+    const image = 'paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437.jpg';
+    const imageHtml = `<div><img src="${image}"></div>`;
+
+    test('fills Images and Audio, which are never shown', () => {
+      expect(
+        handOffFields({
+          composed: {},
+          edits: {},
+          shownFields: [],
+          media: { images: [image, image], audio: 'pronunciation_he_בית.mp3' },
+        }),
+      ).toEqual({
+        ...blankFields,
+        Images: `${imageHtml}${imageHtml}`,
+        Audio: '[sound:pronunciation_he_בית.mp3]',
+      });
+    });
+
+    test("puts a shown variant prompt's images after its text", () => {
+      expect(
+        handOffFields({
+          composed: {},
+          edits: { variant1Prompt: 'female dog' },
+          shownFields: ['variant1Prompt'],
+          media: { variant1Prompt: [image] },
+        }),
+      ).toEqual({ ...blankFields, 'Variant 1 prompt': `female dog${imageHtml}` });
+    });
+
+    test('lets a variant prompt be only an image', () => {
+      expect(
+        handOffFields({
+          composed: {},
+          edits: {},
+          shownFields: ['variant2Prompt'],
+          media: { variant2Prompt: [image] },
+        }),
+      ).toEqual({ ...blankFields, 'Variant 2 prompt': imageHtml });
+    });
+
+    test("ignores a hidden variant prompt's images", () => {
+      expect(
+        handOffFields({
+          composed: {},
+          edits: {},
+          shownFields: ['notes'],
+          media: { variant1Prompt: [image], variant2Prompt: [image] },
+        }),
+      ).toEqual(blankFields);
+    });
+  });
 });

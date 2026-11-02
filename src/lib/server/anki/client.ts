@@ -9,7 +9,8 @@ const noteInfoSchema = z.object({
 export type NoteInfo = z.infer<typeof noteInfoSchema>;
 
 // The allowlist. Nothing here creates, edits or deletes a note: `guiAddCards` only opens the Add
-// window, and the human clicks Add. An action missing from this object can't be typed or sent.
+// window, and the human clicks Add, and `storeMediaFile` only adds a file to the media folder. An
+// action missing from this object can't be typed or sent.
 const resultSchemaByAllowedAction = {
   version: z.number(),
   deckNames: z.array(z.string()),
@@ -22,6 +23,8 @@ const resultSchemaByAllowedAction = {
   notesInfo: z.array(noteInfoSchema),
   guiAddCards: z.number().nullable(),
   guiBrowse: z.array(z.number()),
+  // The name Anki stored the file under, which may not be the one requested.
+  storeMediaFile: z.string(),
 };
 
 export type AllowedAction = keyof typeof resultSchemaByAllowedAction;
@@ -39,6 +42,10 @@ export type ActionParams = {
     note: { deckName: string; modelName: string; fields: Record<string, string>; tags: string[] };
   };
   guiBrowse: { query: string };
+  // The add-on replaces an existing file by default, which would silently change another note's
+  // media. With `false`, different bytes under a taken name get a new name. Its `url` stays out
+  // because that has Anki fetch a third-party site on this tool's behalf.
+  storeMediaFile: { filename: string; data: string; deleteExisting: false };
 };
 
 export type ActionResult<A extends AllowedAction> = z.infer<

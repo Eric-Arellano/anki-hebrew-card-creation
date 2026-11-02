@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Guards Bash commands that reach AnkiConnect (port 8765), which talks to the human's real
 # collection. Enforces the allowlist in AGENTS.md: read-only actions pass through to the normal
-# permission flow, `guiAddCards`/`guiBrowse` prompt, and every other action is denied.
+# permission flow, `guiAddCards`/`guiBrowse`/`storeMediaFile` prompt, and every other action is
+# denied.
 #
 # *Rejected: an `ask` rule on `Bash(curl *:8765*)`, because it prompted on every read-only query
 # and never covered a request sent any way other than curl.*
@@ -34,15 +35,17 @@ if [[ -z $actions ]]; then
   decide ask 'AnkiConnect request with no action this hook can read'
 fi
 
-gui=''
+# Decided after the loop, so a prompting action can't shadow a denied one later in the command.
+prompt_reason=''
 for action in $actions; do
   case $action in
     version | deckNames | modelNames | modelFieldNames | modelFieldDescriptions | modelTemplates | findNotes | notesInfo) ;;
-    guiAddCards | guiBrowse) gui=$action ;;
+    guiAddCards | guiBrowse) prompt_reason="AnkiConnect $action changes what is open in your Anki" ;;
+    storeMediaFile) prompt_reason='AnkiConnect storeMediaFile writes a file into your Anki media folder' ;;
     *) decide deny "AnkiConnect action $action is not on the allowlist in AGENTS.md" ;;
   esac
 done
 
-[[ -z $gui ]] || decide ask "AnkiConnect $gui changes what is open in your Anki"
+[[ -z $prompt_reason ]] || decide ask "$prompt_reason"
 
 exit 0

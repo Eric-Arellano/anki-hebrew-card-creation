@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "HOST=127.0.0.1 node build",
+    "start": "HOST=127.0.0.1 BODY_SIZE_LIMIT=8M node build",
     "build-index": "node scripts/build-index.ts",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
