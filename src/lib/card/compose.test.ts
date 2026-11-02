@@ -104,7 +104,9 @@ describe('composeFields', () => {
   });
 
   describe('for a verb', () => {
-    test('answers with its preposition, and writes its binyan and root', () => {
+    const noForms = { past: '', present: '', future: '' };
+
+    test('answers with its preposition, and writes its binyan, root and forms', () => {
       expect(
         composeFields({
           word: 'לדבר',
@@ -112,7 +114,13 @@ describe('composeFields', () => {
           definitions: ['to speak'],
           partOfSpeech: 'verb',
           root: 'ד־ב־ר',
-          verb: { binyan: "pi'el", preposition: 'עם' },
+          verb: {
+            binyan: "pi'el",
+            preposition: 'עם',
+            past: 'דִּבֵּר',
+            present: 'מְדַבֵּר',
+            future: 'יְדַבֵּר',
+          },
         }),
       ).toEqual({
         unpointed: 'לדבר',
@@ -122,6 +130,43 @@ describe('composeFields', () => {
         productionAnswer: 'לדבר עם',
         binyan: "pi'el",
         root: 'ד־ב־ר',
+        forms: 'past: דִּבֵּר<br>pres: מְדַבֵּר<br>fut: יְדַבֵּר',
+      });
+    });
+
+    describe('with only some of its forms', () => {
+      test('leaves the blank ones out', () => {
+        expect(
+          composeFields({
+            word: 'לדבר',
+            pointed: 'לְדַבֵּר',
+            definitions: ['to speak'],
+            partOfSpeech: 'verb',
+            root: '',
+            verb: {
+              ...noForms,
+              binyan: "pi'el",
+              preposition: undefined,
+              past: 'דִּבֵּר',
+              future: ' ',
+            },
+          }).forms,
+        ).toBe('past: דִּבֵּר');
+      });
+    });
+
+    describe('with none of its forms', () => {
+      test('leaves them blank', () => {
+        expect(
+          composeFields({
+            word: 'לדבר',
+            pointed: 'לְדַבֵּר',
+            definitions: ['to speak'],
+            partOfSpeech: 'verb',
+            root: '',
+            verb: { ...noForms, binyan: "pi'el", preposition: undefined },
+          }).forms,
+        ).toBe('');
       });
     });
 
@@ -134,7 +179,7 @@ describe('composeFields', () => {
             definitions: ['to see'],
             partOfSpeech: 'verb',
             root: 'ר־א־ה',
-            verb: { binyan: "pa'al", preposition: 'את' },
+            verb: { ...noForms, binyan: "pa'al", preposition: 'את' },
           }).productionAnswer,
         ).toBe('לראות את');
       });
@@ -149,7 +194,7 @@ describe('composeFields', () => {
             definitions: ['to go'],
             partOfSpeech: 'verb',
             root: 'ה־ל־ך',
-            verb: { binyan: "pa'al", preposition: undefined },
+            verb: { ...noForms, binyan: "pa'al", preposition: undefined },
           }).productionAnswer,
         ).toBe('ללכת');
       });

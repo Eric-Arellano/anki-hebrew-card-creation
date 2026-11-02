@@ -12,7 +12,13 @@ const noun: NounDraft = {
   femininePlural: 'כְּלָבוֹת',
 };
 
-const verb: VerbDraft = { binyan: "pi'el", preposition: 'עם' };
+const verb: VerbDraft = {
+  binyan: "pi'el",
+  preposition: 'עם',
+  past: 'דִּבֵּר',
+  present: 'מְדַבֵּר',
+  future: 'יְדַבֵּר',
+};
 
 const adjective: AdjectiveInputs = {
   feminine: 'גְּדוֹלָה',
@@ -78,7 +84,7 @@ describe('missingInputs', () => {
           ...ledaberDraft,
           pointed: '',
           root: '',
-          verb: { binyan: undefined, preposition: undefined },
+          verb: { ...verb, binyan: undefined, preposition: undefined },
         }),
       ).toEqual(['preposition', 'pointed', 'binyan']);
     });
@@ -201,15 +207,23 @@ describe('completeInputs', () => {
   });
 
   describe('for a verb', () => {
-    test('returns its preposition, binyan and root, joined with maqafs', () => {
+    test('returns its preposition, binyan, forms and root, joined with maqafs', () => {
       expect(completeInputs(ledaberDraft)).toEqual({
         word: 'לדבר',
         partOfSpeech: 'verb',
         definitions: ['to speak'],
         pointed: 'לְדַבֵּר',
         root: 'ד־ב־ר',
-        verb: { binyan: "pi'el", preposition: 'עם' },
+        verb,
       });
+    });
+  });
+
+  describe('for a verb with blank forms', () => {
+    test('needs none of them', () => {
+      expect(
+        completeInputs({ ...ledaberDraft, verb: { ...verb, past: '', present: '', future: '' } }),
+      ).toMatchObject({ verb: { past: '', present: '', future: '' } });
     });
   });
 

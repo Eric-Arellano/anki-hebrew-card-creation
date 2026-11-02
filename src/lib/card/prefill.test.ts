@@ -31,6 +31,8 @@ const diber: DictionaryCandidate = {
   verb: {
     binyan: "pi'el",
     infinitives: [{ pointed: 'לְדַבֵּר', unpointed: 'לדבר' }],
+    presents: ['מְדַבֵּר'],
+    futures: ['יְדַבֵּר'],
     prepositions: [],
   },
 };
@@ -160,8 +162,8 @@ describe('prefillDraft', () => {
   });
 
   describe('for a verb', () => {
-    test('fills the infinitive, binyan and root, and keeps the preposition chosen', () => {
-      const draft = { ...typed, verb: { binyan: undefined, preposition: 'עם' as const } };
+    test('fills the infinitive, binyan, forms and root, and keeps the preposition chosen', () => {
+      const draft = { ...typed, verb: { ...typed.verb, preposition: 'עם' as const } };
       expect(prefillDraft(draft, diber)).toEqual({
         draft: {
           ...typed,
@@ -169,7 +171,13 @@ describe('prefillDraft', () => {
           pointed: 'לְדַבֵּר',
           partOfSpeech: 'verb',
           root: 'ד־ב־ר',
-          verb: { binyan: "pi'el", preposition: 'עם' },
+          verb: {
+            binyan: "pi'el",
+            preposition: 'עם',
+            past: 'דִּבֵּר',
+            present: 'מְדַבֵּר',
+            future: 'יְדַבֵּר',
+          },
         },
         choices: {},
       });
@@ -217,6 +225,30 @@ describe('prefillDraft', () => {
           prefillDraft(draft, { ...diber, verb: { ...diber.verb, binyan: undefined } }).draft.verb
             .binyan,
         ).toBeUndefined();
+      });
+    });
+
+    describe('with two presents and two futures', () => {
+      test('leaves each blank and offers both', () => {
+        const presents = ['מֵנִיחַ', 'מַנִּיחַ'];
+        const futures = ['יָנִיחַ', 'יַנִּיחַ'];
+        const { draft, choices } = prefillDraft(typed, {
+          ...diber,
+          verb: { ...diber.verb, presents, futures },
+        });
+        expect(draft.verb).toMatchObject({ present: '', future: '' });
+        expect(choices).toEqual({ present: presents, future: futures });
+      });
+    });
+
+    describe('without a pointed lemma or a conjugation table', () => {
+      test('leaves every form blank', () => {
+        const { draft } = prefillDraft(typed, {
+          ...diber,
+          pointed: undefined,
+          verb: { ...diber.verb, presents: [], futures: [] },
+        });
+        expect(draft.verb).toMatchObject({ past: '', present: '', future: '' });
       });
     });
 
@@ -311,7 +343,7 @@ describe('undoPrefill', () => {
     const before: CardInputsDraft = {
       ...typed,
       pointed: 'כְּלָבִים',
-      verb: { binyan: undefined, preposition: 'עם' },
+      verb: { ...typed.verb, preposition: 'עם', future: 'יְדַבֵּר' },
     };
     const filled = prefillDraft(before, diber).draft;
     const edited = {

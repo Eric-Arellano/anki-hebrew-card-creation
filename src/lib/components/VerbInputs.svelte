@@ -6,6 +6,7 @@ import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import RootInput from './RootInput.svelte';
 import ChoiceChips from './ui/ChoiceChips.svelte';
+import TextInput from './ui/TextInput.svelte';
 
 const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label: string }[] = [
   ...GOVERNED_PREPOSITIONS.map((value) => ({ value, label: value })),
@@ -51,6 +52,21 @@ function setBinyan(value: Binyan | '') {
   {/if}
   <div class="forms-row">
     {@render children()}
+    <TextInput label="Past (he), with niqqud" lang="he" required={false} bind:value={verb.past} />
+    <TextInput
+      label="Present (he), with niqqud"
+      lang="he"
+      required={false}
+      choices={choices.present}
+      bind:value={verb.present}
+    />
+    <TextInput
+      label="Future (he), with niqqud"
+      lang="he"
+      required={false}
+      choices={choices.future}
+      bind:value={verb.future}
+    />
     <label class="grid gap-1">
       <span class="required-mark">Binyan</span>
       <select class="text-2xl" required bind:value={() => verb.binyan ?? '', setBinyan}>
