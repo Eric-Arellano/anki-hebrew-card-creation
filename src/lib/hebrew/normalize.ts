@@ -35,6 +35,14 @@ export function hasNiqqud(text: string): boolean {
   return POINT_OR_CANTILLATION.test(text);
 }
 
+// A holam or a dagesh alone makes a ו a vowel, and in NFC a letter's vowel comes straight after it.
+const CONSONANTAL_YOD_OR_VAV = /(?<=[א-ת][\u0591-\u05C7]*)[יו][\u05B0-\u05B8]/;
+
+/** Whether pointed `text` has a י or ו inside a word that ktiv male doubles: `לְצַיֵּר` is `לצייר`. */
+export function hasConsonantalYodOrVav(text: string): boolean {
+  return CONSONANTAL_YOD_OR_VAV.test(text.normalize('NFC'));
+}
+
 /** The key the dictionary index files `text` under: `שְׁנַת־` and `שנת` share one. */
 export function toLookupKey(text: string): string {
   return (

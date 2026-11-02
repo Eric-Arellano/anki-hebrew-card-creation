@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  hasConsonantalYodOrVav,
   hasNiqqud,
   includesPointedText,
   isSamePointedText,
@@ -64,6 +65,21 @@ describe('hasNiqqud', () => {
     ['ד־ב־ר', false],
   ])('answers %s with %s', (text, expected) => {
     expect(hasNiqqud(text)).toBe(expected);
+  });
+});
+
+describe('hasConsonantalYodOrVav', () => {
+  test.each([
+    ['לְטַיֵּל', true],
+    ['לְהִתְכַּוֵּן', true],
+    ['לְהַרְוִיחַ', true],
+    ['לְיַשֵּׁם', true],
+    ['לְדַבֵּר', false],
+    ['לָקוּם', false],
+    ['לִהְיוֹת', false],
+    ['יֶלֶד', false],
+  ])('answers %s with %s', (text, expected) => {
+    expect(hasConsonantalYodOrVav(text)).toBe(expected);
   });
 });
 

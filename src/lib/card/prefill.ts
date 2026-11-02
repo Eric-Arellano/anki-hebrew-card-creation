@@ -62,7 +62,7 @@ export function prefillDraft(
       return {
         draft: {
           ...draft,
-          word: infinitive?.unpointed ?? '',
+          word: infinitive === undefined ? '' : unpointedInfinitive(infinitive, draft.word),
           pointed: infinitive?.pointed ?? '',
           partOfSpeech: 'verb',
           root: onlyValue(candidate.roots),
@@ -132,6 +132,12 @@ export function undoPrefill(draft: CardInputsDraft, before: CardInputsDraft): Ca
 // pointed, keeps it too.
 export function stillSpellsEntry(word: string, filledWord: string): boolean {
   return filledWord === '' || toDefectiveKey(word) === toDefectiveKey(filledWord);
+}
+
+// The human's spelling stands in for one the dictionary lacks, so long as it is this infinitive.
+function unpointedInfinitive({ pointed, unpointed }: DictionaryInfinitive, typed: string): string {
+  if (unpointed !== undefined) return unpointed;
+  return toDefectiveKey(typed) === toDefectiveKey(pointed) ? typed.trim() : '';
 }
 
 function onlyValue(values: readonly string[]): string {

@@ -297,6 +297,12 @@ describe('lookUp', () => {
       });
     });
 
+    test('gives no unpointed spelling for an infinitive with a doubled letter', () => {
+      expect(candidate('טייל', 'טִיֵּל')).toMatchObject({
+        verb: { infinitives: [{ pointed: 'לְטַיֵּל' }] },
+      });
+    });
+
     test('gives a pu’al no infinitive', () => {
       expect(candidate('דובר', 'דֻּבַּר')).toMatchObject({
         verb: { binyan: "pu'al", infinitives: [] },
