@@ -136,11 +136,14 @@ describe('CardEditor', () => {
   });
 
   describe('a verb', () => {
-    test('sends its production answer with its preposition, and its binyan and root', async () => {
+    test('sends its production answer with its preposition, and its binyan, root and forms', async () => {
       const requests = await renderConnectedEditor();
       await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to speak' });
       await fillVerb("pi'el", 'ד.ב.ר');
       await fireEvent.click(screen.getByRole('radio', { name: 'עם' }));
+      await typeInto(input('Past (he), with niqqud'), 'דִּבֵּר');
+      await typeInto(input('Present (he), with niqqud'), 'מְדַבֵּר');
+      await typeInto(input('Future (he), with niqqud'), 'יְדַבֵּר');
       expect(screen.getByText(/Writes the root as/).textContent?.trim()).toBe(
         'Writes the root as ד־ב־ר.',
       );
@@ -158,6 +161,7 @@ describe('CardEditor', () => {
           'Part of speech': 'verb',
           Binyan: "pi'el",
           Root: 'ד־ב־ר',
+          Forms: 'past: דִּבֵּר<br>pres: מְדַבֵּר<br>fut: יְדַבֵּר',
         },
       });
     });

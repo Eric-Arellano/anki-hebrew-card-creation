@@ -43,6 +43,8 @@ function toCandidate(db: DatabaseSync, lemma: Entry): DictionaryCandidate {
         verb: {
           binyan: facts.binyanCode === undefined ? undefined : toBinyan(facts.binyanCode),
           infinitives: facts.infinitives,
+          presents: facts.presents,
+          futures: facts.futures,
           prepositions: [
             ...new Set(
               facts.prepositions.flatMap((text): GovernedPreposition[] => {

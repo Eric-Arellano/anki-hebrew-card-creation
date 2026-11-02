@@ -73,6 +73,9 @@ export type EntryFacts = {
   // On a feminine noun, the masculine it is the counterpart of.
   masculines: string[];
   infinitives: DictionaryInfinitive[];
+  // A verb's, for “he”. Its past is the entry's `pointed`.
+  presents: string[];
+  futures: string[];
   // From a gloss's `[with לְ־ ‘for’]`, like `לְ־`, `עַל` or `direct`.
   prepositions: string[];
   // As written, pointed or not.
@@ -102,6 +105,10 @@ export function readEntry(json: unknown): SourceEntry | undefined {
 
   // The head template's forms; the inflection table's carry a `source`.
   const headForms = line.forms.filter((form) => form.source === undefined);
+  // A cell holding two spellings, `ייגש \ יִגַּשׁ`, is no word form, so its input stays blank.
+  const conjugationForms = line.forms.filter(
+    (form) => form.source === 'conjugation' && isWordForm(form),
+  );
   const glossSenses = line.senses.filter(
     (sense) => sense.form_of.length === 0 && sense.alt_of.length === 0,
   );
@@ -131,6 +138,13 @@ export function readEntry(json: unknown): SourceEntry | undefined {
       femininePlurals: pointedFormsTagged(headForms, ['feminine', 'plural']),
       masculines: pointedFormsTagged(headForms, ['masculine']),
       infinitives: infinitives(line.forms),
+      presents: pointedFormsTagged(conjugationForms, ['masculine', 'present', 'singular']),
+      futures: pointedFormsTagged(conjugationForms, [
+        'future',
+        'masculine',
+        'singular',
+        'third-person',
+      ]),
       prepositions: line.senses.flatMap((sense) =>
         (sense.raw_glosses ?? []).flatMap((gloss) =>
           [...gloss.matchAll(/\[with ([^\]\s‘(]+)/g)].map((match) => match[1] ?? ''),

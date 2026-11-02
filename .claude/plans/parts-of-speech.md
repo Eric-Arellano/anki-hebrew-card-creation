@@ -2,12 +2,11 @@
 
 ## Context
 
-The editor knows all seven parts of speech, each note stores which one it is, and nouns, verbs and
-adjectives all take a root. What remains is to put those roots to use and to fill in a verb's
-principal parts.
+The editor knows all seven parts of speech, each note stores which one it is, nouns, verbs and
+adjectives all take a root, and a verb's principal parts fill in from Wiktionary. What remains is to
+put those roots to use.
 
-The goal is a form that fits the word, with less typing. Each new input is filled from Wiktionary.
-Storing the part of speech also prepares for editing existing notes: with seven of them, the app
+The goal is a form that fits the word, with less typing. Storing the part of speech also prepares for editing existing notes: with seven of them, the app
 cannot infer one from `Gender` and `Binyan`. Notes made before the field existed have it blank.
 
 Builds on dictionary lookup, prefill and plural hints, which have landed. No new dependencies, and
@@ -43,7 +42,7 @@ no new AnkiConnect actions.
 
 *Rejected for now: a noun's construct form, because it is mostly predictable and adds a line to
 every noun card. Storing the pattern (משקל), because it is advanced for a beginner. Variant
-suggestions beyond plurals.*
+suggestions beyond plurals: `verb.ts` says why not for a verb.*
 
 ## What each part of speech shows
 
@@ -63,21 +62,11 @@ suggestions beyond plurals.*
   Anki, so this is where roots pay off. A note's blank `Root` matches nothing, and a blend's note
   holds only the root the human chose.
 
-## PR 2 — Verb principal parts
-
-- `source-forms.ts`: `presents` and `futures` from conjugation rows tagged exactly
-  `masculine present singular` and `future masculine singular third-person`. About 95% of verbs give
-  one of each and almost all the rest several. Past is the entry's pointed lemma. Bump the schema
-  version.
-- Three optional pointed inputs in `VerbInputs.svelte`; `Forms` composes as
-  `past: דִּבֵּר<br>pres: מְדַבֵּר<br>fut: יְדַבֵּר`.
-- Remove the `**Open:**` on a verb's `Forms` in `note-type.ts`.
-
 ## Verification
 
-- Each PR: `npm run lint && npm run check && npm test`, `svelte-autofixer` on each Svelte file until
-  clean, and `npm run build-index` where the schema version changes.
-- Each PR adds tests for its conversion, prefill, undo and composition, and `CardEditor.test.ts`
-  covers which inputs and groups appear.
+- `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file until
+  clean.
+- Tests for the search, `findNotesWithRoot` and the route, and `CardEditor.test.ts` covers when the
+  panel appears.
 - By hand in the running app, without handing off to real Anki unless you agree: גדול, כתובת and
   לדבר.

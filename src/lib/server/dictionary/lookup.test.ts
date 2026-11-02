@@ -240,7 +240,7 @@ describe('lookUp', () => {
   });
 
   describe('for a verb', () => {
-    test('converts its binyan, and takes its infinitive and root from the conjugation', () => {
+    test('converts its binyan, and takes its forms and root from the conjugation', () => {
       expect(candidate('דיבר', 'דִּבֵּר')).toEqual({
         id: expect.any(Number),
         title: 'דיבר',
@@ -252,9 +252,21 @@ describe('lookUp', () => {
         verb: {
           binyan: "pi'el",
           infinitives: [{ pointed: 'לְדַבֵּר', unpointed: 'לדבר' }],
+          presents: ['מְדַבֵּר'],
+          futures: ['יְדַבֵּר'],
           prepositions: [],
         },
       });
+    });
+
+    test('offers each future the table lists', () => {
+      expect(candidate('חדר', 'חָדַר')).toMatchObject({
+        verb: { presents: ['חוֹדֵר'], futures: ['יַחֲדֹר', 'יַחְדֹּר'] },
+      });
+    });
+
+    test('takes no form from a cell holding two spellings', () => {
+      expect(candidate('ניגש', 'נִגַּשׁ')).toMatchObject({ verb: { presents: [], futures: [] } });
     });
 
     test('takes the unpointed infinitive the table lists before the pointed one', () => {

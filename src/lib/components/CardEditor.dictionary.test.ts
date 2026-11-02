@@ -42,6 +42,8 @@ describe('CardEditor', () => {
       verb: {
         binyan: "pi'el",
         infinitives: [{ pointed: 'לְחַכּוֹת', unpointed: 'לחכות' }],
+        presents: ['מְחַכֶּה'],
+        futures: ['יְחַכֶּה'],
         prepositions: ['ל'],
       },
     };
@@ -147,12 +149,15 @@ describe('CardEditor', () => {
       });
     });
 
-    test('fills a verb’s infinitive, binyan and root, and only suggests its preposition', async () => {
+    test('fills a verb’s infinitive, forms, binyan and root, and only suggests its preposition', async () => {
       const requests = await renderConnectedEditor(undefined, found(chika));
       await pick('חיכה', 'חִכָּה');
 
       expect(input('Hebrew word, without niqqud').value).toBe('לחכות');
       expect(input('Hebrew word, with niqqud').value).toBe('לְחַכּוֹת');
+      expect(input('Past (he), with niqqud').value).toBe('חִכָּה');
+      expect(input('Present (he), with niqqud').value).toBe('מְחַכֶּה');
+      expect(input('Future (he), with niqqud').value).toBe('יְחַכֶּה');
       expect((screen.getByRole('combobox', { name: 'Binyan' }) as HTMLSelectElement).value).toBe(
         "pi'el",
       );
@@ -189,6 +194,33 @@ describe('CardEditor', () => {
         await fireEvent.click(screen.getByRole('button', { name: 'לַחְדֹּר' }));
         expect(input('Hebrew word, with niqqud').value).toBe('לַחְדֹּר');
         expect(input('Hebrew word, without niqqud').value).toBe('לחדור');
+      });
+    });
+
+    describe('for a verb with two futures', () => {
+      test('offers both, and choosing one fills the future', async () => {
+        await renderConnectedEditor(
+          undefined,
+          found({ ...chika, verb: { ...chika.verb, futures: ['יַחֲדֹר', 'יַחְדֹּר'] } }),
+        );
+        await pick('חדר', 'חִכָּה');
+        expect(input('Future (he), with niqqud').value).toBe('');
+
+        await fireEvent.click(screen.getByRole('button', { name: 'יַחְדֹּר' }));
+        expect(input('Future (he), with niqqud').value).toBe('יַחְדֹּר');
+      });
+    });
+
+    describe('for a verb, after choosing another', () => {
+      test('clears the forms it filled', async () => {
+        await renderConnectedEditor(undefined, found(chika));
+        await pick('חיכה', 'חִכָּה');
+        await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
+        await choosePartOfSpeech('Verb');
+
+        expect(input('Past (he), with niqqud').value).toBe('');
+        expect(input('Present (he), with niqqud').value).toBe('');
+        expect(input('Future (he), with niqqud').value).toBe('');
       });
     });
 

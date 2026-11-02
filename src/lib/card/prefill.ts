@@ -15,6 +15,8 @@ export type PrefillChoices = {
   feminine?: string[];
   masculinePlural?: string[];
   femininePlural?: string[];
+  present?: string[];
+  future?: string[];
   root?: string[];
 };
 
@@ -50,8 +52,12 @@ export function prefillDraft(
       };
     }
     case 'verb': {
-      // The deck's verbs go by their infinitive, while the dictionary's go by the past 3ms.
-      const { binyan, infinitives } = candidate.verb;
+      // The deck's verbs go by their infinitive, while the dictionary's go by the past 3ms, which
+      // becomes the note's past form. The infinitive is what “to speak” asks for and what follows
+      // “I want”, and the past can't predict it: `הָלַךְ` → `לָלֶכֶת`. A passive has none to fill.
+      // *Rejected: the past 3ms, because over a quarter share their spelling with another entry,
+      // like `כתב` with the noun, where under 1% of infinitives do.*
+      const { binyan, infinitives, presents, futures } = candidate.verb;
       const infinitive = infinitives.length === 1 ? infinitives[0] : undefined;
       return {
         draft: {
@@ -61,9 +67,20 @@ export function prefillDraft(
           partOfSpeech: 'verb',
           root: onlyValue(candidate.roots),
           // The preposition is only ever suggested, so it stays as the human chose it.
-          verb: { ...draft.verb, binyan },
+          verb: {
+            ...draft.verb,
+            binyan,
+            past: candidate.pointed ?? '',
+            present: onlyValue(presents),
+            future: onlyValue(futures),
+          },
         },
-        choices: { infinitives: choicesAmong(infinitives), root: choicesAmong(candidate.roots) },
+        choices: {
+          infinitives: choicesAmong(infinitives),
+          present: choicesAmong(presents),
+          future: choicesAmong(futures),
+          root: choicesAmong(candidate.roots),
+        },
       };
     }
     case 'adjective': {
@@ -106,7 +123,7 @@ export function undoPrefill(draft: CardInputsDraft, before: CardInputsDraft): Ca
     root: before.root,
     noun: before.noun,
     adjective: before.adjective,
-    verb: { ...draft.verb, binyan: before.verb.binyan },
+    verb: { ...before.verb, preposition: draft.verb.preposition },
   };
 }
 

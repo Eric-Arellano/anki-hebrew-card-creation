@@ -31,6 +31,9 @@ export type DictionaryVerb = {
   // `undefined` for a binyan the deck doesn't have, like hitpu'al.
   binyan: Binyan | undefined;
   infinitives: DictionaryInfinitive[];
+  // For “he”, as the candidate's own `pointed` is the past.
+  presents: string[];
+  futures: string[];
   // Only a suggestion: the dictionary names one for few verbs, and not always the usual one.
   prepositions: GovernedPreposition[];
 };
