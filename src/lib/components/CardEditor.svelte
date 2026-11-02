@@ -31,6 +31,8 @@ import NoteFields from './NoteFields.svelte';
 import TextInput from './ui/TextInput.svelte';
 import WordForms from './WordForms.svelte';
 
+let { onnextcard }: { onnextcard?: () => void } = $props();
+
 let draft: CardInputsDraft = $state(emptyDraft());
 // The dictionary entry the inputs were last filled from, until the human types another word. The
 // draft from before, and the word the entry filled in, are what undo it.
@@ -129,6 +131,7 @@ onMount(checkAnki);
       <TextInput
         label="Hebrew word, without niqqud"
         lang="he"
+        takesFocus
         bind:value={draft.word}
         oninput={retype}
       />
@@ -154,6 +157,7 @@ onMount(checkAnki);
 
   <HandOffBar
     fields={ankiFields}
+    {onnextcard}
     ankiBlocker={status === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={missingInputsMessage}
   />
