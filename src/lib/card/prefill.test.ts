@@ -216,6 +216,14 @@ describe('prefillDraft', () => {
         });
         expect([draft.word, draft.pointed]).toEqual(['', 'לְדַבֵּר']);
       });
+
+      test('keeps the spelling typed, if it is this infinitive', () => {
+        const { draft } = prefillDraft(
+          { ...typed, word: 'לטייל ' },
+          { ...diber, verb: { ...diber.verb, infinitives: [{ pointed: 'לְטַיֵּל' }] } },
+        );
+        expect([draft.word, draft.pointed]).toEqual(['לטייל', 'לְטַיֵּל']);
+      });
     });
 
     describe('with a binyan the deck lacks', () => {
