@@ -69,6 +69,11 @@ export async function renderConnectedEditor(
   return requests;
 }
 
+/** Says this word has no image, which a note needs unless it has one attached. */
+export async function skipImage() {
+  await fireEvent.click(screen.getByRole('checkbox', { name: 'No image for this word' }));
+}
+
 export function input(label: string) {
   return screen.getByLabelText(label) as HTMLInputElement;
 }

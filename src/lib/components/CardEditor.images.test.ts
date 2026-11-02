@@ -10,6 +10,7 @@ import {
   input,
   mediaRequests,
   renderConnectedEditor,
+  skipImage,
   stubServer,
 } from './CardEditor.harness.ts';
 import CardEditor from './CardEditor.svelte';
@@ -157,6 +158,61 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('without an image', () => {
+    async function renderFilledEditor() {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      return requests;
+    }
+
+    function openButton() {
+      return screen.getByRole('button', { name: 'Open in Anki' }) as HTMLButtonElement;
+    }
+
+    test('blocks the hand-off and says an image is still needed', async () => {
+      await renderFilledEditor();
+      expect(openButton().disabled).toBe(true);
+      expect(screen.getByText('Still needed: image')).toBeTruthy();
+    });
+
+    test('lists the image after the inputs still blank', async () => {
+      await renderConnectedEditor();
+      expect(
+        screen.getByText(
+          'Still needed: Hebrew word without niqqud, English meaning, part of speech, ' +
+            'Hebrew word with niqqud, image',
+        ),
+      ).toBeTruthy();
+    });
+
+    test('hands off once the human says the word has none', async () => {
+      const requests = await renderFilledEditor();
+      await skipImage();
+      expect(screen.queryByText(/Still needed/)).toBeNull();
+      expect(await handOff(requests)).toMatchObject({ fields: { Images: '' } });
+    });
+
+    test('hands off once an image is attached, and drops the checkbox', async () => {
+      const requests = await renderFilledEditor();
+      await pasteImage();
+      await screen.findByRole('img');
+      expect(screen.queryByRole('checkbox', { name: 'No image for this word' })).toBeNull();
+      expect(openButton().disabled).toBe(false);
+      await handOff(requests);
+      expect(mediaRequests(requests)).toHaveLength(1);
+    });
+
+    describe('after removing the only image', () => {
+      test('is needed again', async () => {
+        await renderFilledEditor();
+        await pasteImage();
+        await screen.findByRole('img');
+        await fireEvent.click(screen.getByRole('button', { name: 'Remove image 1' }));
+        expect(screen.getByText('Still needed: image')).toBeTruthy();
+      });
+    });
+  });
+
   describe('removing an image', () => {
     test('drops it from the hand-off and frees its preview', async () => {
       const requests = await renderConnectedEditor();
@@ -168,6 +224,7 @@ describe('CardEditor', () => {
       expect(thumbnails()).toEqual([]);
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
 
+      await skipImage();
       expect(await handOff(requests)).toMatchObject({ fields: { Images: '' } });
       expect(mediaRequests(requests)).toEqual([]);
     });

@@ -13,6 +13,7 @@ import {
   input,
   noteField,
   renderConnectedEditor,
+  skipImage,
   stubServer,
   typeInto,
 } from './CardEditor.harness.ts';
@@ -24,6 +25,7 @@ describe('CardEditor', () => {
       const requests = await renderConnectedEditor();
       await fillDag();
 
+      await skipImage();
       await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
       expect(screen.getByRole('alert').textContent).toContain("replaces whatever is in Anki's");
       expect(addRequests(requests)).toEqual([]);
@@ -52,6 +54,7 @@ describe('CardEditor', () => {
       const requests = await renderConnectedEditor();
       await fillDag();
 
+      await skipImage();
       await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
       expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Replace and open' }));
       expect(addRequests(requests)).toEqual([]);
@@ -61,6 +64,7 @@ describe('CardEditor', () => {
       const requests = await renderConnectedEditor();
       await fillDag();
 
+      await skipImage();
       await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
       await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
       expect(screen.getByRole('button', { name: 'Open in Anki' })).toBeTruthy();
@@ -76,7 +80,7 @@ describe('CardEditor', () => {
         ).toBe(true);
         expect(
           screen.getByText(
-            'Still needed: English meaning, part of speech, Hebrew word with niqqud',
+            'Still needed: English meaning, part of speech, Hebrew word with niqqud, image',
           ),
         ).toBeTruthy();
       });
@@ -115,6 +119,7 @@ describe('CardEditor', () => {
         'https://www.google.com/search?udm=2&q=fish',
         'https://www.google.com/search?udm=2&q=Pisces',
       ]);
+      await skipImage();
       await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
       await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
       await screen.findByText(/Opened in Anki/);
@@ -168,6 +173,7 @@ describe('CardEditor', () => {
       await fillDag();
       await typeInto(noteField('Hint for reading the Hebrew without niqqud'), 'הדג גדול');
 
+      await skipImage();
       await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
       await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
       await screen.findByText(/Opened in Anki/);
@@ -181,6 +187,7 @@ describe('CardEditor', () => {
       await fillDag();
       await typeInto(noteField('Notes'), 'first\nsecond');
 
+      await skipImage();
       await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
       await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
       await screen.findByText(/Opened in Anki/);
@@ -245,6 +252,7 @@ describe('CardEditor', () => {
         await chooseNoun('Masculine');
         await typeInto(input('Masculine plural, with niqqud'), 'דָּגִים');
 
+        await skipImage();
         await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
         await screen.findByText(/Opened in Anki/);
@@ -258,6 +266,7 @@ describe('CardEditor', () => {
         await fillVerb("pa'al", 'דוג');
         await fireEvent.click(screen.getByRole('radio', { name: 'None' }));
 
+        await skipImage();
         await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
         await screen.findByText(/Opened in Anki/);

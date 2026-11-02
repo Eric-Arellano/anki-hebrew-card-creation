@@ -1,7 +1,15 @@
 <script lang="ts">
 import { encodeImage, type ImageAttachment, pastedImages } from '#lib/card/image.ts';
+import Checkbox from './ui/Checkbox.svelte';
 
-let { images = $bindable() }: { images: ImageAttachment[] } = $props();
+let {
+  images = $bindable(),
+  noImage = $bindable(),
+}: {
+  images: ImageAttachment[];
+  // The human's say that this word has no image worth finding.
+  noImage: boolean;
+} = $props();
 
 let refusal: string | undefined = $state.raw();
 let dragging = $state(false);
@@ -87,12 +95,17 @@ function showing(blob: Blob) {
   ]}
 >
   <div class="flex flex-wrap items-center gap-2">
-    <span>Images</span>
+    <span class={{ 'required-mark': images.length === 0 && !noImage }}>Images</span>
     <label class="chip cursor-pointer text-sm hover:bg-gray-50 has-focus-visible:ring-2">
       Choose files
       <input class="sr-only" type="file" accept="image/*" multiple {onchange}>
     </label>
-    <span class="hint">or paste or drop an image anywhere on this page</span>
+    <span class="hint">or paste or drop one anywhere</span>
+    {#if images.length === 0}
+      <span class="ml-auto text-sm text-gray-600">
+        <Checkbox label="No image for this word" bind:checked={noImage} />
+      </span>
+    {/if}
   </div>
 
   {#if images.length > 0}

@@ -50,6 +50,7 @@ let picked:
 let status: AnkiStatus | undefined = $state.raw();
 let edits: FieldValues = $state({});
 let images: ImageAttachment[] = $state.raw([]);
+let noImage = $state(false);
 
 // Composition waits for every input, since each one shapes it. The fields shown depend only on
 // the part of speech.
@@ -61,9 +62,13 @@ const shownGroups = $derived(
 const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
 const ankiProblem = $derived(status && ankiStatusProblem(status));
 const missingInputsMessage = $derived.by(() => {
-  const missing = missingInputs(draft);
-  if (missing.length === 0) return undefined;
-  return `Still needed: ${missing.map((key) => INPUT_NAMES[key]).join(', ')}`;
+  const missing = missingInputs(draft).map((key) => INPUT_NAMES[key]);
+  // Images are how the human learns, so skipping one is a choice they make, not a slip. It stays a
+  // choice because a word like גם has nothing to picture, and a hard rule would force a junk image.
+  const needsImage = images.length === 0 && !noImage;
+  const stillNeeded = needsImage ? [...missing, 'image'] : missing;
+  if (stillNeeded.length === 0) return undefined;
+  return `Still needed: ${stillNeeded.join(', ')}`;
 });
 
 // Once an entry is picked, the word it filled in isn't looked up again.
@@ -146,7 +151,7 @@ onMount(checkAnki);
     <DictionaryPanel {lookup} picked={picked?.candidate} onpick={pick} onunpick={unpick} />
     <ExistingNotesPanel words={[draft.word, ...(picked ? [picked.candidate.title] : [])]} />
     <LookupLinks word={draft.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
-    <section aria-label="Media"><ImagesInput bind:images /></section>
+    <section aria-label="Media"><ImagesInput bind:images bind:noImage /></section>
   </section>
 
   <WordForms

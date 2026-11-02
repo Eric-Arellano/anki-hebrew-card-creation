@@ -84,6 +84,10 @@ would have to loosen.*
   `searchesImages` marks.
   The images stay apart from the textarea's text and follow it at hand-off, under the rule that a
   hidden field gets nothing from the human.
+- **Every note needs an image unless the human says otherwise.** A missing one joins "Still needed"
+  and blocks the hand-off, until "No image for this word" is ticked. The Spanish deck has images on
+  1,343 of 1,344 notes and this one on 99 of 103, and the exceptions (גם, אבל) have nothing to
+  picture. The tick belongs to `Images`, so a variant's widget doesn't show it.
 - **Audio has the same intake,** so any source works. Forvo just has a shortcut, below.
 
 *Rejected: `sharp`, as `cfa-web-app` uses, because canvas does this with no dependency.*
