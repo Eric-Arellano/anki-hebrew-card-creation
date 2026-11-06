@@ -10,12 +10,15 @@ import {
   type VariantPrompt,
 } from '#lib/note-type.ts';
 
-type Attachments = Partial<Record<'images' | VariantPrompt, readonly ImageAttachment[]>>;
+type AttachmentsByField = Partial<Record<'images' | VariantPrompt, readonly ImageAttachment[]>>;
 
 // A hidden field gets nothing from the human, so a variant's images stay out while another part of
 // speech hides the variants, just as their text does. `Images` is never shown as a textarea, and
 // always reaches the note.
-function reachingNote(media: MediaDraft, shownFields: readonly FieldKey[]): Attachments {
+function attachmentsReachingNote(
+  media: MediaDraft,
+  shownFields: readonly FieldKey[],
+): AttachmentsByField {
   const prompts = Object.keys(VARIANT_ANSWERS) as VariantPrompt[];
   return {
     images: media.images,
@@ -32,7 +35,7 @@ export function attachmentsToStore(
   media: MediaDraft,
   shownFields: readonly FieldKey[],
 ): ImageAttachment[] {
-  const all = Object.values(reachingNote(media, shownFields)).flat();
+  const all = Object.values(attachmentsReachingNote(media, shownFields)).flat();
   return all.filter(
     ({ filename }, index) => all.findIndex((a) => a.filename === filename) === index,
   );
@@ -56,16 +59,16 @@ export function handOffFields({
   media?: MediaDraft;
   storedAs?: ReadonlyMap<string, string>;
 }): Record<string, string> {
-  function stored({ filename }: ImageAttachment): string {
+  function storedName({ filename }: ImageAttachment): string {
     const name = storedAs.get(filename);
     if (name === undefined) throw new Error(`${filename} was never stored`);
     return name;
   }
-  const attachments = media === undefined ? {} : reachingNote(media, shownFields);
+  const attachments = media === undefined ? {} : attachmentsReachingNote(media, shownFields);
   const mediaHtml: FieldValues = Object.fromEntries(
     Object.entries(attachments).map(([field, list]) => [
       field,
-      imagesToAnkiFieldHtml(list.map(stored)),
+      imagesToAnkiFieldHtml(list.map(storedName)),
     ]),
   );
 

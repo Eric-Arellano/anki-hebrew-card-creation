@@ -45,7 +45,7 @@ function askToHandOff() {
 // One at a time, because each body can be megabytes and AnkiConnect handles one request at a time.
 // Stored here rather than on attach, so an abandoned draft leaves nothing in Anki. Handing off
 // twice is harmless, since the same bytes keep the same name.
-async function storeImages(): Promise<ReadonlyMap<string, string>> {
+async function storeAttachments(): Promise<ReadonlyMap<string, string>> {
   const stored: [requested: string, used: string][] = [];
   try {
     for (const { filename, blob } of attachments) {
@@ -60,7 +60,7 @@ async function storeImages(): Promise<ReadonlyMap<string, string>> {
 async function handOffToAnki() {
   handOff = { kind: 'opening' };
   try {
-    await openAddWindow(fieldsWith(await storeImages()));
+    await openAddWindow(fieldsWith(await storeAttachments()));
     handOff = { kind: 'opened' };
   } catch (error) {
     handOff = { kind: 'failed', message: errorMessage(error) };

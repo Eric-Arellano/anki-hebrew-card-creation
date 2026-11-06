@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
-import { encodeImages, imageTargetAt, pastedImages, withAttached } from './attach.ts';
+import { encodeImages, imageFieldAt, pastedImages, withAttached } from './attach.ts';
 
 const png = new File(['png'], 'image.png', { type: 'image/png' });
 const pdf = new File(['pdf'], 'notes.pdf', { type: 'application/pdf' });
@@ -32,24 +32,24 @@ describe('pastedImages', () => {
   });
 });
 
-describe('imageTargetAt', () => {
+describe('imageFieldAt', () => {
   function page() {
     document.body.innerHTML =
-      '<p id="outside"></p><div data-image-target="variant1Prompt"><p><b id="inside"></b></p></div>';
+      '<p id="outside"></p><div data-image-field="variant1Prompt"><p><b id="inside"></b></p></div>';
   }
 
-  test('names the region holding the element, however deep', () => {
+  test('names the field of the block holding the element, however deep', () => {
     page();
-    expect(imageTargetAt(document.getElementById('inside'))).toBe('variant1Prompt');
+    expect(imageFieldAt(document.getElementById('inside'))).toBe('variant1Prompt');
   });
 
   test.each([
-    ['an element outside every region', () => document.getElementById('outside')],
+    ['an element outside every block', () => document.getElementById('outside')],
     ['the window', () => window],
     ['nothing', () => null],
   ])('names nothing for %s', (_, element) => {
     page();
-    expect(imageTargetAt(element())).toBeUndefined();
+    expect(imageFieldAt(element())).toBeUndefined();
   });
 });
 

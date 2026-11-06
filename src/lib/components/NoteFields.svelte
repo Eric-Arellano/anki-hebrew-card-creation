@@ -33,7 +33,7 @@ let {
   promptImages: Record<VariantPrompt, ImageAttachment[]>;
 } = $props();
 
-function unanswered(prompt: VariantPrompt) {
+function lacksAnswer(prompt: VariantPrompt) {
   return (edits[VARIANT_ANSWERS[prompt]] ?? '').trim() === '';
 }
 </script>
@@ -52,12 +52,12 @@ function unanswered(prompt: VariantPrompt) {
       {#each fields as field (field)}
         {@const { label, help } = fieldDisplay(field, partOfSpeech)}
         {@const prompt = isVariantPrompt(field) ? field : undefined}
-        <!-- A variant prompt's block is the region its images widget takes pastes in. A block takes
+        <!-- A paste or drop in a variant prompt's block goes to that prompt's images. A block takes
              focus on a click anywhere in it, so a click is enough to aim a paste: at this prompt,
              or for any other field, at Images. -->
         <div
           class="mb-3 grid gap-1 outline-none sm:row-span-3 sm:grid-rows-subgrid"
-          data-image-target={prompt}
+          data-image-field={prompt}
           tabindex="-1"
         >
           <div class="flex items-end justify-between gap-2">
@@ -74,8 +74,8 @@ function unanswered(prompt: VariantPrompt) {
             <p id="help-{field}" class="hint"><QuotedText text={help} /></p>
           {/if}
           <div class="space-y-2 sm:row-start-3">
-            <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML, except
-                 that a new line becomes `<br>` at the hand-off. -->
+            <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML,
+                 except that a new line becomes `<br>` at the hand-off. -->
             <textarea
               id="field-{field}"
               dir="auto"
@@ -86,12 +86,8 @@ function unanswered(prompt: VariantPrompt) {
               oninput={(event) => onedit(field, event.currentTarget.value)}
             ></textarea>
             {#if prompt !== undefined}
-              <ImagesInput
-                label="Images for {label}"
-                region={prompt}
-                bind:images={promptImages[prompt]}
-              />
-              {#if promptImages[prompt].length > 0 && unanswered(prompt)}
+              <ImagesInput label="Images for {label}" {prompt} bind:images={promptImages[prompt]} />
+              {#if promptImages[prompt].length > 0 && lacksAnswer(prompt)}
                 <p class="hint text-amber-700">
                   No card shows these images until this variant has a Hebrew answer.
                 </p>

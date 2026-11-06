@@ -10,12 +10,12 @@ export function pastedImages(clipboard: DataTransfer | null): File[] {
 }
 
 /**
- * The `data-image-target` of the region holding `element`, naming the image widget a paste or drop
- * there belongs to. `undefined` outside every region, where `Images` takes it.
+ * The field whose images take a paste or drop at `element`: the `data-image-field` of the block
+ * holding it, or `undefined` outside every such block, where the word's `Images` takes it.
  */
-export function imageTargetAt(element: EventTarget | null): string | undefined {
+export function imageFieldAt(element: EventTarget | null): string | undefined {
   if (!(element instanceof Element)) return undefined;
-  return element.closest<HTMLElement>('[data-image-target]')?.dataset.imageTarget;
+  return element.closest<HTMLElement>('[data-image-field]')?.dataset.imageField;
 }
 
 /** Each of `files` the browser can decode, encoded, and a message naming any it can't. */

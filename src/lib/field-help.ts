@@ -67,7 +67,7 @@ const TRAIN_EXAMPLES = examplesHelp(
 );
 
 // The widget for a variant's images sits under its prompt.
-const PASTE_AN_IMAGE = 'Find an image with Images (EN), copy it, and paste it here.';
+const PASTE_IMAGE_HELP = 'Find an image with Images (EN), copy it, and paste it here.';
 
 // Variant 1's help sits right above Variant 2, so Variant 2 needs none.
 export const FIELD_HELP = {
@@ -114,22 +114,22 @@ export const FIELD_HELP = {
   variant1Prompt: {
     noun:
       "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
-      `“female dog” for כלב. ${PASTE_AN_IMAGE}`,
+      `“female dog” for כלב. ${PASTE_IMAGE_HELP}`,
     verb:
       "What you'll be shown. For example, “I will go” for ללכת's irregular " +
-      `future. ${PASTE_AN_IMAGE}`,
+      `future. ${PASTE_IMAGE_HELP}`,
     adjective:
       "What you'll be shown. For example, “other (feminine)” for אחר's irregular " +
-      `feminine. ${PASTE_AN_IMAGE}`,
+      `feminine. ${PASTE_IMAGE_HELP}`,
     preposition:
       "What you'll be shown. For example, “with me” for עם's irregular " +
-      `form. ${PASTE_AN_IMAGE}`,
+      `form. ${PASTE_IMAGE_HELP}`,
     phrase:
       "What you'll be shown, for wording that changes with who you address. For example, " +
-      `“welcome (to a woman)” for “ברוך הבא”. ${PASTE_AN_IMAGE}`,
+      `“welcome (to a woman)” for “ברוך הבא”. ${PASTE_IMAGE_HELP}`,
     other:
       "What you'll be shown, for a form that doesn't follow the usual " +
-      `pattern. ${PASTE_AN_IMAGE}`,
+      `pattern. ${PASTE_IMAGE_HELP}`,
   },
   variant1Answer: {
     noun:

@@ -1,37 +1,37 @@
 <script lang="ts">
-// Every copy of this widget listens on the window, and each acts only on the images its region
-// claims, so exactly one takes a paste or a drop. A paste goes by focus, because the human copies
-// in another tab and comes back with the focus where they left it, often on the search link they
-// clicked. A drop goes by where it lands.
+// Every copy of this widget listens on the window, and each acts only on the images it claims, so
+// exactly one takes a paste or a drop. A paste goes by focus, because the human copies in another
+// tab and comes back with the focus where they left it, often on the search link they clicked. A
+// drop goes by where it lands.
 import type { Snippet } from 'svelte';
-import { encodeImages, imageTargetAt, pastedImages, withAttached } from '#lib/media/attach.ts';
+import { encodeImages, imageFieldAt, pastedImages, withAttached } from '#lib/media/attach.ts';
 import type { ImageAttachment } from '#lib/media/image.ts';
 import type { VariantPrompt } from '#lib/note-type.ts';
 
 let {
   images = $bindable(),
   label,
-  region,
+  prompt,
   required = false,
   children,
 }: {
   images: ImageAttachment[];
   // Names the widget for screen readers, since every copy shows "Images".
   label: string;
-  // The `data-image-target` of the region whose pastes and drops this takes. Without one, it takes
-  // whatever no region claims.
-  region?: VariantPrompt;
+  // The variant prompt these images follow, whose block, marked `data-image-field`, aims pastes and
+  // drops here. Without one, these are the word's `Images`, which take whatever no block claims.
+  prompt?: VariantPrompt;
   required?: boolean;
   // Shown after the hint.
   children?: Snippet;
 } = $props();
 
 let refusal: string | undefined = $state.raw();
-let dragging = $state(false);
-let pasteHere = $state(false);
+let dropLandsHere = $state(false);
+let pasteLandsHere = $state(false);
 
-function isMine(element: EventTarget | null) {
-  return imageTargetAt(element) === region;
+function claims(element: EventTarget | null) {
+  return imageFieldAt(element) === prompt;
 }
 
 async function attach(files: readonly File[]) {
@@ -43,21 +43,21 @@ async function attach(files: readonly File[]) {
 }
 
 function onpaste(event: ClipboardEvent) {
-  if (!isMine(document.activeElement)) return;
+  if (!claims(document.activeElement)) return;
   const files = pastedImages(event.clipboardData);
   if (files.length === 0) return;
   event.preventDefault();
   attach(files);
 }
 
-function markPasteTarget() {
-  pasteHere = isMine(document.activeElement);
+function followFocus() {
+  pasteLandsHere = claims(document.activeElement);
 }
 
 // While focus moves, the element losing it is no longer active, so read where it is going. Leaving
 // the window has no such target and keeps the active element, which is where a paste will land.
 function onfocusout(event: FocusEvent) {
-  pasteHere = isMine(event.relatedTarget ?? document.activeElement);
+  pasteLandsHere = claims(event.relatedTarget ?? document.activeElement);
 }
 
 function isTextField(target: EventTarget | null) {
@@ -66,25 +66,25 @@ function isTextField(target: EventTarget | null) {
 
 // The whole page takes a drop, because one that misses would navigate to the file or link and lose
 // the draft. A word or link dragged onto a text field still lands in the field.
-function takesDrag({ dataTransfer, target }: DragEvent) {
+function claimsDrag({ dataTransfer, target }: DragEvent) {
   const types = dataTransfer?.types ?? [];
-  const takes =
+  const droppable =
     types.includes('Files') || (types.includes('text/uri-list') && !isTextField(target));
-  return takes && isMine(target);
+  return droppable && claims(target);
 }
 
 function ondragover(event: DragEvent) {
-  dragging = takesDrag(event);
-  if (dragging) event.preventDefault();
+  dropLandsHere = claimsDrag(event);
+  if (dropLandsHere) event.preventDefault();
 }
 
 function ondragleave(event: DragEvent) {
-  if (event.relatedTarget === null) dragging = false;
+  if (event.relatedTarget === null) dropLandsHere = false;
 }
 
 function ondrop(event: DragEvent) {
-  dragging = false;
-  if (!takesDrag(event)) return;
+  dropLandsHere = false;
+  if (!claimsDrag(event)) return;
   event.preventDefault();
 
   const files = [...(event.dataTransfer?.files ?? [])];
@@ -111,22 +111,15 @@ function showing(blob: Blob) {
 }
 </script>
 
-<svelte:window
-  {onpaste}
-  onfocusin={markPasteTarget}
-  {onfocusout}
-  {ondragover}
-  {ondragleave}
-  {ondrop}
-/>
+<svelte:window {onpaste} onfocusin={followFocus} {onfocusout} {ondragover} {ondragleave} {ondrop} />
 
 <fieldset
   aria-label={label}
   class={[
     'space-y-2 rounded-md border border-dashed p-3',
-    dragging ? 'border-blue-600 bg-blue-50' : 'border-gray-300',
+    dropLandsHere ? 'border-blue-600 bg-blue-50' : 'border-gray-300',
   ]}
-  {@attach markPasteTarget}
+  {@attach followFocus}
 >
   <div class="flex flex-wrap items-center gap-2">
     <span class={{ 'required-mark': required }}>Images</span>
@@ -135,7 +128,7 @@ function showing(blob: Blob) {
       <input class="sr-only" type="file" accept="image/*" multiple {onchange}>
     </label>
     <span class="hint">or paste or drop one</span>
-    {#if pasteHere}
+    {#if pasteLandsHere}
       <span class="hint text-blue-700"><kbd>⌘V</kbd> pastes here</span>
     {/if}
     {@render children?.()}

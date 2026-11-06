@@ -39,11 +39,11 @@ function thumbnails() {
   return screen.queryAllByRole('img');
 }
 
-function widget(name: string) {
+function imagesWidget(name: string) {
   return screen.getByRole('group', { name });
 }
 
-const VARIANT_1 = 'Images for Variant 1: English prompt';
+const VARIANT_1_IMAGES = 'Images for Variant 1: English prompt';
 
 function fileInput() {
   return screen.getByLabelText('Choose files') as HTMLInputElement;
@@ -293,34 +293,34 @@ describe('CardEditor', () => {
       await renderWithVariants();
       noteField('Variant 1: English prompt').focus();
       await pasteImage(noteField('Variant 1: English prompt'));
-      expect(await within(widget(VARIANT_1)).findByRole('img')).toBeTruthy();
-      expect(within(widget('Images')).queryAllByRole('img')).toEqual([]);
+      expect(await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img')).toBeTruthy();
+      expect(within(imagesWidget('Images')).queryAllByRole('img')).toEqual([]);
     });
 
     test('takes a paste after a click anywhere in its block', async () => {
       await renderWithVariants();
-      const block = noteField('Variant 1: English prompt').closest('[data-image-target]');
+      const block = noteField('Variant 1: English prompt').closest('[data-image-field]');
       (block as HTMLElement).focus();
       await pasteImage(document.body);
-      expect(await within(widget(VARIANT_1)).findByRole('img')).toBeTruthy();
+      expect(await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img')).toBeTruthy();
     });
 
     test('leaves a paste from anywhere else to Images', async () => {
       await renderWithVariants();
       noteField('Notes').focus();
       await pasteImage(noteField('Notes'));
-      expect(await within(widget('Images')).findByRole('img')).toBeTruthy();
-      expect(within(widget(VARIANT_1)).queryAllByRole('img')).toEqual([]);
+      expect(await within(imagesWidget('Images')).findByRole('img')).toBeTruthy();
+      expect(within(imagesWidget(VARIANT_1_IMAGES)).queryAllByRole('img')).toEqual([]);
     });
 
     test('says which widget a paste will go to', async () => {
       await renderWithVariants();
-      expect(within(widget('Images')).queryByText('pastes here')).toBeTruthy();
+      expect(within(imagesWidget('Images')).queryByText('pastes here')).toBeTruthy();
       noteField('Variant 1: English prompt').focus();
       await waitFor(() =>
-        expect(within(widget(VARIANT_1)).queryByText('pastes here')).toBeTruthy(),
+        expect(within(imagesWidget(VARIANT_1_IMAGES)).queryByText('pastes here')).toBeTruthy(),
       );
-      expect(within(widget('Images')).queryByText('pastes here')).toBeNull();
+      expect(within(imagesWidget('Images')).queryByText('pastes here')).toBeNull();
     });
 
     test('takes a file dropped on the prompt', async () => {
@@ -328,8 +328,8 @@ describe('CardEditor', () => {
       await fireEvent.drop(noteField('Variant 1: English prompt'), {
         dataTransfer: { ...emptyTransfer, types: ['Files'], files: [png] },
       });
-      expect(await within(widget(VARIANT_1)).findByRole('img')).toBeTruthy();
-      expect(within(widget('Images')).queryAllByRole('img')).toEqual([]);
+      expect(await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img')).toBeTruthy();
+      expect(within(imagesWidget('Images')).queryAllByRole('img')).toEqual([]);
     });
 
     describe('without an answer', () => {
@@ -337,7 +337,7 @@ describe('CardEditor', () => {
         await renderWithVariants();
         noteField('Variant 1: English prompt').focus();
         await pasteImage();
-        await within(widget(VARIANT_1)).findByRole('img');
+        await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
         const warning = /No card shows these images/;
         expect(screen.getByText(warning)).toBeTruthy();
         await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'דָּגָה');
@@ -356,7 +356,7 @@ describe('CardEditor', () => {
         await typeInto(noteField('Variant 1: English prompt'), 'female fish');
         noteField('Variant 1: English prompt').focus();
         await pasteImage();
-        await within(widget(VARIANT_1)).findByRole('img');
+        await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
 
         expect(await handOff(requests)).toMatchObject({
           fields: { 'Variant 1 prompt': `female fish<div><img src="${stored}"></div>` },
@@ -372,7 +372,7 @@ describe('CardEditor', () => {
           await skipImage();
           noteField('Variant 1: English prompt').focus();
           await pasteImage();
-          await within(widget(VARIANT_1)).findByRole('img');
+          await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
 
           await choosePartOfSpeech('Adverb');
           expect(await handOff(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
@@ -383,11 +383,11 @@ describe('CardEditor', () => {
           await renderWithVariants();
           noteField('Variant 1: English prompt').focus();
           await pasteImage();
-          await within(widget(VARIANT_1)).findByRole('img');
+          await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
 
           await choosePartOfSpeech('Adverb');
           await choosePartOfSpeech('Other');
-          expect(within(widget(VARIANT_1)).getAllByRole('img')).toHaveLength(1);
+          expect(within(imagesWidget(VARIANT_1_IMAGES)).getAllByRole('img')).toHaveLength(1);
         });
       });
     });

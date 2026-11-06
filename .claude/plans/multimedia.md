@@ -40,9 +40,10 @@ opens the Add window as it does today.
   note will hold once, and it stores them one at a time; a failure stops before the window opens.
   It passes `fieldsWith` a map from each name requested to the name Anki used, and `handOffFields`
   composes from the draft's media through that map, throwing on a file never stored. Both go
-  through `reachingNote` in `src/lib/card/hand-off.ts`, the one place that keeps a hidden variant's
-  images out, so what is stored and what the fields name can't disagree. Audio joins as a member of
-  `MediaDraft` that `reachingNote` passes through; `soundToAnkiField` waits for it, unused.
+  through `attachmentsReachingNote` in `src/lib/card/hand-off.ts`, the one place that keeps a
+  hidden variant's images out, so what is stored and what the fields name can't disagree. Audio
+  joins as a member of `MediaDraft` that `attachmentsReachingNote` passes through;
+  `soundToAnkiField` waits for it, unused.
 - **Bytes travel as base64 inside JSON,** because `request-guard.ts` refuses every other content
   type, and that refusal is part of what keeps the web out. adapter-node also refuses bodies over
   512K, but only under `npm start`: `vite dev` and `vite preview` never enforce it. So `start` sets
@@ -68,13 +69,13 @@ would have to loosen.*
   differ only in how the bytes arrive.
 - **Paste is the main path,** because Copy Image is what the human does today. A paste goes by
   focus, because the human copies in another tab and comes back with the focus where they left it,
-  often on the Images (EN) link they clicked. A variant prompt's block is marked `data-image-target`
+  often on the Images (EN) link they clicked. A variant prompt's block is marked `data-image-field`
   and takes focus on a click anywhere in it, so a paste while working on that variant goes to its
   images, and any other paste to `Images`. The widget a paste will reach says "⌘V pastes here", so
   the routing is never a guess for the human. A paste with no image behaves as usual. An image
   always beats text on the same clipboard, because the focus usually sits in a text field when the
   human comes back with Copy Image.
-- **Every `ImagesInput` listens on the window,** and acts only on what `imageTargetAt` in
+- **Every `ImagesInput` listens on the window,** and acts only on what `imageFieldAt` in
   `src/lib/media/attach.ts` assigns its region, so exactly one takes each paste or drop, with no
   registry. A drop goes by where it lands, through the same regions.
 - **The whole page takes a drop,** not just the Media section, because one that misses would
