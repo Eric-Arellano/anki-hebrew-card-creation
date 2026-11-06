@@ -2,7 +2,7 @@
 import { openAddWindow, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import type { StoredMedia } from '#lib/card/hand-off.ts';
-import type { ImageAttachment } from '#lib/card/image.ts';
+import type { ImageAttachment } from '#lib/media/image.ts';
 
 let {
   images,

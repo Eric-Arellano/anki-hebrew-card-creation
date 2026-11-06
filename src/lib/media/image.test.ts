@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
-import { encodeImage, fitWithinLongEdge, pastedImages } from './image.ts';
+import { encodeImage, fitWithinLongEdge } from './image.ts';
 
 describe('fitWithinLongEdge', () => {
   test.each([
@@ -12,35 +12,6 @@ describe('fitWithinLongEdge', () => {
     ['a sliver, keeping a pixel', { width: 5000, height: 1 }, { width: 1000, height: 1 }],
   ])('sizes %s', (_, size, fitted) => {
     expect(fitWithinLongEdge(size)).toEqual(fitted);
-  });
-});
-
-describe('pastedImages', () => {
-  const png = new File(['png'], 'image.png', { type: 'image/png' });
-  const pdf = new File(['pdf'], 'a.pdf', { type: 'application/pdf' });
-
-  function clipboard(...items: Partial<DataTransferItem>[]) {
-    return { items } as unknown as DataTransfer;
-  }
-
-  test('takes the image from what a copied image carries beside it', () => {
-    expect(
-      pastedImages(
-        clipboard(
-          { kind: 'string', type: 'text/html' },
-          { kind: 'file', type: 'image/png', getAsFile: () => png },
-        ),
-      ),
-    ).toEqual([png]);
-  });
-
-  test.each([
-    ['text', clipboard({ kind: 'string', type: 'text/plain' })],
-    ['a file that is no image', clipboard({ kind: 'file', type: pdf.type, getAsFile: () => pdf })],
-    ['an image with no file', clipboard({ kind: 'file', type: png.type, getAsFile: () => null })],
-    ['nothing', null],
-  ])('finds nothing in %s', (_, data) => {
-    expect(pastedImages(data)).toEqual([]);
   });
 });
 

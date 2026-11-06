@@ -1,5 +1,6 @@
 <script lang="ts">
-import { encodeImage, type ImageAttachment, pastedImages } from '#lib/card/image.ts';
+import { encodeImages, pastedImages, withAttached } from '#lib/media/attach.ts';
+import type { ImageAttachment } from '#lib/media/image.ts';
 import Checkbox from './ui/Checkbox.svelte';
 
 let {
@@ -16,17 +17,10 @@ let dragging = $state(false);
 
 async function attach(files: readonly File[]) {
   refusal = undefined;
-  const results = await Promise.allSettled(files.map(encodeImage));
-  const refused = files.filter((_, index) => results[index]?.status === 'rejected');
-  if (refused.length > 0) {
-    refusal = `Couldn't read ${refused.map((file) => file.name).join(', ')} as an image.`;
-  }
-
-  // One image gets one name, so this catches a second paste, and a clipboard offering two formats.
-  const encoded = results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
-  images = [...images, ...encoded].filter(
-    ({ filename }, index, all) => all.findIndex((image) => image.filename === filename) === index,
-  );
+  const result = await encodeImages(files);
+  refusal = result.refusal;
+  // Read after the wait, so an image removed while these encoded stays removed.
+  images = withAttached(images, result.encoded);
 }
 
 function onpaste(event: ClipboardEvent) {

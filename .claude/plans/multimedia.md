@@ -60,9 +60,9 @@ would have to loosen.*
 
 ## Getting media in
 
-- **One intake for every source.** Paste, drop and the file picker all feed `attach` in
-  `ImagesInput.svelte`, so a new source needs no code. Google, DuckDuckGo and Image Playground differ
-  only in how the bytes arrive.
+- **One intake for every source.** Paste, drop and the file picker all feed
+  `src/lib/media/attach.ts`, so a new source needs no code. Google, DuckDuckGo and Image Playground
+  differ only in how the bytes arrive.
 - **Paste is the main path,** because Copy Image is what the human does today. An image pasted
   anywhere on the page goes to the variant prompt holding focus, otherwise to `Images`. A paste with
   no image behaves as usual. An image always beats text on the same clipboard, because the focus
@@ -70,14 +70,14 @@ would have to loosen.*
 - **The whole page takes a drop,** not just the Media section, because one that misses would
   navigate to the file or link and lose the draft. A word or link dragged onto a text field still
   lands in the field.
-- **One image is attached once.** Its name is the hash of its bytes, so `attach` drops a repeat. That
-  covers a second paste and a clipboard offering the same image in two formats.
+- **One image is attached once.** Its name is the hash of its bytes, so `withAttached` drops a
+  repeat. That covers a second paste and a clipboard offering the same image in two formats.
 - **Images are re-encoded in the browser:** drawn to a canvas with the long edge capped (1000 px to
   start), then saved as JPEG over white, since transparent clip art would otherwise turn black. Copy
   Image tends to hand over a PNG whatever the original was, and media syncs to the phone. Decoding
   doubles as validation: what the browser can't decode is refused with a message, an SVG included.
   The name is `paste-<sha1>.jpg`, Anki's own convention. All of it is `encodeImage` in
-  `src/lib/card/image.ts`.
+  `src/lib/media/image.ts`.
 - **A drop that carries only a URL is refused,** with a prompt to copy the image instead. Dragging
   from a web page can do this, and the tool never fetches.
 - **Variant prompts take images through the same widget, `ImagesInput`,** on the two fields
