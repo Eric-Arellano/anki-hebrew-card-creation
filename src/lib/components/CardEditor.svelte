@@ -158,7 +158,7 @@ onMount(checkAnki);
           </span>
         {/if}
       </ImagesInput>
-      <AudioInput bind:audio={draft.media.audio} />
+      <AudioInput bind:audio={draft.media.audio} word={draft.inputs.word} />
     </section>
   </section>
 
