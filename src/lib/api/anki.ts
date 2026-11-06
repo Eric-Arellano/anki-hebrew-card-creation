@@ -1,7 +1,7 @@
 // Our `/api/anki/` endpoints: what each answers, and the browser's one way to call each. The reply
 // types live here rather than beside the server code that builds them, so the browser never
 // imports from `#lib/server/`.
-import { getJson, postJson } from '#lib/api/http.ts';
+import { getJson, postJson, postJsonForReply } from '#lib/api/http.ts';
 
 export type FieldDrift = { missingFromAnki: string[]; unexpectedInAnki: string[] };
 
@@ -35,6 +35,25 @@ export function fetchExistingNotes(words: readonly string[]): Promise<ExistingNo
 
 export function browseNotes(noteIds: readonly number[]): Promise<void> {
   return postJson('/api/anki/browse', { noteIds });
+}
+
+function toBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    // The result is a data URL, and only what follows its comma is the bytes.
+    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '');
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Stores a file in Anki's media folder, and answers with the name Anki used, not the one asked. */
+export async function storeMedia(filename: string, blob: Blob): Promise<string> {
+  const stored = await postJsonForReply<{ filename: string }>('/api/anki/media', {
+    filename,
+    data: await toBase64(blob),
+  });
+  return stored.filename;
 }
 
 /** Opens Anki's Add window, pre-filled with `fields`, keyed by Anki field name. */

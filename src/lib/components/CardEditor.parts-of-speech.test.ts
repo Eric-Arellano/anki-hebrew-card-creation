@@ -12,6 +12,7 @@ import {
   input,
   noteField,
   renderConnectedEditor,
+  skipImage,
   typeInto,
 } from './CardEditor.harness.ts';
 
@@ -25,6 +26,7 @@ describe('CardEditor', () => {
       await typeInto(input('Feminine singular, with niqqud'), 'כַּלְבָּה');
       await typeInto(input('Feminine plural, with niqqud'), 'כְּלָבוֹת');
 
+      await skipImage();
       expect(await handOff(requests)).toEqual({
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
@@ -59,6 +61,7 @@ describe('CardEditor', () => {
       await chooseNoun('Feminine');
       await typeInto(input('Root, like דבר or ד.ב.ר'), 'כתב');
 
+      await skipImage();
       expect(await handOff(requests)).toMatchObject({ fields: { Root: 'כ־ת־ב' } });
     });
 
@@ -72,6 +75,7 @@ describe('CardEditor', () => {
         expect(screen.queryByLabelText('Feminine singular, with niqqud')).toBeNull();
         await typeInto(input('Plural, with niqqud'), 'שָׁנִים');
 
+        await skipImage();
         expect(await handOff(requests)).toEqual({
           fields: {
             ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
@@ -96,6 +100,7 @@ describe('CardEditor', () => {
         await fireEvent.click(screen.getByRole('checkbox', { name: /Only plural/ }));
         expect(screen.queryByLabelText(/plural, with niqqud/i)).toBeNull();
 
+        await skipImage();
         expect(await handOff(requests)).toEqual({
           fields: {
             ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
@@ -116,7 +121,7 @@ describe('CardEditor', () => {
         await fillInputs({ word: 'כלב', pointed: 'כֶּלֶב', gloss: 'dog' });
         await choosePartOfSpeech('Noun');
         expect(screen.queryByLabelText(/plural, with niqqud/i)).toBeNull();
-        expect(screen.getByText('Still needed: gender')).toBeTruthy();
+        expect(screen.getByText('Still needed: gender, image')).toBeTruthy();
       });
     });
 
@@ -148,6 +153,7 @@ describe('CardEditor', () => {
         'Writes the root as ד־ב־ר.',
       );
 
+      await skipImage();
       await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
       await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
       await screen.findByText(/Opened in Anki/);
@@ -173,7 +179,7 @@ describe('CardEditor', () => {
       expect(
         screen.getAllByRole('radio', { checked: true }).map((radio) => radio.getAttribute('name')),
       ).toEqual(['part-of-speech']);
-      expect(screen.getByText('Still needed: preposition, binyan')).toBeTruthy();
+      expect(screen.getByText('Still needed: preposition, binyan, image')).toBeTruthy();
     });
 
     describe('with a blank root', () => {
@@ -183,6 +189,7 @@ describe('CardEditor', () => {
         await fillVerb("pi'el", '');
         await fireEvent.click(screen.getByRole('radio', { name: 'עם' }));
 
+        await skipImage();
         expect(await handOff(requests)).toMatchObject({ fields: { Root: '' } });
       });
     });
@@ -194,7 +201,7 @@ describe('CardEditor', () => {
         await fillVerb("pi'el", 'דִּבֵּר');
         await fireEvent.click(screen.getByRole('radio', { name: 'את' }));
         expect(screen.getByText(/Type only the root's Hebrew letters/)).toBeTruthy();
-        expect(screen.getByText('Still needed: root')).toBeTruthy();
+        expect(screen.getByText('Still needed: root, image')).toBeTruthy();
       });
     });
   });
@@ -216,6 +223,7 @@ describe('CardEditor', () => {
       await typeInto(input('Masculine plural, with niqqud'), 'גְּדוֹלִים');
       await typeInto(input('Feminine plural, with niqqud'), 'גְּדוֹלוֹת');
 
+      await skipImage();
       expect(await handOff(requests)).toEqual({
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
@@ -235,6 +243,7 @@ describe('CardEditor', () => {
       await choosePartOfSpeech('Adjective');
       await typeInto(input('Root, like דבר or ד.ב.ר'), 'גדל');
 
+      await skipImage();
       expect(await handOff(requests)).toMatchObject({ fields: { Root: 'ג־ד־ל' } });
     });
 
@@ -244,7 +253,7 @@ describe('CardEditor', () => {
         await fillInputs({ word: 'גדול', pointed: 'גָּדוֹל', gloss: 'big' });
         await choosePartOfSpeech('Adjective');
         await typeInto(input('Root, like דבר or ד.ב.ר'), 'gdl');
-        expect(screen.getByText('Still needed: root')).toBeTruthy();
+        expect(screen.getByText('Still needed: root, image')).toBeTruthy();
       });
     });
 
@@ -275,6 +284,7 @@ describe('CardEditor', () => {
       expect(screen.queryByLabelText(/^Root/)).toBeNull();
       expect(screen.queryByText('Unusual variants')).toBeNull();
 
+      await skipImage();
       expect(await handOff(requests)).toEqual({
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
@@ -295,6 +305,7 @@ describe('CardEditor', () => {
         await typeInto(noteField('Variant 1: English prompt'), 'quick');
         await choosePartOfSpeech('Adverb');
 
+        await skipImage();
         expect(await handOff(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
       });
     });
@@ -309,6 +320,7 @@ describe('CardEditor', () => {
       await typeInto(noteField('Variant 1: English prompt'), 'with me');
       await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'אִתִּי');
 
+      await skipImage();
       expect(await handOff(requests)).toEqual({
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
@@ -329,6 +341,7 @@ describe('CardEditor', () => {
       await fillInputs({ word: 'חוץ מ־', pointed: 'חוּץ מִ־', gloss: 'except for' });
       await choosePartOfSpeech('Preposition');
 
+      await skipImage();
       expect(await handOff(requests)).toMatchObject({
         fields: { Hebrew: 'חוץ מ־', 'Production answer': 'חוץ מ', 'Part of speech': 'preposition' },
       });
@@ -344,6 +357,7 @@ describe('CardEditor', () => {
       await typeInto(noteField('Variant 1: English prompt'), 'welcome (to a woman)');
       await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'בְּרוּכָה הַבָּאָה');
 
+      await skipImage();
       expect(await handOff(requests)).toEqual({
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),

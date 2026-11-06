@@ -9,6 +9,7 @@ import {
   input,
   renderConnectedEditor,
   type ServerRequest,
+  skipImage,
   typeInto,
 } from './CardEditor.harness.ts';
 
@@ -88,6 +89,7 @@ describe('CardEditor', () => {
       expect(screen.getByRole('list', { name: "Wiktionary's meanings" }).textContent).toContain(
         'scoundrel',
       );
+      await skipImage();
       expect(await handOff(requests)).toEqual({
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
@@ -164,7 +166,7 @@ describe('CardEditor', () => {
       expect(input('Root, like דבר or ד.ב.ר').value).toBe('ח־כ־ה');
       expect(screen.getByText(/Wiktionary suggests/).textContent).toContain('ל');
       expect((screen.getByRole('radio', { name: 'ל' }) as HTMLInputElement).checked).toBe(false);
-      expect(screen.getByText('Still needed: English meaning, preposition')).toBeTruthy();
+      expect(screen.getByText('Still needed: English meaning, preposition, image')).toBeTruthy();
       // The deck check searches the lemma too, which old notes for verbs hold.
       await vi.waitFor(() =>
         expect(requests.map((request) => request.path)).toContain(

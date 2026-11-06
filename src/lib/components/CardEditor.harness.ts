@@ -30,6 +30,8 @@ export function stubServer(
   status: AnkiStatus = connectedStatus,
   existing: ExistingNotes = { exactMatches: [], relatedMatches: [] },
   lookup: DictionaryLookup | Response = notInDictionary,
+  storeMedia: (body: { filename: string }) => Response = ({ filename }) =>
+    Response.json({ filename }),
 ) {
   const requests: ServerRequest[] = [];
   vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
@@ -43,9 +45,14 @@ export function stubServer(
       return lookup instanceof Response ? lookup : Response.json(lookup);
     }
     if (input === '/api/anki/add') return new Response(null, { status: 204 });
+    if (input === '/api/anki/media') return storeMedia(body);
     return new Response(null, { status: 404 });
   });
   return requests;
+}
+
+export function mediaRequests(requests: ServerRequest[]) {
+  return requests.filter((request) => request.path === '/api/anki/media');
 }
 
 export function addRequests(requests: ServerRequest[]) {
@@ -60,6 +67,11 @@ export async function renderConnectedEditor(
   render(CardEditor);
   await screen.findByText(/Connected to Anki/);
   return requests;
+}
+
+/** Says this word has no image, which a note needs unless it has one attached. */
+export async function skipImage() {
+  await fireEvent.click(screen.getByRole('checkbox', { name: 'No image for this word' }));
 }
 
 export function input(label: string) {

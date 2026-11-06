@@ -6,6 +6,7 @@ import {
   handOff,
   input,
   noteField,
+  skipImage,
   stubServer,
   typeInto,
 } from '#lib/components/CardEditor.harness.ts';
@@ -32,6 +33,7 @@ describe('the page', () => {
       const requests = await renderPage();
       await fillDag();
       await typeInto(noteField('Notes'), 'freshwater');
+      await skipImage();
       await handOff(requests);
     }
 
@@ -57,6 +59,16 @@ describe('the page', () => {
         expect(screen.queryByLabelText('Notes')).toBeNull();
         expect(screen.queryByText(/Opened in Anki/)).toBeNull();
         expect(document.activeElement).toBe(input('Hebrew word, without niqqud'));
+      });
+
+      test('asks for an image again, rather than keeping the last tick', async () => {
+        await handOffNote();
+        await fireEvent.click(screen.getByRole('button', { name: 'Next word' }));
+        await screen.findByText(/Connected to Anki/);
+
+        const noImage = screen.getByRole('checkbox', { name: 'No image for this word' });
+        expect((noImage as HTMLInputElement).checked).toBe(false);
+        expect(screen.getByText(/Still needed: .*, image$/)).toBeTruthy();
       });
     });
   });
