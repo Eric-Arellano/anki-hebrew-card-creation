@@ -3,9 +3,9 @@
 ## Context
 
 The goal is to run the deck from this app, with Anki's window at most a final click. Media is what
-still keeps the human there: the editor attaches and stores a word's `Images`, but a variant
-prompt's images and `Audio` are pasted into Anki's Add window. A follow-up plan will update existing
-notes, and it builds on this one.
+still keeps the human there: the editor attaches and stores a word's `Images` and each variant
+prompt's images, but `Audio` is still pasted into Anki's Add window. A follow-up plan will update
+existing notes, and it builds on this one.
 
 Here the editor gains the rest of the images and audio for new notes: it shows them, and stores them
 so Anki loads them. The human still finds the media, and still clicks Add.
@@ -30,16 +30,20 @@ opens the Add window as it does today.
   bytes get a new one, like the deck's `pronunciation_he_מכונית-adf6a331….mp3`, so fields must use
   the name Anki returns, never the one requested. It accepts only `.jpg` and `.mp3`, because card
   webviews load from the media folder and those are all the editor sends.
-- **`retrieveMediaFile` is the one action still to join,** in PR 4. Nothing creates, edits or
+- **`retrieveMediaFile` is the one action still to join,** in PR 3. Nothing creates, edits or
   deletes a note. That PR updates the AGENTS.md rule, `client.ts` and `anki-guard.sh`.
 - **Files are stored at hand-off, not on attach.** Until then they are blobs in the browser, gone on
   reload like the rest of the draft, so an abandoned draft leaves nothing in Anki. Handing off twice
   is harmless, since the same bytes keep the same name. Only what reaches the note is stored, which
   leaves out a hidden variant's images.
-- **`HandOffBar` stores, then composes.** `storeImages` sends one file at a time, and a failure stops
-  before the window opens. The names it gets back go through `fieldsWith`, `CardEditor`'s wrapper
-  around `handOffFields`, because the fields can't exist until the names do. Variants and audio join
-  that same step, through `storeMedia` in `src/lib/api/anki.ts`.
+- **`HandOffBar` stores, then composes.** `CardEditor` hands it `attachmentsToStore`, each file the
+  note will hold once, and it stores them one at a time; a failure stops before the window opens.
+  It passes `fieldsWith` a map from each name requested to the name Anki used, and `handOffFields`
+  composes from the draft's media through that map, throwing on a file never stored. Both go
+  through `attachmentsReachingNote` in `src/lib/card/hand-off.ts`, the one place that keeps a
+  hidden variant's images out, so what is stored and what the fields name can't disagree. Audio
+  joins as a member of `MediaDraft` that `attachmentsReachingNote` passes through;
+  `soundToAnkiField` waits for it, unused.
 - **Bytes travel as base64 inside JSON,** because `request-guard.ts` refuses every other content
   type, and that refusal is part of what keeps the web out. adapter-node also refuses bodies over
   512K, but only under `npm start`: `vite dev` and `vite preview` never enforce it. So `start` sets
@@ -63,13 +67,22 @@ would have to loosen.*
 - **One intake for every source.** Paste, drop and the file picker all feed
   `src/lib/media/attach.ts`, so a new source needs no code. Google, DuckDuckGo and Image Playground
   differ only in how the bytes arrive.
-- **Paste is the main path,** because Copy Image is what the human does today. An image pasted
-  anywhere on the page goes to the variant prompt holding focus, otherwise to `Images`. A paste with
-  no image behaves as usual. An image always beats text on the same clipboard, because the focus
-  usually sits in a text field when the human comes back with Copy Image.
+- **Paste is the main path,** because Copy Image is what the human does today. A paste goes by
+  focus, because the human copies in another tab and comes back with the focus where they left it,
+  often on the Images (EN) link they clicked. A variant prompt's block is marked `data-image-field`
+  and takes focus on a click anywhere in it, so a paste while working on that variant goes to its
+  images, and any other paste to `Images`. The widget a paste will reach says "⌘V pastes here", so
+  the routing is never a guess for the human. A paste with no image behaves as usual. An image
+  always beats text on the same clipboard, because the focus usually sits in a text field when the
+  human comes back with Copy Image.
+- **Every `ImagesInput` listens on the window,** and acts only on what `imageFieldAt` in
+  `src/lib/media/attach.ts` assigns its region, so exactly one takes each paste or drop, with no
+  registry. A drop goes by where it lands, through the same regions.
 - **The whole page takes a drop,** not just the Media section, because one that misses would
   navigate to the file or link and lose the draft. A word or link dragged onto a text field still
-  lands in the field.
+  lands in the field. Today every file dropped outside a prompt goes to `Images`, which refuses one
+  it can't decode, so an audio drop needs the intake to sort files by type before any widget
+  refuses them.
 - **One image is attached once.** Its name is the hash of its bytes, so `withAttached` drops a
   repeat. That covers a second paste and a clipboard offering the same image in two formats.
 - **Images are re-encoded in the browser:** drawn to a canvas with the long edge capped (1000 px to
@@ -80,14 +93,15 @@ would have to loosen.*
   `src/lib/media/image.ts`.
 - **A drop that carries only a URL is refused,** with a prompt to copy the image instead. Dragging
   from a web page can do this, and the tool never fetches.
-- **Variant prompts take images through the same widget, `ImagesInput`,** on the two fields
-  `searchesImages` marks.
-  The images stay apart from the textarea's text and follow it at hand-off, under the rule that a
-  hidden field gets nothing from the human.
+- **Variant prompts take images through the same widget, `ImagesInput`,** on the fields
+  `VARIANT_ANSWERS` in `src/lib/note-type.ts` lists. The images stay apart from the textarea's text
+  in `MediaDraft.promptImages`, kept while another part of speech hides them, and follow the text at
+  hand-off. A prompt with images but no answer gets a hint, since the template gates the card on
+  the answer.
 - **Every note needs an image unless the human says otherwise.** A missing one joins "Still needed"
   and blocks the hand-off, until "No image for this word" is ticked. The Spanish deck has images on
   1,343 of 1,344 notes and this one on 99 of 103, and the exceptions (גם, אבל) have nothing to
-  picture. The tick belongs to `Images`, so a variant's widget doesn't show it.
+  picture. The tick belongs to `Images` alone, and a variant's images never count toward it.
 - **Audio has the same intake,** so any source works. Forvo just has a shortcut, below.
 
 *Rejected: `sharp`, as `cfa-web-app` uses, because canvas does this with no dependency.*
@@ -104,7 +118,7 @@ changes and whenever the tab regains focus, and only while the note has no audio
 - **One match attaches itself,** shown with a player and a remove button. Several become choices,
   per Never guess. None shows nothing, and drop still works.
 - **A found file becomes an ordinary attachment.** The browser fetches it from this server, so
-  everything after that is PR 2's code. It is stored under its name without the browser's suffix.
+  everything after that is PR 1's code. It is stored under its name without the browser's suffix.
 - **The server reads one directory and never writes to it.** It lists names matching the pattern
   and serves only a name from that list, so no request path ever reaches the filesystem. The
   directory is `Downloads` under `os.homedir()`, overridable by an environment variable. macOS can
@@ -135,20 +149,11 @@ making no third-party request, and handles only bytes the human brought to it.
 *Rejected: a browser extension or script that clicks Forvo's download, and scraping add-ons like
 `anki-forvo-dl`, because either is the systematic use the license rules out.*
 
-**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 3.
+**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 2.
 Both pages answer 403 to anything else, so the license quote above comes from a search excerpt, and
 the terms themselves went unread.
 
-## PR 1 — Images on variants
-
-- The widget beside each variant prompt, and the pasted-image routing by focus. `ImagesInput` holds
-  the window's paste and drop listeners today, so each copy would catch every paste: they have to
-  move up to one owner that picks the widget. A drop on a widget goes to that widget.
-- `field-help.ts` stops telling the human to paste a variant's image into Anki.
-- A hint when a variant has an image but no answer, since no card would show it.
-- Switching to a part of speech that hides variants keeps its images out of the hand-off.
-
-## PR 2 — Audio by hand
+## PR 1 — Audio by hand
 
 - One attachment with `<audio controls>`, its filename and remove, through the same intake and
   store. Audio bytes pass through unchanged.
@@ -158,14 +163,14 @@ the terms themselves went unread.
 - **Open:** which extensions to accept beyond `.mp3`, once checked on the phone. `STORABLE_FILENAME`
   in the media route is what to widen.
 
-## PR 3 — Find Forvo downloads
+## PR 2 — Find Forvo downloads
 
 - A server module and two `GET` routes, for the names matching a word and for one file's bytes.
 - The focus check, choices for several matches, and dropping found audio when the word changes.
 - The key function lives in `src/lib/hebrew/`, per the Hebrew text rules.
 - The README gains what the tool reads on this machine.
 
-## PR 4 — Show the deck's own media
+## PR 3 — Show the deck's own media
 
 - `retrieveMediaFile` on the allowlist, read-only in `anki-guard.sh`. It answers `false` for a
   missing file.
@@ -196,7 +201,6 @@ the terms themselves went unread.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   until clean.
-- Hand-off test: a hidden variant's images are never stored.
 - `request-guard.ts` and its tests stay unchanged.
 - Under `npm start`, not only `npm run dev`: attach audio whose base64 passes 512K. An image already
   has, but audio's bytes aren't re-encoded down.
@@ -205,5 +209,8 @@ the terms themselves went unread.
   plays, Variant 1 shows its image, and Tools → Check Media reports nothing missing. Then sync and
   check the phone, and hand off the same note twice to see one set of files.
 - By hand in the browser: copy from Google, DuckDuckGo and Image Playground, and drag from each.
+  Click Images (EN) on a variant, copy there, and come back: "⌘V pastes here" should sit on that
+  variant and the paste land there. jsdom can't show that a browser restores the focus on return,
+  or fires `paste` at a focused `div`.
 - **Open:** what Image Playground hands over. A HEIC file won't decode in most browsers, so copy
   may be the only path for it.

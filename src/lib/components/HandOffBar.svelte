@@ -1,20 +1,21 @@
 <script lang="ts">
 import { openAddWindow, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage } from '#lib/api/http.ts';
-import type { MediaDraft } from '#lib/card/draft.ts';
-import type { StoredMedia } from '#lib/card/hand-off.ts';
+import type { ImageAttachment } from '#lib/media/image.ts';
 
 let {
-  media,
+  attachments,
   fieldsWith,
   onnextcard,
   ankiBlocker,
   inputsBlocker,
 }: {
-  media: MediaDraft;
+  // Each file the note will hold, once.
+  attachments: readonly ImageAttachment[];
   // Keyed by Anki field name, as `/api/anki/add` takes them. Fields need the names Anki stored the
-  // media under, which only exist once it has been stored.
-  fieldsWith: (media: StoredMedia) => Record<string, string>;
+  // media under, which only exist once it has been stored, so this takes each name requested to
+  // the one Anki used.
+  fieldsWith: (storedAs: ReadonlyMap<string, string>) => Record<string, string>;
   // Called when the human moves on. Nothing clears by itself at the hand-off, because they may
   // still fix something and open the Add window again.
   onnextcard?: () => void;
@@ -44,20 +45,22 @@ function askToHandOff() {
 // One at a time, because each body can be megabytes and AnkiConnect handles one request at a time.
 // Stored here rather than on attach, so an abandoned draft leaves nothing in Anki. Handing off
 // twice is harmless, since the same bytes keep the same name.
-async function storeImages(): Promise<string[]> {
-  const stored: string[] = [];
+async function storeAttachments(): Promise<ReadonlyMap<string, string>> {
+  const stored: [requested: string, used: string][] = [];
   try {
-    for (const { filename, blob } of media.images) stored.push(await storeMedia(filename, blob));
+    for (const { filename, blob } of attachments) {
+      stored.push([filename, await storeMedia(filename, blob)]);
+    }
   } catch (error) {
     throw new Error(`Add window not opened: storing an image failed. ${errorMessage(error)}`);
   }
-  return stored;
+  return new Map(stored);
 }
 
 async function handOffToAnki() {
   handOff = { kind: 'opening' };
   try {
-    await openAddWindow(fieldsWith({ images: await storeImages() }));
+    await openAddWindow(fieldsWith(await storeAttachments()));
     handOff = { kind: 'opened' };
   } catch (error) {
     handOff = { kind: 'failed', message: errorMessage(error) };

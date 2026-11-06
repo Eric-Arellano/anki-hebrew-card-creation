@@ -66,6 +66,9 @@ const TRAIN_EXAMPLES = examplesHelp(
   '“כרטיס רכבת (train ticket)” or “הרכבת מאחרת (the train is late)” for רכבת.',
 );
 
+// The widget for a variant's images sits under its prompt.
+const PASTE_IMAGE_HELP = 'Find an image with Images (EN), copy it, and paste it here.';
+
 // Variant 1's help sits right above Variant 2, so Variant 2 needs none.
 export const FIELD_HELP = {
   productionContext: {
@@ -111,24 +114,22 @@ export const FIELD_HELP = {
   variant1Prompt: {
     noun:
       "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
-      '“female dog” for כלב. Find an image with Images (EN), then paste it into this field in ' +
-      'Anki.',
+      `“female dog” for כלב. ${PASTE_IMAGE_HELP}`,
     verb:
-      "What you'll be shown. For example, “I will go” for ללכת's irregular future. Find an " +
-      'image with Images (EN), then paste it into this field in Anki.',
+      "What you'll be shown. For example, “I will go” for ללכת's irregular " +
+      `future. ${PASTE_IMAGE_HELP}`,
     adjective:
-      "What you'll be shown. For example, “other (feminine)” for אחר's irregular feminine. Find " +
-      'an image with Images (EN), then paste it into this field in Anki.',
+      "What you'll be shown. For example, “other (feminine)” for אחר's irregular " +
+      `feminine. ${PASTE_IMAGE_HELP}`,
     preposition:
-      "What you'll be shown. For example, “with me” for עם's irregular form. Find an image with " +
-      'Images (EN), then paste it into this field in Anki.',
+      "What you'll be shown. For example, “with me” for עם's irregular " +
+      `form. ${PASTE_IMAGE_HELP}`,
     phrase:
       "What you'll be shown, for wording that changes with who you address. For example, " +
-      '“welcome (to a woman)” for “ברוך הבא”. Find an image with Images (EN), then paste it ' +
-      'into this field in Anki.',
+      `“welcome (to a woman)” for “ברוך הבא”. ${PASTE_IMAGE_HELP}`,
     other:
-      "What you'll be shown, for a form that doesn't follow the usual pattern. Find an image " +
-      'with Images (EN), then paste it into this field in Anki.',
+      "What you'll be shown, for a form that doesn't follow the usual " +
+      `pattern. ${PASTE_IMAGE_HELP}`,
   },
   variant1Answer: {
     noun:
@@ -156,14 +157,13 @@ export const FIELD_HELP = {
     '“homophone with קרה (to happen)” for קרא.',
 } as const satisfies Partial<Record<FieldKey, FieldHelp>>;
 
-/** How the editor shows a field: its name, what it says about when to fill it, and any search. */
+/** How the editor shows a field: its name, and what it says about when to fill it. */
 export function fieldDisplay(
   key: FieldKey,
   partOfSpeech: PartOfSpeech,
 ): {
   label: string;
   help?: string;
-  searchesImages?: true;
 } {
   const field: Field = FIELDS[key];
   if (!('group' in field)) return { label: field.name };
@@ -172,7 +172,6 @@ export function fieldDisplay(
   return {
     label: field.label,
     help: typeof help === 'object' ? help[partOfSpeech] : help,
-    searchesImages: field.searchesImages,
   };
 }
 

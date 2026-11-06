@@ -2,7 +2,17 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import { fieldDisplay, GROUP_HELP } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
-import type { FieldKey, FieldValues, PartOfSpeech, ShownFieldGroup } from '#lib/note-type.ts';
+import type { ImageAttachment } from '#lib/media/image.ts';
+import {
+  type FieldKey,
+  type FieldValues,
+  isVariantPrompt,
+  type PartOfSpeech,
+  type ShownFieldGroup,
+  VARIANT_ANSWERS,
+  type VariantPrompt,
+} from '#lib/note-type.ts';
+import ImagesInput from './media/ImagesInput.svelte';
 import LinkChip from './ui/LinkChip.svelte';
 import QuotedText from './ui/QuotedText.svelte';
 
@@ -14,12 +24,18 @@ let {
   partOfSpeech,
   edits,
   onedit,
+  promptImages = $bindable(),
 }: {
   groups: ShownFieldGroup[];
   partOfSpeech: PartOfSpeech;
   edits: FieldValues;
   onedit: (field: FieldKey, value: string) => void;
+  promptImages: Record<VariantPrompt, ImageAttachment[]>;
 } = $props();
+
+function lacksAnswer(prompt: VariantPrompt) {
+  return (edits[VARIANT_ANSWERS[prompt]] ?? '').trim() === '';
+}
 </script>
 
 {#each groups as { group, fields } (group)}
@@ -27,18 +43,26 @@ let {
   <div class="grid gap-x-6 gap-y-2 border-t border-gray-100 pt-4 md:grid-cols-[10rem_1fr]">
     <h3 class="text-gray-600">{group}</h3>
     <!-- Two columns pair a variant's prompt with its answer. Each field spans three rows of this
-         grid, for its label, help and textarea, so help of different lengths still lines up a
-         pair's textareas. -->
+         grid, for its label, help and textarea, with a prompt's images under the textarea, so
+         help of different lengths still lines up a pair's textareas. -->
     <div class="grid gap-x-4 gap-y-1 sm:grid-cols-2">
       {#if groupHelp !== undefined}
         <p class="hint mb-3 sm:col-span-2">{groupHelp}</p>
       {/if}
       {#each fields as field (field)}
-        {@const { label, help, searchesImages } = fieldDisplay(field, partOfSpeech)}
-        <div class="mb-3 grid gap-1 sm:row-span-3 sm:grid-rows-subgrid">
+        {@const { label, help } = fieldDisplay(field, partOfSpeech)}
+        {@const prompt = isVariantPrompt(field) ? field : undefined}
+        <!-- A paste or drop in a variant prompt's block goes to that prompt's images. A block takes
+             focus on a click anywhere in it, so a click is enough to aim a paste: at this prompt,
+             or for any other field, at Images. -->
+        <div
+          class="mb-3 grid gap-1 outline-none sm:row-span-3 sm:grid-rows-subgrid"
+          data-image-field={prompt}
+          tabindex="-1"
+        >
           <div class="flex items-end justify-between gap-2">
             <label for="field-{field}">{label}</label>
-            {#if searchesImages}
+            {#if prompt !== undefined}
               <LinkChip
                 label={imagesLink.label}
                 url={buildLinkUrl(imagesLink, ankiFieldHtmlToText(edits[field] ?? ''))}
@@ -49,17 +73,27 @@ let {
           {#if help !== undefined}
             <p id="help-{field}" class="hint"><QuotedText text={help} /></p>
           {/if}
-          <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML, except
-               that a new line becomes `<br>` at the hand-off. -->
-          <textarea
-            id="field-{field}"
-            dir="auto"
-            rows="2"
-            class="font-hebrew text-xl sm:row-start-3"
-            aria-describedby={help && `help-${field}`}
-            value={edits[field] ?? ''}
-            oninput={(event) => onedit(field, event.currentTarget.value)}
-          ></textarea>
+          <div class="space-y-2 sm:row-start-3">
+            <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML,
+                 except that a new line becomes `<br>` at the hand-off. -->
+            <textarea
+              id="field-{field}"
+              dir="auto"
+              rows="2"
+              class="w-full font-hebrew text-xl"
+              aria-describedby={help && `help-${field}`}
+              value={edits[field] ?? ''}
+              oninput={(event) => onedit(field, event.currentTarget.value)}
+            ></textarea>
+            {#if prompt !== undefined}
+              <ImagesInput label="Images for {label}" {prompt} bind:images={promptImages[prompt]} />
+              {#if promptImages[prompt].length > 0 && lacksAnswer(prompt)}
+                <p class="hint text-amber-700">
+                  No card shows these images until this variant has a Hebrew answer.
+                </p>
+              {/if}
+            {/if}
+          </div>
         </div>
       {/each}
     </div>

@@ -6,7 +6,7 @@ import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictio
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
-import { handOffFields, type StoredMedia } from '#lib/card/hand-off.ts';
+import { attachmentsToStore, handOffFields } from '#lib/card/hand-off.ts';
 import { type CardInputsDraft, completeInputs } from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
@@ -21,6 +21,7 @@ import WordForms from './forms/WordForms.svelte';
 import HandOffBar from './HandOffBar.svelte';
 import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './NoteFields.svelte';
+import Checkbox from './ui/Checkbox.svelte';
 import TextInput from './ui/TextInput.svelte';
 import DefinitionsInput from './word/DefinitionsInput.svelte';
 import DictionaryPanel from './word/DictionaryPanel.svelte';
@@ -53,6 +54,7 @@ const shownGroups = $derived(
     : shownFieldGroups(fieldOrder(status), draft.inputs.partOfSpeech),
 );
 const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
+const attachments = $derived(attachmentsToStore(draft.media, shownFields));
 const ankiProblem = $derived(status && ankiStatusProblem(status));
 const stillNeededMessage = $derived.by(() => {
   const needed = stillNeeded(draft);
@@ -104,8 +106,8 @@ function setEdit(field: FieldKey, value: string) {
   draft.edits[field] = value;
 }
 
-function ankiFields(media: StoredMedia) {
-  return handOffFields({ composed, edits: draft.edits, shownFields, media });
+function ankiFields(storedAs: ReadonlyMap<string, string>) {
+  return handOffFields({ composed, edits: draft.edits, shownFields, media: draft.media, storedAs });
 }
 
 async function checkAnki() {
@@ -143,7 +145,18 @@ onMount(checkAnki);
     <ExistingNotesPanel words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]} />
     <LookupLinks word={draft.inputs.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
     <section aria-label="Media">
-      <ImagesInput bind:images={draft.media.images} bind:noImage={draft.media.noImage} />
+      <ImagesInput
+        label="Images"
+        required={draft.media.images.length === 0 && !draft.media.noImage}
+        bind:images={draft.media.images}
+      >
+        <!-- The human's say that this word has no image worth finding. -->
+        {#if draft.media.images.length === 0}
+          <span class="ml-auto text-sm text-gray-600">
+            <Checkbox label="No image for this word" bind:checked={draft.media.noImage} />
+          </span>
+        {/if}
+      </ImagesInput>
     </section>
   </section>
 
@@ -162,11 +175,12 @@ onMount(checkAnki);
       partOfSpeech={draft.inputs.partOfSpeech}
       edits={draft.edits}
       onedit={setEdit}
+      bind:promptImages={draft.media.promptImages}
     />
   {/if}
 
   <HandOffBar
-    media={draft.media}
+    {attachments}
     fieldsWith={ankiFields}
     {onnextcard}
     ankiBlocker={status === undefined ? 'Checking Anki…' : ankiProblem}

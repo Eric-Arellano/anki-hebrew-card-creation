@@ -2,12 +2,14 @@
 // dictionary entry picked and Anki's status belong to the session, not the card, so they stay out.
 import { type CardInputsDraft, emptyDraft, INPUT_NAMES, missingInputs } from '#lib/card/inputs.ts';
 import type { ImageAttachment } from '#lib/media/image.ts';
-import type { FieldValues } from '#lib/note-type.ts';
+import type { FieldValues, VariantPrompt } from '#lib/note-type.ts';
 
 /** Attachments not yet stored, under the names the browser gave them. */
 export type MediaDraft = {
   images: ImageAttachment[];
   noImage: boolean;
+  // Kept while another part of speech hides the variants, as their text is.
+  promptImages: Record<VariantPrompt, ImageAttachment[]>;
 };
 
 export type CardDraft = {
@@ -18,7 +20,11 @@ export type CardDraft = {
 };
 
 export function emptyCardDraft(): CardDraft {
-  return { inputs: emptyDraft(), edits: {}, media: { images: [], noImage: false } };
+  return {
+    inputs: emptyDraft(),
+    edits: {},
+    media: { images: [], noImage: false, promptImages: { variant1Prompt: [], variant2Prompt: [] } },
+  };
 }
 
 /** What still blocks handing `draft` off, as the editor names it, in the order it shows them. */
