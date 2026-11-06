@@ -2,13 +2,12 @@
 
 ## Context
 
-The goal is to run the deck from this app, with Anki's window at most a final click. Media is what
-still keeps the human there: the editor attaches and stores a word's `Images` and each variant
-prompt's images, but `Audio` is still pasted into Anki's Add window. A follow-up plan will update
-existing notes, and it builds on this one.
+The goal is to run the deck from this app, with Anki's window at most a final click. The editor
+attaches and stores a word's `Images`, each variant prompt's images and its `Audio`, so a new note
+needs nothing typed in Anki's Add window. What is left here is finding the audio, and showing the
+media a note already has. A follow-up plan will update existing notes, and it builds on this one.
 
-Here the editor gains the rest of the images and audio for new notes: it shows them, and stores them
-so Anki loads them. The human still finds the media, and still clicks Add.
+The human still finds the media, and still clicks Add.
 
 What the deck holds (103 notes, read 2026-11-01):
 
@@ -30,7 +29,7 @@ opens the Add window as it does today.
   bytes get a new one, like the deck's `pronunciation_he_מכונית-adf6a331….mp3`, so fields must use
   the name Anki returns, never the one requested. It accepts only `.jpg` and `.mp3`, because card
   webviews load from the media folder and those are all the editor sends.
-- **`retrieveMediaFile` is the one action still to join,** in PR 3. Nothing creates, edits or
+- **`retrieveMediaFile` is the one action still to join,** in PR 2. Nothing creates, edits or
   deletes a note. That PR updates the AGENTS.md rule, `client.ts` and `anki-guard.sh`.
 - **Files are stored at hand-off, not on attach.** Until then they are blobs in the browser, gone on
   reload like the rest of the draft, so an abandoned draft leaves nothing in Anki. Handing off twice
@@ -41,9 +40,8 @@ opens the Add window as it does today.
   It passes `fieldsWith` a map from each name requested to the name Anki used, and `handOffFields`
   composes from the draft's media through that map, throwing on a file never stored. Both go
   through `attachmentsReachingNote` in `src/lib/card/hand-off.ts`, the one place that keeps a
-  hidden variant's images out, so what is stored and what the fields name can't disagree. Audio
-  joins as a member of `MediaDraft` that `attachmentsReachingNote` passes through;
-  `soundToAnkiField` waits for it, unused.
+  hidden variant's images out, so what is stored and what the fields name can't disagree.
+  `MediaDraft.audio` always reaches the note, as `Images` does.
 - **Bytes travel as base64 inside JSON,** because `request-guard.ts` refuses every other content
   type, and that refusal is part of what keeps the web out. adapter-node also refuses bodies over
   512K, but only under `npm start`: `vite dev` and `vite preview` never enforce it. So `start` sets
@@ -53,7 +51,10 @@ opens the Add window as it does today.
   image and `soundToAnkiField` gives `[sound:…]`, both in `src/lib/anki/media.ts`. `alt` is dropped:
   the deck's are page titles that no card shows.
 - **Several images, one sound.** `Images` holds a list, with no cap. `Audio` holds at most one, as
-  in every note today.
+  in every note today, so a paste or drop of two recordings is refused rather than picked from.
+- **Audio is only MP3, stored as it came.** Every recording in the deck and every Forvo download is
+  one, and it plays wherever Anki does, the phone included, so nothing needs checking there.
+  `audioAttachment` in `src/lib/media/attach.ts` refuses anything else with a message.
 
 *Rejected: `guiAddCards`' `audio` and `picture` parameters, the earlier idea here, because they
 replace by default, only append to a field, and send every file in one request. Storing first also
@@ -77,12 +78,12 @@ would have to loosen.*
   human comes back with Copy Image.
 - **Every `ImagesInput` listens on the window,** and acts only on what `imageFieldAt` in
   `src/lib/media/attach.ts` assigns its region, so exactly one takes each paste or drop, with no
-  registry. A drop goes by where it lands, through the same regions.
+  registry. A drop goes by where it lands, through the same regions. `AudioInput` listens there
+  too and takes audio wherever it arrives, since a note has one place for it.
 - **The whole page takes a drop,** not just the Media section, because one that misses would
   navigate to the file or link and lose the draft. A word or link dragged onto a text field still
-  lands in the field. Today every file dropped outside a prompt goes to `Images`, which refuses one
-  it can't decode, so an audio drop needs the intake to sort files by type before any widget
-  refuses them.
+  lands in the field. `isAudio` sorts each drop first, so the images never see a recording they
+  would refuse as undecodable.
 - **One image is attached once.** Its name is the hash of its bytes, so `withAttached` drops a
   repeat. That covers a second paste and a clipboard offering the same image in two formats.
 - **Images are re-encoded in the browser:** drawn to a canvas with the long edge capped (1000 px to
@@ -117,8 +118,10 @@ changes and whenever the tab regains focus, and only while the note has no audio
   pointed (`מָלוֹן`), so a plain string comparison would miss them.
 - **One match attaches itself,** shown with a player and a remove button. Several become choices,
   per Never guess. None shows nothing, and drop still works.
-- **A found file becomes an ordinary attachment.** The browser fetches it from this server, so
-  everything after that is PR 1's code. It is stored under its name without the browser's suffix.
+- **A found file becomes an ordinary attachment.** The browser fetches it from this server and
+  hands it to `audioAttachment`, as a drop does, so storing and composing need nothing new. It is
+  stored under its name without the browser's suffix, so the suffix goes before `audioAttachment`,
+  which keeps whatever name it is given.
 - **The server reads one directory and never writes to it.** It lists names matching the pattern
   and serves only a name from that list, so no request path ever reaches the filesystem. The
   directory is `Downloads` under `os.homedir()`, overridable by an environment variable. macOS can
@@ -149,28 +152,18 @@ making no third-party request, and handles only bytes the human brought to it.
 *Rejected: a browser extension or script that clicks Forvo's download, and scraping add-ons like
 `anki-forvo-dl`, because either is the systematic use the license rules out.*
 
-**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 2.
+**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 1.
 Both pages answer 403 to anything else, so the license quote above comes from a search excerpt, and
 the terms themselves went unread.
 
-## PR 1 — Audio by hand
-
-- One attachment with `<audio controls>`, its filename and remove, through the same intake and
-  store. Audio bytes pass through unchanged.
-- A hint when a note has no audio, because it gets no Listening card, and with Anki's window on its
-  way out, the editor is where that gets noticed.
-- `note-type.ts` and the README stop saying `Audio` is added in the Add window.
-- **Open:** which extensions to accept beyond `.mp3`, once checked on the phone. `STORABLE_FILENAME`
-  in the media route is what to widen.
-
-## PR 2 — Find Forvo downloads
+## PR 1 — Find Forvo downloads
 
 - A server module and two `GET` routes, for the names matching a word and for one file's bytes.
 - The focus check, choices for several matches, and dropping found audio when the word changes.
 - The key function lives in `src/lib/hebrew/`, per the Hebrew text rules.
 - The README gains what the tool reads on this machine.
 
-## PR 3 — Show the deck's own media
+## PR 2 — Show the deck's own media
 
 - `retrieveMediaFile` on the allowlist, read-only in `anki-guard.sh`. It answers `false` for a
   missing file.
@@ -202,8 +195,8 @@ the terms themselves went unread.
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   until clean.
 - `request-guard.ts` and its tests stay unchanged.
-- Under `npm start`, not only `npm run dev`: attach audio whose base64 passes 512K. An image already
-  has, but audio's bytes aren't re-encoded down.
+- Under `npm start`, not only `npm run dev`: hand off audio whose base64 passes 512K, which no one
+  has yet. An image already has, but audio's bytes aren't re-encoded down.
 - By hand in real Anki, only with the human's go-ahead: a noun with two images, audio and a variant
   with an image. The Add window shows them, Preview shows the Production front, the Listening front
   plays, Variant 1 shows its image, and Tools → Check Media reports nothing missing. Then sync and

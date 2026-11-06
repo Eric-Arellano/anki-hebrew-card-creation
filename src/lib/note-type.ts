@@ -57,8 +57,7 @@ export type Field = { name: string } & (
 // unless it comes from an input:
 // - `Hebrew`, `Pointed` and `Definitions` are written by the inputs, so a second place to edit
 //   them would only let the two drift apart.
-// - `Images` holds what the human attaches in the editor's Media section. `Audio` stays blank for
-//   now, for the Add window.
+// - `Images` and `Audio` hold what the human attaches in the editor's Media section.
 // - `Part of speech` is the `PartOfSpeech` value, lowercase as the type spells it, so the app can
 //   tell what kind of word a note is without inferring it from `Gender` and `Binyan`.
 //   *Rejected: a `pos::` tag, because the app reads and drift-checks fields.*

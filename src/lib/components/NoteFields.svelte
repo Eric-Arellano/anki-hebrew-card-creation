@@ -2,7 +2,7 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import { fieldDisplay, GROUP_HELP } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
-import type { ImageAttachment } from '#lib/media/image.ts';
+import type { Attachment } from '#lib/media/attach.ts';
 import {
   type FieldKey,
   type FieldValues,
@@ -30,7 +30,7 @@ let {
   partOfSpeech: PartOfSpeech;
   edits: FieldValues;
   onedit: (field: FieldKey, value: string) => void;
-  promptImages: Record<VariantPrompt, ImageAttachment[]>;
+  promptImages: Record<VariantPrompt, Attachment[]>;
 } = $props();
 
 function lacksAnswer(prompt: VariantPrompt) {

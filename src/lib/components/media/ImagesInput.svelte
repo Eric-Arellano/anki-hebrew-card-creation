@@ -4,8 +4,15 @@
 // tab and comes back with the focus where they left it, often on the search link they clicked. A
 // drop goes by where it lands.
 import type { Snippet } from 'svelte';
-import { encodeImages, imageFieldAt, pastedImages, withAttached } from '#lib/media/attach.ts';
-import type { ImageAttachment } from '#lib/media/image.ts';
+import {
+  type Attachment,
+  encodeImages,
+  imageFieldAt,
+  isAudio,
+  isImage,
+  pastedFiles,
+  withAttached,
+} from '#lib/media/attach.ts';
 import type { VariantPrompt } from '#lib/note-type.ts';
 
 let {
@@ -15,7 +22,7 @@ let {
   required = false,
   children,
 }: {
-  images: ImageAttachment[];
+  images: Attachment[];
   // Names the widget for screen readers, since every copy shows "Images".
   label: string;
   // The variant prompt these images follow, whose block, marked `data-image-field`, aims pastes and
@@ -44,7 +51,7 @@ async function attach(files: readonly File[]) {
 
 function onpaste(event: ClipboardEvent) {
   if (!claims(document.activeElement)) return;
-  const files = pastedImages(event.clipboardData);
+  const files = pastedFiles(event.clipboardData).filter(isImage);
   if (files.length === 0) return;
   event.preventDefault();
   attach(files);
@@ -88,12 +95,14 @@ function ondrop(event: DragEvent) {
   event.preventDefault();
 
   const files = [...(event.dataTransfer?.files ?? [])];
-  if (files.length > 0) {
-    attach(files);
-  } else {
+  if (files.length === 0) {
     // Dragging from a web page can carry only the URL, and the tool never fetches.
     refusal = 'That drop only carried a link. Copy the image, then paste it here.';
+    return;
   }
+  // Audio has a widget of its own, wherever it lands.
+  const imageFiles = files.filter((file) => !isAudio(file));
+  if (imageFiles.length > 0) attach(imageFiles);
 }
 
 function onchange(event: Event & { currentTarget: HTMLInputElement }) {
