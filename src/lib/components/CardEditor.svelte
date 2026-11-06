@@ -5,22 +5,16 @@ import { type AnkiStatus, fetchAnkiStatus } from '#lib/api/anki.ts';
 import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
+import { type CardDraft, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { handOffFields, type StoredMedia } from '#lib/card/hand-off.ts';
-import type { ImageAttachment } from '#lib/media/image.ts';
-import {
-  type CardInputsDraft,
-  completeInputs,
-  emptyDraft,
-  INPUT_NAMES,
-  missingInputs,
-} from '#lib/card/inputs.ts';
+import { type CardInputsDraft, completeInputs } from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
   prefillDraft,
   stillSpellsEntry,
   undoPrefill,
 } from '#lib/card/prefill.ts';
-import { type FieldKey, type FieldValues, shownFieldGroups } from '#lib/note-type.ts';
+import { type FieldKey, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import WordForms from './forms/WordForms.svelte';
@@ -35,9 +29,9 @@ import LookupLinks from './word/LookupLinks.svelte';
 
 let { onnextcard }: { onnextcard?: () => void } = $props();
 
-let draft: CardInputsDraft = $state(emptyDraft());
+let draft: CardDraft = $state(emptyCardDraft());
 // The dictionary entry the inputs were last filled from, until the human types another word. The
-// draft from before, and the word the entry filled in, are what undo it.
+// inputs from before, and the word the entry filled in, are what undo it.
 let picked:
   | {
       candidate: DictionaryCandidate;
@@ -48,31 +42,25 @@ let picked:
   | undefined = $state.raw();
 // `undefined` while the check is in flight.
 let status: AnkiStatus | undefined = $state.raw();
-let edits: FieldValues = $state({});
-let images: ImageAttachment[] = $state.raw([]);
-let noImage = $state(false);
 
 // Composition waits for every input, since each one shapes it. The fields shown depend only on
 // the part of speech.
-const inputs = $derived(completeInputs(draft));
-const composed = $derived(inputs === undefined ? {} : composeFields(inputs));
+const completed = $derived(completeInputs(draft.inputs));
+const composed = $derived(completed === undefined ? {} : composeFields(completed));
 const shownGroups = $derived(
-  draft.partOfSpeech === undefined ? [] : shownFieldGroups(fieldOrder(status), draft.partOfSpeech),
+  draft.inputs.partOfSpeech === undefined
+    ? []
+    : shownFieldGroups(fieldOrder(status), draft.inputs.partOfSpeech),
 );
 const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
 const ankiProblem = $derived(status && ankiStatusProblem(status));
-const missingInputsMessage = $derived.by(() => {
-  const missing = missingInputs(draft).map((key) => INPUT_NAMES[key]);
-  // Images are how the human learns, so skipping one is a choice they make, not a slip. It stays a
-  // choice because a word like גם has nothing to picture, and a hard rule would force a junk image.
-  const needsImage = images.length === 0 && !noImage;
-  const stillNeeded = needsImage ? [...missing, 'image'] : missing;
-  if (stillNeeded.length === 0) return undefined;
-  return `Still needed: ${stillNeeded.join(', ')}`;
+const stillNeededMessage = $derived.by(() => {
+  const needed = stillNeeded(draft);
+  return needed.length === 0 ? undefined : `Still needed: ${needed.join(', ')}`;
 });
 
 // Once an entry is picked, the word it filled in isn't looked up again.
-const lookupWord = $derived(picked === undefined ? draft.word.trim() : '');
+const lookupWord = $derived(picked === undefined ? draft.inputs.word.trim() : '');
 // `{#await}` shows only the latest promise, so an older lookup's reply never lands.
 const lookup = $derived(
   lookupWord === ''
@@ -89,32 +77,35 @@ const wiktionaryEntry = $derived(
 const choices = $derived(picked?.choices ?? {});
 
 function pick(candidate: DictionaryCandidate) {
-  const before = $state.snapshot(draft);
+  const before = $state.snapshot(draft.inputs);
   const prefill = prefillDraft(before, candidate);
-  draft = prefill.draft;
+  draft.inputs = prefill.draft;
   picked = { candidate, choices: prefill.choices, before, filledWord: prefill.draft.word };
 }
 
 // Back to the word as typed, so its entries are offered again.
 function unpick() {
   if (picked === undefined) return;
-  draft = undoPrefill($state.snapshot(draft), picked.before);
+  draft.inputs = undoPrefill($state.snapshot(draft.inputs), picked.before);
   picked = undefined;
 }
 
 // Another word, which the entry's forms don't fit.
 function retype() {
-  if (picked === undefined || stillSpellsEntry(draft.word, picked.filledWord)) return;
-  draft = { ...undoPrefill($state.snapshot(draft), picked.before), word: draft.word };
+  if (picked === undefined || stillSpellsEntry(draft.inputs.word, picked.filledWord)) return;
+  draft.inputs = {
+    ...undoPrefill($state.snapshot(draft.inputs), picked.before),
+    word: draft.inputs.word,
+  };
   picked = undefined;
 }
 
 function setEdit(field: FieldKey, value: string) {
-  edits[field] = value;
+  draft.edits[field] = value;
 }
 
 function ankiFields(media: StoredMedia) {
-  return handOffFields({ composed, edits, shownFields, media });
+  return handOffFields({ composed, edits: draft.edits, shownFields, media });
 }
 
 async function checkAnki() {
@@ -143,35 +134,42 @@ onMount(checkAnki);
         label="Hebrew word, without niqqud"
         lang="he"
         takesFocus
-        bind:value={draft.word}
+        bind:value={draft.inputs.word}
         oninput={retype}
       />
-      <DefinitionsInput bind:definitions={draft.definitions} />
+      <DefinitionsInput bind:definitions={draft.inputs.definitions} />
     </div>
     <DictionaryPanel {lookup} picked={picked?.candidate} onpick={pick} onunpick={unpick} />
-    <ExistingNotesPanel words={[draft.word, ...(picked ? [picked.candidate.title] : [])]} />
-    <LookupLinks word={draft.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
-    <section aria-label="Media"><ImagesInput bind:images bind:noImage /></section>
+    <ExistingNotesPanel words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]} />
+    <LookupLinks word={draft.inputs.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
+    <section aria-label="Media">
+      <ImagesInput bind:images={draft.media.images} bind:noImage={draft.media.noImage} />
+    </section>
   </section>
 
   <WordForms
-    bind:draft
+    bind:draft={draft.inputs}
     {choices}
     candidate={picked?.candidate}
-    {edits}
+    edits={draft.edits}
     {shownFields}
     onedit={setEdit}
   />
 
-  {#if draft.partOfSpeech !== undefined}
-    <NoteFields groups={shownGroups} partOfSpeech={draft.partOfSpeech} {edits} onedit={setEdit} />
+  {#if draft.inputs.partOfSpeech !== undefined}
+    <NoteFields
+      groups={shownGroups}
+      partOfSpeech={draft.inputs.partOfSpeech}
+      edits={draft.edits}
+      onedit={setEdit}
+    />
   {/if}
 
   <HandOffBar
-    {images}
+    media={draft.media}
     fieldsWith={ankiFields}
     {onnextcard}
     ankiBlocker={status === undefined ? 'Checking Anki…' : ankiProblem}
-    inputsBlocker={missingInputsMessage}
+    inputsBlocker={stillNeededMessage}
   />
 </main>
