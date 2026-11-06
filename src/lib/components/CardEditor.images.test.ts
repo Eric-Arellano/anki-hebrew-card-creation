@@ -1,19 +1,16 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
 import {
   addRequests,
-  connectedStatus,
   fillDag,
   handOff,
   input,
   mediaRequests,
   renderConnectedEditor,
   skipImage,
-  stubServer,
 } from './CardEditor.harness.ts';
-import CardEditor from './CardEditor.svelte';
 
 // `printf 'jpeg bytes' | shasum`, since the stub's every image encodes to those bytes.
 const FILENAME = 'paste-2ee409c930850cda2ff3a3f17c6e40a3ffa2dd60.jpg';
@@ -233,11 +230,9 @@ describe('CardEditor', () => {
   describe('handing off with an image', () => {
     test('stores it, then fills Images with the name Anki used', async () => {
       const stored = 'paste-2ee409c9-1.jpg';
-      const requests = stubServer(connectedStatus, undefined, undefined, () =>
-        Response.json({ filename: stored }),
-      );
-      render(CardEditor);
-      await screen.findByText(/Connected to Anki/);
+      const requests = await renderConnectedEditor({
+        storeMedia: () => Response.json({ filename: stored }),
+      });
       await fillDag();
       await pasteImage();
       await screen.findByRole('img');
@@ -258,11 +253,10 @@ describe('CardEditor', () => {
 
     describe('when storing fails', () => {
       test('says so and never opens the Add window', async () => {
-        const requests = stubServer(connectedStatus, undefined, undefined, () =>
-          Response.json({ message: 'collection is not available' }, { status: 502 }),
-        );
-        render(CardEditor);
-        await screen.findByText(/Connected to Anki/);
+        const requests = await renderConnectedEditor({
+          storeMedia: () =>
+            Response.json({ message: 'collection is not available' }, { status: 502 }),
+        });
         await fillDag();
         await pasteImage();
         await screen.findByRole('img');

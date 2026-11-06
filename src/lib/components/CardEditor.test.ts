@@ -88,7 +88,7 @@ describe('CardEditor', () => {
 
     describe('while Anki has a problem', () => {
       test('is disabled and says why', async () => {
-        const requests = stubServer({ kind: 'error', message: 'Is Anki open?' });
+        const requests = stubServer({ status: { kind: 'error', message: 'Is Anki open?' } });
         render(CardEditor);
         await screen.findByText('Is Anki open?');
         await fillDag();
@@ -279,8 +279,10 @@ describe('CardEditor', () => {
     describe('when the word is in the deck', () => {
       test('warns, naming the note', async () => {
         await renderConnectedEditor({
-          exactMatches: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
-          relatedMatches: [],
+          existing: {
+            exactMatches: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+            relatedMatches: [],
+          },
         });
         await typeInto(input('Hebrew word, without niqqud'), 'כלב');
         const check = screen.getByRole('region', { name: 'Already in the deck' });
@@ -292,8 +294,10 @@ describe('CardEditor', () => {
     describe('when only related notes are in the deck', () => {
       test('lists them without warning', async () => {
         await renderConnectedEditor({
-          exactMatches: [],
-          relatedMatches: [{ noteId: 1752426864218, unpointed: 'בית משפט', pointed: 'בֵּית מִשְׁפָּט' }],
+          existing: {
+            exactMatches: [],
+            relatedMatches: [{ noteId: 1752426864218, unpointed: 'בית משפט', pointed: 'בֵּית מִשְׁפָּט' }],
+          },
         });
         await typeInto(input('Hebrew word, without niqqud'), 'בית');
         const check = screen.getByRole('region', { name: 'Already in the deck' });

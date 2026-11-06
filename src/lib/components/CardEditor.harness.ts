@@ -25,14 +25,21 @@ const notInDictionary: DictionaryLookup = {
   staleIndex: false,
 };
 
+/** How the stub answers each route; a route left out answers as a connected Anki with no notes. */
+export type ServerReplies = {
+  status?: AnkiStatus;
+  existing?: ExistingNotes;
+  lookup?: DictionaryLookup | Response;
+  storeMedia?: (body: { filename: string }) => Response;
+};
+
 /** Our server, answering the editor's API calls, and recording every request. */
-export function stubServer(
-  status: AnkiStatus = connectedStatus,
-  existing: ExistingNotes = { exactMatches: [], relatedMatches: [] },
-  lookup: DictionaryLookup | Response = notInDictionary,
-  storeMedia: (body: { filename: string }) => Response = ({ filename }) =>
-    Response.json({ filename }),
-) {
+export function stubServer({
+  status = connectedStatus,
+  existing = { exactMatches: [], relatedMatches: [] },
+  lookup = notInDictionary,
+  storeMedia = ({ filename }) => Response.json({ filename }),
+}: ServerReplies = {}) {
   const requests: ServerRequest[] = [];
   vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
     const body = init?.body === undefined ? undefined : JSON.parse(String(init.body));
@@ -59,11 +66,8 @@ export function addRequests(requests: ServerRequest[]) {
   return requests.filter((request) => request.path === '/api/anki/add');
 }
 
-export async function renderConnectedEditor(
-  existing?: ExistingNotes,
-  lookup?: DictionaryLookup | Response,
-) {
-  const requests = stubServer(connectedStatus, existing, lookup);
+export async function renderConnectedEditor(replies: Omit<ServerReplies, 'status'> = {}) {
+  const requests = stubServer(replies);
   render(CardEditor);
   await screen.findByText(/Connected to Anki/);
   return requests;
