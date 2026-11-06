@@ -1,17 +1,17 @@
 <script lang="ts">
 import { openAddWindow, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage } from '#lib/api/http.ts';
+import type { MediaDraft } from '#lib/card/draft.ts';
 import type { StoredMedia } from '#lib/card/hand-off.ts';
-import type { ImageAttachment } from '#lib/media/image.ts';
 
 let {
-  images,
+  media,
   fieldsWith,
   onnextcard,
   ankiBlocker,
   inputsBlocker,
 }: {
-  images: readonly ImageAttachment[];
+  media: MediaDraft;
   // Keyed by Anki field name, as `/api/anki/add` takes them. Fields need the names Anki stored the
   // media under, which only exist once it has been stored.
   fieldsWith: (media: StoredMedia) => Record<string, string>;
@@ -47,7 +47,7 @@ function askToHandOff() {
 async function storeImages(): Promise<string[]> {
   const stored: string[] = [];
   try {
-    for (const { filename, blob } of images) stored.push(await storeMedia(filename, blob));
+    for (const { filename, blob } of media.images) stored.push(await storeMedia(filename, blob));
   } catch (error) {
     throw new Error(`Add window not opened: storing an image failed. ${errorMessage(error)}`);
   }
