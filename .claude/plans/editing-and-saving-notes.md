@@ -2,8 +2,6 @@
 
 ## Context
 
-Comes after [multimedia.md](multimedia.md), and assumes all four of its PRs have landed.
-
 The app finds a word's notes but can only open them in Anki's Browse, and a new note still ends
 with a click in Anki's Add window. Here both move into the app: the editor loads an existing note,
 and saves a new or edited one itself. Anki stays the place to review cards and to delete a note.
@@ -56,7 +54,7 @@ other.
 - **A stored file stays a name.** Attachments become `{ kind: 'new', filename, blob }` or
   `{ kind: 'stored', filename }`. A stored one previews from `GET /api/anki/media/[filename]`, and
   only new ones go through `storeMedia`.
-- **A variant prompt splits into its text and images** with `splitImages`, beside `mediaReferences`.
+- **A variant prompt splits into its text and images** with `splitImages`, the one reader of image HTML.
 - **Loading is a remount.** `{#key card}` already gives each card a fresh editor, so `+page.svelte`
   passes the note as a seed. It replaces the draft, so it asks first when anything beyond the word
   has been typed.
@@ -133,21 +131,28 @@ Pure functions, with nothing calling them yet.
 - `draftFromNote` in `src/lib/card/from-note.ts`, with the readers beside `formsHtml`,
   `composeNounFields`, `composeVerbFields` and `composeAdjectiveFields`. It also returns each value
   no chip offers.
-- `splitImages` in `src/lib/anki/media.ts` and `ankiFieldHtmlToTextarea` in `src/lib/anki/html.ts`.
+- `splitImages` in `src/lib/anki/media.ts`, tested on every wrapper the deck has: `<img>`,
+  `<div><img></div>`, `<img><br><img>`, nested `div`s and an image after a variant's text.
+- `ankiFieldHtmlToTextarea` in `src/lib/anki/html.ts`.
 - `changedFields`, tested on the deck's six image wrappers, both variant prompts and a `Pointed`
   with line breaks.
 - The round trip: for each part of speech, `composeFields` output loads and composes back with no
   changed fields.
 - Capture real fixtures in `tests/fixtures/anki/`: a labelled `Pointed`, which loads as it is and
-  saves unchanged, and a two-image note if multimedia's PR 4 didn't.
+  saves unchanged, and a two-image note.
 
 ## PR 2 — Stored media in the widgets
 
 A prefactor: nothing creates a stored attachment yet.
 
+- `retrieveMediaFile` on the allowlist: the AGENTS.md rule, `client.ts`, and read-only in
+  `anki-guard.sh`. It answers `false` for a missing file.
+- `GET /api/anki/media/[filename]` serves bytes only for the extensions the deck holds, matched
+  without regard to case: `.jpg`, `.jpeg`, `.png`, `.webp` and `.mp3`. The 16 images that aren't
+  `.jpg` would otherwise show broken. It sets the type from the extension, with `nosniff` and a
+  sandboxing CSP, because the media folder can hold anything, and an SVG or HTML file served from
+  this origin could script `/api/anki/add`.
 - The attachment type above, through `ImagesInput`, the audio widget and the bar's store step.
-- Check multimedia's media route serves the deck's extensions, including `.jpeg`, `.png`, `.webp`
-  and the uppercase `.JPG`. Its plan names no list, and 16 images would otherwise show broken.
 
 ## PR 3 — Open a note in the editor
 
@@ -184,6 +189,11 @@ Ships with no way to save, so the human can open notes and see how they read bef
   `Part of speech` is the query.
 - **Open:** a card preview in the app, since the Add window's Preview goes with it. Browse → Preview
   still works.
+- **Open:** offer Wiktionary's recording as a link for a word Forvo lacks. About 15% of dictionary
+  entries carry a Wikimedia Commons `mp3_url`, which `source.ts` doesn't read yet. It stays a link
+  under Never reach a third-party site.
+- **Open:** once the deck has roots, search for a note's root in `findExistingNotes`, so its word
+  family lands in Related. The substring search can't find למד from תלמיד.
 
 ## Verification
 
