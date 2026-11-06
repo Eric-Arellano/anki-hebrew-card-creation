@@ -1,7 +1,7 @@
 <script lang="ts">
 import { encodeImages, pastedImages, withAttached } from '#lib/media/attach.ts';
 import type { ImageAttachment } from '#lib/media/image.ts';
-import Checkbox from './ui/Checkbox.svelte';
+import Checkbox from '../ui/Checkbox.svelte';
 
 let {
   images = $bindable(),

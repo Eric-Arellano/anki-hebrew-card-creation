@@ -9,12 +9,12 @@ import {
   PARTS_OF_SPEECH,
   type PartOfSpeech,
 } from '#lib/note-type.ts';
+import ChoiceChips from '../ui/ChoiceChips.svelte';
+import QuotedText from '../ui/QuotedText.svelte';
+import TextInput from '../ui/TextInput.svelte';
 import AdjectiveInputs from './AdjectiveInputs.svelte';
 import NounInputs from './NounInputs.svelte';
 import PluralHints from './PluralHints.svelte';
-import ChoiceChips from './ui/ChoiceChips.svelte';
-import QuotedText from './ui/QuotedText.svelte';
-import TextInput from './ui/TextInput.svelte';
 import VerbInputs from './VerbInputs.svelte';
 
 const PART_OF_SPEECH_LABELS = {

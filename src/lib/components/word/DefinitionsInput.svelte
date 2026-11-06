@@ -1,6 +1,6 @@
 <script lang="ts">
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
-import LinkChip from './ui/LinkChip.svelte';
+import LinkChip from '../ui/LinkChip.svelte';
 
 let { definitions = $bindable() }: { definitions: string[] } = $props();
 

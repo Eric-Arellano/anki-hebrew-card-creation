@@ -2,8 +2,8 @@
 import type { Snippet } from 'svelte';
 import type { AdjectiveInputs } from '#lib/card/adjective.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
+import TextInput from '../ui/TextInput.svelte';
 import RootInput from './RootInput.svelte';
-import TextInput from './ui/TextInput.svelte';
 
 let {
   adjective = $bindable(),

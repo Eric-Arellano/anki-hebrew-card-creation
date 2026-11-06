@@ -100,6 +100,8 @@ allow:
 - `api/` is the browser's calls to our routes, and the types those routes answer with.
 - `server/` is whatever reaches AnkiConnect or the disk. Nothing the browser loads imports it.
 - A component wires these together. Logic worth a unit test moves out into one of them.
+- `components/` is grouped by the section of the editor a component renders, with `ui/` for
+  widgets no section owns. A section of one component stays beside `CardEditor`.
 
 ### Comments
 
