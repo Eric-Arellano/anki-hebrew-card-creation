@@ -20,7 +20,6 @@ describe('fieldDisplay', () => {
     expect(fieldDisplay('variant1Answer', 'verb')).toEqual({
       label: 'Variant 1: Hebrew answer, with niqqud',
       help: FIELD_HELP.variant1Answer.verb,
-      searchesImages: undefined,
     });
   });
 

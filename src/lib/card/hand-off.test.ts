@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { handOffFields } from './hand-off.ts';
+import { emptyCardDraft, type MediaDraft } from './draft.ts';
+import { attachmentsToStore, handOffFields } from './hand-off.ts';
 
 const blankFields = Object.fromEntries(fieldNames.map((name) => [name, '']));
 
@@ -35,23 +36,27 @@ describe('handOffFields', () => {
     });
   });
 
-  describe('with stored media', () => {
-    const image = 'paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437.jpg';
-    const imageHtml = `<div><img src="${image}"></div>`;
+  describe('with media', () => {
+    const requested = 'paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437.jpg';
+    const stored = 'paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437-1.jpg';
+    const image = { filename: requested, blob: new Blob(['jpeg']) };
+    const imageHtml = `<div><img src="${stored}"></div>`;
+    const storedAs = new Map([[requested, stored]]);
 
-    test('fills Images and Audio, which are never shown', () => {
+    function media(changes: Partial<MediaDraft>): MediaDraft {
+      return { ...emptyCardDraft().media, ...changes };
+    }
+
+    test('fills Images, which is never shown, with the names Anki used', () => {
       expect(
         handOffFields({
           composed: {},
           edits: {},
           shownFields: [],
-          media: { images: [image, image], audio: 'pronunciation_he_בית.mp3' },
+          media: media({ images: [image, image] }),
+          storedAs,
         }),
-      ).toEqual({
-        ...blankFields,
-        Images: `${imageHtml}${imageHtml}`,
-        Audio: '[sound:pronunciation_he_בית.mp3]',
-      });
+      ).toEqual({ ...blankFields, Images: `${imageHtml}${imageHtml}` });
     });
 
     test("puts a shown variant prompt's images after its text", () => {
@@ -60,7 +65,8 @@ describe('handOffFields', () => {
           composed: {},
           edits: { variant1Prompt: 'female dog' },
           shownFields: ['variant1Prompt'],
-          media: { variant1Prompt: [image] },
+          media: media({ promptImages: { variant1Prompt: [image], variant2Prompt: [] } }),
+          storedAs,
         }),
       ).toEqual({ ...blankFields, 'Variant 1 prompt': `female dog${imageHtml}` });
     });
@@ -71,7 +77,8 @@ describe('handOffFields', () => {
           composed: {},
           edits: {},
           shownFields: ['variant2Prompt'],
-          media: { variant2Prompt: [image] },
+          media: media({ promptImages: { variant1Prompt: [], variant2Prompt: [image] } }),
+          storedAs,
         }),
       ).toEqual({ ...blankFields, 'Variant 2 prompt': imageHtml });
     });
@@ -82,9 +89,43 @@ describe('handOffFields', () => {
           composed: {},
           edits: {},
           shownFields: ['notes'],
-          media: { variant1Prompt: [image], variant2Prompt: [image] },
+          media: media({ promptImages: { variant1Prompt: [image], variant2Prompt: [image] } }),
         }),
       ).toEqual(blankFields);
     });
+
+    describe('when a file was never stored', () => {
+      test('throws, rather than send a name Anki may not have', () => {
+        expect(() =>
+          handOffFields({
+            composed: {},
+            edits: {},
+            shownFields: [],
+            media: media({ images: [image] }),
+          }),
+        ).toThrow(`${requested} was never stored`);
+      });
+    });
+  });
+});
+
+describe('attachmentsToStore', () => {
+  const first = { filename: 'paste-a.jpg', blob: new Blob(['a']) };
+  const second = { filename: 'paste-b.jpg', blob: new Blob(['b']) };
+  const media: MediaDraft = {
+    ...emptyCardDraft().media,
+    images: [first],
+    promptImages: { variant1Prompt: [second], variant2Prompt: [first] },
+  };
+
+  test('gives each file once, wherever else the note holds it', () => {
+    expect(attachmentsToStore(media, ['variant1Prompt', 'variant2Prompt'])).toEqual([
+      first,
+      second,
+    ]);
+  });
+
+  test("leaves out a hidden variant prompt's images", () => {
+    expect(attachmentsToStore(media, ['notes'])).toEqual([first]);
   });
 });

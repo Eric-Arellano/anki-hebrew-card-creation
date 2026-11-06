@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { type CardDraft, emptyCardDraft, stillNeeded } from './draft.ts';
+import { type CardDraft, emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
 
 const image = { filename: 'paste-a.jpg', blob: new Blob(['jpeg']) };
 
-function dagDraft(media: CardDraft['media']): CardDraft {
+function dagDraft(media: Pick<MediaDraft, 'images' | 'noImage'>): CardDraft {
   const empty = emptyCardDraft();
   return {
     ...empty,
@@ -14,7 +14,7 @@ function dagDraft(media: CardDraft['media']): CardDraft {
       definitions: ['fish'],
       partOfSpeech: 'other',
     },
-    media,
+    media: { ...empty.media, ...media },
   };
 }
 

@@ -9,6 +9,15 @@ export function pastedImages(clipboard: DataTransfer | null): File[] {
     .flatMap((item) => item.getAsFile() ?? []);
 }
 
+/**
+ * The `data-image-target` of the region holding `element`, naming the image widget a paste or drop
+ * there belongs to. `undefined` outside every region, where `Images` takes it.
+ */
+export function imageTargetAt(element: EventTarget | null): string | undefined {
+  if (!(element instanceof Element)) return undefined;
+  return element.closest<HTMLElement>('[data-image-target]')?.dataset.imageTarget;
+}
+
 /** Each of `files` the browser can decode, encoded, and a message naming any it can't. */
 export async function encodeImages(
   files: readonly File[],

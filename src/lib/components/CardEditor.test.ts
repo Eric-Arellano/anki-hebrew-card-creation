@@ -212,7 +212,7 @@ describe('CardEditor', () => {
         await renderConnectedEditor();
         await choosePartOfSpeech('Other');
         const prompt = noteField('Variant 1: English prompt');
-        const promptField = prompt.parentElement as HTMLElement;
+        const promptField = prompt.closest('[data-image-target]') as HTMLElement;
         expect(within(promptField).getByText('Images (EN)').title).toBe('Type the prompt first');
         await typeInto(prompt, 'good tables');
         expect(

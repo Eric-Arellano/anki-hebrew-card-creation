@@ -1,15 +1,18 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, screen, waitFor, within } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
 import {
   addRequests,
+  choosePartOfSpeech,
   fillDag,
   handOff,
   input,
   mediaRequests,
+  noteField,
   renderConnectedEditor,
   skipImage,
+  typeInto,
 } from './CardEditor.harness.ts';
 
 // `printf 'jpeg bytes' | shasum`, since the stub's every image encodes to those bytes.
@@ -35,6 +38,12 @@ async function pasteImage(target: Element | Window = window) {
 function thumbnails() {
   return screen.queryAllByRole('img');
 }
+
+function widget(name: string) {
+  return screen.getByRole('group', { name });
+}
+
+const VARIANT_1 = 'Images for Variant 1: English prompt';
 
 function fileInput() {
   return screen.getByLabelText('Choose files') as HTMLInputElement;
@@ -269,6 +278,117 @@ describe('CardEditor', () => {
           ),
         );
         expect(addRequests(requests)).toEqual([]);
+      });
+    });
+  });
+
+  describe('attaching an image to a variant prompt', () => {
+    async function renderWithVariants() {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      return requests;
+    }
+
+    test('takes a paste while the focus is in the prompt', async () => {
+      await renderWithVariants();
+      noteField('Variant 1: English prompt').focus();
+      await pasteImage(noteField('Variant 1: English prompt'));
+      expect(await within(widget(VARIANT_1)).findByRole('img')).toBeTruthy();
+      expect(within(widget('Images')).queryAllByRole('img')).toEqual([]);
+    });
+
+    test('takes a paste after a click anywhere in its block', async () => {
+      await renderWithVariants();
+      const block = noteField('Variant 1: English prompt').closest('[data-image-target]');
+      (block as HTMLElement).focus();
+      await pasteImage(document.body);
+      expect(await within(widget(VARIANT_1)).findByRole('img')).toBeTruthy();
+    });
+
+    test('leaves a paste from anywhere else to Images', async () => {
+      await renderWithVariants();
+      noteField('Notes').focus();
+      await pasteImage(noteField('Notes'));
+      expect(await within(widget('Images')).findByRole('img')).toBeTruthy();
+      expect(within(widget(VARIANT_1)).queryAllByRole('img')).toEqual([]);
+    });
+
+    test('says which widget a paste will go to', async () => {
+      await renderWithVariants();
+      expect(within(widget('Images')).queryByText('pastes here')).toBeTruthy();
+      noteField('Variant 1: English prompt').focus();
+      await waitFor(() =>
+        expect(within(widget(VARIANT_1)).queryByText('pastes here')).toBeTruthy(),
+      );
+      expect(within(widget('Images')).queryByText('pastes here')).toBeNull();
+    });
+
+    test('takes a file dropped on the prompt', async () => {
+      await renderWithVariants();
+      await fireEvent.drop(noteField('Variant 1: English prompt'), {
+        dataTransfer: { ...emptyTransfer, types: ['Files'], files: [png] },
+      });
+      expect(await within(widget(VARIANT_1)).findByRole('img')).toBeTruthy();
+      expect(within(widget('Images')).queryAllByRole('img')).toEqual([]);
+    });
+
+    describe('without an answer', () => {
+      test('warns that no card shows the image, until there is one', async () => {
+        await renderWithVariants();
+        noteField('Variant 1: English prompt').focus();
+        await pasteImage();
+        await within(widget(VARIANT_1)).findByRole('img');
+        const warning = /No card shows these images/;
+        expect(screen.getByText(warning)).toBeTruthy();
+        await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'דָּגָה');
+        expect(screen.queryByText(warning)).toBeNull();
+      });
+    });
+
+    describe('handing off', () => {
+      test('stores it, then puts it after the prompt under the name Anki used', async () => {
+        const stored = 'paste-2ee409c9-1.jpg';
+        const requests = await renderConnectedEditor({
+          storeMedia: () => Response.json({ filename: stored }),
+        });
+        await fillDag();
+        await skipImage();
+        await typeInto(noteField('Variant 1: English prompt'), 'female fish');
+        noteField('Variant 1: English prompt').focus();
+        await pasteImage();
+        await within(widget(VARIANT_1)).findByRole('img');
+
+        expect(await handOff(requests)).toMatchObject({
+          fields: { 'Variant 1 prompt': `female fish<div><img src="${stored}"></div>` },
+        });
+        expect(mediaRequests(requests)).toEqual([
+          { method: 'POST', path: '/api/anki/media', body: { filename: FILENAME, data: BASE64 } },
+        ]);
+      });
+
+      describe('after switching to a part of speech without variants', () => {
+        test('neither stores the image nor sends it', async () => {
+          const requests = await renderWithVariants();
+          await skipImage();
+          noteField('Variant 1: English prompt').focus();
+          await pasteImage();
+          await within(widget(VARIANT_1)).findByRole('img');
+
+          await choosePartOfSpeech('Adverb');
+          expect(await handOff(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
+          expect(mediaRequests(requests)).toEqual([]);
+        });
+
+        test('keeps the image for switching back', async () => {
+          await renderWithVariants();
+          noteField('Variant 1: English prompt').focus();
+          await pasteImage();
+          await within(widget(VARIANT_1)).findByRole('img');
+
+          await choosePartOfSpeech('Adverb');
+          await choosePartOfSpeech('Other');
+          expect(within(widget(VARIANT_1)).getAllByRole('img')).toHaveLength(1);
+        });
       });
     });
   });

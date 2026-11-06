@@ -40,15 +40,13 @@ export const FIELD_GROUPS = [
 export type FieldGroup = (typeof FIELD_GROUPS)[number];
 
 // `shownFor` is the parts of speech for which the editor shows the field as a textarea. A shown
-// field needs a group to appear in, and a `label`, because Anki's names are terse. It may set
-// `searchesImages` for a field whose text is worth an image search.
+// field needs a group to appear in, and a `label`, because Anki's names are terse.
 export type Field = { name: string } & (
   | { shownFor: readonly [] }
   | {
       shownFor: readonly PartOfSpeech[];
       group: FieldGroup;
       label: string;
-      searchesImages?: true;
     }
 );
 
@@ -104,7 +102,6 @@ export const FIELDS = {
     shownFor: PARTS_OF_SPEECH_WITH_VARIANTS,
     group: 'Unusual variants',
     label: 'Variant 1: English prompt',
-    searchesImages: true,
   },
   variant1Answer: {
     name: 'Variant 1 answer',
@@ -117,7 +114,6 @@ export const FIELDS = {
     shownFor: PARTS_OF_SPEECH_WITH_VARIANTS,
     group: 'Unusual variants',
     label: 'Variant 2: English prompt',
-    searchesImages: true,
   },
   variant2Answer: {
     name: 'Variant 2 answer',
@@ -138,6 +134,19 @@ export const FIELDS = {
     label: 'Notes',
   },
 } as const satisfies Record<string, Field>;
+
+// Each variant prompt, which holds images after its text, and the answer that gates its card: the
+// template shows a variant only once its answer is filled, so a prompt may be only an image.
+export const VARIANT_ANSWERS = {
+  variant1Prompt: 'variant1Answer',
+  variant2Prompt: 'variant2Answer',
+} as const satisfies Partial<Record<FieldKey, FieldKey>>;
+
+export type VariantPrompt = keyof typeof VARIANT_ANSWERS;
+
+export function isVariantPrompt(key: FieldKey): key is VariantPrompt {
+  return Object.hasOwn(VARIANT_ANSWERS, key);
+}
 
 export type FieldKey = keyof typeof FIELDS;
 
