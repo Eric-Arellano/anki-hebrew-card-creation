@@ -1,6 +1,6 @@
 <script lang="ts">
 import { formatRoot } from '#lib/hebrew/root.ts';
-import TextInput from './ui/TextInput.svelte';
+import TextInput from '../ui/TextInput.svelte';
 
 let {
   root = $bindable(),

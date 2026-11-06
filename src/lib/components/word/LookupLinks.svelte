@@ -2,7 +2,7 @@
 import { INPUT_NAMES } from '#lib/card/inputs.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
-import LinkChip from './ui/LinkChip.svelte';
+import LinkChip from '../ui/LinkChip.svelte';
 
 let {
   word,

@@ -4,9 +4,9 @@ import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { VerbDraft } from '#lib/card/verb.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
+import ChoiceChips from '../ui/ChoiceChips.svelte';
+import TextInput from '../ui/TextInput.svelte';
 import RootInput from './RootInput.svelte';
-import ChoiceChips from './ui/ChoiceChips.svelte';
-import TextInput from './ui/TextInput.svelte';
 
 const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label: string }[] = [
   ...GOVERNED_PREPOSITIONS.map((value) => ({ value, label: value })),

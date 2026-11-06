@@ -23,15 +23,15 @@ import {
 import { type FieldKey, type FieldValues, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
-import DefinitionsInput from './DefinitionsInput.svelte';
-import DictionaryPanel from './DictionaryPanel.svelte';
-import ExistingNotesPanel from './ExistingNotesPanel.svelte';
+import WordForms from './forms/WordForms.svelte';
 import HandOffBar from './HandOffBar.svelte';
-import ImagesInput from './ImagesInput.svelte';
-import LookupLinks from './LookupLinks.svelte';
+import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './NoteFields.svelte';
 import TextInput from './ui/TextInput.svelte';
-import WordForms from './WordForms.svelte';
+import DefinitionsInput from './word/DefinitionsInput.svelte';
+import DictionaryPanel from './word/DictionaryPanel.svelte';
+import ExistingNotesPanel from './word/ExistingNotesPanel.svelte';
+import LookupLinks from './word/LookupLinks.svelte';
 
 let { onnextcard }: { onnextcard?: () => void } = $props();
 
