@@ -81,7 +81,7 @@ describe('CardEditor', () => {
     }
 
     test('fills a noun’s inputs from the entry picked, and shows its meanings', async () => {
-      const requests = await renderConnectedEditor(undefined, found(kelev));
+      const requests = await renderConnectedEditor({ lookup: found(kelev) });
       await typeInto(input('English meaning'), 'dog');
       await pick('כלבים', 'כֶּלֶב');
 
@@ -106,7 +106,7 @@ describe('CardEditor', () => {
 
     describe('once another word is typed over the one it filled', () => {
       test('looks that word up, and clears what the entry filled', async () => {
-        const requests = await renderConnectedEditor(undefined, found(kelev));
+        const requests = await renderConnectedEditor({ lookup: found(kelev) });
         await pick('כלבים', 'כֶּלֶב');
         expect(lookups(requests)).toHaveLength(1);
 
@@ -124,10 +124,9 @@ describe('CardEditor', () => {
 
     describe('once another spelling of the word it filled is typed', () => {
       test('keeps the entry and what it filled', async () => {
-        const requests = await renderConnectedEditor(
-          undefined,
-          found({ ...kelev, title: 'שולחן', pointed: 'שֻׁלְחָן' }),
-        );
+        const requests = await renderConnectedEditor({
+          lookup: found({ ...kelev, title: 'שולחן', pointed: 'שֻׁלְחָן' }),
+        });
         await pick('שולחנות', 'שֻׁלְחָן');
         await typeInto(input('Hebrew word, without niqqud'), 'שלחן');
 
@@ -139,7 +138,7 @@ describe('CardEditor', () => {
 
     describe('after choosing another', () => {
       test('offers the entries for the word as typed, and clears what the entry filled', async () => {
-        await renderConnectedEditor(undefined, found(kelev));
+        await renderConnectedEditor({ lookup: found(kelev) });
         await pick('כלבים', 'כֶּלֶב');
         await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
 
@@ -152,7 +151,7 @@ describe('CardEditor', () => {
     });
 
     test('fills a verb’s infinitive, forms, binyan and root, and only suggests its preposition', async () => {
-      const requests = await renderConnectedEditor(undefined, found(chika));
+      const requests = await renderConnectedEditor({ lookup: found(chika) });
       await pick('חיכה', 'חִכָּה');
 
       expect(input('Hebrew word, without niqqud').value).toBe('לחכות');
@@ -177,9 +176,8 @@ describe('CardEditor', () => {
 
     describe('for a verb with two infinitives', () => {
       test('offers both, and choosing one fills both spellings', async () => {
-        await renderConnectedEditor(
-          undefined,
-          found({
+        await renderConnectedEditor({
+          lookup: found({
             ...chika,
             verb: {
               ...chika.verb,
@@ -189,7 +187,7 @@ describe('CardEditor', () => {
               ],
             },
           }),
-        );
+        });
         await pick('חדר', 'חִכָּה');
         expect(input('Hebrew word, with niqqud').value).toBe('');
 
@@ -201,10 +199,9 @@ describe('CardEditor', () => {
 
     describe('for a verb with two futures', () => {
       test('offers both, and choosing one fills the future', async () => {
-        await renderConnectedEditor(
-          undefined,
-          found({ ...chika, verb: { ...chika.verb, futures: ['יַחֲדֹר', 'יַחְדֹּר'] } }),
-        );
+        await renderConnectedEditor({
+          lookup: found({ ...chika, verb: { ...chika.verb, futures: ['יַחֲדֹר', 'יַחְדֹּר'] } }),
+        });
         await pick('חדר', 'חִכָּה');
         expect(input('Future (he), with niqqud').value).toBe('');
 
@@ -215,7 +212,7 @@ describe('CardEditor', () => {
 
     describe('for a verb, after choosing another', () => {
       test('clears the forms it filled', async () => {
-        await renderConnectedEditor(undefined, found(chika));
+        await renderConnectedEditor({ lookup: found(chika) });
         await pick('חיכה', 'חִכָּה');
         await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
         await choosePartOfSpeech('Verb');
@@ -228,7 +225,7 @@ describe('CardEditor', () => {
 
     describe('for a noun with a root', () => {
       test('fills the root, and undoes it with the rest', async () => {
-        await renderConnectedEditor(undefined, found({ ...kelev, roots: ['כ־ל־ב'] }));
+        await renderConnectedEditor({ lookup: found({ ...kelev, roots: ['כ־ל־ב'] }) });
         await pick('כלבים', 'כֶּלֶב');
         expect(input('Root, like דבר or ד.ב.ר').value).toBe('כ־ל־ב');
 
@@ -240,7 +237,7 @@ describe('CardEditor', () => {
 
     describe('for an adjective with two masculine plurals', () => {
       test('fills its forms, and choosing one fills that form', async () => {
-        await renderConnectedEditor(undefined, found(yisraeli));
+        await renderConnectedEditor({ lookup: found(yisraeli) });
         await pick('ישראלית', 'יִשְׂרְאֵלִי');
         expect(screen.getByRole('radio', { name: 'Adjective', checked: true })).toBeTruthy();
         expect(input('Feminine singular, with niqqud').value).toBe('יִשְׂרְאֵלִית');
@@ -266,7 +263,7 @@ describe('CardEditor', () => {
 
     describe('once an entry is picked', () => {
       test('points the Wiktionary link at its page', async () => {
-        await renderConnectedEditor(undefined, found(kelev));
+        await renderConnectedEditor({ lookup: found(kelev) });
         await pick('כלבים', 'כֶּלֶב');
         const links = screen.getByRole('navigation', { name: 'Look up' });
         expect(within(links).getByRole('link', { name: 'Wiktionary' }).getAttribute('href')).toBe(
@@ -278,7 +275,7 @@ describe('CardEditor', () => {
     describe('without an index', () => {
       test('says how to build one', async () => {
         const message = "There's no dictionary index yet. Run npm run build-index.";
-        await renderConnectedEditor(undefined, Response.json({ message }, { status: 503 }));
+        await renderConnectedEditor({ lookup: Response.json({ message }, { status: 503 }) });
         await typeInto(input('Hebrew word, without niqqud'), 'כלב');
         expect((await screen.findByRole('alert')).textContent).toBe(message);
       });
