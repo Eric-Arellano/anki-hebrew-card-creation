@@ -37,7 +37,7 @@ describe('ankiStatusProblem', () => {
           deckFound: false,
           noteType: { found: false },
         }),
-      ).toBe('Anki has no deck named עברית');
+      ).toBe('Anki has no deck named Hebrew');
     });
 
     test('names the note type', () => {

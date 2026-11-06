@@ -2,7 +2,10 @@
 //
 // Renaming a field in Anki requires updating this file and `tests/fixtures/anki/`.
 
-export const DECK = 'עברית';
+// Recall cards land in its `Hebrew::Production` subdeck through Deck Override on those card types
+// in Anki, so they get their own FSRS preset; the tool only ever names this parent deck.
+// *Rejected: the Hebrew name עברית, because Anki shows `עברית::Production` reversed.*
+export const DECK = 'Hebrew';
 export const NOTE_TYPE = 'Hebrew';
 export const TAGS: readonly string[] = [];
 

@@ -7,7 +7,7 @@ describe('getAnkiStatus', () => {
   function connectedAnkiWithFields(liveFieldNames: string[]) {
     return fakeAnki({
       version: () => 6,
-      deckNames: () => ['Default', 'עברית'],
+      deckNames: () => ['Default', 'Hebrew'],
       modelNames: () => ['Basic', 'Hebrew'],
       modelFieldNames: () => liveFieldNames,
     });
