@@ -18,13 +18,6 @@ export function fitWithinLongEdge({ width, height }: Size, longEdge = LONG_EDGE)
   return { width: scaled(width), height: scaled(height) };
 }
 
-/** The files on a clipboard that are images. Most copies carry none, and paste as usual. */
-export function pastedImages(clipboard: DataTransfer | null): File[] {
-  return [...(clipboard?.items ?? [])]
-    .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
-    .flatMap((item) => item.getAsFile() ?? []);
-}
-
 async function hexSha1(blob: Blob): Promise<string> {
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-1', await blob.arrayBuffer()));
   return [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('');

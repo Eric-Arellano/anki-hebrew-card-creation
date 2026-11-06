@@ -88,6 +88,19 @@ differ from an agent's defaults:
   local that names a computed value, or adds meaning, is fine. Tests get more slack for
   arrange-step locals.
 
+### Where code goes
+
+A directory under `src/lib/` says what its files may touch, so put a module where its imports
+allow:
+
+- `hebrew/` knows Hebrew text, and nothing of Anki or the editor.
+- `card/` turns the editor's inputs into fields. It stays pure, with no DOM and no `fetch`.
+- `media/` is what the browser does with an attachment before it is stored.
+- `anki/` is Anki's own formats, shared by the browser and the server.
+- `api/` is the browser's calls to our routes, and the types those routes answer with.
+- `server/` is whatever reaches AnkiConnect or the disk. Nothing the browser loads imports it.
+- A component wires these together. Logic worth a unit test moves out into one of them.
+
 ### Comments
 
 Prefer self-documenting code: a good name beats a comment explaining a bad one. What survives

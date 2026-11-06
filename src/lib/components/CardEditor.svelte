@@ -6,7 +6,7 @@ import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictio
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { handOffFields, type StoredMedia } from '#lib/card/hand-off.ts';
-import type { ImageAttachment } from '#lib/card/image.ts';
+import type { ImageAttachment } from '#lib/media/image.ts';
 import {
   type CardInputsDraft,
   completeInputs,
