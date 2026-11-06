@@ -16,7 +16,7 @@ describe('_openAddWindow', () => {
     expect(calls).toEqual([
       {
         action: 'guiAddCards',
-        params: { note: { deckName: 'עברית', modelName: 'Hebrew', fields, tags: [] } },
+        params: { note: { deckName: 'Hebrew', modelName: 'Hebrew', fields, tags: [] } },
       },
     ]);
   });

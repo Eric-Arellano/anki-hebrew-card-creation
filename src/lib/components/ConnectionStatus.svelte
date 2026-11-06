@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { AnkiStatus } from '#lib/api/anki.ts';
-import { DECK, NOTE_TYPE } from '#lib/note-type.ts';
 
 let {
   status,
@@ -34,7 +33,7 @@ let {
     {#if status === undefined}
       <p>Checking Anki…</p>
     {:else}
-      <p>Connected to Anki: deck <span lang="he" dir="rtl">{DECK}</span>, note type {NOTE_TYPE}</p>
+      <p>Connected to Anki</p>
     {/if}
     {@render recheck()}
   </div>
