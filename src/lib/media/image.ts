@@ -1,12 +1,11 @@
 // Media syncs to the phone, and Copy Image tends to hand over a PNG whatever the original was, so
 // every image is re-encoded here before it reaches the media folder.
+import type { Attachment } from '#lib/media/attach.ts';
+
 const LONG_EDGE = 1000;
 const JPEG_QUALITY = 0.85;
 
 export type Size = { width: number; height: number };
-
-/** An image ready for Anki, under the name it asks for. */
-export type ImageAttachment = { filename: string; blob: Blob };
 
 /** `size` scaled down so its long edge fits, keeping its shape. A smaller image stays as it is. */
 export function fitWithinLongEdge({ width, height }: Size, longEdge = LONG_EDGE): Size {
@@ -37,7 +36,7 @@ function canvasToJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
  * `file` as a JPEG named as Anki names a paste, so one image always gets one name. Rejects when the
  * browser can't decode it, which is also how anything that isn't an image gets refused.
  */
-export async function encodeImage(file: Blob): Promise<ImageAttachment> {
+export async function encodeImage(file: Blob): Promise<Attachment> {
   const bitmap = await createImageBitmap(file);
   const canvas = document.createElement('canvas');
   Object.assign(canvas, fitWithinLongEdge(bitmap));

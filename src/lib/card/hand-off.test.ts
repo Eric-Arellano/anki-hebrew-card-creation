@@ -94,6 +94,19 @@ describe('handOffFields', () => {
       ).toEqual(blankFields);
     });
 
+    test('fills Audio with a sound under the name Anki used', () => {
+      const recording = { filename: 'pronunciation_he_דג.mp3', blob: new Blob(['mp3']) };
+      expect(
+        handOffFields({
+          composed: {},
+          edits: {},
+          shownFields: [],
+          media: media({ audio: recording }),
+          storedAs: new Map([[recording.filename, 'pronunciation_he_דג-1.mp3']]),
+        }),
+      ).toEqual({ ...blankFields, Audio: '[sound:pronunciation_he_דג-1.mp3]' });
+    });
+
     describe('when a file was never stored', () => {
       test('throws, rather than send a name Anki may not have', () => {
         expect(() =>
@@ -127,5 +140,13 @@ describe('attachmentsToStore', () => {
 
   test("leaves out a hidden variant prompt's images", () => {
     expect(attachmentsToStore(media, ['notes'])).toEqual([first]);
+  });
+
+  test('gives the audio too', () => {
+    const recording = { filename: 'pronunciation_he_דג.mp3', blob: new Blob(['mp3']) };
+    expect(attachmentsToStore({ ...media, audio: recording }, ['notes'])).toEqual([
+      first,
+      recording,
+    ]);
   });
 });

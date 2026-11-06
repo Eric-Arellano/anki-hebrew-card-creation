@@ -1,7 +1,7 @@
 import { textareaToAnkiFieldHtml } from '#lib/anki/html.ts';
-import { imagesToAnkiFieldHtml } from '#lib/anki/media.ts';
+import { imagesToAnkiFieldHtml, soundToAnkiField } from '#lib/anki/media.ts';
 import type { MediaDraft } from '#lib/card/draft.ts';
-import type { ImageAttachment } from '#lib/media/image.ts';
+import type { Attachment } from '#lib/media/attach.ts';
 import {
   type FieldKey,
   type FieldValues,
@@ -10,11 +10,13 @@ import {
   type VariantPrompt,
 } from '#lib/note-type.ts';
 
-type AttachmentsByField = Partial<Record<'images' | VariantPrompt, readonly ImageAttachment[]>>;
+type AttachmentsByField = Partial<
+  Record<'images' | 'audio' | VariantPrompt, readonly Attachment[]>
+>;
 
 // A hidden field gets nothing from the human, so a variant's images stay out while another part of
-// speech hides the variants, just as their text does. `Images` is never shown as a textarea, and
-// always reaches the note.
+// speech hides the variants, just as their text does. `Images` and `Audio` are never shown as a
+// textarea, and always reach the note.
 function attachmentsReachingNote(
   media: MediaDraft,
   shownFields: readonly FieldKey[],
@@ -22,6 +24,7 @@ function attachmentsReachingNote(
   const prompts = Object.keys(VARIANT_ANSWERS) as VariantPrompt[];
   return {
     images: media.images,
+    audio: media.audio === undefined ? [] : [media.audio],
     ...Object.fromEntries(
       prompts
         .filter((prompt) => shownFields.includes(prompt))
@@ -34,7 +37,7 @@ function attachmentsReachingNote(
 export function attachmentsToStore(
   media: MediaDraft,
   shownFields: readonly FieldKey[],
-): ImageAttachment[] {
+): Attachment[] {
   const all = Object.values(attachmentsReachingNote(media, shownFields)).flat();
   return all.filter(
     ({ filename }, index) => all.findIndex((a) => a.filename === filename) === index,
@@ -59,17 +62,20 @@ export function handOffFields({
   media?: MediaDraft;
   storedAs?: ReadonlyMap<string, string>;
 }): Record<string, string> {
-  function storedName({ filename }: ImageAttachment): string {
+  function storedName({ filename }: Attachment): string {
     const name = storedAs.get(filename);
     if (name === undefined) throw new Error(`${filename} was never stored`);
     return name;
   }
   const attachments = media === undefined ? {} : attachmentsReachingNote(media, shownFields);
   const mediaHtml: FieldValues = Object.fromEntries(
-    Object.entries(attachments).map(([field, list]) => [
-      field,
-      imagesToAnkiFieldHtml(list.map(storedName)),
-    ]),
+    Object.entries(attachments).map(([field, list]) => {
+      const names = list.map(storedName);
+      return [
+        field,
+        field === 'audio' ? names.map(soundToAnkiField).join('') : imagesToAnkiFieldHtml(names),
+      ];
+    }),
   );
 
   // A hidden field gets only what composition gives it, so an edit made under another part of

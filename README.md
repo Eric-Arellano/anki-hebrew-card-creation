@@ -2,8 +2,8 @@
 
 A local helper for making Hebrew Anki cards. You type a word, and it does the rote part: lookup
 links, the pointed forms, the plural and gender fields, and a check for whether the word is
-already in your deck. Paste, drop or pick images, and it stores them in Anki when it opens Anki's
-own Add window, pre-filled. You add any audio there and click Add. The tool never adds, edits or
+already in your deck. Paste, drop or pick images and an MP3 recording, and it stores them in Anki
+when it opens Anki's own Add window, pre-filled. You click Add there. The tool never adds, edits or
 deletes a note itself.
 
 It is built for my own deck and note type, which `src/lib/note-type.ts` describes. To adapt it,

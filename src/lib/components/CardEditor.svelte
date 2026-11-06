@@ -19,6 +19,7 @@ import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import WordForms from './forms/WordForms.svelte';
 import HandOffBar from './HandOffBar.svelte';
+import AudioInput from './media/AudioInput.svelte';
 import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './NoteFields.svelte';
 import Checkbox from './ui/Checkbox.svelte';
@@ -144,7 +145,7 @@ onMount(checkAnki);
     <DictionaryPanel {lookup} picked={picked?.candidate} onpick={pick} onunpick={unpick} />
     <ExistingNotesPanel words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]} />
     <LookupLinks word={draft.inputs.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
-    <section aria-label="Media">
+    <section aria-label="Media" class="space-y-2">
       <ImagesInput
         label="Images"
         required={draft.media.images.length === 0 && !draft.media.noImage}
@@ -157,6 +158,7 @@ onMount(checkAnki);
           </span>
         {/if}
       </ImagesInput>
+      <AudioInput bind:audio={draft.media.audio} />
     </section>
   </section>
 

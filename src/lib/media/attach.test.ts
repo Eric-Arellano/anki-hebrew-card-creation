@@ -1,19 +1,26 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
-import { encodeImages, imageFieldAt, pastedImages, withAttached } from './attach.ts';
+import {
+  audioAttachment,
+  encodeImages,
+  imageFieldAt,
+  isAudio,
+  pastedFiles,
+  withAttached,
+} from './attach.ts';
 
 const png = new File(['png'], 'image.png', { type: 'image/png' });
 const pdf = new File(['pdf'], 'notes.pdf', { type: 'application/pdf' });
 
-describe('pastedImages', () => {
+describe('pastedFiles', () => {
   function clipboard(...items: Partial<DataTransferItem>[]) {
     return { items } as unknown as DataTransfer;
   }
 
-  test('takes the image from what a copied image carries beside it', () => {
+  test('takes the file from what a copied image carries beside it', () => {
     expect(
-      pastedImages(
+      pastedFiles(
         clipboard(
           { kind: 'string', type: 'text/html' },
           { kind: 'file', type: 'image/png', getAsFile: () => png },
@@ -24,11 +31,45 @@ describe('pastedImages', () => {
 
   test.each([
     ['text', clipboard({ kind: 'string', type: 'text/plain' })],
-    ['a file that is no image', clipboard({ kind: 'file', type: pdf.type, getAsFile: () => pdf })],
-    ['an image with no file', clipboard({ kind: 'file', type: png.type, getAsFile: () => null })],
+    [
+      'a file item with no file',
+      clipboard({ kind: 'file', type: png.type, getAsFile: () => null }),
+    ],
     ['nothing', null],
   ])('finds nothing in %s', (_, data) => {
-    expect(pastedImages(data)).toEqual([]);
+    expect(pastedFiles(data)).toEqual([]);
+  });
+});
+
+describe('isAudio', () => {
+  test.each([
+    ['an MP3', new File(['mp3'], 'a.mp3', { type: 'audio/mpeg' })],
+    ['an MP3 with no type', new File(['mp3'], 'a.MP3')],
+    ['audio of another format', new File(['ogg'], 'a.ogg', { type: 'audio/ogg' })],
+  ])('takes %s', (_, file) => {
+    expect(isAudio(file)).toBe(true);
+  });
+
+  test.each([
+    ['an image', png],
+    ['a PDF', pdf],
+  ])('leaves %s to the images', (_, file) => {
+    expect(isAudio(file)).toBe(false);
+  });
+});
+
+describe('audioAttachment', () => {
+  test('keeps the name and the bytes as they came', () => {
+    const file = new File(['mp3'], 'pronunciation_he_בית.mp3', { type: 'audio/mpeg' });
+    expect(audioAttachment(file)).toEqual({ filename: 'pronunciation_he_בית.mp3', blob: file });
+  });
+
+  test('lowercases the extension, which the media route needs', () => {
+    expect(audioAttachment(new File(['mp3'], 'a.MP3'))?.filename).toBe('a.mp3');
+  });
+
+  test('refuses another format', () => {
+    expect(audioAttachment(new File(['ogg'], 'a.ogg', { type: 'audio/ogg' }))).toBeUndefined();
   });
 });
 

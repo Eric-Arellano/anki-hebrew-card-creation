@@ -1,7 +1,7 @@
 <script lang="ts">
 import { openAddWindow, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage } from '#lib/api/http.ts';
-import type { ImageAttachment } from '#lib/media/image.ts';
+import type { Attachment } from '#lib/media/attach.ts';
 
 let {
   attachments,
@@ -11,7 +11,7 @@ let {
   inputsBlocker,
 }: {
   // Each file the note will hold, once.
-  attachments: readonly ImageAttachment[];
+  attachments: readonly Attachment[];
   // Keyed by Anki field name, as `/api/anki/add` takes them. Fields need the names Anki stored the
   // media under, which only exist once it has been stored, so this takes each name requested to
   // the one Anki used.
@@ -52,7 +52,7 @@ async function storeAttachments(): Promise<ReadonlyMap<string, string>> {
       stored.push([filename, await storeMedia(filename, blob)]);
     }
   } catch (error) {
-    throw new Error(`Add window not opened: storing an image failed. ${errorMessage(error)}`);
+    throw new Error(`Add window not opened: storing media failed. ${errorMessage(error)}`);
   }
   return new Map(stored);
 }

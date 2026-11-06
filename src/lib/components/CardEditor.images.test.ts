@@ -274,7 +274,7 @@ describe('CardEditor', () => {
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
         await waitFor(() =>
           expect(screen.getByRole('alert').textContent).toBe(
-            'Add window not opened: storing an image failed. collection is not available',
+            'Add window not opened: storing media failed. collection is not available',
           ),
         );
         expect(addRequests(requests)).toEqual([]);
