@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { vi } from 'vitest';
 import type { AnkiStatus, ExistingNotes } from '#lib/api/anki.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
+import type { ForvoDownloads } from '#lib/api/forvo.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import CardEditor from './CardEditor.svelte';
 
@@ -31,6 +32,8 @@ export type ServerReplies = {
   existing?: ExistingNotes;
   lookup?: DictionaryLookup | Response;
   storeMedia?: (body: { filename: string }) => Response;
+  forvoDownloads?: (word: string) => ForvoDownloads;
+  forvoFile?: (filename: string) => Response;
 };
 
 /** Our server, answering the editor's API calls, and recording every request. */
@@ -39,6 +42,8 @@ export function stubServer({
   existing = { exactMatches: [], relatedMatches: [] },
   lookup = notInDictionary,
   storeMedia = ({ filename }) => Response.json({ filename }),
+  forvoDownloads = () => ({ kind: 'found', downloads: [] }),
+  forvoFile = () => new Response('mp3 bytes'),
 }: ServerReplies = {}) {
   const requests: ServerRequest[] = [];
   vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
@@ -53,6 +58,13 @@ export function stubServer({
     }
     if (input === '/api/anki/add') return new Response(null, { status: 204 });
     if (input === '/api/anki/media') return storeMedia(body);
+    const url = new URL(input, 'http://127.0.0.1');
+    if (url.pathname === '/api/forvo/downloads') {
+      return Response.json(forvoDownloads(url.searchParams.get('word') ?? ''));
+    }
+    if (url.pathname === '/api/forvo/downloads/file') {
+      return forvoFile(url.searchParams.get('filename') ?? '');
+    }
     return new Response(null, { status: 404 });
   });
   return requests;
