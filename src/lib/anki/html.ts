@@ -17,13 +17,16 @@ function decodeHtmlEntity(wholeEntity: string, entityBody: string): string {
   return codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : wholeEntity;
 }
 
+const LINE_BREAK = /<br\s*\/?>/gi;
+
+/** `text` with each entity it holds as the character it stands for. */
+export function decodeHtmlEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, decodeHtmlEntity);
+}
+
 /** The text an Anki field shows, from the HTML Anki stores. */
 export function ankiFieldHtmlToText(html: string): string {
-  return html
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, decodeHtmlEntity)
-    .trim();
+  return decodeHtmlEntities(html.replace(LINE_BREAK, ' ').replace(/<[^>]*>/g, '')).trim();
 }
 
 /** Plain text as Anki field HTML, so a `<` or `&` the human typed shows as itself. */
@@ -34,4 +37,9 @@ export function textToAnkiFieldHtml(text: string): string {
 /** A textarea's value as Anki field HTML: the human may type HTML, and a new line is a `<br>`. */
 export function textareaToAnkiFieldHtml(value: string): string {
   return value.replace(/\r?\n/g, '<br>');
+}
+
+/** Anki field HTML as a textarea shows it, undoing `textareaToAnkiFieldHtml`. */
+export function ankiFieldHtmlToTextarea(html: string): string {
+  return html.replace(LINE_BREAK, '\n');
 }

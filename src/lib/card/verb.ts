@@ -47,3 +47,18 @@ export function composeVerbFields(word: string, verb: VerbInputs): FieldValues {
     ]),
   };
 }
+
+/** A verb's inputs from the fields `composeVerbFields` wrote, and its preposition, read apart. */
+export function verbDraftFrom({
+  binyan,
+  preposition,
+  forms,
+}: Pick<VerbDraft, 'binyan' | 'preposition'> & { forms: ReadonlyMap<string, string> }): VerbDraft {
+  return {
+    binyan,
+    preposition,
+    past: forms.get('past') ?? '',
+    present: forms.get('pres') ?? '',
+    future: forms.get('fut') ?? '',
+  };
+}

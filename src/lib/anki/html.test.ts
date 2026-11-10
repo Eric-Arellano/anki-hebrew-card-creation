@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { ankiFieldHtmlToText, textareaToAnkiFieldHtml, textToAnkiFieldHtml } from './html.ts';
+import {
+  ankiFieldHtmlToText,
+  ankiFieldHtmlToTextarea,
+  textareaToAnkiFieldHtml,
+  textToAnkiFieldHtml,
+} from './html.ts';
 
 describe('ankiFieldHtmlToText', () => {
   test('turns line breaks into spaces and drops other tags', () => {
@@ -45,5 +50,18 @@ describe('textareaToAnkiFieldHtml', () => {
 
   test('keeps the HTML the human typed', () => {
     expect(textareaToAnkiFieldHtml('<b>bold</b> &amp; more')).toBe('<b>bold</b> &amp; more');
+  });
+});
+
+describe('ankiFieldHtmlToTextarea', () => {
+  test('turns each line break into a new line, and keeps the rest of the HTML', () => {
+    expect(ankiFieldHtmlToTextarea('f: גְּדוֹלָה<br>m.pl:&nbsp;<b>גְּדוֹלִים</b><BR />f.pl')).toBe(
+      'f: גְּדוֹלָה\nm.pl:&nbsp;<b>גְּדוֹלִים</b>\nf.pl',
+    );
+  });
+
+  test('round-trips through textareaToAnkiFieldHtml', () => {
+    const html = '<b>bold</b> &amp; more<br>next';
+    expect(textareaToAnkiFieldHtml(ankiFieldHtmlToTextarea(html))).toBe(html);
   });
 });
