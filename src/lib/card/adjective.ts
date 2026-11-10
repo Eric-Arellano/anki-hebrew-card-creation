@@ -23,3 +23,12 @@ export function composeAdjectiveFields(word: string, adjective: AdjectiveInputs)
     ]),
   };
 }
+
+/** An adjective's inputs from the `Forms` that `composeAdjectiveFields` wrote. */
+export function adjectiveInputsFrom(forms: ReadonlyMap<string, string>): AdjectiveInputs {
+  return {
+    feminine: forms.get('f') ?? '',
+    masculinePlural: forms.get('m.pl') ?? '',
+    femininePlural: forms.get('f.pl') ?? '',
+  };
+}

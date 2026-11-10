@@ -13,6 +13,11 @@ export function productionTov({
   return gender === 'f' ? 'טובה' : 'טוב';
 }
 
+/** Whether `tov` is what `productionTov` gives a noun that is only plural. */
+export function isPluralTov(tov: string): boolean {
+  return tov === 'טובים' || tov === 'טובות';
+}
+
 /**
  * A variant answer for the pointed `plural`, which agrees with the noun's grammatical gender, not
  * with the plural's suffix: “אָבוֹת טוֹבִים”, “שָׁנִים טוֹבוֹת”. An `mf` noun can take either.

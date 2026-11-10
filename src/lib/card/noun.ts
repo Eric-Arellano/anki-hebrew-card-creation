@@ -1,6 +1,6 @@
 import { type FormLine, formsHtml } from '#lib/card/forms.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
-import { productionTov } from '#lib/hebrew/tov.ts';
+import { isPluralTov, productionTov } from '#lib/hebrew/tov.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 
 // The forms are pointed, as the human copies them from a dictionary, and any may be blank. A noun
@@ -49,6 +49,28 @@ export function composeNounFields(word: string, noun: NounInputs): FieldValues {
     productionAnswer: `${word} ${productionTov(noun)}`,
     gender: noun.gender,
     forms: formsHtml(formLines(noun)),
+  };
+}
+
+/**
+ * A noun's inputs from the fields `composeNounFields` wrote, where `tov` is what its production
+ * answer holds after the word.
+ */
+export function nounDraftFrom({
+  gender,
+  forms,
+  tov,
+}: {
+  gender: Gender | undefined;
+  forms: ReadonlyMap<string, string>;
+  tov: string | undefined;
+}): NounDraft {
+  return {
+    gender,
+    pluralOnly: tov !== undefined && isPluralTov(tov),
+    plural: forms.get('pl') ?? forms.get('m.pl') ?? '',
+    feminine: forms.get('f') ?? '',
+    femininePlural: forms.get('f.pl') ?? '',
   };
 }
 

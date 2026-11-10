@@ -1,4 +1,4 @@
-import { textToAnkiFieldHtml } from '#lib/anki/html.ts';
+import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
 import { composeAdjectiveFields } from '#lib/card/adjective.ts';
 import type { CardInputs, Definitions } from '#lib/card/inputs.ts';
 import { composeNounFields } from '#lib/card/noun.ts';
@@ -38,4 +38,16 @@ function definitionsHtml(definitions: Definitions): string {
   return definitions
     .map((definition, index) => `${index + 1}. ${textToAnkiFieldHtml(definition)}`)
     .join('<br>');
+}
+
+/** Each meaning in a `Definitions` field, one a line, without the numbers `definitionsHtml` adds. */
+export function definitionsFromHtml(html: string): string[] {
+  const lines = html
+    .split(/<br\s*\/?>/i)
+    .map(ankiFieldHtmlToText)
+    .filter((line) => line !== '');
+  // Only a list numbered from 1 is one `definitionsHtml` wrote, so a meaning like `1. Kings` stays.
+  const numbered =
+    lines.length > 1 && lines.every((line, index) => line.startsWith(`${index + 1}. `));
+  return numbered ? lines.map((line) => line.replace(/^\d+\. /, '')) : lines;
 }

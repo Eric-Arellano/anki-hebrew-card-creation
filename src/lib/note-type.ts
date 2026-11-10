@@ -166,6 +166,16 @@ export function toAnkiFields(
   return Object.fromEntries(FIELD_KEYS.map((key) => [FIELDS[key].name, valueFor(key) ?? '']));
 }
 
+/** `fields`, keyed by Anki name as `notesInfo` gives them, undoing `toAnkiFields`. */
+export function fromAnkiFields(fields: Readonly<Record<string, string>>): FieldValues {
+  return Object.fromEntries(
+    FIELD_KEYS.flatMap((key) => {
+      const { name } = FIELDS[key];
+      return Object.hasOwn(fields, name) ? [[key, fields[name]]] : [];
+    }),
+  );
+}
+
 export type ShownFieldGroup = { group: FieldGroup; fields: FieldKey[] };
 
 /** The fields the editor shows for `partOfSpeech`, by group, each in `liveFieldNames`' order. */
