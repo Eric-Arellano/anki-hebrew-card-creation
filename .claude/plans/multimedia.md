@@ -4,8 +4,8 @@
 
 The goal is to run the deck from this app, with Anki's window at most a final click. The editor
 attaches and stores a word's `Images`, each variant prompt's images and its `Audio`, so a new note
-needs nothing typed in Anki's Add window. What is left here is finding the audio, and showing the
-media a note already has. A follow-up plan will update existing notes, and it builds on this one.
+needs nothing typed in Anki's Add window, and finds a pronunciation the human downloaded from
+Forvo. What is left here is showing the media a note already has. A follow-up plan will update existing notes, and it builds on this one.
 
 The human still finds the media, and still clicks Add.
 
@@ -29,7 +29,7 @@ opens the Add window as it does today.
   bytes get a new one, like the deck's `pronunciation_he_מכונית-adf6a331….mp3`, so fields must use
   the name Anki returns, never the one requested. It accepts only `.jpg` and `.mp3`, because card
   webviews load from the media folder and those are all the editor sends.
-- **`retrieveMediaFile` is the one action still to join,** in PR 2. Nothing creates, edits or
+- **`retrieveMediaFile` is the one action still to join,** in PR 1. Nothing creates, edits or
   deletes a note. That PR updates the AGENTS.md rule, `client.ts` and `anki-guard.sh`.
 - **Files are stored at hand-off, not on attach.** Until then they are blobs in the browser, gone on
   reload like the rest of the draft, so an abandoned draft leaves nothing in Anki. Handing off twice
@@ -110,22 +110,14 @@ would have to loosen.*
 
 ### Forvo pickup
 
-After the human downloads a pronunciation, the editor finds it in Downloads. It looks when the word
-changes and whenever the tab regains focus, and only while the note has no audio.
-
-- **Match on `toComparisonKey`,** after turning `_` back into spaces and dropping a browser's
-  ` (1)`. That matches 93 of the deck's 93 filenames to their note's `Hebrew`. Three of them are
-  pointed (`מָלוֹן`), so a plain string comparison would miss them.
-- **One match attaches itself,** shown with a player and a remove button. Several become choices,
-  per Never guess. None shows nothing, and drop still works.
-- **A found file becomes an ordinary attachment.** The browser fetches it from this server and
-  hands it to `audioAttachment`, as a drop does, so storing and composing need nothing new. It is
-  stored under its name without the browser's suffix, so the suffix goes before `audioAttachment`,
-  which keeps whatever name it is given.
-- **The server reads one directory and never writes to it.** It lists names matching the pattern
-  and serves only a name from that list, so no request path ever reaches the filesystem. The
-  directory is `Downloads` under `os.homedir()`, overridable by an environment variable. macOS can
-  refuse a process access to Downloads, so `EPERM` becomes a message rather than a failure.
+After the human downloads a pronunciation, `AudioInput` finds it in Downloads, through
+`src/lib/server/forvo-downloads.ts`, which reads that one directory (or `FORVO_DOWNLOADS`), never
+writes to it, and serves only a name its own listing holds. One match attaches itself and several
+are choices; a found recording is that word's, so another word drops it, and one the human removes
+comes back as a choice rather than attaching itself again. Matching goes through
+`toComparisonKey`, since three of the deck's 93 filenames are pointed. A found file becomes an
+ordinary attachment under its name without the browser's ` (1)`, so storing and composing needed
+nothing new.
 
 *Rejected: `fs.watch` with an event stream, because the human has to come back to this tab anyway.
 A focus check finds the file just as soon, with no long-lived process, and a partial download is
@@ -152,18 +144,11 @@ making no third-party request, and handles only bytes the human brought to it.
 *Rejected: a browser extension or script that clicks Forvo's download, and scraping add-ons like
 `anki-forvo-dl`, because either is the systematic use the license rules out.*
 
-**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser before PR 1.
-Both pages answer 403 to anything else, so the license quote above comes from a search excerpt, and
-the terms themselves went unread.
+**Open:** read Forvo's [terms](https://forvo.com/terms-and-conditions/) in a browser. Both pages
+answer 403 to anything else, so the license quote above comes from a search excerpt, and the terms
+themselves went unread, though the pickup has already shipped.
 
-## PR 1 — Find Forvo downloads
-
-- A server module and two `GET` routes, for the names matching a word and for one file's bytes.
-- The focus check, choices for several matches, and dropping found audio when the word changes.
-- The key function lives in `src/lib/hebrew/`, per the Hebrew text rules.
-- The README gains what the tool reads on this machine.
-
-## PR 2 — Show the deck's own media
+## PR 1 — Show the deck's own media
 
 - `retrieveMediaFile` on the allowlist, read-only in `anki-guard.sh`. It answers `false` for a
   missing file.
@@ -201,6 +186,9 @@ the terms themselves went unread.
   with an image. The Add window shows them, Preview shows the Production front, the Listening front
   plays, Variant 1 shows its image, and Tools → Check Media reports nothing missing. Then sync and
   check the phone, and hand off the same note twice to see one set of files.
+- By hand on macOS: download a word from Forvo and come back to the tab, under `npm start` from a
+  terminal that has not yet been granted Downloads, to see the prompt, then the refusal's message
+  if it is denied.
 - By hand in the browser: copy from Google, DuckDuckGo and Image Playground, and drag from each.
   Click Images (EN) on a variant, copy there, and come back: "⌘V pastes here" should sit on that
   variant and the paste land there. jsdom can't show that a browser restores the focus on return,

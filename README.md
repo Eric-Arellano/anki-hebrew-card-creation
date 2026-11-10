@@ -45,6 +45,14 @@ says when the index is older than the file.
 The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can open Add
 windows in your Anki and add files to its media folder.
 
+## What it reads on your machine
+
+- **The dictionary** you saved in `data/`, and the index built from it.
+- **Your Downloads folder, for Forvo pronunciations.** Download a word's MP3 from Forvo, come back
+  to the tab, and the editor attaches it. It only reads the names of files that look like Forvo
+  downloads, and those files' bytes, and never writes there. Set `FORVO_DOWNLOADS` to look in
+  another folder. On macOS, the first look asks whether your terminal may read Downloads.
+
 ## What it sends over the network
 
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
