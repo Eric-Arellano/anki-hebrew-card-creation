@@ -12,13 +12,19 @@ human still makes every write, by clicking Save in the app.
 The design is for the deck this is heading to, where a loaded note is usually right. Old notes get
 no special handling: they load like any other, and the human cleans up what's wrong.
 
+**Loading tolerates anything; saving requires everything.** The goal is a deck of only valid notes,
+and the human is fixing today's violations. So any note loads, however incomplete, with each blank
+or unreadable value left unchosen, but no save, of an edit or a new note, reaches Anki until every
+required input is filled. The one gate is `stillNeeded`, the same check a new note passes today.
+
 The flow: type a word, click its note under "Already in the deck", change what needs changing, ⌘↵,
 read what will change, ⌘↵.
 
-Two facts about today's deck (103 notes, read 2026-11-01) still shape the work:
+Two facts about today's deck (104 notes, read 2026-11-10) still shape the work:
 
-- **Every note is missing a required input.** All 103 have a blank `Part of speech`, 45 blank
-  `Definitions` and 4 no image, so each one's first save asks the human to finish it.
+- **Every note is missing a required input.** 103 have a blank `Part of speech`, 45 blank
+  `Definitions` and 5 no image, so each one's first save asks the human to finish it. Every one of
+  them loads through `draftFromNote` without error.
 - **Images:** 105 across 99 notes, in six wrappers, and most with an `alt`. 89 are `.jpg`; the rest
   are `.png` (9), `.jpeg` (4), `.webp` (2) and `.JPG` (1).
 
@@ -159,9 +165,6 @@ Ships with no way to save, so the human can open notes and see how they read bef
 - Error text on `ChoiceChips`, and the `Pointed` warning, with its comparison in
   `src/lib/hebrew/normalize.ts` per the Hebrew text rules.
 - The bar refuses while a note is loaded, because Open in Anki would add a duplicate.
-- Capture a real two-image note in `tests/fixtures/anki/`, with Anki open, and test `draftFromNote`
-  and `changedFields` on it. The other fixtures already hold a labelled `Pointed` (בית), which loads
-  as it is and saves unchanged.
 
 ## PR 3 — Save an edit
 

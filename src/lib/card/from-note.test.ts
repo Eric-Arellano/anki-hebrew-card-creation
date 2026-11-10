@@ -5,7 +5,7 @@ import { type FieldKey, type PartOfSpeech, shownFieldGroups } from '#lib/note-ty
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { realNote } from '#tests/real-notes.ts';
 import { composeFields } from './compose.ts';
-import { emptyCardDraft, type MediaDraft } from './draft.ts';
+import { emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
 import { draftFromNote, type StoredMedia } from './from-note.ts';
 import { handOffFields } from './hand-off.ts';
 import { type CardInputs, type CardInputsDraft, completeInputs } from './inputs.ts';
@@ -152,6 +152,45 @@ describe('draftFromNote', () => {
         'Production answer': 'בית טוב',
         'Part of speech': 'noun',
         Gender: 'm',
+      });
+    });
+  });
+
+  describe('for a real note missing required inputs', () => {
+    const loaded = draftFromNote(realNote('כרטיס'));
+
+    test('loads what it holds', () => {
+      expect(loaded.inputs).toEqual({
+        ...emptyCardDraft().inputs,
+        word: 'כרטיס',
+        pointed: 'כַּרְטִיס',
+      });
+      expect(loaded.media.images).toHaveLength(2);
+    });
+
+    test('can’t be saved until they are filled', () => {
+      expect(completeInputs(loaded.inputs)).toBeUndefined();
+      expect(stillNeeded({ ...loaded, media: mediaDraft(loaded.media) })).toEqual([
+        'English meaning',
+        'part of speech',
+      ]);
+    });
+  });
+
+  describe('for a real note with two images, finished as a noun', () => {
+    test('changes only the inputs filled in', () => {
+      const held = realNote('דרך');
+      const finished = saved(held, (inputs) => ({
+        ...inputs,
+        definitions: ['road'],
+        partOfSpeech: 'noun',
+        noun: { ...inputs.noun, gender: 'f' },
+      }));
+      expect(changedFields(held, finished)).toEqual({
+        Definitions: 'road',
+        'Production answer': 'דרך טובה',
+        'Part of speech': 'noun',
+        Gender: 'f',
       });
     });
   });

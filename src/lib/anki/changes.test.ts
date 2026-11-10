@@ -18,8 +18,35 @@ describe('changedFields', () => {
         ['paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437.jpg'],
       ],
       ['an alt holding an entity', realField('דג', 'Images'), ['Porcupine-fish-Diodon-hystox.jpg']],
-      ['two images on two lines', '<img src="a.jpg"><br><img src="b.png">', ['a.jpg', 'b.png']],
-      ['an image in nested divs', '<div><div><img src="a.jpg"></div><br></div>', ['a.jpg']],
+      [
+        'two images on two lines',
+        realField('דרך', 'Images'),
+        ['winding-dirt-road-italy-unsplash.jpg', 'ff_49_istock-492601952_1000.jpg'],
+      ],
+      [
+        'two images side by side, one with no alt',
+        realField('ילד', 'Images'),
+        [
+          'illustration-cartoon-of-a-cute-boy-standing-and-smiling-in-colorful-and-casual-clothes-vector.jpg',
+          'paste-7d99cd0a8447a41edf80eab9f3c4951a7034b6c8.jpg',
+        ],
+      ],
+      [
+        'two images in their own divs',
+        realField('כרטיס', 'Images'),
+        [
+          'paste-2bdfe949b5c694fba9870569e3b56e8095bea0fa.jpg',
+          'movie-theater-ticket-isolated-white-background-vector-movie-popcornfestival-ticket_1137439-318.jpg',
+        ],
+      ],
+      [
+        'an image in nested divs',
+        realField('שכונה', 'Images'),
+        [
+          'paste-a3fdf5984f0fdf990de3ad910b5c7f379e227fe0.jpg',
+          'paste-2e8eb9af03728028e2141d8e0d7a01d1ebc84a74.jpg',
+        ],
+      ],
     ])('leaves out %s, written again by composition', (_, held, images) => {
       expect(changedFields({ Images: held }, { Images: imagesToAnkiFieldHtml(images) })).toEqual(
         {},
