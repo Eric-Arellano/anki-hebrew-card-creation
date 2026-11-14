@@ -131,15 +131,6 @@ out for the reason `storeMediaFile`'s `url` does.*
 - `HandOffBar` and `handOffFields` get names for what they do now.
 - The README's opening and network sections, the `client.ts` comment, and the rest of AGENTS.md.
 
-## Open
-
-- **Open:** a way to walk the unfinished notes, rather than finding each by typing its word. A blank
-  `Part of speech` is the query.
-- **Open:** a card preview in the app, since the Add window's Preview goes with it. Browse → Preview
-  still works.
-- **Open:** once the deck has roots, search for a note's root in `findExistingNotes`, so its word
-  family lands in Related. The substring search can't find למד from תלמיד.
-
 ## Verification
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file

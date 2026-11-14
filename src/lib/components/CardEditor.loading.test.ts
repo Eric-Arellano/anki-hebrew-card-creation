@@ -89,6 +89,7 @@ describe('CardEditor', () => {
                   definitions: '',
                 },
               ],
+              sameRootMatches: [],
               relatedMatches: [
                 {
                   noteId: 1,
@@ -125,6 +126,7 @@ describe('CardEditor', () => {
                     definitions: '',
                   },
                 ],
+                sameRootMatches: [],
                 relatedMatches: [],
               },
             },

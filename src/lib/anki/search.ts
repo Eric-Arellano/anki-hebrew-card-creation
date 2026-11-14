@@ -27,6 +27,11 @@ export function searchByFieldContainingKey(fieldName: string, comparisonKey: str
   return quoteSearchTerm(`${escapeInsideQuotedTerm(fieldName)}:*${wildcardPattern}*`);
 }
 
+// Without a wildcard, Anki matches the whole field, so a root never finds a longer one.
+export function searchByFieldEquals(fieldName: string, text: string): string {
+  return quoteSearchTerm(`${escapeInsideQuotedTerm(fieldName)}:${escapeInsideQuotedTerm(text)}`);
+}
+
 /** Notes any of `terms` finds. One term needs no grouping, which keeps the common query plain. */
 export function searchForAny(terms: readonly string[]): string {
   return terms.length === 1 ? (terms[0] ?? '') : `(${terms.join(' OR ')})`;

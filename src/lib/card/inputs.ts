@@ -86,9 +86,18 @@ function ifBlank(input: RequiredInput, value: string | undefined): RequiredInput
 // the human shouldn't have to work one out to save a card. Only a typed root can be mistyped, which
 // counts as missing, unless it is left over from a part of speech that showed it.
 function ifMistypedRoot({ partOfSpeech, root }: CardInputsDraft): RequiredInput[] {
-  const showsRoot =
-    partOfSpeech === 'noun' || partOfSpeech === 'verb' || partOfSpeech === 'adjective';
-  return showsRoot && root.trim() !== '' && formatRoot(root) === undefined ? ['root'] : [];
+  return showsRoot(partOfSpeech) && root.trim() !== '' && formatRoot(root) === undefined
+    ? ['root']
+    : [];
+}
+
+function showsRoot(partOfSpeech: PartOfSpeech | undefined): boolean {
+  return partOfSpeech === 'noun' || partOfSpeech === 'verb' || partOfSpeech === 'adjective';
+}
+
+/** The root `draft` will save, as `formatRoot` writes it, or `undefined` while it has none. */
+export function draftRoot({ partOfSpeech, root }: CardInputsDraft): string | undefined {
+  return showsRoot(partOfSpeech) ? formatRoot(root) : undefined;
 }
 
 /** The required inputs still blank in `draft`, in the order the editor shows them. */

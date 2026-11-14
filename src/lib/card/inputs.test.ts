@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { AdjectiveInputs } from './adjective.ts';
-import { type CardInputsDraft, completeInputs, missingInputs } from './inputs.ts';
+import { type CardInputsDraft, completeInputs, draftRoot, missingInputs } from './inputs.ts';
 import type { NounDraft } from './noun.ts';
 import type { VerbDraft } from './verb.ts';
 
@@ -272,6 +272,26 @@ describe('completeInputs', () => {
   describe('for a noun while its gender is unchosen', () => {
     test('returns nothing', () => {
       expect(completeInputs({ ...dagDraft, partOfSpeech: 'noun' })).toBeUndefined();
+    });
+  });
+});
+
+describe('draftRoot', () => {
+  describe.each(['noun', 'verb', 'adjective'] as const)('for a %s', (partOfSpeech) => {
+    test('formats the typed root', () => {
+      expect(draftRoot({ ...ledaberDraft, partOfSpeech })).toBe('ד־ב־ר');
+    });
+
+    test('has none while the root is blank or mistyped', () => {
+      expect(draftRoot({ ...ledaberDraft, partOfSpeech, root: ' ' })).toBeUndefined();
+      expect(draftRoot({ ...ledaberDraft, partOfSpeech, root: 'דִּבֵּר' })).toBeUndefined();
+    });
+  });
+
+  describe('for a part of speech that shows no root', () => {
+    test('ignores one left over from another', () => {
+      expect(draftRoot(dagDraft)).toBeUndefined();
+      expect(draftRoot({ ...dagDraft, partOfSpeech: undefined })).toBeUndefined();
     });
   });
 });

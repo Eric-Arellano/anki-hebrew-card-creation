@@ -29,7 +29,12 @@ export type ExistingNote = {
   definitions: string;
 };
 
-export type ExistingNotes = { exactMatches: ExistingNote[]; relatedMatches: ExistingNote[] };
+// Each note in one list only, the first that fits: its word, then its root, then containing the word.
+export type ExistingNotes = {
+  exactMatches: ExistingNote[];
+  sameRootMatches: ExistingNote[];
+  relatedMatches: ExistingNote[];
+};
 
 /** A note as Anki holds it, with its fields keyed by Anki name. */
 export type LoadedNote = { noteId: number; mod: number; fields: Record<string, string> };
@@ -38,9 +43,13 @@ export function fetchAnkiStatus(): Promise<AnkiStatus> {
   return getJson('/api/anki/status');
 }
 
-/** The notes that hold any of `words`. */
-export function fetchExistingNotes(words: readonly string[]): Promise<ExistingNotes> {
-  const query = words.map((word) => `word=${encodeURIComponent(word)}`).join('&');
+/** The notes that hold any of `words`, or whose root is `root`, as `formatRoot` writes it. */
+export function fetchExistingNotes(
+  words: readonly string[],
+  root: string | undefined,
+): Promise<ExistingNotes> {
+  const query = new URLSearchParams(words.map((word) => ['word', word]));
+  if (root !== undefined) query.append('root', root);
   return getJson(`/api/anki/existing?${query}`);
 }
 

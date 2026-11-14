@@ -11,6 +11,7 @@ import { afterTypingPauses } from '#lib/typing-pause.ts';
 
 let {
   words,
+  root,
   editingNoteId,
   replacesDraft,
   onopen,
@@ -18,6 +19,8 @@ let {
   // The word as typed, and once a dictionary entry is picked, its title too, which finds old notes
   // that hold a verb's past tense rather than its infinitive.
   words: string[];
+  // As `formatRoot` writes it, so the deck's word family shows up: למד finds תלמיד.
+  root: string | undefined;
   // Left out of the list, where it would report itself as already in the deck.
   editingNoteId: number | undefined;
   // Whether opening a note would lose something typed, so it asks first.
@@ -26,7 +29,8 @@ let {
 } = $props();
 
 const searchedWords = $derived(words.map((word) => word.trim()).filter((word) => word !== ''));
-const query = $derived(searchedWords.join('\n'));
+// A root alone searches nothing: the route needs a word.
+const query = $derived(searchedWords.length === 0 ? '' : [...searchedWords, root ?? ''].join('\n'));
 // `{#await}` shows only the latest promise, so an older search's reply never lands.
 const search = $derived(
   query === ''
@@ -34,21 +38,26 @@ const search = $derived(
     : afterTypingPauses(
         query,
         () => query,
-        async () => withoutEditedNote(await fetchExistingNotes(searchedWords)),
+        async () => withoutEditedNote(await fetchExistingNotes(searchedWords, root)),
       ),
 );
 let confirming: ExistingNote | undefined = $state.raw();
 let opening = $state(false);
 let openFailure: string | undefined = $state();
 
-function withoutEditedNote({ exactMatches, relatedMatches }: ExistingNotes): ExistingNotes {
+function withoutEditedNote(notes: ExistingNotes): ExistingNotes {
   function isOther(note: ExistingNote) {
     return note.noteId !== editingNoteId;
   }
   return {
-    exactMatches: exactMatches.filter(isOther),
-    relatedMatches: relatedMatches.filter(isOther),
+    exactMatches: notes.exactMatches.filter(isOther),
+    sameRootMatches: notes.sameRootMatches.filter(isOther),
+    relatedMatches: notes.relatedMatches.filter(isOther),
   };
+}
+
+function foundNone(notes: ExistingNotes): boolean {
+  return Object.values(notes).every((list) => list.length === 0);
 }
 
 function displayed(note: ExistingNote): string {
@@ -83,9 +92,15 @@ function focus(element: HTMLElement) {
 {#snippet noteList(
   label: string,
   notes: ExistingNote[],
+  labelHebrew?: string,
 )}
   {#if notes.length > 0}
-    <p class="mb-2 font-medium">{label}</p>
+    <p class="mb-2 font-medium">
+      {label}
+      {#if labelHebrew !== undefined}
+        <bdi lang="he">{labelHebrew}</bdi>
+      {/if}
+    </p>
     <ul class="grid gap-2 sm:grid-cols-2">
       {#each notes as note (note.noteId)}
         <li class="grid">
@@ -123,7 +138,7 @@ function focus(element: HTMLElement) {
     {:then notes}
       {#if notes === undefined}
         {@render searching()}
-      {:else if notes.exactMatches.length === 0 && notes.relatedMatches.length === 0}
+      {:else if foundNone(notes)}
         <!-- While editing, the note itself was found, so the word is in the deck after all. -->
         {#if editingNoteId === undefined}
           <p class="text-sm text-gray-500">Not in the deck yet.</p>
@@ -137,6 +152,8 @@ function focus(element: HTMLElement) {
           ]}
         >
           {@render noteList('Already in your deck. Edit it?', notes.exactMatches)}
+          <!-- Its own list, since nothing in the word itself says why תלמיד is here for למד. -->
+          {@render noteList('Same root', notes.sameRootMatches, root)}
           {@render noteList(
             found ? 'Related notes' : 'Related notes in your deck',
             notes.relatedMatches,

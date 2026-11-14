@@ -289,6 +289,7 @@ describe('CardEditor', () => {
                 definitions: '',
               },
             ],
+            sameRootMatches: [],
             relatedMatches: [],
           },
         });
@@ -304,6 +305,7 @@ describe('CardEditor', () => {
         await renderConnectedEditor({
           existing: {
             exactMatches: [],
+            sameRootMatches: [],
             relatedMatches: [
               {
                 noteId: 1752426864218,
@@ -319,6 +321,35 @@ describe('CardEditor', () => {
         const check = screen.getByRole('region', { name: 'Already in the deck' });
         expect(await within(check).findByText('Related notes in your deck')).toBeTruthy();
         expect(within(check).queryByText('Already in your deck. Edit it?')).toBeNull();
+      });
+    });
+
+    describe('when notes share the root', () => {
+      test('lists them under the root', async () => {
+        const requests = await renderConnectedEditor({
+          existing: {
+            exactMatches: [],
+            sameRootMatches: [
+              {
+                noteId: 1752427043636,
+                unpointed: 'בית ספר',
+                pointed: 'בֵּית סֵפֶר',
+                partOfSpeech: '',
+                definitions: 'school',
+              },
+            ],
+            relatedMatches: [],
+          },
+        });
+        await typeInto(input('Hebrew word, without niqqud'), 'ספר');
+        await choosePartOfSpeech('Noun');
+        await typeInto(input('Root, like דבר or ד.ב.ר'), 'ס.פ.ר');
+        const check = screen.getByRole('region', { name: 'Already in the deck' });
+        expect((await within(check).findByText('Same root')).textContent).toContain('ס־פ־ר');
+        expect(within(check).getByRole('button', { name: /בֵּית סֵפֶר/ })).toBeTruthy();
+        expect(requests.map((request) => request.path)).toContain(
+          `/api/anki/existing?word=${encodeURIComponent('ספר')}&root=${encodeURIComponent('ס־פ־ר')}`,
+        );
       });
     });
 
