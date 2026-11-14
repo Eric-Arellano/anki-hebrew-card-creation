@@ -171,7 +171,7 @@ export function fromAnkiFields(fields: Readonly<Record<string, string>>): FieldV
   );
 }
 
-export type ShownFieldGroup = { group: FieldGroup; fields: FieldKey[] };
+type ShownFieldGroup = { group: FieldGroup; fields: FieldKey[] };
 
 /** The fields the editor shows for `partOfSpeech`, by group, each in `liveFieldNames`' order. */
 export function shownFieldGroups(

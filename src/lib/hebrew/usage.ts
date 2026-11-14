@@ -17,7 +17,7 @@ const HEBREW_WORD = new RegExp(
   'g',
 );
 
-export type TextRange = { start: number; end: number };
+type TextRange = { start: number; end: number };
 
 type Word = TextRange & { key: string };
 

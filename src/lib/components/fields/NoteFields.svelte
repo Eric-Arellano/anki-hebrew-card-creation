@@ -2,7 +2,7 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import type { Suggestions } from '#lib/api/ai.ts';
 import type { SameMeaningNote } from '#lib/api/anki.ts';
-import { attachmentsChange, textChange } from '#lib/card/change.ts';
+import { attachmentsChange, textChange } from '#lib/card/changed-from.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
 import type { Example } from '#lib/card/examples.ts';
 import { fieldDisplay } from '#lib/field-help.ts';

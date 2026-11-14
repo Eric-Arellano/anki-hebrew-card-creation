@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { attachmentsChange, listChange, removedRows, textChange } from './change.ts';
+import { attachmentsChange, listChange, removedRows, textChange } from './changed-from.ts';
 
 describe('textChange', () => {
   test('finds nothing to compare without a held value', () => {

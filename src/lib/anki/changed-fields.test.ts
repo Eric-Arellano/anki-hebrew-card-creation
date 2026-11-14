@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { realField } from '#tests/real-notes.ts';
-import { changedFields } from './changes.ts';
+import { changedFields } from './changed-fields.ts';
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from './html.ts';
 import { imagesToAnkiFieldHtml } from './media.ts';
 

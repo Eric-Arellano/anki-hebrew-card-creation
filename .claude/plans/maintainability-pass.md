@@ -4,9 +4,9 @@
 
 The UI revamp landed fast, and it left names and folders describing the editor as it used to be.
 `components/forms/` renders the Grammar section, `NoteFields` renders one field group,
-`ExistingNotesPanel` and `DictionaryPanel` are no longer panels, and `card/change.ts` sits beside
-`anki/changes.ts` with an unrelated job. Pure logic about Claude's suggestions grew inside three
-components, where only DOM tests reach it.
+`ExistingNotesPanel` and `DictionaryPanel` are no longer panels, and `card/examples.ts` gathers
+forms that have nothing to do with the `Examples` field. Pure logic about Claude's suggestions grew
+inside three components, where only DOM tests reach it.
 
 This pass changes no behaviour. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
@@ -14,7 +14,7 @@ This pass changes no behaviour. Each PR is a prefactor: a reviewer should be abl
 Two pieces of work are still to come: the Claude correctness check and the verb revamp
 (`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet). Neither should wait on
 this pass, and the order among these PRs is loose. When the verb plan is adopted, its paths need
-updating for PR 2 and PR 4. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
+updating for PR 1 and PR 3. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
 `fields/SuggestButton.svelte`, and `suggestBlocker` in `CardEditor.svelte`.
 
 ## Decisions
@@ -41,34 +41,7 @@ updating for PR 2 and PR 4. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceC
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: Rename the `lib/` modules whose names collide or mislead
-
-Moves and renames, then import updates. No logic changes.
-
-- `card/change.ts` → `card/changed-from.ts`, after `ui/ChangedFrom.svelte`, which renders its
-  `Change`. Today it reads as a sibling of `anki/changes.ts`.
-- `anki/changes.ts` → `anki/changed-fields.ts`, after its one export, `changedFields`, the save
-  diff.
-- `anki/status.ts` (`fieldOrder`, `ankiStatusProblem`) folds into `api/anki.ts` beside the
-  `AnkiStatus` it reads. Its only importer is `CardEditor.svelte`. It isn't one of Anki's formats,
-  and it shares a basename with `server/anki/status.ts`, which does the opposite job. The test
-  moves into a new `api/anki.test.ts`.
-- `hebrew/tov.ts` → `card/parts-of-speech/tov.ts` (and its test). It holds deck conventions
-  ("the deck's convention gives an `mf` noun the masculine"), not facts about Hebrew text. Its
-  importers are `noun.ts` and `checks/plural-hints.ts`.
-- Unexport the types nothing else imports:
-  - `Size` (`media/image.ts`)
-  - `TextRange` (`hebrew/usage.ts`)
-  - `PluralHint` (`checks/plural-hints.ts`)
-  - `NoteTypeStatus` (`api/anki.ts`)
-  - `DictionaryAdjective` and `DictionaryVerb` (`api/dictionary.ts`)
-  - `ShownFieldGroup` (`note-type.ts`)
-  - `TextPart` (`field-help.ts`)
-  - `Link` (`links.ts`)
-
-  Re-grep each one first.
-
-## PR 2: One home for the server's HTTP errors, and a clearer dictionary index
+## PR 1: One home for the server's HTTP errors, and a clearer dictionary index
 
 - `server/http.ts` → `server/route-errors.ts`, so it no longer shares a name with `api/http.ts`.
   It gains `withAiErrorsAs502`, replacing the try/catch copied into
@@ -94,7 +67,7 @@ Moves and renames, then import updates. No logic changes.
   - Fix the drifted copy of the gender codes at `source.ts:68`: point at `convert.ts`, which has
     the full list.
 
-## PR 3: Move form gathering out of `card/examples.ts`
+## PR 2: Move form gathering out of `card/examples.ts`
 
 The bottom half of `card/examples.ts` gathers a word's labelled forms: `LabeledForm`,
 `labeledForms`, `formsFieldLines`, `allLabeledForms` and `wordUsage`. It is not about the
@@ -109,7 +82,7 @@ Merge them only if the existing tests show they agree on every input each one se
 add one line on each saying why they differ. Move `wordUsage`'s rationale paragraph out of its
 doc comment, onto the line it explains.
 
-## PR 4: Component directories follow the editor's sections
+## PR 3: Component directories follow the editor's sections
 
 Renames and moves first (`git mv`), then imports and test queries.
 
@@ -136,7 +109,7 @@ Renames and moves first (`git mv`), then imports and test queries.
     Move it there.
 - Run `svelte-autofixer` on every moved file.
 
-## PR 5: Claude's suggestions, as pure functions with unit tests
+## PR 4: Claude's suggestions, as pure functions with unit tests
 
 A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
 
@@ -144,12 +117,12 @@ A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
   branching that is tested only through the DOM today; the second is the inline `SuggestRequest`.
 - `filledBlanks(suggestions, edits, examples)` from `SuggestButton.svelte`'s `ask`: which hints
   and examples a reply fills, given that typing during the call wins.
-- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 4).
+- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 3).
 
 The components keep the state and the calls. Their DOM tests stay as integration tests, but drop
 any case that the unit tests now cover exhaustively.
 
-## PR 6: One list-row algebra for meanings and examples, and one `Held` type
+## PR 5: One list-row algebra for meanings and examples, and one `Held` type
 
 - `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
   `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
@@ -159,7 +132,7 @@ any case that the unit tests now cover exhaustively.
   replaces the nine copies of that comment on `held` props. `SaveBar`'s and `CardEditor`'s `held`
   is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
 
-## PR 7: Shared fixtures for the editor's tests
+## PR 6: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -174,7 +147,7 @@ any case that the unit tests now cover exhaustively.
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 8: Shared fakes for the server's tests
+## PR 7: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.
@@ -189,7 +162,7 @@ any case that the unit tests now cover exhaustively.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   touched until it reports nothing. No test reaches the network, a real Anki or the real API.
-- PRs 1–4: after the move, `grep -rn` for each old module and component name across `src/`,
+- PRs 1–3: after the move, `grep -rn` for each old module and component name across `src/`,
   `tests/`, `scripts/`, `AGENTS.md` and `README.md` comes back empty.
-- PR 4, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
+- PR 3, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
   as before. Nothing is clicked that writes to Anki or calls Claude.

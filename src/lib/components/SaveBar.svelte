@@ -1,5 +1,5 @@
 <script lang="ts">
-import { changedFields } from '#lib/anki/changes.ts';
+import { changedFields } from '#lib/anki/changed-fields.ts';
 import type { CheckRequest } from '#lib/api/ai.ts';
 import { addNote, type LoadedNote, saveNote, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage, RouteError } from '#lib/api/http.ts';

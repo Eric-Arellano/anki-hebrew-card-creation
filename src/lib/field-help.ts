@@ -189,7 +189,7 @@ export function fieldDisplay(
   };
 }
 
-export type TextPart = { text: string; quoted: boolean };
+type TextPart = { text: string; quoted: boolean };
 
 /** `text` split around its “quoted” examples, without the quote marks. */
 export function quotedParts(text: string): TextPart[] {

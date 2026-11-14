@@ -1,6 +1,6 @@
 import { type FormLine, formsHtml } from '#lib/card/parts-of-speech/forms.ts';
+import { isPluralTov, productionTov } from '#lib/card/parts-of-speech/tov.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
-import { isPluralTov, productionTov } from '#lib/hebrew/tov.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 
 // The forms are pointed, as the human copies them from a dictionary, and any may be blank. A noun

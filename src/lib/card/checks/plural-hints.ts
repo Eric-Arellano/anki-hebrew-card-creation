@@ -1,10 +1,10 @@
 import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
+import { pluralVariantAnswers } from '#lib/card/parts-of-speech/tov.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
 import { type IrregularPlural, irregularPlural } from '#lib/hebrew/plural.ts';
-import { pluralVariantAnswers } from '#lib/hebrew/tov.ts';
 
-export type PluralHint = {
+type PluralHint = {
   plural: string;
   reason: IrregularPlural;
   // What a variant card for it could ask for, pointed: `שֻׁלְחָנוֹת טוֹבִים`.

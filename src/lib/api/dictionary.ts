@@ -15,7 +15,7 @@ export type DictionaryNoun = {
   femininePlurals: string[];
 };
 
-export type DictionaryAdjective = {
+type DictionaryAdjective = {
   feminineSingulars: string[];
   masculinePlurals: string[];
   femininePlurals: string[];
@@ -25,7 +25,7 @@ export type DictionaryAdjective = {
 // where the source gives none.
 export type DictionaryInfinitive = { pointed: string; unpointed?: string };
 
-export type DictionaryVerb = {
+type DictionaryVerb = {
   // `undefined` for a binyan the deck doesn't have, like hitpu'al.
   binyan: Binyan | undefined;
   infinitives: DictionaryInfinitive[];
