@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { vi } from 'vitest';
-import type { AiStatus, SuggestRequest } from '#lib/api/ai.ts';
+import type { AiStatus, CheckRequest, SuggestRequest } from '#lib/api/ai.ts';
 import type { AnkiStatus, ExistingNotes, LoadedNote, SameMeaningNote } from '#lib/api/anki.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { ForvoDownloads } from '#lib/api/forvo.ts';
@@ -58,7 +58,12 @@ export type ServerReplies = {
   // By default, the server has no Anthropic API key.
   ai?: AiStatus;
   suggest?: (body: SuggestRequest) => Response | Promise<Response>;
+  check?: (body: CheckRequest, signal: AbortSignal | undefined) => Response | Promise<Response>;
 };
+
+function noKey() {
+  return Response.json({ message: 'Set ANTHROPIC_API_KEY to use Claude.' }, { status: 503 });
+}
 
 /** Our server, answering the editor's API calls, and recording every request. */
 export function stubServer({
@@ -73,8 +78,8 @@ export function stubServer({
   forvoDownloads = () => ({ kind: 'found', downloads: [] }),
   forvoFile = () => new Response('mp3 bytes'),
   ai = { available: false },
-  suggest = () =>
-    Response.json({ message: 'Set ANTHROPIC_API_KEY to use Claude.' }, { status: 503 }),
+  suggest = noKey,
+  check = noKey,
 }: ServerReplies = {}) {
   const requests: ServerRequest[] = [];
   const held = [...notes];
@@ -104,6 +109,7 @@ export function stubServer({
     if (input === '/api/anki/media') return storeMedia(body);
     if (input === '/api/ai/status') return Response.json(ai);
     if (input === '/api/ai/suggest') return suggest(body);
+    if (input === '/api/ai/check') return check(body, init?.signal ?? undefined);
     const url = new URL(input, 'http://127.0.0.1');
     if (url.pathname === '/api/forvo/downloads') {
       return Response.json(forvoDownloads(url.searchParams.get('word') ?? ''));
