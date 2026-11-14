@@ -2,12 +2,9 @@
 // writes to it, and it serves only a name from that directory's own listing, so no request path
 // ever reaches the filesystem.
 import { readdir, readFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { ForvoDownload, ForvoDownloads } from '#lib/api/forvo.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
-
-export const DOWNLOADS_DIRECTORY = process.env.FORVO_DOWNLOADS ?? join(homedir(), 'Downloads');
 
 // Forvo names a download `pronunciation_he_<word>.mp3`, with `_` for each space, and a browser
 // saving a name again adds ` (1)`. A download still in progress, `….mp3.crdownload`, never matches.

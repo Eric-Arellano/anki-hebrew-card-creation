@@ -7,8 +7,6 @@ import type { ClaudeMessages } from './client.ts';
 import type { Homograph } from './homographs.ts';
 import { suggest, suggestionRequest, toSuggestions } from './suggest.ts';
 
-vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
-
 const sefer: SuggestRequest = {
   word: 'ספר',
   pointed: 'סֵפֶר',

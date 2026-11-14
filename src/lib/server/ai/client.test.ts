@@ -3,8 +3,6 @@ import { describe, expect, type Mock, test, vi } from 'vitest';
 import { z } from 'zod';
 import { AiError, askForStructured, type ClaudeMessages } from './client.ts';
 
-vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
-
 const request = {
   system: 'Answer with the word’s gender.',
   user: 'ספר',

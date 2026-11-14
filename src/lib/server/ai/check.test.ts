@@ -11,8 +11,6 @@ import { checkNote, checkRequest, fieldTexts, toNoteCheck } from './check.ts';
 import type { ClaudeMessages } from './client.ts';
 import type { Homograph } from './homographs.ts';
 
-vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
-
 // כלב as Anki holds it, with an image and audio, and an image in its variant's prompt.
 const kelev: CheckRequest = { partOfSpeech: 'noun', fields: fromAnkiFields(realNote('כלב')) };
 

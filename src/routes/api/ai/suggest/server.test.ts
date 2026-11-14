@@ -6,8 +6,6 @@ import { buildFixtureIndex } from '#tests/dictionary-index.ts';
 import suggestSefer from '#tests/fixtures/claude/suggest-sefer.json' with { type: 'json' };
 import { _suggest } from './+server.ts';
 
-vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
-
 let index: Awaited<ReturnType<typeof buildFixtureIndex>>;
 
 beforeAll(async () => {
