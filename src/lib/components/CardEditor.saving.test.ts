@@ -61,7 +61,7 @@ describe('CardEditor', () => {
       ]);
     });
 
-    test('writes each example on its own line, its Hebrew in a <bdi>', async () => {
+    test('writes each example on its own line, its Hebrew in a <bdi> and its English in a <span>', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await skipImage();
@@ -74,7 +74,8 @@ describe('CardEditor', () => {
         fields: {
           ...dagFields,
           Examples:
-            '<bdi lang="he">איפה הדג?</bdi> (Where is the fish?)<br>' +
+            '<bdi lang="he">איפה הדג?</bdi><span class="sep"> — </span>' +
+            '<span lang="en">Where is the fish?</span><br>' +
             '<bdi lang="he">דג &amp; צ׳יפס.</bdi>',
         },
         allowDuplicate: false,

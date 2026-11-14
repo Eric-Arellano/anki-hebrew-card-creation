@@ -15,9 +15,9 @@ row, with a Hebrew input and an English input (`ExamplesInput.svelte`), held as
 
 Decided with the user:
 
-- **Each line is stored as `<bdi lang="he">Hebrew.</bdi> (English.)`**, joined by `<br>`. Anki
-  shows the field left to right (see `QuotedText.svelte`'s comment), so the `.`, `?` or `!` ending
-  the Hebrew would jump to the wrong side of the line; `<bdi>` keeps it with its sentence.
+- **Each line keeps its Hebrew in a `<bdi lang="he">`** and its English in a separate element,
+  as `src/lib/card/examples.ts`'s header shows, so the note type's styling can set the English
+  under the Hebrew, without parentheses.
 - **Every sentence ends in punctuation**, in both languages.
 - **One example per meaning, in the order of Definitions**, and the English shows which sense
   each one uses. Nothing in the data model or in Anki links an example to its meaning.
@@ -126,9 +126,8 @@ machine still holds.
 
 - After each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` clean on every
   touched `.svelte` file. Run `uptime` first if anything looks slow.
-- Don't click Save or Add to deck without asking. With the user's go-ahead, save one test note,
-  then confirm in Anki that each `<bdi>` line renders with the punctuation on the left of its
-  Hebrew (not yet checked in Anki itself), and (PR 2) that the word is bold.
+- PR 2: don't click Save or Add to deck without asking. With the user's go-ahead, save one test
+  note, then confirm in Anki that the word is bold.
 - PR 1: with the user's go-ahead only (each call costs money), click Suggest on רכבת, a verb, and
   a word with two meanings like כרטיס. Check that the sentences are full and punctuated, use the
   listed forms in varied ways, and give one per meaning.
