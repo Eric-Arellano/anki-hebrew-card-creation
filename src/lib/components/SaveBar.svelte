@@ -16,7 +16,6 @@ let {
   onloadagain,
   ankiBlocker,
   inputsBlocker,
-  aiAvailable,
   partOfSpeech,
 }: {
   // Each file the note will hold that Anki doesn't yet, once.
@@ -37,15 +36,13 @@ let {
   ankiBlocker: string | undefined;
   // Which inputs are still blank, spelled out in the bar.
   inputsBlocker: string | undefined;
-  // Whether the server has an Anthropic API key, so the review can have Claude check the note.
-  aiAvailable: boolean;
   partOfSpeech: PartOfSpeech | undefined;
 } = $props();
 
 type Saving =
   | { kind: 'idle' }
-  // `check` is the note as Claude is asked to check it, absent without a key.
-  | { kind: 'reviewing'; check?: CheckRequest }
+  // `check` is the note as Claude is asked to check it.
+  | { kind: 'reviewing'; check: CheckRequest }
   // A check the human asked for outside a review, which saves nothing.
   | { kind: 'checked'; check: CheckRequest }
   | { kind: 'sending' }
@@ -71,21 +68,20 @@ const blocker = $derived(
     (held !== undefined && Object.keys(changes).length === 0 ? NOTHING_CHANGED : undefined),
 );
 
-const checks = $derived(aiAvailable && partOfSpeech !== undefined);
+const checks = $derived(partOfSpeech !== undefined);
 
 function noteToCheck(): CheckRequest | undefined {
-  return partOfSpeech !== undefined && aiAvailable
-    ? { partOfSpeech, fields: fromAnkiFields(fieldsWith(unstored)) }
-    : undefined;
+  return partOfSpeech === undefined
+    ? undefined
+    : { partOfSpeech, fields: fromAnkiFields(fieldsWith(unstored)) };
 }
 
-// A save overwrites the note, so it shows what will change first. A new note overwrites nothing,
-// so it is reviewed only when Claude can check it.
+// Every add and save is reviewed, so Claude checks the note and a save shows what it will change.
+// The part of speech is a required input, so a note without a blocker always has a check.
 function submit() {
   if (blocker !== undefined || saving.kind === 'sending') return;
   const check = noteToCheck();
-  if (held === undefined && check === undefined) add({ allowDuplicate: false });
-  else saving = { kind: 'reviewing', check };
+  if (check !== undefined) saving = { kind: 'reviewing', check };
 }
 
 // Even when nothing changed, so a finished note can be checked again.
@@ -201,9 +197,7 @@ function focus(element: HTMLElement) {
         {/each}
       </dl>
     {/if}
-    {#if saving.check !== undefined}
-      <ClaudeCheck request={saving.check} />
-    {/if}
+    <ClaudeCheck request={saving.check} />
     <!-- Focused, so the Cmd+Enter that opened this step is followed by a deliberate second one. -->
     <button
       type="button"
@@ -224,11 +218,7 @@ function focus(element: HTMLElement) {
       title={blocker}
       onclick={submit}
     >
-      {#if held === undefined}
-        {checks ? 'Check and add' : 'Add to deck'}
-      {:else}
-        {checks ? 'Check and save' : 'Save'}
-      {/if}
+      {held === undefined ? 'Check and add' : 'Check and save'}
     </button>
     <kbd>⌘↵</kbd>
     {#if checks}

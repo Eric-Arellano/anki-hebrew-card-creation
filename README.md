@@ -19,6 +19,7 @@ It suggests a variant card for an irregular plural, and composes every productio
 - [Anki](https://apps.ankiweb.net/) desktop, running while you use the tool.
 - The [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on.
 - [Node.js](https://nodejs.org/) 24 or newer.
+- An Anthropic API key, set up as in [Claude](#claude).
 
 ## Setup and running
 
@@ -43,13 +44,13 @@ npm start        # http://127.0.0.1:3000
 To pick up a newer Wiktionary, download the file again and rerun `npm run build-index`. The editor
 says when the index is older than the file.
 
-### Claude (optional)
+### Claude
 
-Without an API key, everything above works and nothing reaches Anthropic. With one, Suggest fills
-in the examples and hints, and the first ⌘↵ shows Claude's check of the note before the second one
-saves it, whether or not Claude has answered. Check only checks a note without saving it. To set it up, create an API key in the
-[Claude Console](https://platform.claude.com/), set a monthly spend limit there, and put the key in
-a `.env` file at the top of this folder, which git ignores:
+The server won't start without an Anthropic API key. Suggest fills in the examples and hints, and
+the first ⌘↵ shows Claude's check of the note before the second one saves it, whether or not Claude
+has answered, so offline you can still save past the error. Check only checks a note without
+saving it. Create an API key in the [Claude Console](https://platform.claude.com/), set a monthly
+spend limit there, and put the key in a `.env` file at the top of this folder, which git ignores:
 
 ```sh
 ANTHROPIC_API_KEY=sk-ant-...
@@ -74,8 +75,8 @@ notes in your collection, add new ones and add files to its media folder.
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
   plus the calls that add a note, save an edited one and store images and audio in your media
   folder.
-- **To Anthropic, only with a key and only when you click:** the word you're editing and its
-  fields' text. Images, audio and the rest of your deck stay on your machine.
+- **To Anthropic, only when you ask for suggestions, a check or a save:** the word you're editing
+  and its fields' text. Images, audio and the rest of your deck stay on your machine.
 - **To other third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are
   only opened when you click them.
 

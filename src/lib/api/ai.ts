@@ -1,14 +1,7 @@
 // Our `/api/ai/` endpoints: what each answers, and the browser's one way to call each.
-import { getJson, postJsonForReply } from '#lib/api/http.ts';
+import { postJsonForReply } from '#lib/api/http.ts';
 import type { Example, LabeledForm } from '#lib/card/examples.ts';
 import type { FieldKey, FieldValues, PartOfSpeech } from '#lib/note-type.ts';
-
-// `available` is whether the server has an Anthropic API key, never the key itself.
-export type AiStatus = { available: boolean };
-
-export function fetchAiStatus(): Promise<AiStatus> {
-  return getJson('/api/ai/status');
-}
 
 // The fields the dictionary can't fill, which Claude suggests, are the examples and these hints.
 export const SUGGESTED_HINTS = [

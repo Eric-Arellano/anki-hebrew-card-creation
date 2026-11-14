@@ -1,18 +1,12 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { isHttpError } from '@sveltejs/kit';
-import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import type { ClaudeMessages } from '#lib/server/ai/client.ts';
 import { buildFixtureIndex } from '#tests/dictionary-index.ts';
 import suggestSefer from '#tests/fixtures/claude/suggest-sefer.json' with { type: 'json' };
 import { _suggest } from './+server.ts';
 
-const env = vi.hoisted(() => ({ apiKey: 'test-key' as string | undefined }));
-
-vi.mock('$app/env/private', () => ({
-  get ANTHROPIC_API_KEY() {
-    return env.apiKey;
-  },
-}));
+vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
 
 let index: Awaited<ReturnType<typeof buildFixtureIndex>>;
 
@@ -21,10 +15,6 @@ beforeAll(async () => {
 });
 
 afterAll(() => index.remove());
-
-afterEach(() => {
-  env.apiKey = 'test-key';
-});
 
 const sefer = {
   word: 'ספר',
@@ -99,16 +89,6 @@ describe('_suggest', () => {
       await expect(
         _suggest(index, suggestRequest({ ...sefer, partOfSpeech: 'pronoun' })),
       ).rejects.toSatisfy((error) => isHttpError(error, 400));
-    });
-  });
-
-  describe('without a key', () => {
-    test('answers 503 saying how to set one', async () => {
-      env.apiKey = undefined;
-      await expect(_suggest(index, suggestRequest(sefer))).rejects.toSatisfy(
-        (error) =>
-          isHttpError(error, 503) && error.body.message === 'Set ANTHROPIC_API_KEY to use Claude.',
-      );
     });
   });
 

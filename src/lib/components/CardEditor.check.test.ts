@@ -65,28 +65,21 @@ function heldReply() {
   };
 }
 
-async function renderWithKey(
-  replies: Omit<ServerReplies, 'status' | 'ai'> = {},
-  note?: LoadedNote,
-) {
-  return renderConnectedEditor(
-    { ai: { available: true }, check: () => Response.json(wrongGender), ...replies },
-    note,
-  );
+async function renderWithClaude(replies: Omit<ServerReplies, 'status'> = {}, note?: LoadedNote) {
+  return renderConnectedEditor({ check: () => Response.json(wrongGender), ...replies }, note);
 }
 
-// דג, ready to add, once the editor knows it may ask Claude.
-async function fillDagWithKey() {
+// דג, ready to add.
+async function fillDagReady() {
   await fillDag();
   await skipImage();
-  await screen.findByRole('button', { name: 'Suggest' });
 }
 
 describe('CardEditor', () => {
-  describe('checking a new note, with a key', () => {
+  describe('checking a new note', () => {
     test('reviews it on the first Cmd+Enter, sending its fields, and adds on the second', async () => {
-      const requests = await renderWithKey();
-      await fillDagWithKey();
+      const requests = await renderWithClaude();
+      await fillDagReady();
       await typeExample(1, { hebrew: 'הדג גדולה.', english: 'The fish is big.' });
       await pressCmdEnter();
       expect(screen.getByText('Adding this note to the deck.')).toBeTruthy();
@@ -118,8 +111,8 @@ describe('CardEditor', () => {
     });
 
     test('shows each finding with its field and rewrite', async () => {
-      await renderWithKey();
-      await fillDagWithKey();
+      await renderWithClaude();
+      await fillDagReady();
       await fireEvent.click(screen.getByRole('button', { name: 'Check and add' }));
       await within(checkSection()).findByText(/should be גדול/);
       expect(checkSection().textContent?.replace(/\s+/g, ' ').trim()).toBe(
@@ -129,18 +122,18 @@ describe('CardEditor', () => {
     });
 
     test('says so when Claude finds nothing', async () => {
-      await renderWithKey({ check: () => Response.json({ findings: [] }) });
-      await fillDagWithKey();
+      await renderWithClaude({ check: () => Response.json({ findings: [] }) });
+      await fillDagReady();
       await pressCmdEnter();
       expect(await screen.findByText('Claude found no problems.')).toBeTruthy();
     });
 
     describe('when the check fails', () => {
       test('says why, and still adds', async () => {
-        const requests = await renderWithKey({
+        const requests = await renderWithClaude({
           check: () => Response.json({ message: 'Claude declined to answer.' }, { status: 502 }),
         });
-        await fillDagWithKey();
+        await fillDagReady();
         await pressCmdEnter();
         expect(
           await screen.findByText("Couldn't check the note: Claude declined to answer."),
@@ -154,8 +147,8 @@ describe('CardEditor', () => {
     describe('when saved before Claude answers', () => {
       test('adds at once, and abandons the check', async () => {
         const { check, send, signal } = heldReply();
-        const requests = await renderWithKey({ check });
-        await fillDagWithKey();
+        const requests = await renderWithClaude({ check });
+        await fillDagReady();
         await pressCmdEnter();
         expect(screen.getByText('Claude is checking the note…')).toBeTruthy();
         await pressCmdEnter();
@@ -170,8 +163,8 @@ describe('CardEditor', () => {
     describe('when cancelled', () => {
       test('adds nothing, and abandons the check', async () => {
         const { check, signal } = heldReply();
-        const requests = await renderWithKey({ check });
-        await fillDagWithKey();
+        const requests = await renderWithClaude({ check });
+        await fillDagReady();
         await pressCmdEnter();
         await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
         expect(signal()?.aborted).toBe(true);
@@ -181,9 +174,9 @@ describe('CardEditor', () => {
     });
   });
 
-  describe('checking an edit, with a key', () => {
+  describe('checking an edit', () => {
     test('shows the findings beside what will change', async () => {
-      const requests = await renderWithKey({ notes: [kelev] }, kelev);
+      const requests = await renderWithClaude({ notes: [kelev] }, kelev);
       await screen.findByRole('button', { name: 'Suggest' });
       await typeInto(input('English meaning'), 'hound');
       await pressCmdEnter();
@@ -206,7 +199,7 @@ describe('CardEditor', () => {
     }
 
     test('checks a loaded note with nothing changed, saving nothing', async () => {
-      const requests = await renderWithKey({ notes: [kelev] }, kelev);
+      const requests = await renderWithClaude({ notes: [kelev] }, kelev);
       await screen.findByRole('button', { name: 'Suggest' });
       expect(
         (screen.getByRole('button', { name: 'Check and save' }) as HTMLButtonElement).disabled,
@@ -221,7 +214,7 @@ describe('CardEditor', () => {
     });
 
     test('asks again on each click', async () => {
-      const requests = await renderWithKey({ notes: [kelev] }, kelev);
+      const requests = await renderWithClaude({ notes: [kelev] }, kelev);
       await screen.findByRole('button', { name: 'Suggest' });
       await fireEvent.click(checkOnly());
       await within(checkSection()).findByText(/should be גדול/);
@@ -231,8 +224,8 @@ describe('CardEditor', () => {
     });
 
     test('gives way to the review on Cmd+Enter', async () => {
-      const requests = await renderWithKey();
-      await fillDagWithKey();
+      const requests = await renderWithClaude();
+      await fillDagReady();
       await fireEvent.click(checkOnly());
       await pressCmdEnter();
       expect(screen.getByText('Adding this note to the deck.')).toBeTruthy();

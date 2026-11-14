@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { fetchAiStatus, SUGGESTED_HINTS, type Suggestions } from '#lib/api/ai.ts';
+import { SUGGESTED_HINTS, type Suggestions } from '#lib/api/ai.ts';
 import {
   type AnkiStatus,
   fetchAnkiStatus,
@@ -84,8 +84,6 @@ let picked:
   | undefined = $state.raw();
 // `undefined` while Anki is being checked.
 let ankiStatus: AnkiStatus | undefined = $state.raw();
-// Whether the server has an Anthropic API key. Until it says so, the editor works as without one.
-let aiAvailable = $state(false);
 let suggested: Suggestions = $state.raw({});
 
 // Composition waits for every input, since each one shapes it. The fields shown depend only on
@@ -208,18 +206,7 @@ async function checkAnki() {
   }
 }
 
-async function checkAi() {
-  try {
-    aiAvailable = (await fetchAiStatus()).available;
-  } catch {
-    aiAvailable = false;
-  }
-}
-
-onMount(() => {
-  checkAnki();
-  checkAi();
-});
+onMount(checkAnki);
 </script>
 
 <main class="mx-auto max-w-240 space-y-8 p-4">
@@ -298,23 +285,21 @@ onMount(() => {
   />
 
   {#if draft.inputs.partOfSpeech !== undefined}
-    {#if aiAvailable}
-      <SuggestButton
-        request={{
-          word: draft.inputs.word.trim(),
-          pointed: draft.inputs.pointed.trim(),
-          partOfSpeech: draft.inputs.partOfSpeech,
-          definitions: meanings,
-          forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
-        }}
-        blocker={suggestBlocker}
-        edits={draft.edits}
-        examples={draft.examples}
-        onedit={setEdit}
-        onexamples={(examples) => (draft.examples = examples)}
-        bind:suggested
-      />
-    {/if}
+    <SuggestButton
+      request={{
+        word: draft.inputs.word.trim(),
+        pointed: draft.inputs.pointed.trim(),
+        partOfSpeech: draft.inputs.partOfSpeech,
+        definitions: meanings,
+        forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
+      }}
+      blocker={suggestBlocker}
+      edits={draft.edits}
+      examples={draft.examples}
+      onedit={setEdit}
+      onexamples={(examples) => (draft.examples = examples)}
+      bind:suggested
+    />
     <NoteFields
       groups={shownGroups}
       partOfSpeech={draft.inputs.partOfSpeech}
@@ -342,7 +327,6 @@ onMount(() => {
     onloadagain={loadAgain}
     ankiBlocker={ankiStatus === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={stillNeededMessage}
-    {aiAvailable}
     partOfSpeech={draft.inputs.partOfSpeech}
   />
 </main>
