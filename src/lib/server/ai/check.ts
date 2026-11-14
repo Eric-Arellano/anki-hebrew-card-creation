@@ -4,14 +4,15 @@
 import { z } from 'zod';
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import type { CheckRequest, Finding, NoteCheck } from '#lib/api/ai.ts';
+import { examplesFromHtml, isBlankExample } from '#lib/card/examples.ts';
 import { FIELD_HELP, GROUP_HELP } from '#lib/field-help.ts';
-import { hasNiqqud } from '#lib/hebrew/normalize.ts';
+import { hasNiqqud, isSamePointedText } from '#lib/hebrew/normalize.ts';
 import { FIELDS, type FieldKey, type FieldValues, type PartOfSpeech } from '#lib/note-type.ts';
 import { askForStructured, type ClaudeMessages, type StructuredRequest } from './client.ts';
 import { type Homograph, homographLines } from './homographs.ts';
 
-// What Claude reads, in the order a card shows them. `Notes` stays out, as the human's own, and so
-// does `Production answer`, which only repeats the word for the card to check a typed answer.
+// What Claude reads, in the order a card shows them. `Production answer` stays out, since it only
+// repeats the word for the card to check a typed answer.
 const SENT_FIELDS = [
   'unpointed',
   'pointed',
@@ -27,6 +28,7 @@ const SENT_FIELDS = [
   'variant2Prompt',
   'variant2Answer',
   'examples',
+  'notes',
 ] as const satisfies readonly FieldKey[];
 
 // What a finding may name: the fields the human wrote, and the two a contradiction in the
@@ -41,6 +43,7 @@ const JUDGED_FIELDS = [
   'variant2Prompt',
   'variant2Answer',
   'examples',
+  'notes',
 ] as const satisfies readonly FieldKey[];
 
 type JudgedField = (typeof JUDGED_FIELDS)[number];
@@ -51,10 +54,26 @@ const KEY_BY_NAME = new Map<string, JudgedField>(
   JUDGED_FIELDS.map((key) => [FIELDS[key].name, key]),
 );
 
+// The descriptions reach Claude with the schema, so what each field holds is said once, here.
 const answerSchema = z.object({
-  findings: z.array(
-    z.object({ field: z.enum(JUDGED_NAMES), problem: z.string(), rewrite: z.string().nullable() }),
-  ),
+  findings: z
+    .array(
+      z.object({
+        field: z.enum(JUDGED_NAMES).describe('The field the problem is in.'),
+        problem: z.string().describe('One short English sentence saying what is wrong and why.'),
+        rewrite: z
+          .string()
+          .nullable()
+          .describe(
+            'The corrected text of just the part that is wrong, or null when no rewrite fixes ' +
+              'it. For an example, its whole Hebrew sentence, then ` — `, then its English. It ' +
+              'must change something: a fix that leaves the text as it is means there is no ' +
+              'problem. Any Hebrew without niqqud, since the learner points it from the ' +
+              'dictionary.',
+          ),
+      }),
+    )
+    .describe('One finding per problem, in the order of the fields. Empty when there are none.'),
 });
 
 type Answer = z.infer<typeof answerSchema>;
@@ -73,6 +92,18 @@ export function fieldTexts(fields: FieldValues): Partial<Record<FieldKey, string
       return text === '' ? [] : [[key, text]];
     }),
   );
+}
+
+// An example a pair of labelled lines, since a line mixing Hebrew and English after a dash is easy
+// to misread: a Hebrew run's start and end can be taken for the whole of it.
+function examplesBlock(html: string): string {
+  const lines = examplesFromHtml(html)
+    .filter((example) => !isBlankExample(example))
+    .flatMap(({ hebrew, english }) => [
+      `  - Hebrew: ${hebrew}`,
+      ...(english === '' ? [] : [`    English: ${english}`]),
+    ]);
+  return [`${FIELDS.examples.name}:`, ...lines].join('\n');
 }
 
 function fieldBlock(key: FieldKey, text: string): string {
@@ -101,14 +132,15 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'the Hebrew.\n' +
       '- Each variant is a card of its own: its prompt is shown, in English, and its answer is ' +
       'the Hebrew to recall.\n' +
-      '- The Examples show under the answer, each Hebrew sentence followed by its English after ' +
-      '“—”.\n' +
+      '- The Examples show under the answer, each Hebrew sentence with its English under it.\n' +
+      '- The Notes show under the answer too.\n' +
       'The word, its niqqud, Definitions, Gender, Binyan, Root and Forms come from Wiktionary. ' +
       'The other fields the learner wrote, with this help beside each:\n' +
       `- Production context: ${FIELD_HELP.productionContext[partOfSpeech]}\n` +
       `- Reading context: ${FIELD_HELP.readingContext[partOfSpeech]}\n` +
       `- Variants: ${GROUP_HELP['Unusual variants']}\n` +
-      `- Examples: ${FIELD_HELP.examples[partOfSpeech]}`,
+      `- Examples: ${FIELD_HELP.examples[partOfSpeech]}\n` +
+      `- Notes: ${FIELD_HELP.notes}`,
 
     'Look for these, and nothing else:\n' +
       '- Hebrew in the Examples, the Reading context or a variant’s answer that is wrong, or ' +
@@ -122,7 +154,8 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'listed, fails too.\n' +
       '- A variant whose answer doesn’t answer its prompt.\n' +
       '- A Gender or Binyan that an example contradicts, like an adjective agreeing as if the ' +
-      'noun were the other gender. Report it under the field you think is wrong.',
+      'noun were the other gender. Report it under the field you think is wrong.\n' +
+      '- A note that is wrong about the word, its usage or its spelling.',
 
     'Leave these alone:\n' +
       '- Niqqud. It comes from Wiktionary, so never comment on it, nor on where it is missing.\n' +
@@ -133,12 +166,7 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'and the choice of examples.\n' +
       '- Spelling without niqqud, where the full and the defective spelling are both in use.',
 
-    'For each problem, name the field it is in, and say in one short English sentence what is ' +
-      'wrong and why. Give one finding per problem, in the order of the fields. Where a rewrite ' +
-      'fixes it, give in `rewrite` the corrected text of just the part that is wrong: for an ' +
-      'example, its whole sentence and English as the field shows them. Write any Hebrew in a ' +
-      'rewrite without niqqud, since the learner points it from the dictionary. Otherwise ' +
-      'answer null.',
+    'Answer with your findings in the schema given, whose fields say what each holds.',
   ].join('\n\n');
 }
 
@@ -151,7 +179,8 @@ export function checkRequest(
     `Part of speech: ${partOfSpeech}`,
     ...SENT_FIELDS.flatMap((key) => {
       const text = texts[key];
-      return text === undefined ? [] : [fieldBlock(key, text)];
+      if (text === undefined) return [];
+      return [key === 'examples' ? examplesBlock(fields.examples ?? '') : fieldBlock(key, text)];
     }),
     ...(homographs.length === 0 ? [] : [homographLines(homographs)]),
   ].join('\n');
@@ -163,6 +192,22 @@ function isPlainLine(text: string): boolean {
   return text.trim() !== '' && !/[<>\r\n]/.test(text);
 }
 
+// Compared after NFC, with runs of space as one and any dash between spaces as an em dash, so an
+// example's rewrite compares with its line as `fieldTexts` gives it.
+function comparable(text: string): string {
+  return text
+    .normalize('NFC')
+    .replace(/\s+/g, ' ')
+    .replace(/ [-–—] /g, ' — ')
+    .trim();
+}
+
+// A rewrite of a field's line into that same line means Claude misread the field, which is what
+// its problem then describes.
+function repeatsField(rewrite: string, text: string): boolean {
+  return text.split('\n').some((line) => isSamePointedText(comparable(line), comparable(rewrite)));
+}
+
 /**
  * The findings in `answer` that name a field the note holds text in. A rewrite that isn't a plain
  * line, or carries niqqud, which a model can't be trusted to point, is dropped from its finding.
@@ -171,7 +216,9 @@ export function toNoteCheck(answer: Answer, fields: FieldValues): NoteCheck {
   const texts = fieldTexts(fields);
   const findings = answer.findings.flatMap(({ field: name, problem, rewrite }): Finding[] => {
     const field = KEY_BY_NAME.get(name);
-    if (field === undefined || texts[field] === undefined || !isPlainLine(problem)) return [];
+    const text = field === undefined ? undefined : texts[field];
+    if (field === undefined || text === undefined || !isPlainLine(problem)) return [];
+    if (rewrite != null && repeatsField(rewrite, text)) return [];
     const keepsRewrite = rewrite != null && isPlainLine(rewrite) && !hasNiqqud(rewrite);
     return [
       { field, problem: problem.trim(), ...(keepsRewrite ? { rewrite: rewrite.trim() } : {}) },

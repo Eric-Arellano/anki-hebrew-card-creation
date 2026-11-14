@@ -45,10 +45,11 @@ describe('fieldTexts', () => {
     });
   });
 
-  test('leaves out the human’s Notes and the composed Production answer', () => {
-    expect(fieldTexts({ ...kelev.fields, notes: 'a pet', productionAnswer: 'כלב טוב' })).toEqual(
-      fieldTexts(kelev.fields),
-    );
+  test('sends Notes, and leaves out the composed Production answer', () => {
+    expect(fieldTexts({ ...kelev.fields, notes: 'a pet', productionAnswer: 'כלב טוב' })).toEqual({
+      ...fieldTexts(kelev.fields),
+      notes: 'a pet',
+    });
   });
 });
 
@@ -68,8 +69,9 @@ describe('checkRequest', () => {
         'Variant 1 prompt: female dog',
         'Variant 1 answer: כַּלְבָּה',
         'Examples:',
-        '  הכלב שלי גדולה. — My dog is big.',
-        '  יש לי כלב.',
+        '  - Hebrew: הכלב שלי גדולה.',
+        '    English: My dog is big.',
+        '  - Hebrew: יש לי כלב.',
       ].join('\n'),
     );
   });
@@ -101,7 +103,8 @@ describe('checkRequest', () => {
     expect(schema.safeParse(answer([{ ...finding, field: 'Gender' }])).success).toBe(true);
     expect(schema.safeParse(answer([{ ...finding, field: 'Examples' }])).success).toBe(true);
     expect(schema.safeParse(answer([{ ...finding, field: 'Pointed' }])).success).toBe(false);
-    expect(schema.safeParse(answer([{ ...finding, field: 'Notes' }])).success).toBe(false);
+    expect(schema.safeParse(answer([{ ...finding, field: 'Notes' }])).success).toBe(true);
+    expect(schema.safeParse(answer([{ ...finding, field: 'Definitions' }])).success).toBe(false);
   });
 });
 
@@ -128,6 +131,20 @@ describe('toNoteCheck', () => {
         },
         { field: 'gender', problem: 'The examples treat it as feminine.' },
       ],
+    });
+  });
+
+  describe('when a rewrite repeats a line of its field', () => {
+    test.each([
+      ['as it is', 'יש לי כלב.'],
+      ['with another dash and spacing', 'הכלב שלי גדולה.  -  My dog is big.'],
+    ])('drops the finding, as Claude misread the field: %s', (_, rewrite) => {
+      expect(
+        toNoteCheck(
+          answer([{ field: 'Examples', problem: 'The Hebrew is only one word.', rewrite }]),
+          kelevWithExamples.fields,
+        ),
+      ).toEqual({ findings: [] });
     });
   });
 
@@ -196,6 +213,20 @@ describe('checkNote', () => {
     const { system, user } = checkRequest(kelev, []);
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({ system, messages: [{ role: 'user', content: user }] }),
+    );
+  });
+
+  test('sends the schema with what each field holds', async () => {
+    const create = vi.fn<ClaudeMessages['create']>(
+      async () =>
+        ({
+          stop_reason: 'end_turn',
+          content: [{ type: 'text', text: '{"findings":[]}', citations: null }],
+        }) as Anthropic.Beta.BetaMessage,
+    );
+    await checkNote(kelev, [], { create });
+    expect(JSON.stringify(create.mock.calls[0]?.[0].output_config?.format)).toContain(
+      'One short English sentence saying what is wrong and why.',
     );
   });
 });

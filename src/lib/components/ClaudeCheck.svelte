@@ -63,7 +63,13 @@ onMount(() => {
           {#if rewrite !== undefined}
             <span class="block">
               <span class="text-gray-600">Try:</span>
-              <bdi class="font-hebrew text-lg">{rewrite}</bdi>
+              <!-- Each side of an example's ` — ` isolated, so its English stays after its Hebrew. -->
+              {#each rewrite.split(/ [-–—] /) as part, partIndex (partIndex)}
+                {#if partIndex > 0}
+                  {' — '}
+                {/if}
+                <bdi class="font-hebrew text-lg">{part}</bdi>
+              {/each}
             </span>
           {/if}
         </li>
