@@ -19,6 +19,12 @@ export const connectedStatus: AnkiStatus = {
 
 export type ServerRequest = { method: string; path: string; body: unknown };
 
+type SaveBody = { fields: Record<string, string>; mod: number };
+
+function savedNote(held: LoadedNote, { fields }: SaveBody): Response {
+  return Response.json({ ...held, mod: held.mod + 1, fields: { ...held.fields, ...fields } });
+}
+
 const notInDictionary: DictionaryLookup = {
   match: 'exact',
   candidates: [],
@@ -32,6 +38,8 @@ export type ServerReplies = {
   existing?: ExistingNotes;
   // The notes Anki holds, by id; any other id answers 404.
   notes?: readonly LoadedNote[];
+  // By default, a save writes its fields over the note and bumps its `mod`.
+  saveNote?: (held: LoadedNote, body: SaveBody) => Response;
   lookup?: DictionaryLookup | Response;
   storeMedia?: (body: { filename: string }) => Response;
   forvoDownloads?: (word: string) => ForvoDownloads;
@@ -43,6 +51,7 @@ export function stubServer({
   status = connectedStatus,
   existing = { exactMatches: [], sameRootMatches: [], relatedMatches: [] },
   notes = [],
+  saveNote = savedNote,
   lookup = notInDictionary,
   storeMedia = ({ filename }) => Response.json({ filename }),
   forvoDownloads = () => ({ kind: 'found', downloads: [] }),
@@ -58,9 +67,10 @@ export function stubServer({
     }
     if (input.startsWith('/api/anki/notes/')) {
       const note = notes.find(({ noteId }) => input === `/api/anki/notes/${noteId}`);
-      return note === undefined
-        ? Response.json({ message: 'Anki has no Hebrew note' }, { status: 404 })
-        : Response.json(note);
+      if (note === undefined) {
+        return Response.json({ message: 'Anki has no Hebrew note' }, { status: 404 });
+      }
+      return init?.method === 'POST' ? saveNote(note, body) : Response.json(note);
     }
     if (input.startsWith('/api/lookup')) {
       return lookup instanceof Response ? lookup : Response.json(lookup);
@@ -81,6 +91,12 @@ export function stubServer({
 
 export function mediaRequests(requests: ServerRequest[]) {
   return requests.filter((request) => request.path === '/api/anki/media');
+}
+
+export function saveRequests(requests: ServerRequest[]) {
+  return requests.filter(
+    (request) => request.method === 'POST' && request.path.startsWith('/api/anki/notes/'),
+  );
 }
 
 export function addRequests(requests: ServerRequest[]) {

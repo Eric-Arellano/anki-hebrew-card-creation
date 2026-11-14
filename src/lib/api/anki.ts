@@ -57,6 +57,14 @@ export function fetchNote(noteId: number): Promise<LoadedNote> {
   return getJson(`/api/anki/notes/${noteId}`);
 }
 
+/**
+ * Writes `fields`, keyed by Anki field name, to the note as `held` loaded it, and answers with the
+ * note as Anki now holds it. A `RouteError` with status 409 means it changed in Anki since.
+ */
+export function saveNote(held: LoadedNote, fields: Record<string, string>): Promise<LoadedNote> {
+  return postJsonForReply(`/api/anki/notes/${held.noteId}`, { fields, mod: held.mod });
+}
+
 function toBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
