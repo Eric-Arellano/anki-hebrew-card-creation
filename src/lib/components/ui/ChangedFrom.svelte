@@ -5,12 +5,18 @@ import type { Change } from '#lib/card/change.ts';
 let {
   label,
   change,
+  lang,
+  quoted = true,
   onrestore,
   children,
 }: {
   // The input's own label, naming what Restore puts back.
   label: string;
   change: Change | undefined;
+  // What it was is in, so Hebrew keeps to its own direction beside the English around it.
+  lang?: 'he' | 'en';
+  // Off where what it was is a count, not a value.
+  quoted?: boolean;
   onrestore: () => void;
   children: Snippet;
 } = $props();
@@ -22,9 +28,13 @@ const EDGE = {
 } satisfies Record<Change['kind'], string>;
 </script>
 
-<!-- The edge sits in a negative margin, so marking a value never shifts the input. -->
+<!-- The edge sits in a negative margin, so marking a value never shifts the input. `grid-cols-1`
+     lets what it wraps shrink below its intrinsic width, as a phone needs. -->
 <div
-  class={['grid gap-1 border-s-2 -ms-2.5 ps-2', change ? EDGE[change.kind] : 'border-transparent']}
+  class={[
+    'grid grid-cols-1 content-start gap-1 border-s-2 -ms-2.5 ps-2',
+    change ? EDGE[change.kind] : 'border-transparent',
+  ]}
 >
   {@render children()}
   {#if change !== undefined}
@@ -33,7 +43,12 @@ const EDGE = {
         Added
       {:else}
         {change.kind === 'cleared' ? 'Cleared. Was' : 'Was'}
-        “<bdi class="break-words">{change.was}</bdi>” ·
+        {#if quoted}
+          “<bdi class="break-words" {lang}>{change.was}</bdi>” ·
+        {:else}
+          {change.was}
+          ·
+        {/if}
         <button
           type="button"
           class="link border-0 bg-transparent p-0 hover:bg-transparent"

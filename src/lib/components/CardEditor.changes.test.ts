@@ -5,10 +5,13 @@ import type { LoadedNote } from '#lib/api/anki.ts';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { loadedNote } from '#tests/real-notes.ts';
 import {
+  choosePartOfSpeech,
+  exampleRows,
   fillInputs,
   input,
   noteField,
   renderConnectedEditor,
+  typeExample,
   typeInto,
 } from './CardEditor.harness.ts';
 
@@ -43,6 +46,10 @@ function markerAfter(element: Element | null) {
 
 function marker(label: string) {
   return markerAfter(input(label).closest('label'));
+}
+
+function groupMarker(name: string) {
+  return markerAfter(screen.getByRole('group', { name }));
 }
 
 function saveBar() {
@@ -99,6 +106,96 @@ describe('CardEditor', () => {
       await renderConnectedEditor({}, kelev());
       await typeInto(input(PLURAL), 'כְּלָבוֹת');
       expect(within(saveBar()).getByText('Will change: Forms')).toBeTruthy();
+    });
+
+    test('marks a changed chip by its label, and restores it', async () => {
+      await renderConnectedEditor({}, kelev());
+      await fireEvent.click(screen.getByRole('radio', { name: 'Feminine' }));
+
+      expect(groupMarker('Gender')).toBe('Was “Masculine” · Restore');
+      await fireEvent.click(screen.getByRole('button', { name: 'Restore Gender' }));
+      expect(screen.getByRole('radio', { name: 'Masculine', checked: true })).toBeTruthy();
+    });
+
+    test('marks a part of speech chosen for a note without one as added', async () => {
+      await renderConnectedEditor({}, loadedNote('כלב'));
+      await choosePartOfSpeech('Verb');
+      expect(groupMarker('Part of speech')).toBe('Added');
+    });
+
+    test('marks a binyan chosen for a note without one as added', async () => {
+      await renderConnectedEditor({}, loadedNote('כלב'));
+      await choosePartOfSpeech('Verb');
+      const binyan = screen.getByRole('combobox', { name: 'Binyan' });
+      await fireEvent.change(binyan, { target: { value: "pi'el" } });
+      expect(markerAfter(binyan.closest('label'))).toBe('Added');
+    });
+
+    test('marks each changed meaning, and restores it', async () => {
+      await renderConnectedEditor({}, kelev());
+      await typeInto(input('English meaning'), 'hound');
+      expect(markerAfter(input('English meaning').parentElement)).toBe('Was “dog” · Restore');
+
+      await fireEvent.click(screen.getByRole('button', { name: 'Restore English meaning' }));
+      expect(input('English meaning').value).toBe('dog');
+    });
+
+    test('marks only the meaning added', async () => {
+      await renderConnectedEditor({}, kelev());
+      await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
+      await typeInto(input('English meaning 2'), 'hound');
+
+      expect(markerAfter(input('English meaning 2').parentElement)).toBe('Added');
+      expect(markerAfter(input('English meaning').parentElement)).toBeUndefined();
+    });
+
+    test('marks each side of an example on its own', async () => {
+      await renderConnectedEditor({}, loadedNote('אמא'));
+      await typeInto(input('Example 1 in English'), 'My mom is making dinner.');
+
+      expect(markerAfter(input('Example 1 in English'))).toBe(
+        'Was “My mom is cooking dinner.” · Restore',
+      );
+      expect(markerAfter(input('Example 1 in Hebrew'))).toBeUndefined();
+      await fireEvent.click(screen.getByRole('button', { name: 'Restore Example 1 in English' }));
+      expect(input('Example 1 in English').value).toBe('My mom is cooking dinner.');
+    });
+
+    test('marks both sides of examples written for a note without any as added', async () => {
+      await renderConnectedEditor({}, kelev());
+      await typeExample(1, { hebrew: 'הַכֶּלֶב נוֹבֵחַ', english: 'The dog barks' });
+      expect(markerAfter(input('Example 1 in Hebrew'))).toBe('Added');
+      expect(markerAfter(input('Example 1 in English'))).toBe('Added');
+    });
+
+    describe('once a row Anki holds is gone from the end', () => {
+      test('lists it as removed, and restores it at its place', async () => {
+        await renderConnectedEditor({}, loadedNote('אמא'));
+        const rows = exampleRows();
+        await fireEvent.click(screen.getByRole('button', { name: 'Remove example 2' }));
+
+        const examples = noteField('Examples');
+        expect(within(examples).getByText(/^Removed:/).textContent).toContain(rows[1]?.english);
+        await fireEvent.click(screen.getByRole('button', { name: 'Restore example 2' }));
+        expect(exampleRows()).toEqual(rows);
+        expect(within(examples).queryByText(/^Removed:/)).toBeNull();
+      });
+    });
+
+    test('marks a removed image by how many there were, and restores it', async () => {
+      await renderConnectedEditor({}, kelev());
+      const images = screen.getByRole('group', { name: 'Images' });
+      await fireEvent.click(within(images).getByRole('button', { name: 'Remove image 1' }));
+
+      expect(groupMarker('Images')).toBe('Cleared. Was 1 image · Restore');
+      await fireEvent.click(screen.getByRole('button', { name: 'Restore Images' }));
+      expect(within(images).getByRole('img', { name: 'Attachment 1' })).toBeTruthy();
+    });
+
+    test('marks removed audio', async () => {
+      await renderConnectedEditor({}, kelev());
+      await fireEvent.click(screen.getByRole('button', { name: 'Remove audio' }));
+      expect(groupMarker('Audio')).toBe('Cleared. Was 1 recording · Restore');
     });
 
     describe('after a save', () => {

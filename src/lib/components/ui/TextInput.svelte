@@ -47,7 +47,7 @@ function choose(choice: string) {
 </script>
 
 <div class="grid content-start gap-1">
-  <ChangedFrom {label} change={textChange(held, value)} onrestore={restore}>
+  <ChangedFrom {label} {lang} change={textChange(held, value)} onrestore={restore}>
     <label class="grid gap-1">
       <span class={{ 'required-mark': required }}>{label}</span>
       <input

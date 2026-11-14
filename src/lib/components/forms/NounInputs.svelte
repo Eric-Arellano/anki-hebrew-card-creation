@@ -45,6 +45,7 @@ let {
     options={GENDERS}
     offered={choices.gender}
     unoffered={unoffered.gender}
+    held={held && (held.gender ?? '')}
     bind:value={noun.gender}
   />
   <!-- A noun like מים has no singular, so it agrees in the plural and has no forms to copy. -->

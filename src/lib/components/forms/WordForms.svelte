@@ -79,6 +79,7 @@ function chooseInfinitive(pointed: string) {
       options={partOfSpeechOptions}
       offered={choices.partOfSpeech}
       unoffered={unoffered.partOfSpeech}
+      held={held && (held.partOfSpeech ?? '')}
       bind:value={inputs.partOfSpeech}
     />
     {#if inputs.partOfSpeech !== undefined}
