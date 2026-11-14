@@ -9,13 +9,16 @@ the legacy שולחן note. Sections and links are fixed; what remains is edit m
 - **Edit mode looks like new mode.** The only difference is a small blue banner. The word input
   still takes focus. For a complete note, "Fill in the blanks from Wiktionary" takes up the whole
   top of the page. Nothing marks a value as changed until the review step, which shows raw HTML.
-- **Most edits are upgrades of legacy notes.** 77 of the 104 notes have no Part of speech. They
-  hold Hebrew, Pointed (often `[ms] שֻׁלְחָן<br>[mp] …`), Images and Audio, and about half have
-  Definitions. For these notes, picking the Wiktionary entry is the main thing to do. For a
-  complete note it's noise.
+- **The Wiktionary picker crowds a complete note.** For a note with no part of speech yet (77 of
+  the 104 today, legacy notes being upgraded), picking the entry is the main thing to do. For a
+  complete note it's probably noise.
 
-Goal: an edit mode that separates *upgrading a legacy note* from *tweaking a complete one*,
-marking each changed value against what Anki holds.
+Goal: an edit mode that looks like one, keeps the picker out of the way unless the note needs it,
+and marks each changed value against what Anki holds.
+
+*Rejected: a legacy mode with its own notice, because the legacy notes are nearly all upgraded
+and the code would outlive them.* The picker opens by whether the note has a part of speech yet,
+which stays meaningful after the cleanup.
 
 **Verbs are in flux** (see `~/.claude/plans/so-in-theory-that-unified-squid.md`, still being
 modelled). `VerbInputs.svelte` keeps its layout and only gets the shared marker props, and the
@@ -48,18 +51,17 @@ accessible name, so the test harness's `noteField` looks only at textareas and f
 - The header states the mode. New mode shows "New word". Edit mode shows "Editing כֶּלֶב" with a
   "Start a new word" button, which replaces the blue banner. `<title>` follows the mode in
   `+page.svelte`, or in CardEditor through `svelte:head`.
-- **Legacy note**: the loaded note has no part of speech, or one no chip offers (`start.inputs.
-  partOfSpeech === undefined`). It gets a notice in the Word section: "This note predates the
-  current note type. Pick its Wiktionary entry to fill in the blanks, then check each field."
-- `DictionaryPanel` in edit mode wraps the candidates in `<details>`. It's open for a legacy note
-  and closed for a complete one, with the summary "Fill blanks from Wiktionary (N entries)". New
-  mode is unchanged.
+- `DictionaryPanel` in edit mode wraps the candidates in `<details>`, with the summary "Fill blanks
+  from Wiktionary (N entries)". It starts open when the loaded note has no part of speech yet
+  (`start.inputs.partOfSpeech === undefined`), since picking an entry is how it gets one, and
+  closed otherwise. New mode is unchanged. If a complete note's picker keeps getting opened,
+  open it always.
 - The word input takes focus only in new mode.
 - `ExistingNotesPanel` copy: in new mode, "Already in your deck: edit it instead?". In edit mode,
   "Also in your deck with this spelling". The dictionary heading in new mode reads "Start from
   Wiktionary: which word is it?".
 - Tests: update the copy in `CardEditor.dictionary.test.ts` and `CardEditor.test.ts`. Add tests
-  for the legacy notice, `details` open or closed by note type, and focus by mode.
+  for `details` open or closed by whether the note has a part of speech, and focus by mode.
 
 ### PR 2: change markers against what Anki holds
 
@@ -120,7 +122,8 @@ In the running app (:5174, served from this worktree, with HMR), take Playwright
 
 - a complete note in edit mode (כלב), with the dictionary collapsed, after changing the plural to
   show the marker and using Restore;
-- a legacy note (the old שולחן), with the notice, after picking the entry to show "Added" markers.
+- a legacy note (the old שולחן), with the picker open, after picking the entry to show "Added"
+  markers.
 
 Don't click Suggest, Check, Add or Save without asking.
 
