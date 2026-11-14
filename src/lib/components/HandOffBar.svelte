@@ -7,6 +7,7 @@ let {
   attachments,
   fieldsWith,
   onnextcard,
+  editing,
   ankiBlocker,
   inputsBlocker,
 }: {
@@ -19,6 +20,8 @@ let {
   // Called when the human moves on. Nothing clears by itself at the hand-off, because they may
   // still fix something and open the Add window again.
   onnextcard?: () => void;
+  // Whether the draft is a note already in Anki, which the Add window would add a second time.
+  editing: boolean;
   // Why Anki can't take the note yet. The header already shows it, so here it is only a tooltip.
   ankiBlocker: string | undefined;
   // Which inputs are still blank, spelled out in the bar.
@@ -34,7 +37,9 @@ type HandOff =
 
 let handOff: HandOff = $state.raw({ kind: 'idle' });
 
-const blocker = $derived(ankiBlocker ?? inputsBlocker);
+const EDITING_BLOCKER = 'Already in the deck, so Open in Anki would add it twice.';
+
+const blocker = $derived(ankiBlocker ?? (editing ? EDITING_BLOCKER : inputsBlocker));
 
 // `guiAddCards` replaces Anki's Add window and discards whatever the human typed there, so every
 // hand-off asks first.
@@ -110,8 +115,13 @@ function focus(element: HTMLElement) {
       <button type="button" {@attach focus} onclick={onnextcard}>Next word</button>
     {:else if handOff.kind === 'failed'}
       <p role="alert" class="text-red-700">{handOff.message}</p>
-    {:else if inputsBlocker !== undefined}
-      <p class="text-gray-600">{inputsBlocker}</p>
+    {:else}
+      {#if editing}
+        <p class="text-gray-600">{EDITING_BLOCKER}</p>
+      {/if}
+      {#if inputsBlocker !== undefined}
+        <p class="text-gray-600">{inputsBlocker}</p>
+      {/if}
     {/if}
   {/if}
 </section>

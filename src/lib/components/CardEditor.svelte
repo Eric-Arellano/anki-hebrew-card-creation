@@ -1,11 +1,12 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { type AnkiStatus, fetchAnkiStatus } from '#lib/api/anki.ts';
+import { type AnkiStatus, fetchAnkiStatus, type LoadedNote } from '#lib/api/anki.ts';
 import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
-import { type CardDraft, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
+import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
+import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, handOffFields } from '#lib/card/hand-off.ts';
 import { type CardInputsDraft, completeInputs } from '#lib/card/inputs.ts';
 import {
@@ -29,9 +30,25 @@ import DictionaryPanel from './word/DictionaryPanel.svelte';
 import ExistingNotesPanel from './word/ExistingNotesPanel.svelte';
 import LookupLinks from './word/LookupLinks.svelte';
 
-let { onnextcard }: { onnextcard?: () => void } = $props();
+let {
+  note,
+  onnextcard,
+  onopennote,
+}: {
+  // The note this editor edits, or `undefined` for a new one. Read once, since the page remounts
+  // the editor for each card.
+  note?: LoadedNote;
+  onnextcard?: () => void;
+  onopennote?: (note: LoadedNote) => void;
+} = $props();
 
-let draft: CardDraft = $state(emptyCardDraft());
+function startingDraft(): NoteDraft {
+  return note === undefined ? { ...emptyCardDraft(), unoffered: {} } : draftFromNote(note.fields);
+}
+
+const { unoffered, ...start } = startingDraft();
+// A state proxy never writes back to `start`, so it stays what the editor began with.
+let draft: CardDraft = $state(start);
 // The dictionary entry the inputs were last filled from, until the human types another word. The
 // inputs from before, and the word the entry filled in, are what undo it.
 let picked:
@@ -78,6 +95,7 @@ const wiktionaryEntry = $derived(
   picked !== undefined ? true : lookup?.then((result) => result?.titleHasEntry),
 );
 const choices = $derived(picked?.choices ?? {});
+const replacesDraft = $derived(changedBeyondWord(start, draft));
 
 function pick(candidate: DictionaryCandidate) {
   const before = $state.snapshot(draft.inputs);
@@ -129,6 +147,19 @@ onMount(checkAnki);
     <ConnectionStatus {status} problem={ankiProblem} onrecheck={checkAnki} />
   </header>
 
+  {#if note !== undefined}
+    <section
+      aria-label="Editing"
+      class="flex flex-wrap items-center gap-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
+    >
+      <p>
+        Editing the note for
+        <bdi lang="he" class="text-xl">{start.inputs.pointed || start.inputs.word}</bdi>
+      </p>
+      <button type="button" onclick={onnextcard}>New word</button>
+    </section>
+  {/if}
+
   <!-- The word and its meanings come first, because they are all the lookups need, and the
        lookups are where the niqqud, gender and forms below come from. -->
   <section aria-label="Word" class="space-y-4">
@@ -143,7 +174,12 @@ onMount(checkAnki);
       <DefinitionsInput bind:definitions={draft.inputs.definitions} />
     </div>
     <DictionaryPanel {lookup} picked={picked?.candidate} onpick={pick} onunpick={unpick} />
-    <ExistingNotesPanel words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]} />
+    <ExistingNotesPanel
+      words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]}
+      editingNoteId={note?.noteId}
+      {replacesDraft}
+      onopen={(opened) => onopennote?.(opened)}
+    />
     <LookupLinks word={draft.inputs.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
     <section aria-label="Media" class="space-y-2">
       <ImagesInput
@@ -165,6 +201,7 @@ onMount(checkAnki);
   <WordForms
     bind:draft={draft.inputs}
     {choices}
+    {unoffered}
     candidate={picked?.candidate}
     edits={draft.edits}
     {shownFields}
@@ -185,6 +222,7 @@ onMount(checkAnki);
     {attachments}
     fieldsWith={ankiFields}
     {onnextcard}
+    editing={note !== undefined}
     ankiBlocker={status === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={stillNeededMessage}
   />

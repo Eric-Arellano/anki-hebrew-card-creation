@@ -1,10 +1,13 @@
 <script lang="ts" generics="T extends string">
+import UnofferedValue from './UnofferedValue.svelte';
+
 let {
   legend,
   name,
   options,
   value = $bindable(),
   suggested = [],
+  unoffered,
 }: {
   legend: string;
   // Distinguishes this group's radios from any other group's on the page.
@@ -14,10 +17,18 @@ let {
   value: T | undefined;
   // Options the dictionary suggests, marked but never chosen.
   suggested?: readonly T[];
+  // What a loaded note holds that no option is, shown until the human chooses.
+  unoffered?: string;
 } = $props();
+
+const errorId = $props.id();
+const shownUnoffered = $derived(value === undefined ? unoffered : undefined);
 </script>
 
-<fieldset class="flex flex-wrap items-center gap-2">
+<fieldset
+  class="flex flex-wrap items-center gap-2"
+  aria-describedby={shownUnoffered === undefined ? undefined : errorId}
+>
   <legend class="required-mark mb-1">{legend}</legend>
   {#each options as option (option.value)}
     {@const isSuggested = suggested.includes(option.value)}
@@ -32,4 +43,7 @@ let {
       {option.label}
     </label>
   {/each}
+  {#if shownUnoffered !== undefined}
+    <UnofferedValue id={errorId} value={shownUnoffered} />
+  {/if}
 </fieldset>
