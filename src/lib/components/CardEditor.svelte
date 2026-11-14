@@ -1,7 +1,7 @@
 <script lang="ts">
-import { onMount } from 'svelte';
+import { onMount, untrack } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { type AnkiStatus, fetchAnkiStatus, type LoadedNote } from '#lib/api/anki.ts';
+import { type AnkiStatus, fetchAnkiStatus, fetchNote, type LoadedNote } from '#lib/api/anki.ts';
 import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
@@ -49,6 +49,8 @@ function startingDraft(): NoteDraft {
 }
 
 const { unoffered, ...start } = startingDraft();
+// The note as Anki last answered with it: as loaded, then as each save left it.
+let held: LoadedNote | undefined = $state.raw(untrack(() => note));
 // A state proxy never writes back to `start`, so it stays what the editor began with.
 let draft: CardDraft = $state(start);
 // The dictionary entry the inputs were last filled from, until the human types another word. The
@@ -129,6 +131,10 @@ function setEdit(field: FieldKey, value: string) {
 
 function ankiFields(storedAs: ReadonlyMap<string, string>) {
   return handOffFields({ composed, edits: draft.edits, shownFields, media: draft.media, storedAs });
+}
+
+async function loadAgain() {
+  if (held !== undefined) onopennote?.(await fetchNote(held.noteId));
 }
 
 async function checkAnki() {
@@ -238,7 +244,9 @@ onMount(checkAnki);
     {attachments}
     fieldsWith={ankiFields}
     {onnextcard}
-    editing={note !== undefined}
+    {held}
+    onsaved={(saved) => (held = saved)}
+    onloadagain={loadAgain}
     ankiBlocker={status === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={stillNeededMessage}
   />

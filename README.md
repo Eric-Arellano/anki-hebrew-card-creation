@@ -3,8 +3,9 @@
 A local helper for making Hebrew Anki cards. You type a word, and it does the rote part: lookup
 links, the pointed forms, the plural and gender fields, and a check for whether the word is
 already in your deck. Paste, drop or pick images and an MP3 recording, and it stores them in Anki
-when it opens Anki's own Add window, pre-filled. You click Add there. The tool never adds, edits or
-deletes a note itself.
+when it opens Anki's own Add window, pre-filled. You click Add there. Open a note already in the
+deck and it saves your changes to it when you click Save, after showing what will change. The tool
+never adds or deletes a note itself.
 
 It is built for my own deck and note type, which `src/lib/note-type.ts` describes. To adapt it,
 edit that file.
@@ -42,8 +43,8 @@ npm start        # http://127.0.0.1:3000
 To pick up a newer Wiktionary, download the file again and rerun `npm run build-index`. The editor
 says when the index is older than the file.
 
-The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can open Add
-windows in your Anki and add files to its media folder.
+The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can change the
+notes in your collection, open Add windows in your Anki and add files to its media folder.
 
 ## What it reads on your machine
 
@@ -56,8 +57,8 @@ windows in your Anki and add files to its media folder.
 ## What it sends over the network
 
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
-  plus the call that opens the Add window and store images and audio in your media
-  folder.
+  plus the calls that save an edited note, open the Add window and store images and audio in your
+  media folder.
 - **To third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are only
   opened when you click them.
 

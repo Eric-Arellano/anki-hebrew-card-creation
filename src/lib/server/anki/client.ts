@@ -10,9 +10,11 @@ const noteInfoSchema = z.object({
 
 export type NoteInfo = z.infer<typeof noteInfoSchema>;
 
-// The allowlist. Nothing here creates, edits or deletes a note: `guiAddCards` only opens the Add
-// window, and the human clicks Add, `storeMediaFile` only adds a file to the media folder, and
-// `retrieveMediaFile` only reads one. An action missing from this object can't be typed or sent.
+// The allowlist. Nothing here creates or deletes a note: `guiAddCards` only opens the Add window,
+// and the human clicks Add, `storeMediaFile` only adds a file to the media folder, and
+// `retrieveMediaFile` only reads one. `updateNoteFields` edits a note, only when the human clicks
+// Save, and leaves its tags, deck and scheduling alone. An action missing from this object can't be
+// typed or sent.
 const resultSchemaByAllowedAction = {
   version: z.number(),
   deckNames: z.array(z.string()),
@@ -24,6 +26,7 @@ const resultSchemaByAllowedAction = {
   findNotes: z.array(z.number()),
   notesInfo: z.array(noteInfoSchema),
   guiAddCards: z.number().nullable(),
+  updateNoteFields: z.null(),
   // The name Anki stored the file under, which may not be the one requested.
   storeMediaFile: z.string(),
   // The file's bytes in base64, or `false` when the media folder has no such file.
@@ -47,6 +50,9 @@ export type ActionParams = {
   // The add-on replaces an existing file by default, which would silently change another note's
   // media. With `false`, different bytes under a taken name get a new name. Its `url` stays out
   // because that has Anki fetch a third-party site on this tool's behalf.
+  // Only the fields named change. Its `audio` and `picture` stay out for the reason
+  // `storeMediaFile`'s `url` does.
+  updateNoteFields: { note: { id: number; fields: Record<string, string> } };
   storeMediaFile: { filename: string; data: string; deleteExisting: false };
   retrieveMediaFile: { filename: string };
 };

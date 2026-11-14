@@ -2,12 +2,13 @@
 
 ## Context
 
-The app finds a word's notes and opens one in the editor, and a new note still ends
-with a click in Anki's Add window. Here both move into the app: the editor loads an existing note,
-and saves a new or edited one itself. Anki stays the place to review cards and to delete a note.
+The app finds a word's notes, opens one in the editor, and saves an edit to it. A new note still
+ends with a click in Anki's Add window. What's left moves that into the app too: the editor adds a
+new note itself. Anki stays the place to review cards and to delete a note.
 
-This reverses a hard rule, "Nothing here creates, edits or deletes a note; I click Add myself." The
-human still makes every write, by clicking Save in the app.
+This finishes reversing a hard rule that read "Nothing here creates, edits or deletes a note; I
+click Add myself." Edits already go through Save; adding is the half that remains. The human still
+makes every write, by clicking a button in the app.
 
 The design is for the deck this is heading to, where a loaded note is usually right. Old notes get
 no special handling: they load like any other, and the human cleans up what's wrong.
@@ -47,8 +48,9 @@ as `note`, which `draftFromNote` turns into the starting draft. What saving buil
 - **The editor holds the note it edits.** `note` carries `notesInfo`'s `mod`, which the save sends
   back. `readNote` in `src/lib/server/anki/notes.ts` finds the note before reading it, so a missing
   note or one of another type is `undefined`, and the route's 404.
-- **While a note is loaded, the bar refuses,** through `HandOffBar`'s `editing`, because Open in
-  Anki would add a duplicate. Saving an edit replaces that refusal.
+- **`held` is the note as Anki last answered with it.** `CardEditor` keeps it in state, starting
+  from `note` and replaced through `HandOffBar`'s `onsaved` by each save's reply. `HandOffBar`
+  shows Save, not Open in Anki, whenever `held` is set, and diffs against it.
 
 *Rejected: recognizing the old `[ms]` and `(פעל)` formats, to parse them or keep them out of the
 inputs, because the deck is headed to one format, and the 42 notes that hold them are the human's to
@@ -73,13 +75,16 @@ images by extension, and re-sending unchanged bytes achieves nothing.*
   composition gives it, so marking a note with a variant as an adverb blanks that variant. The
   review lists it.
 - **A note changed since it loaded is refused.** The editor holds `notesInfo`'s `mod` and sends it
-  back. The server compares it just before writing and answers 409, and the bar offers Load again.
-  Anki edits and syncs change `mod`; reviewing a card doesn't.
+  back. `POST /api/anki/notes/[noteId]` compares it just before writing and answers 409, and the
+  bar offers Load again. Anki edits and syncs change `mod`; reviewing a card doesn't. The browser
+  tells a 409 apart through `RouteError`'s `status`, in `src/lib/api/http.ts`, which a duplicate's
+  409 can use too.
 - **Every write answers with the note as Anki now holds it,** which becomes the new `held`. The
   editor never assumes what Anki kept.
 - **A new note is added at once, and the editor becomes an edit of it.** A second Save updates that
   note, rather than adding a duplicate. It keeps what the Add window allowed: fixing something right
-  after the hand-off.
+  after the hand-off. Handing the added note to `onsaved` is enough, since a set `held` is what
+  puts the bar in Save mode.
 - **Duplicates ask, once.** `addNote` goes first with `allowDuplicate: false`. Anki's refusal becomes
   a 409 and an "Add anyway" button, which resends with `true`. The deck will hold homographs: the
   field help's own example is ספר.
@@ -103,51 +108,46 @@ AnkiConnect behind the same action names, so upstream's docs aren't a safe guide
 
 ## The hard rule
 
-- **`updateNoteFields` and `addNote` join the allowlist, and `guiAddCards` leaves it.** `guiBrowse`
-  already left with "Browse in Anki", which nobody used once a note opened in the editor.
-- **Agents still can't write.** `anki-guard.sh` keeps denying both actions, now with a reason of
-  their own, so only the app's Save sends them. AGENTS.md extends "without asking" to clicking Save
-  in a running app against the real Anki.
+- **`updateNoteFields` is on the allowlist; `addNote` joins it, and `guiAddCards` leaves it.**
+  `guiBrowse` already left with "Browse in Anki", which nobody used once a note opened in the
+  editor.
+- **Agents still can't write.** `anki-guard.sh` denies `updateNoteFields` with a reason of its own,
+  and `addNote` gets the same, so only the app sends them. AGENTS.md already names
+  `updateNoteFields` as the app's alone and extends "without asking" to clicking Save in a running
+  app against the real Anki; `addNote` joins both.
 - **Nothing else joins.** `deleteNotes` and every tag, deck and scheduling action stay out.
 
 *Rejected: `updateNote`, because it can also rewrite tags. The `audio` and `picture` parameters stay
 out for the reason `storeMediaFile`'s `url` does.*
 
-## PR 1 — Save an edit
-
-- `updateNoteFields` in `client.ts`, `anki-guard.sh`, and the AGENTS.md rule.
-- `POST /api/anki/notes/[noteId]`, taking `{ fields, mod }`: refuse unknown fields as
-  `/api/anki/add` does, 404 through `readNote`, 409 on `mod`, write, read back.
-- The review step in the bar in place of the `editing` refusal, Saved with Next word, and Load
-  again.
-- `request-guard.ts`'s header comment and the README: the server can now change notes, which raises
-  the stakes of "Don't expose it".
-
-## PR 2 — Add without the Add window
+## PR 1 — Add without the Add window
 
 - `addNote` in `client.ts` and `POST /api/anki/notes`, answering 409 on Anki's duplicate refusal.
 - "Add to deck" and "Add anyway", and the move into editing the new note.
 - Remove `guiAddCards`, `/api/anki/add`, `openAddWindow` and the Replace and open step.
-- `HandOffBar` and `handOffFields` get names for what they do now.
-- The README's opening and network sections, the `client.ts` comment, and the rest of AGENTS.md.
+- `HandOffBar` and `handOffFields` get names for what they do now. With the Add window gone, the
+  bar's `confirming`, `opened` and the `storeAttachments` prefix for it go too.
+- The README's opening, "Don't expose it" and network sections, the allowlist comment in
+  `client.ts`, `request-guard.ts`'s header comment, and AGENTS.md: each still names the Add window
+  or `guiAddCards`.
 
 ## Verification
 
-- Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
-  until clean. Route tests use `fakeAnki`, covering a missing note, another note type, a stale `mod`,
-  a duplicate and an Anki failure.
+- `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file until
+  clean. Route tests use `fakeAnki`, covering a duplicate and an Anki failure, as the save route's
+  tests cover a missing note, another note type, a stale `mod` and a refused write.
 - `request-guard.ts`'s logic and its tests stay unchanged.
-- Before PR 1, by hand while nothing can write yet: open a noun, a verb, a note with a labelled
-  `Pointed`, a two-image note and כלב, and check each input, image, player and variant. The labelled
-  `Pointed` shows its warning.
+- **Open:** saving has only run against `fakeAnki` and the stubbed server. By hand, before relying
+  on it: open a noun, a verb, a note with a labelled `Pointed`, a two-image note and כלב, and check
+  each input, image, player and variant; the labelled `Pointed` shows its warning.
 - Before the first real save, the human backs up the collection. Then, by hand in real Anki and only
-  with the human's go-ahead, for PR 1:
+  with the human's go-ahead, for saving an edit:
   - Finish a note with a labelled `Pointed`, leaving that field alone. Browse shows only the listed
     fields changed, `Pointed` keeps its line breaks, and Preview shows the note's cards.
   - Anki's Undo takes the save back.
   - Save with the note open in Browse: refused, with the message. Close it and save again.
   - Load a note, edit it in Anki, then save: refused, and Load again shows Anki's version.
   - Add audio to a note with none: a Listening card appears. Then sync and check the phone.
-- For PR 2, the same way: add a noun, then change it and save, and one note exists. Add a second note
-  with the same `Hebrew`, and it needs Add anyway.
+- For adding, the same way: add a noun, then change it and save, and one note exists. Add a second
+  note with the same `Hebrew`, and it needs Add anyway.
 - Under `npm start`, not only `npm run dev`: save a note with new media.

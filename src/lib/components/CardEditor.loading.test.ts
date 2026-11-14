@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor, within } from '@testing-library/svelte';
+import { screen, waitFor, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import type { LoadedNote } from '#lib/api/anki.ts';
 import { loadedNote } from '#tests/real-notes.ts';
@@ -54,20 +54,6 @@ describe('CardEditor', () => {
       const banner = screen.getByRole('region', { name: 'Editing' });
       expect(banner.textContent).toContain('כֶּלֶב');
       expect(within(banner).getByRole('button', { name: 'New word' })).toBeTruthy();
-    });
-
-    test('refuses to open the Add window, which would add it twice', async () => {
-      const requests = await renderConnectedEditor(
-        {},
-        withFields(kelev, { 'Part of speech': 'noun' }),
-      );
-      const openInAnki = screen.getByRole('button', { name: 'Open in Anki' }) as HTMLButtonElement;
-      expect(openInAnki.disabled).toBe(true);
-      expect(screen.getByText(/would add it twice/)).toBeTruthy();
-
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-      expect(screen.queryByRole('button', { name: 'Replace and open' })).toBeNull();
-      expect(requests.filter(({ method }) => method === 'POST')).toEqual([]);
     });
 
     test('still says what the note lacks', async () => {
