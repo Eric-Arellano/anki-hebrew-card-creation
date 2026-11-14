@@ -72,6 +72,7 @@ function chooseInfinitive(pointed: string) {
       legend="Part of speech"
       name="part-of-speech"
       options={partOfSpeechOptions}
+      offered={choices.partOfSpeech}
       unoffered={unoffered.partOfSpeech}
       bind:value={draft.partOfSpeech}
     />
@@ -84,8 +85,8 @@ function chooseInfinitive(pointed: string) {
       <TextInput
         label="Hebrew word, with niqqud"
         lang="he"
-        choices={choices.infinitives?.map((infinitive) => infinitive.pointed)}
-        onchoose={chooseInfinitive}
+        choices={choices.pointed ?? choices.infinitives?.map((infinitive) => infinitive.pointed)}
+        onchoose={choices.infinitives === undefined ? undefined : chooseInfinitive}
         bind:value={draft.pointed}
       />
       {#if misspellsWord}

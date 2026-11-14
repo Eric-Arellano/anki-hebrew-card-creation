@@ -38,6 +38,7 @@ let {
     legend="Gender"
     name="gender"
     options={GENDERS}
+    offered={choices.gender}
     unoffered={unoffered.gender}
     bind:value={noun.gender}
   />

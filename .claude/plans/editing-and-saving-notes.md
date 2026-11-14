@@ -2,7 +2,7 @@
 
 ## Context
 
-The app finds a word's notes but can only open them in Anki's Browse, and a new note still ends
+The app finds a word's notes and opens one in the editor, and a new note still ends
 with a click in Anki's Add window. Here both move into the app: the editor loads an existing note,
 and saves a new or edited one itself. Anki stays the place to review cards and to delete a note.
 
@@ -94,8 +94,8 @@ AnkiConnect behind the same action names, so upstream's docs aren't a safe guide
 - **`updateNoteFields` runs `col.update_note`, with undo policy `single`,** so Anki's Undo should
   take back the latest save. It leaves tags, deck and scheduling alone.
 - **A note open in any editor refuses the write,** Browse included, with `editorConflict`: "Close
-  the affected editor before this API write, even if its content is saved." "Browse in Anki" can
-  cause that, and the message reaches the human as it stands.
+  the affected editor before this API write, even if its content is saved." The message reaches the
+  human as it stands.
 - **`notesInfo` answers `[{}]` for a missing note,** which `noteInfoSchema` would turn into a 502.
   That is why `readNote` runs `findNotes` first, and a save's 404 goes through it too.
 - **Filling `Audio` or a variant answer should add a card on save.** Blanking one leaves an empty
@@ -104,7 +104,7 @@ AnkiConnect behind the same action names, so upstream's docs aren't a safe guide
 ## The hard rule
 
 - **`updateNoteFields` and `addNote` join the allowlist, and `guiAddCards` leaves it.** `guiBrowse`
-  stays, because deleting a note and seeing its rendered cards still happen in Anki.
+  already left with "Browse in Anki", which nobody used once a note opened in the editor.
 - **Agents still can't write.** `anki-guard.sh` keeps denying both actions, now with a reason of
   their own, so only the app's Save sends them. AGENTS.md extends "without asking" to clicking Save
   in a running app against the real Anki.

@@ -56,7 +56,7 @@ windows in your Anki and add files to its media folder.
 ## What it sends over the network
 
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
-  plus the calls that open the Add and Browse windows and store images and audio in your media
+  plus the call that opens the Add window and store images and audio in your media
   folder.
 - **To third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are only
   opened when you click them.

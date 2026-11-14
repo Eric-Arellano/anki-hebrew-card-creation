@@ -8,6 +8,7 @@ import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/pre
 import ChoiceChips from '../ui/ChoiceChips.svelte';
 import TextInput from '../ui/TextInput.svelte';
 import UnofferedValue from '../ui/UnofferedValue.svelte';
+import WiktionaryHas from '../ui/WiktionaryHas.svelte';
 import RootInput from './RootInput.svelte';
 
 const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label: string }[] = [
@@ -60,7 +61,13 @@ function setBinyan(value: Binyan | '') {
   {/if}
   <div class="forms-row">
     {@render children()}
-    <TextInput label="Past (he), with niqqud" lang="he" required={false} bind:value={verb.past} />
+    <TextInput
+      label="Past (he), with niqqud"
+      lang="he"
+      required={false}
+      choices={choices.past}
+      bind:value={verb.past}
+    />
     <TextInput
       label="Present (he), with niqqud"
       lang="he"
@@ -90,6 +97,15 @@ function setBinyan(value: Binyan | '') {
           {/each}
         </select>
       </label>
+      {#if choices.binyan !== undefined}
+        <WiktionaryHas
+          label="Binyan"
+          lang="en"
+          options={choices.binyan}
+          isChosen={(binyan) => binyan === verb.binyan}
+          onchoose={(binyan) => (verb.binyan = binyan)}
+        />
+      {/if}
       {#if shownUnofferedBinyan !== undefined}
         <UnofferedValue id={binyanErrorId} value={shownUnofferedBinyan} />
       {/if}

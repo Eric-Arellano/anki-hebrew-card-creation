@@ -280,14 +280,22 @@ describe('CardEditor', () => {
       test('warns, naming the note', async () => {
         await renderConnectedEditor({
           existing: {
-            exactMatches: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+            exactMatches: [
+              {
+                noteId: 1751686072898,
+                unpointed: 'כלב',
+                pointed: 'כֶּלֶב',
+                partOfSpeech: '',
+                definitions: '',
+              },
+            ],
             relatedMatches: [],
           },
         });
         await typeInto(input('Hebrew word, without niqqud'), 'כלב');
         const check = screen.getByRole('region', { name: 'Already in the deck' });
-        expect(await within(check).findByText('Already in the deck')).toBeTruthy();
-        expect(within(check).getByRole('listitem').textContent).toBe('כֶּלֶב');
+        expect(await within(check).findByText('Already in your deck. Edit it?')).toBeTruthy();
+        expect(within(check).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
       });
     });
 
@@ -296,13 +304,21 @@ describe('CardEditor', () => {
         await renderConnectedEditor({
           existing: {
             exactMatches: [],
-            relatedMatches: [{ noteId: 1752426864218, unpointed: 'בית משפט', pointed: 'בֵּית מִשְׁפָּט' }],
+            relatedMatches: [
+              {
+                noteId: 1752426864218,
+                unpointed: 'בית משפט',
+                pointed: 'בֵּית מִשְׁפָּט',
+                partOfSpeech: '',
+                definitions: '',
+              },
+            ],
           },
         });
         await typeInto(input('Hebrew word, without niqqud'), 'בית');
         const check = screen.getByRole('region', { name: 'Already in the deck' });
-        expect(await within(check).findByText('Related notes in the deck')).toBeTruthy();
-        expect(within(check).queryByText('Already in the deck')).toBeNull();
+        expect(await within(check).findByText('Related notes in your deck')).toBeTruthy();
+        expect(within(check).queryByText('Already in your deck. Edit it?')).toBeNull();
       });
     });
 

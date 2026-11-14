@@ -24,7 +24,6 @@ const resultSchemaByAllowedAction = {
   findNotes: z.array(z.number()),
   notesInfo: z.array(noteInfoSchema),
   guiAddCards: z.number().nullable(),
-  guiBrowse: z.array(z.number()),
   // The name Anki stored the file under, which may not be the one requested.
   storeMediaFile: z.string(),
   // The file's bytes in base64, or `false` when the media folder has no such file.
@@ -45,7 +44,6 @@ export type ActionParams = {
   guiAddCards: {
     note: { deckName: string; modelName: string; fields: Record<string, string>; tags: string[] };
   };
-  guiBrowse: { query: string };
   // The add-on replaces an existing file by default, which would silently change another note's
   // media. With `false`, different bytes under a taken name get a new name. Its `url` stays out
   // because that has Anki fetch a third-party site on this tool's behalf.

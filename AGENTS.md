@@ -14,9 +14,9 @@ those two facts.
 
 - **Call only the allowlisted AnkiConnect actions**: `version`, `deckNames`, `modelNames`,
   `modelFieldNames`, `modelFieldDescriptions`, `modelTemplates`, `findNotes`, `notesInfo`,
-  `guiAddCards`, `guiBrowse`, `retrieveMediaFile`, and `storeMediaFile` — from code and from `curl` alike. Nothing here
+  `guiAddCards`, `retrieveMediaFile`, and `storeMediaFile` — from code and from `curl` alike. Nothing here
   creates, edits or deletes a note; I click Add myself.
-- **Don't call `guiAddCards`, `guiBrowse` or `storeMediaFile` against my real Anki without
+- **Don't call `guiAddCards` or `storeMediaFile` against my real Anki without
   asking.** `guiAddCards` replaces the open Add window and discards whatever I had typed there, and
   `storeMediaFile` writes into my media folder.
 - **Never reach a third-party site.** No module calls `fetch` on an outside host; the tool only

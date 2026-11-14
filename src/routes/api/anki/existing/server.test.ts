@@ -19,7 +19,15 @@ describe('_findExisting', () => {
     });
     const response = await _findExisting(anki, existingUrl(`?word=${encodeURIComponent('דג')}`));
     expect(await response.json()).toEqual({
-      exactMatches: [{ noteId: 1751714182456, unpointed: 'דג', pointed: 'דָּג' }],
+      exactMatches: [
+        {
+          noteId: 1751714182456,
+          unpointed: 'דג',
+          pointed: 'דָּג',
+          partOfSpeech: '',
+          definitions: 'fish',
+        },
+      ],
       relatedMatches: [],
     });
   });

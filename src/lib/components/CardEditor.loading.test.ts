@@ -80,19 +80,35 @@ describe('CardEditor', () => {
         await renderConnectedEditor(
           {
             existing: {
-              exactMatches: [{ noteId: kelev.noteId, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
-              relatedMatches: [{ noteId: 1, unpointed: 'כלבה', pointed: 'כַּלְבָּה' }],
+              exactMatches: [
+                {
+                  noteId: kelev.noteId,
+                  unpointed: 'כלב',
+                  pointed: 'כֶּלֶב',
+                  partOfSpeech: '',
+                  definitions: '',
+                },
+              ],
+              relatedMatches: [
+                {
+                  noteId: 1,
+                  unpointed: 'כלבה',
+                  pointed: 'כַּלְבָּה',
+                  partOfSpeech: '',
+                  definitions: '',
+                },
+              ],
             },
           },
           kelev,
         );
         const check = screen.getByRole('region', { name: 'Already in the deck' });
-        expect(await within(check).findByText('Related notes in the deck')).toBeTruthy();
+        expect(await within(check).findByText('Related notes in your deck')).toBeTruthy();
         expect(
           within(check)
             .getAllByRole('listitem')
-            .map((item) => item.textContent),
-        ).toEqual(['כַּלְבָּה']);
+            .map((item) => within(item).getByText('כַּלְבָּה')),
+        ).toHaveLength(1);
       });
 
       describe('when it finds only the note', () => {
@@ -100,7 +116,15 @@ describe('CardEditor', () => {
           await renderConnectedEditor(
             {
               existing: {
-                exactMatches: [{ noteId: kelev.noteId, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+                exactMatches: [
+                  {
+                    noteId: kelev.noteId,
+                    unpointed: 'כלב',
+                    pointed: 'כֶּלֶב',
+                    partOfSpeech: '',
+                    definitions: '',
+                  },
+                ],
                 relatedMatches: [],
               },
             },
