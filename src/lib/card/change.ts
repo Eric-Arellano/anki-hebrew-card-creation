@@ -1,6 +1,5 @@
 // How an input's value differs from what Anki holds, for the marker beside it while editing.
 
-import { type Example, isBlankExample } from '#lib/card/examples.ts';
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
 import type { Attachment } from '#lib/media/attach.ts';
 
@@ -36,18 +35,19 @@ export function listChange(
   return same ? undefined : { kind: 'changed', was: describe(held) };
 }
 
-/** As `listChange`, for the rows of `Examples` that hold anything. */
-export function examplesChange(
-  was: readonly Example[] | undefined,
-  now: readonly Example[],
-): Change | undefined {
-  return listChange(was && exampleRows(was), exampleRows(now), (rows) => rows.join(' / '));
-}
-
-function exampleRows(examples: readonly Example[]): string[] {
-  return examples
-    .filter((example) => !isBlankExample(example))
-    .map(({ hebrew, english }) => `${hebrew.trim()} — ${english.trim()}`);
+/**
+ * Each row Anki holds past the end of `now`, with its index there, leaving out blank ones. A row
+ * still in `now` is marked where it is, field by field, against the row at its index.
+ */
+export function removedRows<T>(
+  held: readonly T[] | undefined,
+  now: readonly unknown[],
+  isBlank: (row: T) => boolean,
+): { index: number; row: T }[] {
+  return (held ?? [])
+    .map((row, index) => ({ index, row }))
+    .slice(now.length)
+    .filter(({ row }) => !isBlank(row));
 }
 
 /** As `listChange`, for attachments, which are the same when their filenames are. */

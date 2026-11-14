@@ -1,5 +1,6 @@
 import type { LoadedNote } from '#lib/api/anki.ts';
 import bayit from '#tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
+import ima from '#tests/fixtures/anki/notes-info-ima.json' with { type: 'json' };
 import kelevChatulDag from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
@@ -8,7 +9,7 @@ import twoImages from '#tests/fixtures/anki/notes-info-two-images.json' with { t
 
 /** The fixture note whose `Hebrew` is `word`, as `GET /api/anki/notes/[noteId]` answers with it. */
 export function loadedNote(word: string): LoadedNote {
-  const note = [...kelevChatulDag, ...bayit, ...twoImages, ...mechonitOto].find(
+  const note = [...kelevChatulDag, ...bayit, ...twoImages, ...mechonitOto, ...ima].find(
     ({ fields }) => fields.Hebrew.value === word,
   );
   if (note === undefined) throw new Error(`No fixture note for ${word}`);

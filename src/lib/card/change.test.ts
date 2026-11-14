@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { attachmentsChange, examplesChange, listChange, textChange } from './change.ts';
+import { attachmentsChange, listChange, removedRows, textChange } from './change.ts';
 
 describe('textChange', () => {
   test('finds nothing to compare without a held value', () => {
@@ -68,18 +68,24 @@ describe('listChange', () => {
   });
 });
 
-describe('examplesChange', () => {
-  const barks = { hebrew: 'הַכֶּלֶב נוֹבֵחַ', english: 'The dog barks' };
+describe('removedRows', () => {
+  function isBlank(row: string) {
+    return row.trim() === '';
+  }
 
-  test('leaves out blank rows', () => {
-    expect(examplesChange([barks], [barks, { hebrew: ' ', english: '' }])).toBeUndefined();
+  test('finds none without held rows', () => {
+    expect(removedRows(undefined, ['dog'], isBlank)).toEqual([]);
   });
 
-  test('writes the rows it held compactly', () => {
-    expect(examplesChange([barks], [{ ...barks, english: 'The dog is barking' }])).toEqual({
-      kind: 'changed',
-      was: 'הַכֶּלֶב נוֹבֵחַ — The dog barks',
-    });
+  test('finds the held rows past the end, with their indexes, leaving out blanks', () => {
+    expect(removedRows(['dog', 'hound', '', 'cur'], ['dog'], isBlank)).toEqual([
+      { index: 1, row: 'hound' },
+      { index: 3, row: 'cur' },
+    ]);
+  });
+
+  test('finds none while every held row has a row at its index', () => {
+    expect(removedRows(['dog'], ['hound', 'cur'], isBlank)).toEqual([]);
   });
 });
 

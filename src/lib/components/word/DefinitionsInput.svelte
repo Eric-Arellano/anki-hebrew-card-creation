@@ -1,22 +1,29 @@
 <script lang="ts">
-import { listChange } from '#lib/card/change.ts';
-import { filledDefinitions } from '#lib/card/inputs.ts';
+import { removedRows, textChange } from '#lib/card/change.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
+import RemovedRow from '../ui/RemovedRow.svelte';
 
 let {
   definitions = $bindable(),
   held,
 }: {
   definitions: string[];
-  // What Anki holds, while editing a note, so a change from it is marked.
+  // What Anki holds, while editing a note, so each change from it is marked, meaning by meaning.
   held?: readonly string[];
 } = $props();
 
-const change = $derived(
-  listChange(held && filledDefinitions(held), filledDefinitions(definitions), (meanings) =>
-    meanings.join('; '),
-  ),
-);
+function isBlank(meaning: string) {
+  return meaning.trim() === '';
+}
+
+function labelAt(index: number) {
+  return index === 0 ? 'English meaning' : `English meaning ${index + 1}`;
+}
+
+// Up to and including the meaning at `index`, so it lands back at its own index.
+function restoreThrough(index: number) {
+  definitions = [...definitions, ...(held ?? []).slice(definitions.length, index + 1)];
+}
 
 // The last row is cleared rather than removed, so there is always one to type in.
 function remove(index: number) {
@@ -24,12 +31,17 @@ function remove(index: number) {
 }
 </script>
 
-<ChangedFrom label="English meaning" {change} onrestore={() => (definitions = [...(held ?? [''])])}>
-  <!-- `grid-cols-1` lets a row shrink below its inputs' intrinsic width, which overflows a phone. -->
-  <fieldset class="grid grid-cols-1 content-start gap-2">
-    <legend class="required-mark mb-1">English meaning</legend>
-    {#each definitions, index}
-      {@const label = index === 0 ? 'English meaning' : `English meaning ${index + 1}`}
+<!-- `grid-cols-1` lets a row shrink below its inputs' intrinsic width, which overflows a phone. -->
+<fieldset class="grid grid-cols-1 content-start gap-2">
+  <legend class="required-mark mb-1">English meaning</legend>
+  {#each definitions, index}
+    {@const label = labelAt(index)}
+    <ChangedFrom
+      {label}
+      lang="en"
+      change={textChange(held && (held[index] ?? ''), definitions[index] ?? '')}
+      onrestore={() => (definitions[index] = held?.[index] ?? '')}
+    >
       <div class="flex items-center gap-2">
         <input
           class="flex-1 text-2xl"
@@ -48,13 +60,18 @@ function remove(index: number) {
           ×
         </button>
       </div>
-    {/each}
-    <button
-      type="button"
-      class="justify-self-start text-sm"
-      onclick={() => (definitions = [...definitions, ''])}
-    >
-      + Another meaning
-    </button>
-  </fieldset>
-</ChangedFrom>
+    </ChangedFrom>
+  {/each}
+  {#each removedRows(held, definitions, isBlank) as { index, row } (index)}
+    <RemovedRow label={labelAt(index)} onrestore={() => restoreThrough(index)}>
+      “<bdi lang="en">{row}</bdi>”
+    </RemovedRow>
+  {/each}
+  <button
+    type="button"
+    class="justify-self-start text-sm"
+    onclick={() => (definitions = [...definitions, ''])}
+  >
+    + Another meaning
+  </button>
+</fieldset>

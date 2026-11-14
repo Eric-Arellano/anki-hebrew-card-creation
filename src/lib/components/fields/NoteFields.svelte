@@ -2,7 +2,7 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import type { Suggestions } from '#lib/api/ai.ts';
 import type { SameMeaningNote } from '#lib/api/anki.ts';
-import { attachmentsChange, examplesChange, textChange } from '#lib/card/change.ts';
+import { attachmentsChange, textChange } from '#lib/card/change.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
 import type { Example } from '#lib/card/examples.ts';
 import { fieldDisplay } from '#lib/field-help.ts';
@@ -120,19 +120,14 @@ function lacksAnswer(prompt: VariantPrompt) {
       {/if}
       <div class="space-y-2 sm:row-start-3">
         {#if field === 'examples'}
-          <ChangedFrom
-            {label}
-            change={examplesChange(held?.examples, examples)}
-            onrestore={() => (examples = (held?.examples ?? []).map((example) => ({ ...example })))}
-          >
-            <ExamplesInput
-              bind:examples
-              labelledBy="label-{field}"
-              {describedBy}
-              {word}
-              withoutWord={examplesWithoutWord}
-            />
-          </ChangedFrom>
+          <ExamplesInput
+            bind:examples
+            held={held?.examples}
+            labelledBy="label-{field}"
+            {describedBy}
+            {word}
+            withoutWord={examplesWithoutWord}
+          />
         {:else}
           <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML,
                except that a new line becomes `<br>` on save. -->

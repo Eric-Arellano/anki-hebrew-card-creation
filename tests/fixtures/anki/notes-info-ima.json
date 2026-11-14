@@ -1,0 +1,88 @@
+[
+  {
+    "noteId": 1762027072961,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "אמא",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "אִמָּא",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "אמא טובה",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "mother",
+        "order": 3
+      },
+      "Production context": {
+        "value": "the everyday word you call or talk about your mom with, not the formal term",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<div><img alt=\"Mother ~ Detailed Information | Photos | Videos\" src=\"paste-73a276540e531d93cb30fa37ffb987806073d30a.jpg\"></div>",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_אמא.mp3]",
+        "order": 7
+      },
+      "Part of speech": {
+        "value": "noun",
+        "order": 8
+      },
+      "Gender": {
+        "value": "f",
+        "order": 9
+      },
+      "Forms": {
+        "value": "pl: אִמָּהוֹת",
+        "order": 10
+      },
+      "Binyan": {
+        "value": "",
+        "order": 11
+      },
+      "Root": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 prompt": {
+        "value": "mothers (plural)<div><img src=\"paste-83d63fa7efc9b869ac32f9c786c4e0a1e882e782.jpg\"></div>",
+        "order": 13
+      },
+      "Variant 1 answer": {
+        "value": "אִמָּהוֹת",
+        "order": 14
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 15
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 16
+      },
+      "Examples": {
+        "value": "<bdi lang=\"he\"><b>אמא</b> שלי מבשלת ארוחת ערב.</bdi><span class=\"sep\"> — </span><span lang=\"en\">My mom is cooking dinner.</span><br><bdi lang=\"he\"><b>האמהות</b> מחכות לילדים ליד הגן.</bdi><span class=\"sep\"> — </span><span lang=\"en\">The mothers are waiting for the kids by the kindergarten.</span>",
+        "order": 17
+      },
+      "Notes": {
+        "value": "Formal spelling: אימא",
+        "order": 18
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1794669084,
+    "cards": [1762027072962, 1762027072963, 1762027072964, 1794628950886]
+  }
+]
