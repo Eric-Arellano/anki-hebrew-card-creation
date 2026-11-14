@@ -6,6 +6,7 @@ import { ankiFieldHtmlToText, ankiFieldHtmlToTextarea } from '#lib/anki/html.ts'
 import { soundsInAnkiField, splitImages } from '#lib/anki/media.ts';
 import { definitionsFromHtml } from '#lib/card/compose.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
+import { examplesFromHtml } from '#lib/card/examples.ts';
 import { adjectiveInputsFrom } from '#lib/card/parts-of-speech/adjective.ts';
 import { formsByLabel } from '#lib/card/parts-of-speech/forms.ts';
 import { nounDraftFrom } from '#lib/card/parts-of-speech/noun.ts';
@@ -77,7 +78,7 @@ function stored(filename: string): StoredAttachment {
 
 const TEXTAREA_FIELDS = (Object.keys(FIELDS) as FieldKey[]).filter((key) => {
   const field: Field = FIELDS[key];
-  return 'group' in field;
+  return 'group' in field && key !== 'examples';
 });
 
 /** Everything the editor holds for a note, from its fields keyed by Anki name. */
@@ -127,6 +128,7 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
         ankiFieldHtmlToTextarea(isVariantPrompt(key) ? splitImages(html(key)).text : html(key)),
       ]),
     ),
+    examples: examplesFromHtml(html('examples')),
     media: {
       images: imagesIn('images'),
       // No field holds the choice, so it is made again on each save.

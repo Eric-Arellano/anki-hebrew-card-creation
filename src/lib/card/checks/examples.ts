@@ -1,4 +1,4 @@
-import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
+import type { Example } from '#lib/card/examples.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import { usesForm, usesRoot } from '#lib/hebrew/usage.ts';
@@ -24,25 +24,27 @@ function inputForms(inputs: CardInputsDraft, formsField: string): string[] {
 }
 
 /**
- * The lines of the `Examples` textarea that use no form of the word, as Anki shows them. The
- * forms are those the inputs and `Forms` hold, and a verb's root as well, since its forms are
- * for “he” while an example may conjugate it any way: `דיברתי` for `לְדַבֵּר`.
+ * The index of each example whose Hebrew is filled but uses no form of the word. The forms are
+ * those the inputs and `Forms` hold, and a verb's root as well, since its forms are for “he” while
+ * an example may conjugate it any way: `דיברתי` for `לְדַבֵּר`.
  */
 export function examplesWithoutWord({
   examples,
   inputs,
   formsField,
 }: {
-  examples: string;
+  examples: readonly Example[];
   inputs: CardInputsDraft;
   formsField: string;
-}): string[] {
+}): number[] {
   if (inputs.word.trim() === '') return [];
   const forms = [inputs.word, inputs.pointed, ...inputForms(inputs, formsField)];
   const root = inputs.partOfSpeech === 'verb' ? formatRoot(inputs.root) : undefined;
-  return examples
-    .split('\n')
-    .map(ankiFieldHtmlToText)
-    .filter((line) => line !== '')
-    .filter((line) => !usesForm(line, forms) && !(root !== undefined && usesRoot(line, root)));
+  return examples.flatMap(({ hebrew }, index) =>
+    hebrew.trim() === '' ||
+    usesForm(hebrew, forms) ||
+    (root !== undefined && usesRoot(hebrew, root))
+      ? []
+      : [index],
+  );
 }

@@ -7,6 +7,7 @@ import {
   addToDeck,
   chooseNoun,
   choosePartOfSpeech,
+  exampleRows,
   fillDag,
   fillInputs,
   fillVerb,
@@ -14,6 +15,7 @@ import {
   noteField,
   renderConnectedEditor,
   skipImage,
+  typeExample,
   typeInto,
 } from './CardEditor.harness.ts';
 
@@ -185,21 +187,35 @@ describe('CardEditor', () => {
     });
 
     describe('for the examples', () => {
-      test('warn of a line that uses no form of the word, until it does', async () => {
+      test('warn of a row that uses no form of the word, until it does', async () => {
         await renderConnectedEditor();
         await fillDag();
-        const examples = noteField('Examples');
-        await typeInto(examples, 'הדג שוחה (the fish swims)\nהחתול ישן (the cat sleeps)');
-        const message = screen.getByText(/No form of/);
-        expect(message.textContent).toBe('No form of דג in:');
-        expect(
-          within(message.parentElement as HTMLElement)
-            .getAllByRole('listitem')
-            .map((item) => item.textContent),
-        ).toEqual(['החתול ישן (the cat sleeps)']);
+        await typeExample(1, { hebrew: 'הדג שוחה.', english: 'The fish swims.' });
+        await fireEvent.click(screen.getByRole('button', { name: '+ Another example' }));
+        await typeExample(2, { hebrew: 'החתול ישן.', english: 'The cat sleeps.' });
+        expect(screen.getByText(/No form of/).textContent?.trim()).toBe('No form of דג');
+        expect(input('Example 2 in Hebrew').getAttribute('aria-describedby')).toBe(
+          screen.getByText(/No form of/).id,
+        );
+        expect(input('Example 1 in Hebrew').getAttribute('aria-describedby')).toBeNull();
 
-        await typeInto(examples, 'הדג שוחה (the fish swims)');
+        await typeInto(input('Example 2 in Hebrew'), 'הדג ישן.');
         expect(screen.queryByText(/No form of/)).toBeNull();
+      });
+
+      test('remove the row whose × is clicked', async () => {
+        await renderConnectedEditor();
+        await fillDag();
+        expect(screen.queryByRole('button', { name: 'Remove example 1' })).toBeNull();
+        for (const row of [2, 3]) {
+          await fireEvent.click(screen.getByRole('button', { name: '+ Another example' }));
+          await typeExample(row, { hebrew: `דג ${row}.`, english: `Fish ${row}.` });
+        }
+        await fireEvent.click(screen.getByRole('button', { name: 'Remove example 2' }));
+        expect(exampleRows()).toEqual([
+          { hebrew: '', english: '' },
+          { hebrew: 'דג 3.', english: 'Fish 3.' },
+        ]);
       });
     });
 

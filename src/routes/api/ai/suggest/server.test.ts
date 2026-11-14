@@ -51,10 +51,11 @@ describe('_suggest', () => {
     const messages = replyingWith(suggestSefer);
     const response = await _suggest(index, suggestRequest(sefer), messages);
     expect(await response.json()).toEqual({
-      examples:
-        "אני קורא ספר מעניין (I'm reading an interesting book)\n" +
-        'ספר בישול (cookbook)\n' +
-        'הספרים על המדף (the books are on the shelf)',
+      examples: [
+        { hebrew: 'אני קורא ספר מעניין', english: "I'm reading an interesting book" },
+        { hebrew: 'ספר בישול', english: 'cookbook' },
+        { hebrew: 'הספרים על המדף', english: 'the books are on the shelf' },
+      ],
       readingContext: 'קראתי ספר',
     });
     expect(messages.create.mock.calls[0]?.[0].messages).toEqual([

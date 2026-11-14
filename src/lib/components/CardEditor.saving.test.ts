@@ -12,6 +12,7 @@ import {
   saveRequests,
   skipImage,
   stubServer,
+  typeExample,
   typeInto,
 } from './CardEditor.harness.ts';
 import CardEditor from './CardEditor.svelte';
@@ -58,6 +59,26 @@ describe('CardEditor', () => {
           body: { fields: dagFields, allowDuplicate: false },
         },
       ]);
+    });
+
+    test('writes each example on its own line, its Hebrew in a <bdi>', async () => {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      await skipImage();
+      await typeExample(1, { hebrew: 'איפה הדג?', english: 'Where is the fish?' });
+      await fireEvent.click(screen.getByRole('button', { name: '+ Another example' }));
+      await typeExample(2, { hebrew: 'דג & צ׳יפס.', english: '' });
+      await fireEvent.click(addButton());
+      await screen.findByText('Added to the deck.');
+      expect(addRequests(requests)[0]?.body).toEqual({
+        fields: {
+          ...dagFields,
+          Examples:
+            '<bdi lang="he">איפה הדג?</bdi> (Where is the fish?)<br>' +
+            '<bdi lang="he">דג &amp; צ׳יפס.</bdi>',
+        },
+        allowDuplicate: false,
+      });
     });
 
     test('adds on Cmd+Enter too, without asking first', async () => {

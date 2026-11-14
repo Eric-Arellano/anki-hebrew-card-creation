@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import type { Suggestions, SuggestRequest } from '#lib/api/ai.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
+import type { Example } from '#lib/card/examples.ts';
 import { FIELD_HELP } from '#lib/field-help.ts';
 import { hasHebrewLetters, hasLatinLetters } from '#lib/hebrew/letters.ts';
 import { hasNiqqud, isSamePointedText, toLookupKey } from '#lib/hebrew/normalize.ts';
@@ -95,7 +96,7 @@ export function suggestionRequest(
   return { system, user, schema: withReading ? answerWithReadingSchema : answerSchema };
 }
 
-// A textarea's text is saved as Anki HTML, where `<`, `>` and `&` would be markup, and a line
+// A hint's textarea is saved as Anki HTML, where `<`, `>` and `&` would be markup, and a line
 // break would split one suggestion into two.
 function isPlainLine(text: string): boolean {
   return text.trim() !== '' && !/[<>&\r\n]/.test(text);
@@ -106,22 +107,23 @@ function isUnpointedHebrew(text: string): boolean {
   return isPlainLine(text) && hasHebrewLetters(text) && !hasLatinLetters(text) && !hasNiqqud(text);
 }
 
-// In the form the Examples help shows, `Hebrew (English)`, one per line.
-function exampleLine({ hebrew, english }: z.infer<typeof exampleSchema>): string[] {
-  const valid =
+function isValidExample({ hebrew, english }: Example): boolean {
+  return (
     isUnpointedHebrew(hebrew) &&
     isPlainLine(english) &&
     !hasHebrewLetters(english) &&
-    !/[()]/.test(english);
-  return valid ? [`${hebrew.trim()} (${english.trim()})`] : [];
+    !/[()]/.test(english)
+  );
 }
 
-/** What of `answer` passes the guards, as each field's textarea holds it. */
+/** What of `answer` passes the guards, as each field's input holds it. */
 export function toSuggestions(answer: Answer): Suggestions {
-  const examples = answer.examples.flatMap(exampleLine).join('\n');
+  const examples = answer.examples
+    .filter(isValidExample)
+    .map(({ hebrew, english }) => ({ hebrew: hebrew.trim(), english: english.trim() }));
   const { productionContext, readingContext } = answer;
   return {
-    ...(examples === '' ? {} : { examples }),
+    ...(examples.length === 0 ? {} : { examples }),
     // Hebrew in the hint would give the answer away.
     ...(productionContext != null &&
     isPlainLine(productionContext) &&

@@ -4,25 +4,30 @@ import { describe, expect, test } from 'vitest';
 import type { Suggestions } from '#lib/api/ai.ts';
 import {
   chooseNoun,
+  exampleRows,
   fillInputs,
   input,
   noteField,
   renderConnectedEditor,
   type ServerReplies,
   type ServerRequest,
+  typeExample,
   typeInto,
 } from './CardEditor.harness.ts';
 
 // As `/api/ai/suggest` answers for סֵפֶר, from the captured reply in `tests/fixtures/claude/`.
 const seferSuggestions: Suggestions = {
-  examples:
-    "אני קורא ספר מעניין (I'm reading an interesting book)\n" +
-    'ספר בישול (cookbook)\n' +
-    'הספרים על המדף (the books are on the shelf)',
+  examples: [
+    { hebrew: 'אני קורא ספר מעניין', english: "I'm reading an interesting book" },
+    { hebrew: 'ספר בישול', english: 'cookbook' },
+    { hebrew: 'הספרים על המדף', english: 'the books are on the shelf' },
+  ],
   readingContext: 'קראתי ספר',
 };
 
 const EXAMPLES = 'Examples';
+const newBook = { hebrew: 'ספר חדש.', english: 'A new book.' };
+const blankRow = [{ hebrew: '', english: '' }];
 const PRODUCTION_CONTEXT = 'Hint for recalling the Hebrew from its English meaning';
 const READING_CONTEXT = 'Hint for reading the Hebrew without niqqud';
 
@@ -97,7 +102,7 @@ describe('CardEditor', () => {
       await fillSefer();
       await typeInto(noteField(READING_CONTEXT), 'ספר טוב');
       await clickSuggest();
-      expect(noteField(EXAMPLES).value).toBe(seferSuggestions.examples);
+      expect(exampleRows()).toEqual(seferSuggestions.examples);
       expect(noteField(READING_CONTEXT).value).toBe('ספר טוב');
       expect(noteField(PRODUCTION_CONTEXT).value).toBe('');
     });
@@ -108,10 +113,10 @@ describe('CardEditor', () => {
       await fillSefer();
       await fireEvent.click(suggestButton());
       expect(suggestButton().disabled).toBe(true);
-      await typeInto(noteField(EXAMPLES), 'ספר חדש (a new book)');
+      await typeExample(1, newBook);
       send(seferSuggestions);
       await answered();
-      expect(noteField(EXAMPLES).value).toBe('ספר חדש (a new book)');
+      expect(exampleRows()).toEqual([newBook]);
       expect(noteField(READING_CONTEXT).value).toBe('קראתי ספר');
     });
 
@@ -124,7 +129,7 @@ describe('CardEditor', () => {
         expect(isMarkedSuggested(READING_CONTEXT)).toBe(true);
         expect(isMarkedSuggested(PRODUCTION_CONTEXT)).toBe(false);
 
-        await typeInto(noteField(EXAMPLES), 'אני קורא ספר מעניין (I’m reading a good book)');
+        await typeInto(input('Example 1 in English'), 'I’m reading a good book');
         expect(isMarkedSuggested(EXAMPLES)).toBe(false);
         expect(isMarkedSuggested(READING_CONTEXT)).toBe(true);
       });
@@ -148,7 +153,7 @@ describe('CardEditor', () => {
         await typeInto(input('English meaning'), 'barber');
         send(seferSuggestions);
         await screen.findByText(/changed while Claude was answering/);
-        expect(noteField(EXAMPLES).value).toBe('');
+        expect(exampleRows()).toEqual(blankRow);
       });
     });
 
@@ -171,7 +176,7 @@ describe('CardEditor', () => {
         expect(screen.getByText(/Couldn't get suggestions/).textContent).toBe(
           "Couldn't get suggestions: Claude declined to answer.",
         );
-        expect(noteField(EXAMPLES).value).toBe('');
+        expect(exampleRows()).toEqual(blankRow);
         expect(suggestButton().disabled).toBe(false);
       });
     });
@@ -189,7 +194,7 @@ describe('CardEditor', () => {
       test('is disabled, saying why', async () => {
         await renderWithKey();
         await fillSefer();
-        await typeInto(noteField(EXAMPLES), 'ספר חדש (a new book)');
+        await typeExample(1, newBook);
         await typeInto(noteField(PRODUCTION_CONTEXT), 'something you read');
         await typeInto(noteField(READING_CONTEXT), 'קראתי ספר');
         expect(suggestButton().disabled).toBe(true);

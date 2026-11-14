@@ -146,14 +146,17 @@ describe('toSuggestions', () => {
     readingContext: 'ספר טוב',
   };
 
-  test('writes each example as the Examples help shows it, one per line', () => {
+  test('keeps each example, trimmed', () => {
     expect(
       toSuggestions({
         ...kept,
         examples: [...kept.examples, { hebrew: ' ספר בישול ', english: 'cookbook ' }],
       }),
     ).toEqual({
-      examples: 'קראתי ספר (I read a book)\nספר בישול (cookbook)',
+      examples: [
+        { hebrew: 'קראתי ספר', english: 'I read a book' },
+        { hebrew: 'ספר בישול', english: 'cookbook' },
+      ],
       productionContext: 'a thing you read',
       readingContext: 'ספר טוב',
     });
@@ -162,7 +165,7 @@ describe('toSuggestions', () => {
   test('leaves out what Claude answered null or nothing for', () => {
     expect(toSuggestions({ examples: [], productionContext: null })).toEqual({});
     expect(toSuggestions({ ...kept, productionContext: null, readingContext: null })).toEqual({
-      examples: 'קראתי ספר (I read a book)',
+      examples: kept.examples,
     });
   });
 
@@ -177,8 +180,8 @@ describe('toSuggestions', () => {
       ['parentheses in the English', { hebrew: 'קראתי ספר', english: 'I read (a) book' }],
       ['a blank side', { hebrew: 'קראתי ספר', english: ' ' }],
     ])('drops one with %s, keeping the rest', (_, example) => {
-      expect(toSuggestions({ ...kept, examples: [example, ...kept.examples] }).examples).toBe(
-        'קראתי ספר (I read a book)',
+      expect(toSuggestions({ ...kept, examples: [example, ...kept.examples] }).examples).toEqual(
+        kept.examples,
       );
     });
   });
@@ -212,10 +215,11 @@ describe('suggest', () => {
       async () => suggestSefer as Anthropic.Beta.BetaMessage,
     );
     expect(await suggest(sefer, seferHomographs, { create })).toEqual({
-      examples:
-        "אני קורא ספר מעניין (I'm reading an interesting book)\n" +
-        'ספר בישול (cookbook)\n' +
-        'הספרים על המדף (the books are on the shelf)',
+      examples: [
+        { hebrew: 'אני קורא ספר מעניין', english: "I'm reading an interesting book" },
+        { hebrew: 'ספר בישול', english: 'cookbook' },
+        { hebrew: 'הספרים על המדף', english: 'the books are on the shelf' },
+      ],
       readingContext: 'קראתי ספר',
     });
     const { system, user } = suggestionRequest(sefer, seferHomographs);

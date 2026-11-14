@@ -4,6 +4,7 @@ import type { AiStatus, SuggestRequest } from '#lib/api/ai.ts';
 import type { AnkiStatus, ExistingNotes, LoadedNote, SameMeaningNote } from '#lib/api/anki.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { ForvoDownloads } from '#lib/api/forvo.ts';
+import type { Example } from '#lib/card/examples.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import CardEditor from './CardEditor.svelte';
 
@@ -150,6 +151,22 @@ export function input(label: string) {
 
 export function noteField(fieldName: string) {
   return screen.getByLabelText(fieldName) as HTMLTextAreaElement;
+}
+
+/** Each row of Examples, as its inputs hold it. */
+export function exampleRows(): Example[] {
+  function values(side: string) {
+    return screen
+      .getAllByLabelText(new RegExp(`^Example \\d+ in ${side}$`))
+      .map((element) => (element as HTMLInputElement).value);
+  }
+  const english = values('English');
+  return values('Hebrew').map((hebrew, index) => ({ hebrew, english: english[index] ?? '' }));
+}
+
+export async function typeExample(row: number, { hebrew, english }: Example) {
+  await typeInto(input(`Example ${row} in Hebrew`), hebrew);
+  await typeInto(input(`Example ${row} in English`), english);
 }
 
 export async function typeInto(element: HTMLElement, value: string) {
