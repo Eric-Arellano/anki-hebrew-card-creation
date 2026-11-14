@@ -21,6 +21,7 @@ let {
   label,
   prompt,
   required = false,
+  links,
   children,
 }: {
   images: Attachment[];
@@ -30,6 +31,8 @@ let {
   // drops here. Without one, these are the word's `Images`, which take whatever no block claims.
   prompt?: VariantPrompt;
   required?: boolean;
+  // Searches for an image to paste here.
+  links?: Snippet;
   // Shown after the hint.
   children?: Snippet;
 } = $props();
@@ -135,6 +138,12 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
     {/if}
     {@render children?.()}
   </div>
+  {#if links !== undefined}
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-sm text-gray-600">Search images</span>
+      {@render links()}
+    </div>
+  {/if}
 
   {#if images.length > 0}
     <ul class="flex flex-wrap gap-2">

@@ -73,7 +73,7 @@ const TRAIN_EXAMPLES = examplesHelp(
 );
 
 // The widget for a variant's images sits under its prompt.
-const PASTE_IMAGE_HELP = 'Find an image with Images (EN), copy it, and paste it here.';
+const PASTE_IMAGE_HELP = 'Search images for the prompt, copy one, and paste it here.';
 
 // Variant 1's help sits right above Variant 2, so Variant 2 needs none.
 export const FIELD_HELP = {

@@ -1,37 +1,29 @@
-// What a link searches with: the Hebrew word, or English such as a meaning or a variant's prompt.
-export type LinkInput = 'hebrew' | 'english';
-
 export type Link = {
   label: string;
-  input: LinkInput;
   url: (encodedText: string) => `https://${string}`;
 };
 
-// Keyed by id, in the order the editor shows them.
+// Each is shown beside what it feeds. An image search is labelled by the text it searches, under
+// "Search images", so its own label shows only while that text is blank.
 export const LINKS = {
   wiktionary: {
     label: 'Wiktionary',
-    input: 'hebrew',
     url: (text) => `https://en.wiktionary.org/wiki/${text}#Hebrew`,
   },
   pealim: {
     label: 'Pealim',
-    input: 'hebrew',
     url: (text) => `https://www.pealim.com/search/?q=${text}`,
   },
   forvo: {
     label: 'Forvo',
-    input: 'hebrew',
     url: (text) => `https://forvo.com/word/${text}/#he`,
   },
   'images-en': {
-    label: 'Images (EN)',
-    input: 'english',
+    label: 'English',
     url: (text) => `https://www.google.com/search?udm=2&q=${text}`,
   },
   'images-he': {
-    label: 'Images (HE)',
-    input: 'hebrew',
+    label: 'Hebrew',
     url: (text) => `https://www.google.com/search?udm=2&q=${text}`,
   },
 } satisfies Record<string, Link>;

@@ -9,6 +9,8 @@ import {
   forvoDownloadUrl,
 } from '#lib/api/forvo.ts';
 import { errorMessage } from '#lib/api/http.ts';
+import { INPUT_NAMES } from '#lib/card/inputs.ts';
+import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import {
   type Attachment,
   audioAttachment,
@@ -17,6 +19,7 @@ import {
   showingAttachment,
 } from '#lib/media/attach.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
+import LinkChip from '../ui/LinkChip.svelte';
 
 let { audio = $bindable(), word }: { audio: Attachment | undefined; word: string } = $props();
 
@@ -141,7 +144,12 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
       Choose file
       <input class="sr-only" type="file" accept=".mp3,audio/mpeg" {onchange}>
     </label>
-    <span class="hint">or paste or drop an MP3, or download it from Forvo</span>
+    <span class="hint">or paste or drop an MP3</span>
+    <LinkChip
+      label={LINKS.forvo.label}
+      url={buildLinkUrl(LINKS.forvo, word)}
+      blankInput={INPUT_NAMES.word}
+    />
   </div>
 
   {#if audio === undefined}

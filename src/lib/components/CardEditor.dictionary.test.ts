@@ -298,8 +298,8 @@ describe('CardEditor', () => {
         await renderConnectedEditor();
         await typeInto(input('Hebrew word, without niqqud'), 'זזזז');
         expect(await screen.findByText('Not in the dictionary.')).toBeTruthy();
-        const links = screen.getByRole('navigation', { name: 'Look up' });
-        expect(within(links).getByRole('link', { name: /Wiktionary/ }).textContent).toContain(
+        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+        expect(within(dictionary).getByRole('link', { name: /Wiktionary/ }).textContent).toContain(
           'no entry',
         );
       });
@@ -309,10 +309,10 @@ describe('CardEditor', () => {
       test('points the Wiktionary link at its page', async () => {
         await renderConnectedEditor({ lookup: found(kelev) });
         await pick('כלבים', 'כֶּלֶב');
-        const links = screen.getByRole('navigation', { name: 'Look up' });
-        expect(within(links).getByRole('link', { name: 'Wiktionary' }).getAttribute('href')).toBe(
-          `https://en.wiktionary.org/wiki/${encodeURIComponent('כלב')}#Hebrew`,
-        );
+        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+        expect(
+          within(dictionary).getByRole('link', { name: 'Wiktionary' }).getAttribute('href'),
+        ).toBe(`https://en.wiktionary.org/wiki/${encodeURIComponent('כלב')}#Hebrew`);
       });
     });
 
