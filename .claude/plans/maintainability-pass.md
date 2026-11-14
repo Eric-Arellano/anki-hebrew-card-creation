@@ -3,10 +3,9 @@
 ## Context
 
 The UI revamp landed fast, and it left names and folders describing the editor as it used to be.
-`components/forms/` renders the Grammar section, `NoteFields` renders one field group,
-`ExistingNotesPanel` and `DictionaryPanel` are no longer panels, and `card/examples.ts` gathers
-forms that have nothing to do with the `Examples` field. Pure logic about Claude's suggestions grew
-inside three components, where only DOM tests reach it.
+`components/forms/` renders the Grammar section, `NoteFields` renders one field group, and
+`ExistingNotesPanel` and `DictionaryPanel` are no longer panels. Pure logic about Claude's
+suggestions grew inside three components, where only DOM tests reach it.
 
 This pass changes no behaviour. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
@@ -14,7 +13,7 @@ This pass changes no behaviour. Each PR is a prefactor: a reviewer should be abl
 Two pieces of work are still to come: the Claude correctness check and the verb revamp
 (`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet). Neither should wait on
 this pass, and the order among these PRs is loose. When the verb plan is adopted, its paths need
-updating for PR 2 and PR 3. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
+updating for PR 1 and PR 2. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
 `fields/SuggestButton.svelte`, and `suggestBlocker` in `CardEditor.svelte`.
 
 ## Decisions
@@ -41,22 +40,7 @@ updating for PR 2 and PR 3. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceC
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: Move form gathering out of `card/examples.ts`
-
-The bottom half of `card/examples.ts` gathers a word's labelled forms: `LabeledForm`,
-`labeledForms`, `formsFieldLines`, `allLabeledForms` and `wordUsage`. It is not about the
-`Examples` field, and `api/ai.ts` imports `LabeledForm` "from examples". Move it into
-`card/parts-of-speech/forms.ts`, beside `FormLine` and `formsByLabel`, with its tests.
-
-That puts the two `label: form` parsers side by side:
-- `formsFieldLines` splits text on `\n` and takes any label;
-- `formsByLabel` splits HTML and takes only `[a-z.]+` labels.
-
-Merge them only if the existing tests show they agree on every input each one sees. Otherwise,
-add one line on each saying why they differ. Move `wordUsage`'s rationale paragraph out of its
-doc comment, onto the line it explains.
-
-## PR 2: Component directories follow the editor's sections
+## PR 1: Component directories follow the editor's sections
 
 Renames and moves first (`git mv`), then imports and test queries.
 
@@ -83,7 +67,7 @@ Renames and moves first (`git mv`), then imports and test queries.
     Move it there.
 - Run `svelte-autofixer` on every moved file.
 
-## PR 3: Claude's suggestions, as pure functions with unit tests
+## PR 2: Claude's suggestions, as pure functions with unit tests
 
 A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
 
@@ -91,12 +75,12 @@ A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
   branching that is tested only through the DOM today; the second is the inline `SuggestRequest`.
 - `filledBlanks(suggestions, edits, examples)` from `SuggestButton.svelte`'s `ask`: which hints
   and examples a reply fills, given that typing during the call wins.
-- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 2).
+- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 1).
 
 The components keep the state and the calls. Their DOM tests stay as integration tests, but drop
 any case that the unit tests now cover exhaustively.
 
-## PR 4: One list-row algebra for meanings and examples, and one `Held` type
+## PR 3: One list-row algebra for meanings and examples, and one `Held` type
 
 - `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
   `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
@@ -106,7 +90,7 @@ any case that the unit tests now cover exhaustively.
   replaces the nine copies of that comment on `held` props. `SaveBar`'s and `CardEditor`'s `held`
   is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
 
-## PR 5: Shared fixtures for the editor's tests
+## PR 4: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -121,7 +105,7 @@ any case that the unit tests now cover exhaustively.
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 6: Shared fakes for the server's tests
+## PR 5: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.
@@ -136,7 +120,7 @@ any case that the unit tests now cover exhaustively.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   touched until it reports nothing. No test reaches the network, a real Anki or the real API.
-- PRs 1–2: after the move, `grep -rn` for each old module and component name across `src/`,
+- PR 1: after the move, `grep -rn` for each old module and component name across `src/`,
   `tests/`, `scripts/`, `AGENTS.md` and `README.md` comes back empty.
-- PR 2, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
+- PR 1, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
   as before. Nothing is clicked that writes to Anki or calls Claude.
