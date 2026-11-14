@@ -7,20 +7,21 @@ import type { RequestHandler } from './$types';
 // The kinds of file the deck's notes hold, under whatever case their extensions came in. The media
 // folder can hold anything, and an SVG or HTML file served from this origin could script the
 // routes that write to Anki, so nothing else is served, and each is sent as the type its extension
-// names rather than one sniffed from its bytes.
-const CONTENT_TYPE_BY_EXTENSION: Readonly<Record<string, string>> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-  mp3: 'audio/mpeg',
-};
+// names rather than one sniffed from its bytes. A Map, not an object literal, so `a.constructor`
+// can't find something on the prototype.
+const CONTENT_TYPE_BY_EXTENSION: ReadonlyMap<string, string> = new Map([
+  ['jpg', 'image/jpeg'],
+  ['jpeg', 'image/jpeg'],
+  ['png', 'image/png'],
+  ['webp', 'image/webp'],
+  ['mp3', 'audio/mpeg'],
+]);
 
 const SERVABLE_FILENAME = /^[^/\\]+\.([a-z0-9]+)$/i;
 
 function contentTypeOf(filename: string): string | undefined {
   const extension = filename.match(SERVABLE_FILENAME)?.[1]?.toLowerCase();
-  return extension === undefined ? undefined : CONTENT_TYPE_BY_EXTENSION[extension];
+  return extension === undefined ? undefined : CONTENT_TYPE_BY_EXTENSION.get(extension);
 }
 
 export const GET: RequestHandler = ({ params }) => _readMedia(anki, params.filename);
