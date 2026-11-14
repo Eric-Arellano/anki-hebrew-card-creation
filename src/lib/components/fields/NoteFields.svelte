@@ -2,7 +2,8 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import type { Suggestions } from '#lib/api/ai.ts';
 import type { SameMeaningNote } from '#lib/api/anki.ts';
-import { textChange } from '#lib/card/change.ts';
+import { attachmentsChange, examplesChange, textChange } from '#lib/card/change.ts';
+import type { CardDraft } from '#lib/card/draft.ts';
 import type { Example } from '#lib/card/examples.ts';
 import { fieldDisplay } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
@@ -40,7 +41,7 @@ let {
   partOfSpeech: PartOfSpeech;
   edits: FieldValues;
   // What Anki holds, while editing a note, so each change from it is marked.
-  held: FieldValues | undefined;
+  held: CardDraft | undefined;
   examples: Example[];
   // The word without niqqud, which the examples should use.
   word: string;
@@ -119,20 +120,26 @@ function lacksAnswer(prompt: VariantPrompt) {
       {/if}
       <div class="space-y-2 sm:row-start-3">
         {#if field === 'examples'}
-          <ExamplesInput
-            bind:examples
-            labelledBy="label-{field}"
-            {describedBy}
-            {word}
-            withoutWord={examplesWithoutWord}
-          />
+          <ChangedFrom
+            {label}
+            change={examplesChange(held?.examples, examples)}
+            onrestore={() => (examples = (held?.examples ?? []).map((example) => ({ ...example })))}
+          >
+            <ExamplesInput
+              bind:examples
+              labelledBy="label-{field}"
+              {describedBy}
+              {word}
+              withoutWord={examplesWithoutWord}
+            />
+          </ChangedFrom>
         {:else}
           <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML,
                except that a new line becomes `<br>` on save. -->
           <ChangedFrom
             {label}
-            change={textChange(held && (held[field] ?? ''), edits[field] ?? '')}
-            onrestore={() => onedit(field, held?.[field] ?? '')}
+            change={textChange(held && (held.edits[field] ?? ''), edits[field] ?? '')}
+            onrestore={() => onedit(field, held?.edits[field] ?? '')}
           >
             <textarea
               id="field-{field}"
@@ -147,15 +154,26 @@ function lacksAnswer(prompt: VariantPrompt) {
         {/if}
         {#if prompt !== undefined}
           {@const promptText = ankiFieldHtmlToText(edits[field] ?? '').trim()}
-          <ImagesInput label="Images for {label}" {prompt} bind:images={promptImages[prompt]}>
-            {#snippet links()}
-              <LinkChip
-                label={promptText || LINKS['images-en'].label}
-                url={buildLinkUrl(LINKS['images-en'], promptText)}
-                blankInput="prompt"
-              />
-            {/snippet}
-          </ImagesInput>
+          <ChangedFrom
+            label="Images for {label}"
+            change={attachmentsChange(
+              held?.media.promptImages[prompt],
+              promptImages[prompt],
+              'image',
+            )}
+            quoted={false}
+            onrestore={() => (promptImages[prompt] = [...(held?.media.promptImages[prompt] ?? [])])}
+          >
+            <ImagesInput label="Images for {label}" {prompt} bind:images={promptImages[prompt]}>
+              {#snippet links()}
+                <LinkChip
+                  label={promptText || LINKS['images-en'].label}
+                  url={buildLinkUrl(LINKS['images-en'], promptText)}
+                  blankInput="prompt"
+                />
+              {/snippet}
+            </ImagesInput>
+          </ChangedFrom>
           {#if promptImages[prompt].length > 0 && lacksAnswer(prompt)}
             <p class="hint text-amber-400">
               No card shows these images until this variant has a Hebrew answer.

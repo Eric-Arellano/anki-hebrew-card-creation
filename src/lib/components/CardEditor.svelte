@@ -20,6 +20,7 @@ import {
   labeledForms,
   wordUsage,
 } from '#lib/card/examples.ts';
+import { attachmentsChange } from '#lib/card/change.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {
@@ -37,6 +38,7 @@ import {
   undoPrefill,
 } from '#lib/card/prefill.ts';
 import { GROUP_HELP } from '#lib/field-help.ts';
+import type { Attachment } from '#lib/media/attach.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import { type FieldKey, type PartOfSpeech, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
@@ -47,6 +49,7 @@ import AudioInput from './media/AudioInput.svelte';
 import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './fields/NoteFields.svelte';
 import SuggestButton from './fields/SuggestButton.svelte';
+import ChangedFrom from './ui/ChangedFrom.svelte';
 import Checkbox from './ui/Checkbox.svelte';
 import LinkChip from './ui/LinkChip.svelte';
 import Section from './ui/Section.svelte';
@@ -185,6 +188,10 @@ function retype() {
   picked = undefined;
 }
 
+function recordings(audio: Attachment | undefined): Attachment[] {
+  return audio === undefined ? [] : [audio];
+}
+
 function setEdit(field: FieldKey, value: string) {
   draft.edits[field] = value;
 }
@@ -257,7 +264,10 @@ onMount(checkAnki);
         bind:value={draft.inputs.word}
         oninput={retype}
       />
-      <DefinitionsInput bind:definitions={draft.inputs.definitions} />
+      <DefinitionsInput
+        bind:definitions={draft.inputs.definitions}
+        held={marked?.inputs.definitions}
+      />
     </div>
     <ExistingNotesPanel
       words={deckWords}
@@ -302,35 +312,53 @@ onMount(checkAnki);
 
   <Section title="Media">
     <div class="space-y-2">
-      <ImagesInput
+      <ChangedFrom
         label="Images"
-        required={draft.media.images.length === 0 && !draft.media.noImage}
-        bind:images={draft.media.images}
+        change={attachmentsChange(marked?.media.images, draft.media.images, 'image')}
+        quoted={false}
+        onrestore={() => (draft.media.images = [...baseline.media.images])}
       >
-        <!-- A card usually has one image per meaning, so each meaning gets its own search. -->
-        {#snippet links()}
-          {#each meanings.length === 0 ? [''] : meanings as meaning, index (index)}
+        <ImagesInput
+          label="Images"
+          required={draft.media.images.length === 0 && !draft.media.noImage}
+          bind:images={draft.media.images}
+        >
+          <!-- A card usually has one image per meaning, so each meaning gets its own search. -->
+          {#snippet links()}
+            {#each meanings.length === 0 ? [''] : meanings as meaning, index (index)}
+              <LinkChip
+                label={meaning || LINKS['images-en'].label}
+                url={buildLinkUrl(LINKS['images-en'], meaning)}
+                blankInput="meaning"
+              />
+            {/each}
             <LinkChip
-              label={meaning || LINKS['images-en'].label}
-              url={buildLinkUrl(LINKS['images-en'], meaning)}
-              blankInput="meaning"
+              label={draft.inputs.word.trim() || LINKS['images-he'].label}
+              url={buildLinkUrl(LINKS['images-he'], draft.inputs.word)}
+              blankInput={INPUT_NAMES.word}
+              lang="he"
             />
-          {/each}
-          <LinkChip
-            label={draft.inputs.word.trim() || LINKS['images-he'].label}
-            url={buildLinkUrl(LINKS['images-he'], draft.inputs.word)}
-            blankInput={INPUT_NAMES.word}
-            lang="he"
-          />
-        {/snippet}
-        <!-- The human's say that this word has no image worth finding. -->
-        {#if draft.media.images.length === 0}
-          <span class="ml-auto text-sm text-neutral-400">
-            <Checkbox label="No image for this word" bind:checked={draft.media.noImage} />
-          </span>
-        {/if}
-      </ImagesInput>
-      <AudioInput bind:audio={draft.media.audio} word={draft.inputs.word} />
+          {/snippet}
+          <!-- The human's say that this word has no image worth finding. -->
+          {#if draft.media.images.length === 0}
+            <span class="ml-auto text-sm text-neutral-400">
+              <Checkbox label="No image for this word" bind:checked={draft.media.noImage} />
+            </span>
+          {/if}
+        </ImagesInput>
+      </ChangedFrom>
+      <ChangedFrom
+        label="Audio"
+        change={attachmentsChange(
+          marked && recordings(marked.media.audio),
+          recordings(draft.media.audio),
+          'recording',
+        )}
+        quoted={false}
+        onrestore={() => (draft.media.audio = baseline.media.audio)}
+      >
+        <AudioInput bind:audio={draft.media.audio} word={draft.inputs.word} />
+      </ChangedFrom>
     </div>
   </Section>
 
@@ -342,7 +370,7 @@ onMount(checkAnki);
       {fields}
       {partOfSpeech}
       edits={draft.edits}
-      held={marked?.edits}
+      held={marked}
       word={draft.inputs.word.trim()}
       bind:examples={draft.examples}
       examplesWithoutWord={examplesWithoutWord({

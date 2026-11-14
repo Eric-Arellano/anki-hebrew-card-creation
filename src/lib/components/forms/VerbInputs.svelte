@@ -3,8 +3,10 @@ import type { Snippet } from 'svelte';
 import type { UnofferedValues } from '#lib/card/from-note.ts';
 import type { VerbDraft } from '#lib/card/parts-of-speech/verb.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
+import { textChange } from '#lib/card/change.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
+import ChangedFrom from '../ui/ChangedFrom.svelte';
 import ChoiceChips from '../ui/ChoiceChips.svelte';
 import TextInput from '../ui/TextInput.svelte';
 import UnofferedValue from '../ui/UnofferedValue.svelte';
@@ -56,6 +58,7 @@ function setBinyan(value: Binyan | '') {
     options={PREPOSITION_OPTIONS}
     suggested={suggestedPrepositions}
     unoffered={unoffered.preposition}
+    held={held && (held.preposition ?? '')}
     bind:value={verb.preposition}
   />
   {#if suggestedPrepositions.length > 0}
@@ -91,20 +94,26 @@ function setBinyan(value: Binyan | '') {
       bind:value={verb.future}
     />
     <div class="grid content-start gap-1">
-      <label class="grid gap-1">
-        <span class="required-mark">Binyan</span>
-        <select
-          class="text-2xl"
-          required
-          aria-describedby={shownUnofferedBinyan === undefined ? undefined : binyanErrorId}
-          bind:value={() => verb.binyan ?? '', setBinyan}
-        >
-          <option value=""></option>
-          {#each BINYANIM as binyan (binyan)}
-            <option value={binyan}>{binyan}</option>
-          {/each}
-        </select>
-      </label>
+      <ChangedFrom
+        label="Binyan"
+        change={textChange(held && (held.binyan ?? ''), verb.binyan ?? '')}
+        onrestore={() => (verb.binyan = held?.binyan)}
+      >
+        <label class="grid gap-1">
+          <span class="required-mark">Binyan</span>
+          <select
+            class="text-2xl"
+            required
+            aria-describedby={shownUnofferedBinyan === undefined ? undefined : binyanErrorId}
+            bind:value={() => verb.binyan ?? '', setBinyan}
+          >
+            <option value=""></option>
+            {#each BINYANIM as binyan (binyan)}
+              <option value={binyan}>{binyan}</option>
+            {/each}
+          </select>
+        </label>
+      </ChangedFrom>
       {#if choices.binyan !== undefined}
         <WiktionaryHas
           label="Binyan"

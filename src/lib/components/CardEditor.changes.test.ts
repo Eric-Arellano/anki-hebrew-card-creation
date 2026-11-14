@@ -5,10 +5,12 @@ import type { LoadedNote } from '#lib/api/anki.ts';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { loadedNote } from '#tests/real-notes.ts';
 import {
+  choosePartOfSpeech,
   fillInputs,
   input,
   noteField,
   renderConnectedEditor,
+  typeExample,
   typeInto,
 } from './CardEditor.harness.ts';
 
@@ -43,6 +45,10 @@ function markerAfter(element: Element | null) {
 
 function marker(label: string) {
   return markerAfter(input(label).closest('label'));
+}
+
+function groupMarker(name: string) {
+  return markerAfter(screen.getByRole('group', { name }));
 }
 
 function saveBar() {
@@ -99,6 +105,61 @@ describe('CardEditor', () => {
       await renderConnectedEditor({}, kelev());
       await typeInto(input(PLURAL), 'כְּלָבוֹת');
       expect(within(saveBar()).getByText('Will change: Forms')).toBeTruthy();
+    });
+
+    test('marks a changed chip by its label, and restores it', async () => {
+      await renderConnectedEditor({}, kelev());
+      await fireEvent.click(screen.getByRole('radio', { name: 'Feminine' }));
+
+      expect(groupMarker('Gender')).toBe('Was “Masculine” · Restore');
+      await fireEvent.click(screen.getByRole('button', { name: 'Restore Gender' }));
+      expect(screen.getByRole('radio', { name: 'Masculine', checked: true })).toBeTruthy();
+    });
+
+    test('marks a part of speech chosen for a note without one as added', async () => {
+      await renderConnectedEditor({}, loadedNote('כלב'));
+      await choosePartOfSpeech('Verb');
+      expect(groupMarker('Part of speech')).toBe('Added');
+    });
+
+    test('marks a binyan chosen for a note without one as added', async () => {
+      await renderConnectedEditor({}, loadedNote('כלב'));
+      await choosePartOfSpeech('Verb');
+      const binyan = screen.getByRole('combobox', { name: 'Binyan' });
+      await fireEvent.change(binyan, { target: { value: "pi'el" } });
+      expect(markerAfter(binyan.closest('label'))).toBe('Added');
+    });
+
+    test('marks the meanings as a whole list', async () => {
+      await renderConnectedEditor({}, kelev());
+      await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
+      await typeInto(input('English meaning 2'), 'hound');
+      expect(groupMarker('English meaning')).toBe('Was “dog” · Restore');
+
+      await fireEvent.click(screen.getByRole('button', { name: 'Restore English meaning' }));
+      expect(screen.queryByLabelText('English meaning 2')).toBeNull();
+    });
+
+    test('marks examples written for a note without any as added', async () => {
+      await renderConnectedEditor({}, kelev());
+      await typeExample(1, { hebrew: 'הַכֶּלֶב נוֹבֵחַ', english: 'The dog barks' });
+      expect(markerAfter(noteField('Examples'))).toBe('Added');
+    });
+
+    test('marks a removed image by how many there were, and restores it', async () => {
+      await renderConnectedEditor({}, kelev());
+      const images = screen.getByRole('group', { name: 'Images' });
+      await fireEvent.click(within(images).getByRole('button', { name: 'Remove image 1' }));
+
+      expect(groupMarker('Images')).toBe('Cleared. Was 1 image · Restore');
+      await fireEvent.click(screen.getByRole('button', { name: 'Restore Images' }));
+      expect(within(images).getByRole('img', { name: 'Attachment 1' })).toBeTruthy();
+    });
+
+    test('marks removed audio', async () => {
+      await renderConnectedEditor({}, kelev());
+      await fireEvent.click(screen.getByRole('button', { name: 'Remove audio' }));
+      expect(groupMarker('Audio')).toBe('Cleared. Was 1 recording · Restore');
     });
 
     describe('after a save', () => {
