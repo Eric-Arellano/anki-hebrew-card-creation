@@ -15,14 +15,10 @@ import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
-import {
-  examplesToAnkiFieldHtml,
-  isBlankExample,
-  labeledForms,
-  wordUsage,
-} from '#lib/card/examples.ts';
+import { examplesToAnkiFieldHtml, isBlankExample } from '#lib/card/examples.ts';
 import { attachmentsChange } from '#lib/card/changed-from.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
+import { labeledForms, wordUsage } from '#lib/card/parts-of-speech/forms.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {
   type CardInputsDraft,

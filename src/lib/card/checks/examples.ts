@@ -1,5 +1,6 @@
-import { type Example, wordUsage } from '#lib/card/examples.ts';
+import type { Example } from '#lib/card/examples.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
+import { wordUsage } from '#lib/card/parts-of-speech/forms.ts';
 import { usageRanges } from '#lib/hebrew/usage.ts';
 
 /** The index of each example whose Hebrew is filled but uses no form of the word. */

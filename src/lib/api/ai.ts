@@ -1,6 +1,7 @@
 // Our `/api/ai/` endpoints: what each answers, and the browser's one way to call each.
 import { postJsonForReply } from '#lib/api/http.ts';
-import type { Example, LabeledForm } from '#lib/card/examples.ts';
+import type { Example } from '#lib/card/examples.ts';
+import type { LabeledForm } from '#lib/card/parts-of-speech/forms.ts';
 import type { FieldKey, FieldValues, PartOfSpeech } from '#lib/note-type.ts';
 
 // The fields the dictionary can't fill, which Claude suggests, are the examples and these hints.
