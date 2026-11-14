@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import { realField } from '#tests/real-notes.ts';
 import { blankExample, examplesFromHtml, examplesToAnkiFieldHtml } from './examples.ts';
 
@@ -10,14 +11,16 @@ describe('examplesToAnkiFieldHtml', () => {
         { hebrew: ' איפה הרכבת? ', english: ' Where is the train? ' },
       ]),
     ).toBe(
-      '<bdi lang="he">נסענו ברכבת לחיפה.</bdi> (We took the train to Haifa.)<br>' +
-        '<bdi lang="he">איפה הרכבת?</bdi> (Where is the train?)',
+      '<bdi lang="he">נסענו ברכבת לחיפה.</bdi><span class="sep"> — </span>' +
+        '<span lang="en">We took the train to Haifa.</span><br>' +
+        '<bdi lang="he">איפה הרכבת?</bdi><span class="sep"> — </span>' +
+        '<span lang="en">Where is the train?</span>',
     );
   });
 
   test('escapes what would be markup', () => {
     expect(examplesToAnkiFieldHtml([{ hebrew: 'א<ב', english: 'cats & dogs' }])).toBe(
-      '<bdi lang="he">א&lt;ב</bdi> (cats &amp; dogs)',
+      '<bdi lang="he">א&lt;ב</bdi><span class="sep"> — </span><span lang="en">cats &amp; dogs</span>',
     );
   });
 
@@ -28,7 +31,7 @@ describe('examplesToAnkiFieldHtml', () => {
         blankExample(),
         { hebrew: '', english: 'A train.' },
       ]),
-    ).toBe('<bdi lang="he">רכבת.</bdi><br>(A train.)');
+    ).toBe('<bdi lang="he">רכבת.</bdi><br><span lang="en">A train.</span>');
   });
 
   test('gives an empty field for no examples', () => {
@@ -53,8 +56,8 @@ describe('examplesFromHtml', () => {
   });
 
   test('skips blank lines', () => {
-    expect(examplesFromHtml('<br><bdi lang="he">רכבת.</bdi> (A train.)<br> <br/>')).toEqual([
-      { hebrew: 'רכבת.', english: 'A train.' },
+    expect(examplesFromHtml('<br><bdi lang="he">רכבת.</bdi><br> <br/>')).toEqual([
+      { hebrew: 'רכבת.', english: '' },
     ]);
   });
 
@@ -65,10 +68,12 @@ describe('examplesFromHtml', () => {
       ]);
     });
 
-    test('keeps two Hebrew parts together, rather than guess them apart', () => {
-      expect(
-        examplesFromHtml('<bdi lang="he">רכבת</bdi> (train) <bdi lang="he">כרטיס</bdi>'),
-      ).toEqual([{ hebrew: 'רכבת (train) כרטיס', english: '' }]);
+    test.each([
+      ['two Hebrew parts', '<bdi lang="he">רכבת</bdi> (train) <bdi lang="he">כרטיס</bdi>'],
+      ['English with no separator', '<bdi lang="he">רכבת</bdi><span lang="en">train</span>'],
+      ['English in parentheses', '<bdi lang="he">רכבת</bdi> (train)'],
+    ])('keeps %s together, rather than guess them apart', (_, line) => {
+      expect(examplesFromHtml(line)).toEqual([{ hebrew: ankiFieldHtmlToText(line), english: '' }]);
     });
   });
 

@@ -1,6 +1,11 @@
-// `Examples` holds one line per example, `<bdi lang="he">Hebrew.</bdi> (English.)`, joined by
-// `<br>`. Anki shows the field left to right, so without the `<bdi>` the `.`, `?` or `!` ending
-// the Hebrew would jump to the far side of its sentence.
+// `Examples` holds one line per example, joined by `<br>`:
+//
+//   <bdi lang="he">Hebrew.</bdi><span class="sep"> — </span><span lang="en">English.</span>
+//
+// Anki shows the field left to right, so without the `<bdi>` the `.`, `?` or `!` ending the
+// Hebrew would jump to the far side of its sentence. The note type's styling puts the English on
+// its own line under the Hebrew and hides `.sep`, which is there for where that styling doesn't
+// reach, like the Browse table, so the two sentences don't run together.
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
 
 // Each part is plain text, as a meaning is, not HTML.
@@ -14,11 +19,14 @@ export function isBlankExample({ hebrew, english }: Example): boolean {
   return hebrew.trim() === '' && english.trim() === '';
 }
 
+const SEPARATOR = '<span class="sep"> — </span>';
+
 function exampleHtml({ hebrew, english }: Example): string {
   const he =
     hebrew.trim() === '' ? [] : [`<bdi lang="he">${textToAnkiFieldHtml(hebrew.trim())}</bdi>`];
-  const en = english.trim() === '' ? [] : [`(${textToAnkiFieldHtml(english.trim())})`];
-  return [...he, ...en].join(' ');
+  const en =
+    english.trim() === '' ? [] : [`<span lang="en">${textToAnkiFieldHtml(english.trim())}</span>`];
+  return [...he, ...en].join(SEPARATOR);
 }
 
 export function examplesToAnkiFieldHtml(examples: readonly Example[]): string {
@@ -28,16 +36,23 @@ export function examplesToAnkiFieldHtml(examples: readonly Example[]): string {
     .join('<br>');
 }
 
-const COMPOSED_LINE = /^(?:<bdi lang="he">((?:(?!<\/bdi>).)*)<\/bdi>)? ?(?:\((.*)\))?$/;
+// The Hebrew may hold markup inside its `<bdi>`; the English, escaped, holds none.
+const COMPOSED_LINE = new RegExp(
+  '^(?:<bdi lang="he">((?:(?!</bdi>).)*)</bdi>' +
+    `(?:${SEPARATOR}<span lang="en">([^<]*)</span>)?` +
+    '|<span lang="en">([^<]*)</span>)$',
+);
 
 // A line this tool didn't write loads whole into the Hebrew, never guessed apart: the human splits
 // it, and the review before a save shows it rewritten.
 function exampleFromLine(line: string): Example {
-  const [, hebrew = '', english = ''] = line.trim().match(COMPOSED_LINE) ?? [];
-  if (hebrew === '' && english === '') {
-    return { hebrew: ankiFieldHtmlToText(line), english: '' };
-  }
-  return { hebrew: ankiFieldHtmlToText(hebrew), english: ankiFieldHtmlToText(english) };
+  const match = line.trim().match(COMPOSED_LINE);
+  if (match === null) return { hebrew: ankiFieldHtmlToText(line), english: '' };
+  const [, hebrew = '', englishAfterHebrew = '', englishAlone = ''] = match;
+  return {
+    hebrew: ankiFieldHtmlToText(hebrew),
+    english: ankiFieldHtmlToText(englishAfterHebrew || englishAlone),
+  };
 }
 
 /** Each example in an `Examples` field, or one blank row when it holds none. */
