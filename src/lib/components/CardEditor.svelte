@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
+import { fetchAiStatus, SUGGESTED_FIELDS, type Suggestions } from '#lib/api/ai.ts';
 import {
   type AnkiStatus,
   fetchAnkiStatus,
@@ -36,6 +37,7 @@ import SaveBar from './SaveBar.svelte';
 import AudioInput from './media/AudioInput.svelte';
 import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './fields/NoteFields.svelte';
+import SuggestButton from './fields/SuggestButton.svelte';
 import Checkbox from './ui/Checkbox.svelte';
 import TextInput from './ui/TextInput.svelte';
 import DefinitionsInput from './word/DefinitionsInput.svelte';
@@ -76,6 +78,9 @@ let picked:
   | undefined = $state.raw();
 // `undefined` while Anki is being checked.
 let ankiStatus: AnkiStatus | undefined = $state.raw();
+// Whether the server has an Anthropic API key. Until it says so, the editor works as without one.
+let aiAvailable = $state(false);
+let suggested: Suggestions = $state.raw({});
 
 // Composition waits for every input, since each one shapes it. The fields shown depend only on
 // the part of speech.
@@ -127,6 +132,15 @@ const sameMeaningSearch = $derived(
       ),
 );
 const replacesDraft = $derived(changedBeyondWord(start, draft));
+const suggestBlocker = $derived.by(() => {
+  if (draft.inputs.word.trim() === '' || meanings.length === 0) {
+    return 'Type the word and a meaning first.';
+  }
+  if (SUGGESTED_FIELDS.every((field) => (draft.edits[field] ?? '').trim() !== '')) {
+    return 'The examples and both hints are filled. Clear one to have it suggested again.';
+  }
+  return undefined;
+});
 
 function pick(candidate: DictionaryCandidate) {
   const before = $state.snapshot(draft.inputs);
@@ -173,7 +187,18 @@ async function checkAnki() {
   }
 }
 
-onMount(checkAnki);
+async function checkAi() {
+  try {
+    aiAvailable = (await fetchAiStatus()).available;
+  } catch {
+    aiAvailable = false;
+  }
+}
+
+onMount(() => {
+  checkAnki();
+  checkAi();
+});
 </script>
 
 <main class="mx-auto max-w-240 space-y-8 p-4">
@@ -252,6 +277,20 @@ onMount(checkAnki);
   />
 
   {#if draft.inputs.partOfSpeech !== undefined}
+    {#if aiAvailable}
+      <SuggestButton
+        request={{
+          word: draft.inputs.word.trim(),
+          pointed: draft.inputs.pointed.trim(),
+          partOfSpeech: draft.inputs.partOfSpeech,
+          definitions: meanings,
+        }}
+        blocker={suggestBlocker}
+        edits={draft.edits}
+        onedit={setEdit}
+        bind:suggested
+      />
+    {/if}
     <NoteFields
       groups={shownGroups}
       partOfSpeech={draft.inputs.partOfSpeech}
@@ -263,6 +302,7 @@ onMount(checkAnki);
         formsField: draft.edits.forms ?? '',
       })}
       {sameMeaningSearch}
+      {suggested}
       onedit={setEdit}
       bind:promptImages={draft.media.promptImages}
     />
