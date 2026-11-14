@@ -380,7 +380,7 @@ describe('CardEditor', () => {
   describe('the help under the part of speech', () => {
     test('waits for a choice, then follows it', async () => {
       await renderConnectedEditor();
-      const forms = screen.getByRole('region', { name: 'Word forms' });
+      const forms = screen.getByRole('region', { name: 'Grammar' });
       expect(forms.querySelector('p.hint')).toBeNull();
       await choosePartOfSpeech('Adverb');
       expect(forms.querySelector('p.hint')?.textContent).toContain('never changes');

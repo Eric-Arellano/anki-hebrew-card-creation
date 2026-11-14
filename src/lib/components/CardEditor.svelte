@@ -35,7 +35,8 @@ import {
   stillSpellsEntry,
   undoPrefill,
 } from '#lib/card/prefill.ts';
-import { type FieldKey, shownFieldGroups } from '#lib/note-type.ts';
+import { GROUP_HELP } from '#lib/field-help.ts';
+import { type FieldKey, type PartOfSpeech, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import WordForms from './forms/WordForms.svelte';
@@ -45,6 +46,7 @@ import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './fields/NoteFields.svelte';
 import SuggestButton from './fields/SuggestButton.svelte';
 import Checkbox from './ui/Checkbox.svelte';
+import Section from './ui/Section.svelte';
 import TextInput from './ui/TextInput.svelte';
 import DefinitionsInput from './word/DefinitionsInput.svelte';
 import DictionaryPanel from './word/DictionaryPanel.svelte';
@@ -96,6 +98,9 @@ const shownGroups = $derived(
     : shownFieldGroups(fieldOrder(ankiStatus), draft.inputs.partOfSpeech),
 );
 const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
+// The `Grammar` group sits with the word's forms, in their own section.
+const grammarFields = $derived(shownGroups.find(({ group }) => group === 'Grammar')?.fields ?? []);
+const sectionGroups = $derived(shownGroups.filter(({ group }) => group !== 'Grammar'));
 const attachments = $derived(attachmentsToStore(draft.media, shownFields));
 const ankiProblem = $derived(ankiStatus && ankiStatusProblem(ankiStatus));
 const stillNeededMessage = $derived.by(() => {
@@ -209,7 +214,8 @@ async function checkAnki() {
 onMount(checkAnki);
 </script>
 
-<main class="mx-auto max-w-240 space-y-8 p-4">
+<!-- No bottom padding, so the sticky save bar comes to rest on the window's edge. -->
+<main class="mx-auto max-w-240 space-y-6 px-4 pt-4">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <h1>Hebrew card helper</h1>
     <ConnectionStatus status={ankiStatus} problem={ankiProblem} onrecheck={checkAnki} />
@@ -230,7 +236,7 @@ onMount(checkAnki);
 
   <!-- The word and its meanings come first, because they are all the lookups need, and the
        lookups are where the niqqud, gender and forms below come from. -->
-  <section aria-label="Word" class="space-y-4">
+  <Section title="Word">
     <div class="grid items-start gap-4 sm:grid-cols-2">
       <TextInput
         label="Hebrew word, without niqqud"
@@ -257,7 +263,25 @@ onMount(checkAnki);
       onunpick={unpick}
     />
     <LookupLinks word={draft.inputs.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
-    <section aria-label="Media" class="space-y-2">
+  </Section>
+
+  <Section title="Grammar">
+    <WordForms
+      bind:inputs={draft.inputs}
+      {choices}
+      {unoffered}
+      candidate={picked?.candidate}
+      edits={draft.edits}
+      {shownFields}
+      onedit={setEdit}
+    />
+    {#if draft.inputs.partOfSpeech !== undefined && grammarFields.length > 0}
+      {@render noteFields(grammarFields, draft.inputs.partOfSpeech)}
+    {/if}
+  </Section>
+
+  <Section title="Media">
+    <div class="space-y-2">
       <ImagesInput
         label="Images"
         required={draft.media.images.length === 0 && !draft.media.noImage}
@@ -271,38 +295,16 @@ onMount(checkAnki);
         {/if}
       </ImagesInput>
       <AudioInput bind:audio={draft.media.audio} word={draft.inputs.word} />
-    </section>
-  </section>
+    </div>
+  </Section>
 
-  <WordForms
-    bind:inputs={draft.inputs}
-    {choices}
-    {unoffered}
-    candidate={picked?.candidate}
-    edits={draft.edits}
-    {shownFields}
-    onedit={setEdit}
-  />
-
-  {#if draft.inputs.partOfSpeech !== undefined}
-    <SuggestButton
-      request={{
-        word: draft.inputs.word.trim(),
-        pointed: draft.inputs.pointed.trim(),
-        partOfSpeech: draft.inputs.partOfSpeech,
-        definitions: meanings,
-        forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
-      }}
-      blocker={suggestBlocker}
-      edits={draft.edits}
-      examples={draft.examples}
-      onedit={setEdit}
-      onexamples={(examples) => (draft.examples = examples)}
-      bind:suggested
-    />
+  {#snippet noteFields(
+    fields: readonly FieldKey[],
+    partOfSpeech: PartOfSpeech,
+  )}
     <NoteFields
-      groups={shownGroups}
-      partOfSpeech={draft.inputs.partOfSpeech}
+      {fields}
+      {partOfSpeech}
       edits={draft.edits}
       word={draft.inputs.word.trim()}
       bind:examples={draft.examples}
@@ -316,6 +318,31 @@ onMount(checkAnki);
       onedit={setEdit}
       bind:promptImages={draft.media.promptImages}
     />
+  {/snippet}
+
+  {#if draft.inputs.partOfSpeech !== undefined}
+    {#each sectionGroups as { group, fields } (group)}
+      <Section title={group} description={GROUP_HELP[group]}>
+        {#if group === 'Hints and examples'}
+          <SuggestButton
+            request={{
+              word: draft.inputs.word.trim(),
+              pointed: draft.inputs.pointed.trim(),
+              partOfSpeech: draft.inputs.partOfSpeech,
+              definitions: meanings,
+              forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
+            }}
+            blocker={suggestBlocker}
+            edits={draft.edits}
+            examples={draft.examples}
+            onedit={setEdit}
+            onexamples={(examples) => (draft.examples = examples)}
+            bind:suggested
+          />
+        {/if}
+        {@render noteFields(fields, draft.inputs.partOfSpeech)}
+      </Section>
+    {/each}
   {/if}
 
   <SaveBar

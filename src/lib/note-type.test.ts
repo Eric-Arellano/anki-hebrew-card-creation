@@ -2,38 +2,41 @@ import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { FIELD_NAMES, shownFieldGroups, toAnkiFields } from './note-type.ts';
 
-const context = { group: 'Disambiguation hints', fields: ['productionContext', 'readingContext'] };
-const extras = { group: 'Extras', fields: ['examples', 'notes'] };
-const variantsAndExtras = [
+const hints = {
+  group: 'Hints and examples',
+  fields: ['productionContext', 'readingContext', 'examples'],
+};
+const notes = { group: 'Notes', fields: ['notes'] };
+const variantsAndNotes = [
   {
     group: 'Unusual variants',
     fields: ['variant1Prompt', 'variant1Answer', 'variant2Prompt', 'variant2Answer'],
   },
-  extras,
+  notes,
 ];
 
 describe('shownFieldGroups', () => {
   describe('for a noun', () => {
     test('shows none of the fields its inputs write', () => {
-      expect(shownFieldGroups(fieldNames, 'noun')).toEqual([context, ...variantsAndExtras]);
+      expect(shownFieldGroups(fieldNames, 'noun')).toEqual([hints, ...variantsAndNotes]);
     });
   });
 
   describe('for a verb', () => {
     test('shows none of the fields its inputs write, nor forms', () => {
-      expect(shownFieldGroups(fieldNames, 'verb')).toEqual([context, ...variantsAndExtras]);
+      expect(shownFieldGroups(fieldNames, 'verb')).toEqual([hints, ...variantsAndNotes]);
     });
   });
 
   describe('for an adjective', () => {
     test('shows variants but not forms, which its inputs write', () => {
-      expect(shownFieldGroups(fieldNames, 'adjective')).toEqual([context, ...variantsAndExtras]);
+      expect(shownFieldGroups(fieldNames, 'adjective')).toEqual([hints, ...variantsAndNotes]);
     });
   });
 
   describe('for an adverb', () => {
     test('shows neither forms nor variants', () => {
-      expect(shownFieldGroups(fieldNames, 'adverb')).toEqual([context, extras]);
+      expect(shownFieldGroups(fieldNames, 'adverb')).toEqual([hints, notes]);
     });
   });
 
@@ -41,15 +44,15 @@ describe('shownFieldGroups', () => {
     test('shows forms and variants', () => {
       expect(shownFieldGroups(fieldNames, 'preposition')).toEqual([
         { group: 'Grammar', fields: ['forms'] },
-        context,
-        ...variantsAndExtras,
+        hints,
+        ...variantsAndNotes,
       ]);
     });
   });
 
   describe('for a phrase', () => {
     test('shows variants but not forms', () => {
-      expect(shownFieldGroups(fieldNames, 'phrase')).toEqual([context, ...variantsAndExtras]);
+      expect(shownFieldGroups(fieldNames, 'phrase')).toEqual([hints, ...variantsAndNotes]);
     });
   });
 
@@ -57,8 +60,8 @@ describe('shownFieldGroups', () => {
     test('shows forms only', () => {
       expect(shownFieldGroups(fieldNames, 'other')).toEqual([
         { group: 'Grammar', fields: ['forms'] },
-        context,
-        ...variantsAndExtras,
+        hints,
+        ...variantsAndNotes,
       ]);
     });
   });
@@ -66,8 +69,8 @@ describe('shownFieldGroups', () => {
   describe('when Anki orders fields differently', () => {
     test('keeps its order within a group', () => {
       expect(shownFieldGroups(['Notes', 'Reading context', 'Examples'], 'noun')).toEqual([
-        { group: 'Disambiguation hints', fields: ['readingContext'] },
-        { group: 'Extras', fields: ['notes', 'examples'] },
+        { group: 'Hints and examples', fields: ['readingContext', 'examples'] },
+        { group: 'Notes', fields: ['notes'] },
       ]);
     });
   });
@@ -75,7 +78,7 @@ describe('shownFieldGroups', () => {
   describe('when Anki has a field note-type.ts does not name', () => {
     test('leaves it out', () => {
       expect(shownFieldGroups(['Notes', 'Comments'], 'noun')).toEqual([
-        { group: 'Extras', fields: ['notes'] },
+        { group: 'Notes', fields: ['notes'] },
       ]);
     });
   });

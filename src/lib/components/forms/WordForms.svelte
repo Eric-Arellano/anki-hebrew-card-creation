@@ -68,7 +68,7 @@ function chooseInfinitive(pointed: string) {
 }
 </script>
 
-<section aria-label="Word forms" class="space-y-4 border-t border-gray-200 pt-8">
+<div class="space-y-4">
   <div class="space-y-1">
     <ChoiceChips
       legend="Part of speech"
@@ -120,4 +120,4 @@ function chooseInfinitive(pointed: string) {
   {:else}
     <div class="forms-row">{@render pointedInput()}</div>
   {/if}
-</section>
+</div>

@@ -148,8 +148,11 @@ export function input(label: string) {
   return screen.getByLabelText(label) as HTMLInputElement;
 }
 
+// A field's section can share its name, as Notes does. Examples is a fieldset of rows.
 export function noteField(fieldName: string) {
-  return screen.getByLabelText(fieldName) as HTMLTextAreaElement;
+  return screen.getByLabelText(fieldName, {
+    selector: 'textarea, fieldset',
+  }) as HTMLTextAreaElement;
 }
 
 /** Each row of Examples, as its inputs hold it. */
