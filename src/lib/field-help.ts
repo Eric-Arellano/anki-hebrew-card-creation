@@ -58,12 +58,18 @@ const BOOK_READING_CONTEXT = readingContextHelp(
   'ספר could be “book”, “barber” or “he counted”, so for “book” write “קראתי ספר”.',
 );
 
-function examplesHelp(example: string): string {
-  return `Phrases or sentences that use the word, each with its English. For example, ${example}`;
+// An adverb's or phrase's form never changes.
+function examplesHelp(example: string, { varied = true } = {}): string {
+  const variety = varied ? ', and in a different form each time' : '';
+  return (
+    `Short, simple sentences that use the word, each with its English${variety}. For example, ` +
+    example
+  );
 }
 
 const TRAIN_EXAMPLES = examplesHelp(
-  '“כרטיס רכבת (train ticket)” or “הרכבת מאחרת (the train is late)” for רכבת.',
+  '“נסענו ברכבת לחיפה.” (We took the train to Haifa.) or “הרכבות מלאות בבוקר.” (The trains are ' +
+    'full in the morning.) for רכבת.',
 );
 
 // The widget for a variant's images sits under its prompt.
@@ -143,13 +149,21 @@ export const FIELD_HELP = {
   },
   examples: {
     noun: TRAIN_EXAMPLES,
-    verb: examplesHelp("“אני הולך הביתה (I'm going home)” for ללכת."),
-    adjective: examplesHelp('“בית גדול (a big house)” or “העיר גדולה (the city is big)” for גדול.'),
-    adverb: examplesHelp('“הוא רץ מהר (he runs fast)” for מהר.'),
-    preposition: examplesHelp('“הספר על השולחן (the book is on the table)” for על.'),
-    // Not “תודה! (thanks!)”: a `!` ending the Hebrew jumps to the wrong side of the left-to-right
-    // field, in Anki as here.
-    phrase: examplesHelp('“תודה על העזרה (thanks for the help)” for תודה.'),
+    verb: examplesHelp(
+      '“הלכנו לים אחרי העבודה.” (We went to the beach after work.) or “אני צריך ללכת עכשיו.” ' +
+        '(I need to go now.) for ללכת.',
+    ),
+    adjective: examplesHelp(
+      '“יש להם בית גדול.” (They have a big house.) or “הערים הגדולות יקרות.” (The big cities are ' +
+        'expensive.) for גדול.',
+    ),
+    adverb: examplesHelp('“הוא תמיד אוכל מהר.” (He always eats fast.) for מהר.', { varied: false }),
+    preposition: examplesHelp(
+      '“שמתי את המפתחות על השולחן.” (I put the keys on the table.) for על.',
+    ),
+    phrase: examplesHelp('“תודה על העזרה אתמול!” (Thanks for the help yesterday!) for תודה.', {
+      varied: false,
+    }),
     other: TRAIN_EXAMPLES,
   },
   notes:

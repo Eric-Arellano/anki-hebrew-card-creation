@@ -31,6 +31,7 @@ const sefer = {
   pointed: 'סֵפֶר',
   partOfSpeech: 'noun',
   definitions: ['book', '(archaic) a writing'],
+  forms: [{ label: 'plural', form: 'סְפָרִים' }],
 };
 
 function suggestRequest(body: unknown) {
@@ -59,7 +60,13 @@ describe('_suggest', () => {
       readingContext: 'קראתי ספר',
     });
     expect(messages.create.mock.calls[0]?.[0].messages).toEqual([
-      { role: 'user', content: expect.stringContaining('- סַפָּר (noun): barber') },
+      {
+        role: 'user',
+        content: expect.stringContaining(
+          'Forms:\n- plural: סְפָרִים\nWithout niqqud, its spelling could also be:\n' +
+            '- סַפָּר (noun): barber',
+        ),
+      },
     ]);
   });
 
@@ -71,7 +78,7 @@ describe('_suggest', () => {
       messages,
     );
     expect(messages.create.mock.calls[0]?.[0].messages[0]?.content).toMatch(
-      /^Word: ספר\n.*\nMeanings:\n- book\nWithout/s,
+      /^Word: ספר\n.*\nMeanings:\n- book\nForms:/s,
     );
   });
 

@@ -5,11 +5,11 @@ let { text }: { text: string } = $props();
 </script>
 
 <!-- An example stays on one line, and `<bdi>` keeps a Hebrew one from reordering the English around
-     it. `ltr`, as Anki shows these fields, so “כרטיס רכבת (train ticket)” keeps its English on the
-     right. -->
+     it. `auto`, so a Hebrew sentence keeps the `.` ending it on its left, while “me: לְפָנַי”, which
+     starts in English, still reads left to right. -->
 {#each quotedParts(text) as part, index (index)}
   {#if part.quoted}
-    <span class="whitespace-nowrap">“<bdi dir="ltr">{part.text}</bdi>”</span>
+    <span class="whitespace-nowrap">“<bdi dir="auto">{part.text}</bdi>”</span>
   {:else}
     {part.text}
   {/if}

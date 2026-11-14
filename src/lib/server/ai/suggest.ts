@@ -1,5 +1,5 @@
-// Claude's suggestions for the fields the dictionary can't fill. Only the word, its meanings and
-// its homographs' meanings go in the request.
+// Claude's suggestions for the fields the dictionary can't fill. Only the word, its meanings, its
+// forms and its homographs' meanings go in the request.
 import { z } from 'zod';
 import type { Suggestions, SuggestRequest } from '#lib/api/ai.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
@@ -47,8 +47,29 @@ const answerWithReadingSchema = answerSchema.extend({ readingContext: z.string()
 
 type Answer = z.infer<typeof answerSchema> & { readingContext?: string | null };
 
+// Enforced on the answer too, since a row per example soon gets noisy.
+const MAX_EXAMPLES = 4;
+
+const FORM_VARIETY: Record<PartOfSpeech, string> = {
+  noun:
+    'Use the word in a different form in each, preferring the forms listed: with ה, ב, ל, מ, ו ' +
+    'or ש before it, or in the plural.',
+  verb:
+    'Use the word in a different form in each, preferring the forms listed: in another person ' +
+    'or tense, or as the infinitive after a verb like רוצה or צריך.',
+  adjective:
+    'Use the word in a different form in each, preferring the forms listed: agreeing with a ' +
+    'feminine or a plural noun.',
+  preposition:
+    'Use the word in a different form in each, preferring the forms listed: with a pronoun ' +
+    'ending.',
+  adverb: 'Its form never changes, so use it in a different kind of sentence each time.',
+  phrase: 'Its form never changes, so use it in a different kind of sentence each time.',
+  other: 'Use the word in a different form in each, preferring the forms listed.',
+};
+
 export function suggestionRequest(
-  { word, pointed, partOfSpeech, definitions }: SuggestRequest,
+  { word, pointed, partOfSpeech, definitions, forms }: SuggestRequest,
   homographs: readonly Homograph[],
 ): StructuredRequest<Answer> {
   const withReading = homographs.length > 0;
@@ -59,9 +80,15 @@ export function suggestionRequest(
       '- Use the word in the sense its meanings give.\n' +
       '- Write plain text, with no HTML and no line breaks.',
     `Examples: ${FIELD_HELP.examples[partOfSpeech]}\n` +
-      'Give two or three short ones, each using the word in some form. Put the Hebrew in ' +
-      '`hebrew`, with no punctuation at its end, and its English in `english`, without ' +
-      'parentheses.',
+      '- Write full sentences a native speaker would say in daily life: short, about four to ' +
+      'eight words, with everyday words a beginner knows.\n' +
+      `- ${FORM_VARIETY[partOfSpeech]}\n` +
+      '- A few good sentences beat many. Write one for each distinct meaning, in their order, ' +
+      'so its English shows which meaning it uses. Meanings that are shades of one sense share ' +
+      'a sentence, and one marked archaic, obsolete or rare needs none. With only one meaning ' +
+      `left, write two. Never write more than ${MAX_EXAMPLES}.\n` +
+      '- End every sentence with `.`, `?` or `!`, in Hebrew and in English. Put the Hebrew in ' +
+      '`hebrew`, and a natural English translation in `english`, without parentheses.',
     `Production context: ${FIELD_HELP.productionContext[partOfSpeech]}\n` +
       'Write it in English, with no Hebrew. Answer null when no other common Hebrew word shares ' +
       'these meanings.',
@@ -79,6 +106,13 @@ export function suggestionRequest(
     ...(pointed.trim() === '' ? [] : [`With niqqud: ${pointed}`]),
     `Part of speech: ${partOfSpeech}`,
     `Meanings:\n${definitions.map((meaning) => `- ${meaning}`).join('\n')}`,
+    ...(forms.length === 0
+      ? []
+      : [
+          `Forms:\n${forms
+            .map(({ label, form }) => (label === '' ? `- ${form}` : `- ${label}: ${form}`))
+            .join('\n')}`,
+        ]),
     ...(withReading
       ? [
           'Without niqqud, its spelling could also be:\n' +
@@ -120,6 +154,7 @@ function isValidExample({ hebrew, english }: Example): boolean {
 export function toSuggestions(answer: Answer): Suggestions {
   const examples = answer.examples
     .filter(isValidExample)
+    .slice(0, MAX_EXAMPLES)
     .map(({ hebrew, english }) => ({ hebrew: hebrew.trim(), english: english.trim() }));
   const { productionContext, readingContext } = answer;
   return {

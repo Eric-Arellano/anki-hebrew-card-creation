@@ -84,15 +84,22 @@ function heldReply() {
 
 describe('CardEditor', () => {
   describe('suggesting', () => {
-    test('asks with the word, its niqqud, its part of speech and its meanings', async () => {
+    test('asks with the word, its niqqud, its part of speech, its meanings and its forms', async () => {
       const requests = await renderWithKey();
       await fillSefer();
+      await typeInto(input('Masculine plural, with niqqud'), 'סְפָרִים');
       await clickSuggest();
       expect(suggestRequests(requests)).toEqual([
         {
           method: 'POST',
           path: '/api/ai/suggest',
-          body: { word: 'ספר', pointed: 'סֵפֶר', partOfSpeech: 'noun', definitions: ['book'] },
+          body: {
+            word: 'ספר',
+            pointed: 'סֵפֶר',
+            partOfSpeech: 'noun',
+            definitions: ['book'],
+            forms: [{ label: 'plural', form: 'סְפָרִים' }],
+          },
         },
       ]);
     });

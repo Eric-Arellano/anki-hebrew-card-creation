@@ -1,6 +1,6 @@
 // Our `/api/ai/` endpoints: what each answers, and the browser's one way to call each.
 import { getJson, postJsonForReply } from '#lib/api/http.ts';
-import type { Example } from '#lib/card/examples.ts';
+import type { Example, LabeledForm } from '#lib/card/examples.ts';
 import type { FieldKey, PartOfSpeech } from '#lib/note-type.ts';
 
 // `available` is whether the server has an Anthropic API key, never the key itself.
@@ -23,6 +23,7 @@ export type SuggestRequest = {
   pointed: string;
   partOfSpeech: PartOfSpeech;
   definitions: string[];
+  forms: LabeledForm[];
 };
 
 // Examples a row each, and a hint as its textarea holds it. A field is missing where Claude had
