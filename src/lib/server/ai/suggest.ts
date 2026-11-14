@@ -23,23 +23,32 @@ type Answer = z.infer<typeof answerSchema> & { readingContext?: string | null };
 // Enforced on the answer too, since a row per example soon gets noisy.
 const MAX_EXAMPLES = 4;
 
-const FORM_VARIETY: Record<PartOfSpeech, string> = {
-  noun:
-    'Use the word in a different form in each, preferring the forms listed: with ה, ב, ל, מ, ו ' +
-    'or ש before it, or in the plural.',
-  verb:
-    'Use the word in a different form in each, preferring the forms listed: in another person ' +
-    'or tense, or as the infinitive after a verb like רוצה or צריך.',
-  adjective:
-    'Use the word in a different form in each, preferring the forms listed: agreeing with a ' +
-    'feminine or a plural noun.',
-  preposition:
-    'Use the word in a different form in each, preferring the forms listed: with a pronoun ' +
-    'ending.',
-  adverb: 'Its form never changes, so use it in a different kind of sentence each time.',
-  phrase: 'Its form never changes, so use it in a different kind of sentence each time.',
-  other: 'Use the word in a different form in each, preferring the forms listed.',
+// Where my Hebrew is now, on the CEFR scale. Raise it as I learn, so examples grow with me.
+const LEARNER_LEVEL = 'A1';
+
+type FixedPartOfSpeech = 'adverb' | 'phrase';
+
+// A menu, not a checklist: a second example should differ from the first, not cover every form.
+// No ש before a noun, since it makes a second clause.
+const OTHER_FORMS: Record<Exclude<PartOfSpeech, FixedPartOfSpeech>, string | null> = {
+  noun: 'the plural, or ה, ב, ל, מ or ו before it',
+  verb: 'another person or tense, or the infinitive after a verb like רוצה or צריך',
+  adjective: 'agreeing with a feminine or a plural noun',
+  preposition: 'with a pronoun ending',
+  other: null,
 };
+
+function formVariety(partOfSpeech: PartOfSpeech): string {
+  if (partOfSpeech === 'adverb' || partOfSpeech === 'phrase') {
+    return 'Its form never changes, so make each sentence a different kind from the others.';
+  }
+  const options = OTHER_FORMS[partOfSpeech];
+  return (
+    'You needn’t show every form. Just don’t repeat one: each sentence after the first uses ' +
+    'the word in a form the others haven’t, whichever fits a simple sentence, from the forms ' +
+    (options === null ? 'listed.' : `listed or ${options}.`)
+  );
+}
 
 export function suggestionRequest(
   { word, pointed, partOfSpeech, definitions, forms }: SuggestRequest,
@@ -53,9 +62,18 @@ export function suggestionRequest(
       '- Use the word in the sense its meanings give.\n' +
       '- Write plain text, with no HTML and no line breaks.',
     `Examples: ${FIELD_HELP.examples[partOfSpeech]}\n` +
-      '- Write full sentences a native speaker would say in daily life: short, about four to ' +
-      'eight words, with everyday words a beginner knows.\n' +
-      `- ${FORM_VARIETY[partOfSpeech]}\n` +
+      '- Write full sentences a native speaker would say in daily life, each about one thing: ' +
+      'the word. Its sentence should show what the word means, and nothing else should compete ' +
+      'with it for attention.\n' +
+      `- The learner’s Hebrew is around ${LEARNER_LEVEL}. Keep everything but the word at that ` +
+      'level: one short clause of about three to six words, a common verb, and no added ' +
+      'detail like when, where or why unless it is what shows the meaning. A word beyond ' +
+      `${LEARNER_LEVEL} is fine when the sentence needs it to be real, but use it only then.\n` +
+      '- Let the word do the work, not a place or object beside it. For חתול, ' +
+      '“החתול ישן.” (The cat is sleeping.) or “יש לי חתול.” (I have a cat.) beat ' +
+      '“החתול ישן על הספה בסלון.” (The cat is sleeping on the sofa in the living room.), ' +
+      'where the sofa and the room take over.\n' +
+      `- ${formVariety(partOfSpeech)}\n` +
       '- A few good sentences beat many. Write one for each distinct meaning, in their order, ' +
       'so its English shows which meaning it uses. Meanings that are shades of one sense share ' +
       'a sentence, and one marked archaic, obsolete or rare needs none. With only one meaning ' +

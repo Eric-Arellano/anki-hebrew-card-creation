@@ -123,16 +123,31 @@ describe('suggestionRequest', () => {
       expect(system).toContain('End every sentence with `.`, `?` or `!`, in Hebrew and in English');
     });
 
+    test('pitches everything but the word at the learner’s level', () => {
+      const { system } = suggestionRequest(sefer, []);
+      expect(system).toContain('The learner’s Hebrew is around A1');
+      expect(system).toContain('one short clause of about three to six words');
+      expect(system).toContain('Let the word do the work, not a place or object beside it');
+    });
+
     test.each([
-      ['noun', 'with ה, ב, ל, מ, ו or ש before it, or in the plural'],
-      ['verb', 'as the infinitive after a verb like רוצה or צריך'],
-      ['adjective', 'agreeing with a feminine or a plural noun'],
-      ['preposition', 'with a pronoun ending'],
-      ['adverb', 'Its form never changes, so use it in a different kind of sentence'],
-      ['phrase', 'Its form never changes, so use it in a different kind of sentence'],
-      ['other', 'Use the word in a different form in each, preferring the forms listed.'],
+      ['noun', 'listed or the plural, or ה, ב, ל, מ or ו before it.'],
+      [
+        'verb',
+        'listed or another person or tense, or the infinitive after a verb like רוצה or צריך.',
+      ],
+      ['adjective', 'listed or agreeing with a feminine or a plural noun.'],
+      ['preposition', 'listed or with a pronoun ending.'],
+      ['adverb', 'Its form never changes, so make each sentence a different kind'],
+      ['phrase', 'Its form never changes, so make each sentence a different kind'],
+      ['other', 'whichever fits a simple sentence, from the forms listed.'],
     ] as const)('says how a %s varies', (partOfSpeech, line) => {
       expect(suggestionRequest({ ...sefer, partOfSpeech }, []).system).toContain(line);
+    });
+
+    test('asks for a new form in each further sentence, not every form', () => {
+      const { system } = suggestionRequest(sefer, []);
+      expect(system).toContain('You needn’t show every form. Just don’t repeat one');
     });
   });
 });
