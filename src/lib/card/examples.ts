@@ -7,6 +7,7 @@
 // its own line under the Hebrew and hides `.sep`, which is there for where that styling doesn't
 // reach, like the Browse table, so the two sentences don't run together.
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
+import type { CardInputsDraft } from '#lib/card/inputs.ts';
 
 // Each part is plain text, as a meaning is, not HTML.
 export type Example = { hebrew: string; english: string };
@@ -62,4 +63,57 @@ export function examplesFromHtml(html: string): Example[] {
     .filter((line) => ankiFieldHtmlToText(line) !== '')
     .map(exampleFromLine);
   return examples.length === 0 ? [blankExample()] : examples;
+}
+
+export type LabeledForm = { label: string; form: string };
+
+function labeled(forms: Record<string, string>): LabeledForm[] {
+  return Object.entries(forms).map(([label, form]) => ({ label, form }));
+}
+
+// A preposition's and other's are typed into `Forms` by hand, one `label: form` line each.
+function formsFieldLines(formsField: string): LabeledForm[] {
+  return formsField.split('\n').map((line) => {
+    const colon = line.indexOf(':');
+    return colon === -1
+      ? { label: '', form: line }
+      : { label: line.slice(0, colon).trim(), form: line.slice(colon + 1) };
+  });
+}
+
+function allLabeledForms(inputs: CardInputsDraft, formsField: string): LabeledForm[] {
+  switch (inputs.partOfSpeech) {
+    case 'noun':
+      return labeled({
+        plural: inputs.noun.plural,
+        feminine: inputs.noun.feminine,
+        'feminine plural': inputs.noun.femininePlural,
+      });
+    case 'verb':
+      return labeled({
+        'past (he)': inputs.verb.past,
+        'present (he)': inputs.verb.present,
+        'future (he)': inputs.verb.future,
+      });
+    case 'adjective':
+      return labeled({
+        feminine: inputs.adjective.feminine,
+        'masculine plural': inputs.adjective.masculinePlural,
+        'feminine plural': inputs.adjective.femininePlural,
+      });
+    case 'preposition':
+    case 'other':
+      return formsFieldLines(formsField);
+    case 'adverb':
+    case 'phrase':
+    case undefined:
+      return [];
+  }
+}
+
+/** The word's other forms that the inputs and `Forms` hold, trimmed, leaving out the blank. */
+export function labeledForms(inputs: CardInputsDraft, formsField: string): LabeledForm[] {
+  return allLabeledForms(inputs, formsField)
+    .map(({ label, form }) => ({ label, form: form.trim() }))
+    .filter(({ form }) => form !== '');
 }

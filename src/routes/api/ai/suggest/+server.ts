@@ -17,6 +17,7 @@ const suggestRequestBodySchema = z.strictObject({
   pointed: z.string(),
   partOfSpeech: z.enum(PARTS_OF_SPEECH),
   definitions: z.array(z.string()),
+  forms: z.array(z.strictObject({ label: z.string(), form: z.string() })),
 });
 
 export const POST: RequestHandler = ({ request }) => _suggest(DICTIONARY_PATHS, request);
@@ -29,7 +30,7 @@ export async function _suggest(
   const body = await parseJsonBody(
     request,
     suggestRequestBodySchema,
-    'The body must hold the word, its pointed form, its part of speech and its definitions',
+    'The body must hold the word, its pointed form, its part of speech, its definitions and its forms',
   );
   const word = body.word.trim();
   const definitions = body.definitions.map((meaning) => meaning.trim()).filter(Boolean);

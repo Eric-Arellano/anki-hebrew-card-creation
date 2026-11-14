@@ -14,7 +14,7 @@ import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
-import { examplesToAnkiFieldHtml, isBlankExample } from '#lib/card/examples.ts';
+import { examplesToAnkiFieldHtml, isBlankExample, labeledForms } from '#lib/card/examples.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {
@@ -294,6 +294,7 @@ onMount(() => {
           pointed: draft.inputs.pointed.trim(),
           partOfSpeech: draft.inputs.partOfSpeech,
           definitions: meanings,
+          forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
         }}
         blocker={suggestBlocker}
         edits={draft.edits}

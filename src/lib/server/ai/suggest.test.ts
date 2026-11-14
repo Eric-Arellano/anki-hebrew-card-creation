@@ -34,6 +34,7 @@ const sefer: SuggestRequest = {
   pointed: 'סֵפֶר',
   partOfSpeech: 'noun',
   definitions: ['book', '(archaic) a writing'],
+  forms: [],
 };
 
 const seferHomographs: Homograph[] = [
@@ -137,6 +138,62 @@ describe('suggestionRequest', () => {
     expect(system).toContain(FIELD_HELP.examples.verb);
     expect(system).toContain(FIELD_HELP.productionContext.verb);
   });
+
+  describe('with forms', () => {
+    test('lists each after the meanings, with its label where it has one', () => {
+      const { user } = suggestionRequest(
+        {
+          ...sefer,
+          pointed: '',
+          partOfSpeech: 'other',
+          forms: [
+            { label: 'f', form: 'שְׁתַּיִם' },
+            { label: '', form: 'שְׁנֵי' },
+          ],
+        },
+        [],
+      );
+      expect(user).toBe(
+        [
+          'Word: ספר',
+          'Part of speech: other',
+          'Meanings:',
+          '- book',
+          '- (archaic) a writing',
+          'Forms:',
+          '- f: שְׁתַּיִם',
+          '- שְׁנֵי',
+        ].join('\n'),
+      );
+    });
+  });
+
+  describe('for the examples', () => {
+    test('asks for one sentence per distinct meaning, and at most four', () => {
+      const { system } = suggestionRequest(sefer, []);
+      expect(system).toContain('Write one for each distinct meaning, in their order');
+      expect(system).toContain('Meanings that are shades of one sense share a sentence');
+      expect(system).toContain('With only one meaning left, write two. Never write more than 4.');
+    });
+
+    test('asks for full sentences, punctuated in both languages', () => {
+      const { system } = suggestionRequest(sefer, []);
+      expect(system).toContain('full sentences a native speaker would say');
+      expect(system).toContain('End every sentence with `.`, `?` or `!`, in Hebrew and in English');
+    });
+
+    test.each([
+      ['noun', 'with ה, ב, ל, מ, ו or ש before it, or in the plural'],
+      ['verb', 'as the infinitive after a verb like רוצה or צריך'],
+      ['adjective', 'agreeing with a feminine or a plural noun'],
+      ['preposition', 'with a pronoun ending'],
+      ['adverb', 'Its form never changes, so use it in a different kind of sentence'],
+      ['phrase', 'Its form never changes, so use it in a different kind of sentence'],
+      ['other', 'Use the word in a different form in each, preferring the forms listed.'],
+    ] as const)('says how a %s varies', (partOfSpeech, line) => {
+      expect(suggestionRequest({ ...sefer, partOfSpeech }, []).system).toContain(line);
+    });
+  });
 });
 
 describe('toSuggestions', () => {
@@ -160,6 +217,16 @@ describe('toSuggestions', () => {
       productionContext: 'a thing you read',
       readingContext: 'ספר טוב',
     });
+  });
+
+  test('keeps no more than four examples, counting those that pass the guards', () => {
+    const books = ['ספר אחד', 'שני ספרים', 'שלושה ספרים', 'ארבעה ספרים', 'חמישה ספרים'].map(
+      (hebrew) => ({ hebrew, english: 'books' }),
+    );
+    const dropped = { hebrew: 'קראתי <b>ספר</b>', english: 'I read a book' };
+    expect(toSuggestions({ ...kept, examples: [dropped, ...books] }).examples).toEqual(
+      books.slice(0, 4),
+    );
   });
 
   test('leaves out what Claude answered null or nothing for', () => {
