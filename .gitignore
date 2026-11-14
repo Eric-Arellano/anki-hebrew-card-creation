@@ -11,6 +11,10 @@ vite.config.ts.timestamp-*
 # OS
 .DS_Store
 
+# Where ANTHROPIC_API_KEY lives.
+.env
+.env.*
+
 # The dictionary and its index. Wiktionary's data is CC BY-SA and large, so it never lands in git.
 data/
 *.sqlite

@@ -20,8 +20,12 @@ those two facts.
 - **Don't call `storeMediaFile`, or click Add to deck or Save in a running app, against my real
   Anki without asking.** `storeMediaFile` writes into my media folder, Add to deck adds a note, and
   Save edits one.
-- **Never reach a third-party site.** No module calls `fetch` on an outside host; the tool only
-  builds links I click. No test reaches the network or a real Anki.
+- **Never reach a third-party site, except `api.anthropic.com`.** No module calls `fetch` on an
+  outside host; the tool only builds links I click. The one exception is Claude, reached only from
+  `src/lib/server/ai/` and only when I click a button or Save. No test reaches the network, a real
+  Anki or the real Anthropic API.
+- **Don't call Claude against the real API without asking**, whether by clicking in a running app
+  or from a script. Every call costs money.
 - **Never download the dictionary, and never load it whole.** I put the kaikki.org JSONL in
   `data/`. It is large, so stream it with `grep`, `head` or `readline`.
 - **Follow the Hebrew text rules.** Build keys through `src/lib/hebrew/`, never by ad hoc string
@@ -34,7 +38,7 @@ those two facts.
   Svelte MCP server rather than recalling it, and run `svelte-autofixer` on each Svelte file you
   write until it reports nothing.
 - **No secrets, and no absolute home paths**, in code, config or fixtures. AnkiConnect is called
-  without an API key.
+  without an API key, and the Anthropic key is only read from `ANTHROPIC_API_KEY`.
 
 ## Claude Code plans
 
