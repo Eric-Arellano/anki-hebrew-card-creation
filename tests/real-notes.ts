@@ -3,11 +3,12 @@ import bayit from '#tests/fixtures/anki/notes-info-bayit.json' with { type: 'jso
 import kelevChatulDag from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
+import mechonitOto from '#tests/fixtures/anki/notes-info-mechonit-oto.json' with { type: 'json' };
 import twoImages from '#tests/fixtures/anki/notes-info-two-images.json' with { type: 'json' };
 
 /** The fixture note whose `Hebrew` is `word`, as `GET /api/anki/notes/[noteId]` answers with it. */
 export function loadedNote(word: string): LoadedNote {
-  const note = [...kelevChatulDag, ...bayit, ...twoImages].find(
+  const note = [...kelevChatulDag, ...bayit, ...twoImages, ...mechonitOto].find(
     ({ fields }) => fields.Hebrew.value === word,
   );
   if (note === undefined) throw new Error(`No fixture note for ${word}`);

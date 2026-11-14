@@ -152,9 +152,6 @@ note in the app.
 
 ## Open
 
-- **Open:** feed production context the deck's own collisions too, meaning notes whose
-  `Definitions` share an English word with this one. `findExistingNotes` searches by Hebrew today,
-  so it can't find them.
 - **Open:** show Wiktionary's modern usage examples, the 6% that have them, beside Claude's.
   They're free and written by people.
 - **Open:** an eval set, about 20 words graded by the human, to judge prompt and effort changes

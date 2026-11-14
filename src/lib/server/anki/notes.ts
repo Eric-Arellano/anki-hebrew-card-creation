@@ -1,9 +1,15 @@
 import { error } from '@sveltejs/kit';
+import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import { searchByNoteIds, searchByNoteType } from '#lib/anki/search.ts';
 import type { LoadedNote } from '#lib/api/anki.ts';
-import { FIELD_NAMES, NOTE_TYPE } from '#lib/note-type.ts';
-import type { AnkiClient } from '#lib/server/anki/client.ts';
+import { FIELD_NAMES, type Field, NOTE_TYPE } from '#lib/note-type.ts';
+import type { AnkiClient, NoteInfo } from '#lib/server/anki/client.ts';
 import { withAnkiErrorsAs502 } from '#lib/server/http.ts';
+
+/** A field of `note` as plain text, blank when the note lacks it. */
+export function fieldText(note: NoteInfo, field: Field): string {
+  return ankiFieldHtmlToText(note.fields[field.name]?.value ?? '');
+}
 
 /** The note of our note type with `noteId`, or `undefined` when Anki has none. */
 export async function readNote(anki: AnkiClient, noteId: number): Promise<LoadedNote | undefined> {

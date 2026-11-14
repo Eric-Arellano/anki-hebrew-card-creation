@@ -1,4 +1,3 @@
-import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import {
   searchByFieldContainingKey,
   searchByFieldEquals,
@@ -7,8 +6,9 @@ import {
 } from '#lib/anki/search.ts';
 import type { ExistingNotes } from '#lib/api/anki.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
-import { FIELDS, type Field, NOTE_TYPE } from '#lib/note-type.ts';
+import { FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient, NoteInfo } from '#lib/server/anki/client.ts';
+import { fieldText } from '#lib/server/anki/notes.ts';
 
 const NONE: ExistingNotes = { exactMatches: [], sameRootMatches: [], relatedMatches: [] };
 
@@ -17,18 +17,13 @@ function partition(
   comparisonKeys: readonly string[],
   sameRootNoteIds: readonly number[],
 ): ExistingNotes {
-  const existingNotes = notes.map((note) => {
-    function text(field: Field) {
-      return ankiFieldHtmlToText(note.fields[field.name]?.value ?? '');
-    }
-    return {
-      noteId: note.noteId,
-      unpointed: text(FIELDS.unpointed),
-      pointed: text(FIELDS.pointed),
-      partOfSpeech: text(FIELDS.partOfSpeech),
-      definitions: text(FIELDS.definitions),
-    };
-  });
+  const existingNotes = notes.map((note) => ({
+    noteId: note.noteId,
+    unpointed: fieldText(note, FIELDS.unpointed),
+    pointed: fieldText(note, FIELDS.pointed),
+    partOfSpeech: fieldText(note, FIELDS.partOfSpeech),
+    definitions: fieldText(note, FIELDS.definitions),
+  }));
   const exactMatches = existingNotes.filter((note) =>
     comparisonKeys.includes(toComparisonKey(note.unpointed)),
   );
