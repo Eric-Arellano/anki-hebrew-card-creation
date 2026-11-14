@@ -5,21 +5,18 @@
 The UI revamp landed fast, and it left names and folders describing the editor as it used to be.
 `components/forms/` renders the Grammar section, `NoteFields` renders one field group,
 `ExistingNotesPanel` and `DictionaryPanel` are no longer panels, and `card/change.ts` sits beside
-`anki/changes.ts` with an unrelated job. The README's Status and Claude sections predate most of
-the features, and its privacy statements are close to the code but not exact. Pure logic about
-Claude's suggestions grew inside three components, where only DOM tests reach it.
+`anki/changes.ts` with an unrelated job. Pure logic about Claude's suggestions grew inside three
+components, where only DOM tests reach it.
 
-This pass changes no behaviour except in PR 2, which makes `FORVO_DOWNLOADS` load from `.env`
+This pass changes no behaviour except in PR 1, which makes `FORVO_DOWNLOADS` load from `.env`
 like `ANTHROPIC_API_KEY` does. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
 
-It starts from `main` once `change-markers-lists` (the revamp's last PR, which deletes
-`ui-revamp.md`) has merged, since that branch edits `card/change.ts`, `ChangedFrom` and the
-inputs that PR 3 and PR 6 rename. Two pieces of work are still to come: the Claude correctness
-check and the verb revamp (`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet).
-Neither should wait on this pass, and the order among these PRs is loose after PR 1. When the verb
-plan is adopted, its paths need updating for PR 4 and PR 6. The plan says `forms/VerbInputs.svelte`,
-`ui/ChoiceChips.svelte`, `fields/SuggestButton.svelte`, and `suggestBlocker` in `CardEditor.svelte`.
+Two pieces of work are still to come: the Claude correctness check and the verb revamp
+(`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet). Neither should wait on
+this pass, and the order among these PRs is loose. When the verb plan is adopted, its paths need
+updating for PR 3 and PR 5. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
+`fields/SuggestButton.svelte`, and `suggestBlocker` in `CardEditor.svelte`.
 
 ## Decisions
 
@@ -31,12 +28,6 @@ plan is adopted, its paths need updating for PR 4 and PR 6. The plan says `forms
   too: the Media section is where images are attached.
   *Rejected: a `hints/` directory for `ExamplesInput`, `SameMeaningNotes` and `SuggestButton`,
   because `fields/` already means "the field-group sections", and splitting it again buys nothing.*
-- **The AnkiConnect allowlist stays spelled out in `AGENTS.md`.** It is a rule the agent follows
-  from `curl` too, so it needs to be readable where the rules are. The two enforcing copies,
-  `server/anki/client.ts` and `.claude/hooks/anki-guard.sh`, each get a comment naming the other
-  two, so changing the list means changing all three.
-  *Rejected: replacing the list with a pointer to `client.ts`, because the hook has to stay
-  independent of app code, and a rule you have to open another file to read gets skipped.*
 - **Suggestions logic moves to one module, `card/suggestions.ts`.** That covers what blocks asking,
   the request built from the draft, which blanks a reply fills, and whether a field still holds
   Claude's unread text. This is the code the verb plan's PR 3 extends, so giving it unit tests now
@@ -51,39 +42,7 @@ plan is adopted, its paths need updating for PR 4 and PR 6. The plan says `forms
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: README and AGENTS.md say what the code does
-
-Docs only.
-
-- **README:**
-  - Delete **Status**: the intro and Requirements already say what it does.
-  - Rewrite **Claude**, which runs on past 100 columns and mixes setup with button mechanics.
-    One sentence on what Claude does (suggests examples and hints, and checks a note before
-    each add or save, which you can save past), then the key setup. Say that suggestions and
-    checks need the dictionary index too: `lookUpHomographs` is a 503 without it.
-  - **What it reads**: Forvo lists the folder's names, and reads only the files that look like
-    Forvo downloads. It does not "only read the names of" those files (see `readdir` in
-    `server/forvo-downloads.ts`).
-  - **What it sends**:
-    - The AnkiConnect bullet gains media reads (`retrieveMediaFile`).
-    - The Anthropic bullet adds the part of speech, and the dictionary's definitions of other
-      entries spelled the same (`server/ai/homographs.ts`). Fix the same overclaim in
-      `server/ai/client.ts:1-2`.
-  - Button names: "Add to deck" and "Save changes", as `SaveBar.svelte` labels them.
-- **AGENTS.md:**
-  - Hard rules:
-    - "Never reach a third-party site" becomes "The app never reaches…", since the agent's own
-      WebFetch and the Svelte MCP server are allowed.
-    - Button names, as in the README.
-    - Point at the two enforcing copies of the allowlist (Decisions).
-  - Where code goes:
-    - Add a line for the top-level `src/lib/*.ts` files: pure editor copy and config with no
-      narrower home, which the server's prompts may read too (`field-help.ts`).
-    - `server/` also reaches Anthropic.
-  - Testing philosophy: add "a fake `ClaudeMessages`" beside the fake AnkiConnect client.
-- `client.ts` and `anki-guard.sh` header comments name the other copies of the allowlist.
-
-## PR 2: Read `FORVO_DOWNLOADS` like `ANTHROPIC_API_KEY`, and let `npm start` read `.env`
+## PR 1: Read `FORVO_DOWNLOADS` like `ANTHROPIC_API_KEY`, and let `npm start` read `.env`
 
 - **Declare `FORVO_DOWNLOADS` in `src/env.ts`**, optional, with Downloads as the default. Read it
   through `$app/env/private` in `server/forvo-downloads.ts` instead of `process.env`, which
@@ -97,7 +56,7 @@ Docs only.
   Drop the README's "`npm start` doesn't read `.env`" caveat, and say `FORVO_DOWNLOADS` goes in
   `.env` too.
 
-## PR 3: Rename the `lib/` modules whose names collide or mislead
+## PR 2: Rename the `lib/` modules whose names collide or mislead
 
 Moves and renames, then import updates. No logic changes.
 
@@ -124,7 +83,7 @@ Moves and renames, then import updates. No logic changes.
 
   Re-grep each one first.
 
-## PR 4: One home for the server's HTTP errors, and a clearer dictionary index
+## PR 3: One home for the server's HTTP errors, and a clearer dictionary index
 
 - `server/http.ts` → `server/route-errors.ts`, so it no longer shares a name with `api/http.ts`.
   It gains `withAiErrorsAs502`, replacing the try/catch copied into
@@ -150,7 +109,7 @@ Moves and renames, then import updates. No logic changes.
   - Fix the drifted copy of the gender codes at `source.ts:68`: point at `convert.ts`, which has
     the full list.
 
-## PR 5: Move form gathering out of `card/examples.ts`
+## PR 4: Move form gathering out of `card/examples.ts`
 
 The bottom half of `card/examples.ts` gathers a word's labelled forms: `LabeledForm`,
 `labeledForms`, `formsFieldLines`, `allLabeledForms` and `wordUsage`. It is not about the
@@ -165,7 +124,7 @@ Merge them only if the existing tests show they agree on every input each one se
 add one line on each saying why they differ. Move `wordUsage`'s rationale paragraph out of its
 doc comment, onto the line it explains.
 
-## PR 6: Component directories follow the editor's sections
+## PR 5: Component directories follow the editor's sections
 
 Renames and moves first (`git mv`), then imports and test queries.
 
@@ -192,7 +151,7 @@ Renames and moves first (`git mv`), then imports and test queries.
     Move it there.
 - Run `svelte-autofixer` on every moved file.
 
-## PR 7: Claude's suggestions, as pure functions with unit tests
+## PR 6: Claude's suggestions, as pure functions with unit tests
 
 A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
 
@@ -200,12 +159,12 @@ A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
   branching that is tested only through the DOM today; the second is the inline `SuggestRequest`.
 - `filledBlanks(suggestions, edits, examples)` from `SuggestButton.svelte`'s `ask`: which hints
   and examples a reply fills, given that typing during the call wins.
-- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 6).
+- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 5).
 
 The components keep the state and the calls. Their DOM tests stay as integration tests, but drop
 any case that the unit tests now cover exhaustively.
 
-## PR 8: One list-row algebra for meanings and examples, and one `Held` type
+## PR 7: One list-row algebra for meanings and examples, and one `Held` type
 
 - `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
   `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
@@ -215,7 +174,7 @@ any case that the unit tests now cover exhaustively.
   replaces the nine copies of that comment on `held` props. `SaveBar`'s and `CardEditor`'s `held`
   is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
 
-## PR 9: Shared fixtures for the editor's tests
+## PR 8: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -230,7 +189,7 @@ any case that the unit tests now cover exhaustively.
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 10: Shared fakes for the server's tests
+## PR 9: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.
@@ -245,11 +204,11 @@ any case that the unit tests now cover exhaustively.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   touched until it reports nothing. No test reaches the network, a real Anki or the real API.
-- PRs 3–6: after the move, `grep -rn` for each old module and component name across `src/`,
+- PRs 2–5: after the move, `grep -rn` for each old module and component name across `src/`,
   `tests/`, `scripts/`, `AGENTS.md` and `README.md` comes back empty.
-- PR 2, by hand: put `FORVO_DOWNLOADS` in `.env` pointing at a folder holding a Forvo-named MP3,
+- PR 1, by hand: put `FORVO_DOWNLOADS` in `.env` pointing at a folder holding a Forvo-named MP3,
   run `npm run dev`, type the word, and the editor offers it. Then run `npm run build && npm start`
   and check the server starts with the key from `.env`. Do this without clicking Add to deck,
   Save or any Claude button.
-- PR 6, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
+- PR 5, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
   as before. Nothing is clicked that writes to Anki or calls Claude.

@@ -15,6 +15,8 @@ export type NoteInfo = z.infer<typeof noteInfoSchema>;
 // `storeMediaFile` only adds a file to the media folder, and `retrieveMediaFile` only reads one. An
 // action missing from this object can't be typed or sent. The list is also spelled out in AGENTS.md
 // and enforced on Bash by `.claude/hooks/anki-guard.sh`: change all three together.
+// *Rejected: AGENTS.md pointing here instead, because the hook has to stay independent of app
+// code, and a rule you have to open another file to read gets skipped.*
 const resultSchemaByAllowedAction = {
   version: z.number(),
   deckNames: z.array(z.string()),
