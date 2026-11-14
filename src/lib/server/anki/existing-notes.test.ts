@@ -34,6 +34,7 @@ describe('findExistingNotes', () => {
             definitions: 'dog',
           },
         ],
+        sameRootMatches: [],
         relatedMatches: [],
       });
       expect(calls[0]).toEqual({
@@ -53,6 +54,7 @@ describe('findExistingNotes', () => {
     test('lists them as related matches', async () => {
       const { anki } = ankiWithNotes(bayitNotes);
       expect(await findExistingNotes(anki, ['בית'])).toEqual({
+        sameRootMatches: [],
         exactMatches: [
           {
             noteId: 1752114960166,
@@ -113,11 +115,65 @@ describe('findExistingNotes', () => {
     });
   });
 
+  describe('with a root', () => {
+    function noteFor(word: string): NoteInfo {
+      const note = bayitNotes.find((candidate) => candidate.fields.Hebrew.value === word);
+      if (note === undefined) throw new Error(`No fixture note for ${word}`);
+      return note;
+    }
+    const bayit = noteFor('בית');
+    const mishpat = noteFor('בית משפט');
+    const sefer = noteFor('בית ספר');
+    const rootQuery = '"note:Hebrew" "Root:ב־י־ת"';
+
+    // Anki answers the word's search and the root's apart, as each query asks.
+    function ankiFinding(byQuery: Record<string, NoteInfo[]>) {
+      return fakeAnki({
+        findNotes: ({ query }) => (byQuery[query] ?? []).map((note) => note.noteId),
+        notesInfo: ({ notes: requestedIds }) =>
+          bayitNotes.filter((note) => requestedIds.includes(note.noteId)),
+      });
+    }
+
+    test('lists the notes only the root finds as the same root', async () => {
+      const { anki, calls } = ankiFinding({
+        '"note:Hebrew" "Hebrew:*בית*"': [bayit],
+        [rootQuery]: [bayit, sefer],
+      });
+      const found = await findExistingNotes(anki, ['בית'], 'ב־י־ת');
+      expect(found.exactMatches.map((note) => note.unpointed)).toEqual(['בית']);
+      expect(found.sameRootMatches.map((note) => note.unpointed)).toEqual(['בית ספר']);
+      expect(found.relatedMatches).toEqual([]);
+      expect(calls.map((call) => call.params)).toEqual([
+        { query: '"note:Hebrew" "Hebrew:*בית*"' },
+        { query: rootQuery },
+        { notes: [bayit.noteId, sefer.noteId] },
+      ]);
+    });
+
+    test('lists a note both find as the same root, not as related', async () => {
+      const { anki } = ankiFinding({
+        '"note:Hebrew" "Hebrew:*בית*"': [bayit, mishpat, sefer],
+        [rootQuery]: [sefer],
+      });
+      const found = await findExistingNotes(anki, ['בית'], 'ב־י־ת');
+      expect(found.sameRootMatches.map((note) => note.unpointed)).toEqual(['בית ספר']);
+      expect(found.relatedMatches.map((note) => note.unpointed)).toEqual(['בית משפט']);
+    });
+
+    test('finds only the root when the word is in no note', async () => {
+      const { anki } = ankiFinding({ [rootQuery]: [sefer] });
+      const found = await findExistingNotes(anki, ['ביתי'], 'ב־י־ת');
+      expect(found.sameRootMatches.map((note) => note.unpointed)).toEqual(['בית ספר']);
+    });
+  });
+
   describe('when nothing matches', () => {
     test('does not ask for note details', async () => {
       const { anki, calls } = ankiWithNotes([]);
       expect(await findExistingNotes(anki, ['זזזז'])).toEqual({
         exactMatches: [],
+        sameRootMatches: [],
         relatedMatches: [],
       });
       expect(calls.map((call) => call.action)).toEqual(['findNotes']);
@@ -129,6 +185,7 @@ describe('findExistingNotes', () => {
       const { anki, calls } = ankiWithNotes(kelevChatulDagNotes);
       expect(await findExistingNotes(anki, [' '])).toEqual({
         exactMatches: [],
+        sameRootMatches: [],
         relatedMatches: [],
       });
       expect(calls).toEqual([]);

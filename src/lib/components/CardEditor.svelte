@@ -8,7 +8,7 @@ import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, handOffFields } from '#lib/card/hand-off.ts';
-import { type CardInputsDraft, completeInputs } from '#lib/card/inputs.ts';
+import { type CardInputsDraft, completeInputs, draftRoot } from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
   prefillBlanks,
@@ -177,6 +177,7 @@ onMount(checkAnki);
     </div>
     <ExistingNotesPanel
       words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]}
+      root={draftRoot(draft.inputs)}
       editingNoteId={note?.noteId}
       {replacesDraft}
       onopen={(opened) => onopennote?.(opened)}

@@ -41,7 +41,7 @@ export type ServerReplies = {
 /** Our server, answering the editor's API calls, and recording every request. */
 export function stubServer({
   status = connectedStatus,
-  existing = { exactMatches: [], relatedMatches: [] },
+  existing = { exactMatches: [], sameRootMatches: [], relatedMatches: [] },
   notes = [],
   lookup = notInDictionary,
   storeMedia = ({ filename }) => Response.json({ filename }),

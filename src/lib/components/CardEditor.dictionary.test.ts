@@ -209,10 +209,10 @@ describe('CardEditor', () => {
       expect(screen.getByText(/Wiktionary suggests/).textContent).toContain('ל');
       expect((screen.getByRole('radio', { name: 'ל' }) as HTMLInputElement).checked).toBe(false);
       expect(screen.getByText('Still needed: English meaning, preposition, image')).toBeTruthy();
-      // The deck check searches the lemma too, which old notes for verbs hold.
+      // The deck check searches the lemma too, which old notes for verbs hold, and the root.
       await vi.waitFor(() =>
         expect(requests.map((request) => request.path)).toContain(
-          `/api/anki/existing?word=${encodeURIComponent('לחכות')}&word=${encodeURIComponent('חיכה')}`,
+          `/api/anki/existing?word=${encodeURIComponent('לחכות')}&word=${encodeURIComponent('חיכה')}&root=${encodeURIComponent('ח־כ־ה')}`,
         ),
       );
     });

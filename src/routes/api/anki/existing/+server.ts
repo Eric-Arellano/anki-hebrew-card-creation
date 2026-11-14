@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { formatRoot } from '#lib/hebrew/root.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
 import { anki } from '#lib/server/anki/connection.ts';
 import { findExistingNotes } from '#lib/server/anki/existing-notes.ts';
@@ -10,5 +11,8 @@ export const GET: RequestHandler = ({ url }) => _findExisting(anki, url);
 export async function _findExisting(anki: AnkiClient, url: URL): Promise<Response> {
   const words = url.searchParams.getAll('word');
   if (words.length === 0) error(400, 'word is required');
-  return Response.json(await withAnkiErrorsAs502(() => findExistingNotes(anki, words)));
+  const typedRoot = url.searchParams.get('root');
+  const root = typedRoot === null ? undefined : formatRoot(typedRoot);
+  if (typedRoot !== null && root === undefined) error(400, `${typedRoot} is not a root`);
+  return Response.json(await withAnkiErrorsAs502(() => findExistingNotes(anki, words, root)));
 }

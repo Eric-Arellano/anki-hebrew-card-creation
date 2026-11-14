@@ -36,6 +36,7 @@ async function renderPageFindingKelev() {
           definitions: '',
         },
       ],
+      sameRootMatches: [],
       relatedMatches: [],
     },
     notes: [kelev],
@@ -151,6 +152,7 @@ describe('the page', () => {
                 definitions: '',
               },
             ],
+            sameRootMatches: [],
             relatedMatches: [],
           },
         });

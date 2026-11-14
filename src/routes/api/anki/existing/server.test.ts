@@ -28,6 +28,7 @@ describe('_findExisting', () => {
           definitions: 'fish',
         },
       ],
+      sameRootMatches: [],
       relatedMatches: [],
     });
   });
@@ -39,6 +40,22 @@ describe('_findExisting', () => {
       expect(calls[0]?.params).toEqual({
         query: '"note:Hebrew" ("Hebrew:*לדבר*" OR "Hebrew:*x*")',
       });
+    });
+  });
+
+  describe('with a root', () => {
+    test('searches for it as the deck writes it', async () => {
+      const { anki, calls } = fakeAnki({ findNotes: () => [] });
+      await _findExisting(anki, existingUrl(`?word=x&root=${encodeURIComponent('ד.ב.ר')}`));
+      expect(calls[1]?.params).toEqual({ query: '"note:Hebrew" "Root:ד־ב־ר"' });
+    });
+
+    test('answers 400 for one that is not a root, without calling Anki', async () => {
+      const { anki, calls } = fakeAnki({});
+      await expect(
+        _findExisting(anki, existingUrl(`?word=x&root=${encodeURIComponent('דִּבֵּר')}`)),
+      ).rejects.toSatisfy((error) => isHttpError(error, 400));
+      expect(calls).toEqual([]);
     });
   });
 
