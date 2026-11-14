@@ -28,6 +28,7 @@ let {
   word,
   examplesWithoutWord,
   sameMeaningSearch,
+  suggested,
   onedit,
   promptImages = $bindable(),
 }: {
@@ -39,9 +40,16 @@ let {
   examplesWithoutWord: string[];
   // The deck's other words for this English, which the Production context tells apart.
   sameMeaningSearch: Promise<SameMeaningNote[] | undefined> | undefined;
+  // What Claude last wrote into each field it suggested.
+  suggested: Partial<Record<FieldKey, string>>;
   onedit: (field: FieldKey, value: string) => void;
   promptImages: Record<VariantPrompt, Attachment[]>;
 } = $props();
+
+// Until the human edits what Claude wrote, so it's clear what hasn't been read yet.
+function isUnreadSuggestion(field: FieldKey) {
+  return suggested[field] !== undefined && suggested[field] === edits[field];
+}
 
 function lacksAnswer(prompt: VariantPrompt) {
   return (edits[VARIANT_ANSWERS[prompt]] ?? '').trim() === '';
@@ -62,6 +70,7 @@ function lacksAnswer(prompt: VariantPrompt) {
       {#each fields as field (field)}
         {@const { label, help } = fieldDisplay(field, partOfSpeech)}
         {@const prompt = isVariantPrompt(field) ? field : undefined}
+        {@const unread = isUnreadSuggestion(field)}
         <!-- A paste or drop in a variant prompt's block goes to that prompt's images. A block takes
              focus on a click anywhere in it, so a click is enough to aim a paste: at this prompt,
              or for any other field, at Images. -->
@@ -71,7 +80,18 @@ function lacksAnswer(prompt: VariantPrompt) {
           tabindex="-1"
         >
           <div class="flex items-end justify-between gap-2">
-            <label for="field-{field}">{label}</label>
+            <span class="flex items-center gap-2">
+              <label for="field-{field}">{label}</label>
+              {#if unread}
+                <span
+                  id="suggested-{field}"
+                  class="chip border-violet-300 bg-violet-50 text-xs text-violet-800"
+                  title="Claude wrote this. Read it over, and edit what's wrong."
+                >
+                  Suggested
+                </span>
+              {/if}
+            </span>
             {#if prompt !== undefined}
               <LinkChip
                 label={imagesLink.label}
@@ -91,7 +111,9 @@ function lacksAnswer(prompt: VariantPrompt) {
               dir="auto"
               rows="2"
               class="w-full font-hebrew text-xl"
-              aria-describedby={help && `help-${field}`}
+              aria-describedby={[help && `help-${field}`, unread && `suggested-${field}`]
+                .filter(Boolean)
+                .join(' ') || undefined}
               value={edits[field] ?? ''}
               oninput={(event) => onedit(field, event.currentTarget.value)}
             ></textarea>
