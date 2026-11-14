@@ -1,16 +1,9 @@
+import { MEDIAL_BY_FINAL } from '#lib/hebrew/final-letters.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 
 /** Why a plural is worth its own variant card. */
 export type IrregularPlural = 'masculine-with-ot' | 'feminine-with-im' | 'changed-stem';
-
-const MEDIAL_BY_FINAL: Readonly<Record<string, string>> = {
-  ך: 'כ',
-  ם: 'מ',
-  ן: 'נ',
-  ף: 'פ',
-  ץ: 'צ',
-};
 
 /**
  * Whether the pointed `plural` of the pointed `singular` breaks the usual pattern. Only the first

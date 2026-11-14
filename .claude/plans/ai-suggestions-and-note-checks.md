@@ -157,8 +157,6 @@ note in the app.
   so it can't find them.
 - **Open:** show Wiktionary's modern usage examples, the 6% that have them, beside Claude's.
   They're free and written by people.
-- **Open:** warn when an example doesn't contain a form of the word, matched against the entry's
-  forms with prefix letters through `src/lib/hebrew/`.
 - **Open:** an eval set, about 20 words graded by the human, to judge prompt and effort changes
   rather than guess at them. `/claude-api build-eval` walks through building one.
 - **Open:** whether the check is worth `medium` effort. Measure on the eval before raising it.
