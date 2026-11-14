@@ -282,6 +282,19 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('for a new word', () => {
+    test('says so', async () => {
+      await renderConnectedEditor();
+      expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('New word');
+      expect(document.title).toBe('New word · Hebrew card helper');
+    });
+
+    test('focuses the word', async () => {
+      await renderConnectedEditor();
+      expect(document.activeElement).toBe(input('Hebrew word, without niqqud'));
+    });
+  });
+
   describe('the sections', () => {
     function sectionHeadings() {
       return screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent);
@@ -380,7 +393,9 @@ describe('CardEditor', () => {
         });
         await typeInto(input('Hebrew word, without niqqud'), 'כלב');
         const check = screen.getByRole('region', { name: 'Already in the deck' });
-        expect(await within(check).findByText('Already in your deck. Edit it?')).toBeTruthy();
+        expect(
+          await within(check).findByText('Already in your deck: edit it instead?'),
+        ).toBeTruthy();
         expect(within(check).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
       });
     });
@@ -405,7 +420,7 @@ describe('CardEditor', () => {
         await typeInto(input('Hebrew word, without niqqud'), 'בית');
         const check = screen.getByRole('region', { name: 'Already in the deck' });
         expect(await within(check).findByText('Related notes in your deck')).toBeTruthy();
-        expect(within(check).queryByText('Already in your deck. Edit it?')).toBeNull();
+        expect(within(check).queryByText('Already in your deck: edit it instead?')).toBeNull();
       });
     });
 

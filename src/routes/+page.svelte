@@ -12,10 +12,6 @@ function start(next: LoadedNote | undefined) {
 }
 </script>
 
-<svelte:head>
-  <title>Hebrew card helper</title>
-</svelte:head>
-
 <!-- Remounted for each card, so no input, attachment or message of the last one can carry over,
      including state added later. It also rechecks Anki, which may have closed since. A loaded
      note is a card too, so the editor reads it once, as its starting draft. -->

@@ -51,9 +51,14 @@ describe('CardEditor', () => {
 
     test('says which note it edits', async () => {
       await renderConnectedEditor({}, kelev);
-      const banner = screen.getByRole('region', { name: 'Editing' });
-      expect(banner.textContent).toContain('כֶּלֶב');
-      expect(within(banner).getByRole('button', { name: 'New word' })).toBeTruthy();
+      expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Editing כֶּלֶב');
+      expect(screen.getByRole('button', { name: 'Start a new word' })).toBeTruthy();
+      expect(document.title).toBe('Editing כֶּלֶב · Hebrew card helper');
+    });
+
+    test('leaves the focus where it was', async () => {
+      await renderConnectedEditor({}, kelev);
+      expect(document.activeElement).not.toBe(input('Hebrew word, without niqqud'));
     });
 
     test('still says what the note lacks', async () => {
@@ -96,6 +101,29 @@ describe('CardEditor', () => {
             .getAllByRole('listitem')
             .map((item) => within(item).getByText('כַּלְבָּה')),
         ).toHaveLength(1);
+      });
+
+      test('lists another note with the spelling as another, not as this one', async () => {
+        await renderConnectedEditor(
+          {
+            existing: {
+              exactMatches: [
+                {
+                  noteId: 1,
+                  unpointed: 'כלב',
+                  pointed: 'כֶּלֶב',
+                  partOfSpeech: '',
+                  definitions: '',
+                },
+              ],
+              sameRootMatches: [],
+              relatedMatches: [],
+            },
+          },
+          kelev,
+        );
+        const check = screen.getByRole('region', { name: 'Already in the deck' });
+        expect(await within(check).findByText('Also in your deck with this spelling')).toBeTruthy();
       });
 
       describe('when it finds only the note', () => {

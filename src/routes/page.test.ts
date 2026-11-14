@@ -108,7 +108,7 @@ describe('the page', () => {
     test('opens it in the editor', async () => {
       await renderPageFindingKelev();
       await clickFoundNote();
-      expect(await screen.findByRole('region', { name: 'Editing' })).toBeTruthy();
+      expect(await screen.findByRole('heading', { name: 'Editing כֶּלֶב' })).toBeTruthy();
       expect(input('English meaning').value).toBe('dog');
       expect(input('Hebrew word, with niqqud').value).toBe('כֶּלֶב');
     });
@@ -127,14 +127,14 @@ describe('the page', () => {
           screen.getByRole('button', { name: 'Replace and edit' }),
         );
         await fireEvent.click(screen.getByRole('button', { name: 'Replace and edit' }));
-        expect(await screen.findByRole('region', { name: 'Editing' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Editing כֶּלֶב' })).toBeTruthy();
         expect(input('English meaning').value).toBe('dog');
       });
 
       test('keeps the draft when cancelled', async () => {
         await typeAndClick();
         await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-        expect(screen.queryByRole('region', { name: 'Editing' })).toBeNull();
+        expect(screen.queryByRole('heading', { name: /^Editing/ })).toBeNull();
         expect(input('English meaning').value).toBe('hound');
       });
     });
@@ -159,20 +159,20 @@ describe('the page', () => {
         await typeInto(input('Hebrew word, without niqqud'), 'כלב');
         await clickFoundNote();
         expect((await screen.findByRole('alert')).textContent).toBe('Anki has no Hebrew note');
-        expect(screen.queryByRole('region', { name: 'Editing' })).toBeNull();
+        expect(screen.queryByRole('heading', { name: /^Editing/ })).toBeNull();
       });
     });
   });
 
-  describe('on New word while editing', () => {
+  describe('on Start a new word while editing', () => {
     test('starts a new note with every input blank', async () => {
       await renderPageFindingKelev();
       await clickFoundNote();
-      const banner = await screen.findByRole('region', { name: 'Editing' });
-      await fireEvent.click(within(banner).getByRole('button', { name: 'New word' }));
+      await screen.findByRole('heading', { name: 'Editing כֶּלֶב' });
+      await fireEvent.click(screen.getByRole('button', { name: 'Start a new word' }));
       await screen.findByText(/Connected to Anki/);
 
-      expect(screen.queryByRole('region', { name: 'Editing' })).toBeNull();
+      expect(screen.queryByRole('heading', { name: /^Editing/ })).toBeNull();
       expect(input('Hebrew word, without niqqud').value).toBe('');
       expect(input('English meaning').value).toBe('');
     });
