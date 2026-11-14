@@ -18,12 +18,17 @@ const GENDERS: readonly { value: Gender; label: string }[] = [
 let {
   noun = $bindable(),
   root = $bindable(),
+  held,
+  heldRoot,
   choices,
   unoffered,
   children,
 }: {
   noun: NounDraft;
   root: string;
+  // What Anki holds, while editing a note.
+  held: NounDraft | undefined;
+  heldRoot: string | undefined;
   choices: PrefillChoices;
   unoffered: UnofferedValues;
   // The pointed word, which leads the forms so every pointed form copied from a dictionary
@@ -52,6 +57,7 @@ let {
         lang="he"
         required={false}
         choices={choices.plural}
+        held={held?.plural}
         bind:value={noun.plural}
       />
     {/if}
@@ -62,6 +68,7 @@ let {
         lang="he"
         required={false}
         choices={choices.feminine}
+        held={held?.feminine}
         bind:value={noun.feminine}
       />
       <TextInput
@@ -69,9 +76,10 @@ let {
         lang="he"
         required={false}
         choices={choices.femininePlural}
+        held={held?.femininePlural}
         bind:value={noun.femininePlural}
       />
     {/if}
-    <RootInput choices={choices.root} bind:root />
+    <RootInput choices={choices.root} held={heldRoot} bind:root />
   </div>
 </fieldset>

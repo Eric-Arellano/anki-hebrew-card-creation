@@ -2,6 +2,7 @@
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import type { Suggestions } from '#lib/api/ai.ts';
 import type { SameMeaningNote } from '#lib/api/anki.ts';
+import { textChange } from '#lib/card/change.ts';
 import type { Example } from '#lib/card/examples.ts';
 import { fieldDisplay } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
@@ -16,6 +17,7 @@ import {
 } from '#lib/note-type.ts';
 import ImagesInput from '../media/ImagesInput.svelte';
 import LinkChip from '../ui/LinkChip.svelte';
+import ChangedFrom from '../ui/ChangedFrom.svelte';
 import QuotedText from '../ui/QuotedText.svelte';
 import ExamplesInput from './ExamplesInput.svelte';
 import SameMeaningNotes from './SameMeaningNotes.svelte';
@@ -24,6 +26,7 @@ let {
   fields,
   partOfSpeech,
   edits,
+  held,
   examples = $bindable(),
   word,
   examplesWithoutWord,
@@ -36,6 +39,8 @@ let {
   fields: readonly FieldKey[];
   partOfSpeech: PartOfSpeech;
   edits: FieldValues;
+  // What Anki holds, while editing a note, so each change from it is marked.
+  held: FieldValues | undefined;
   examples: Example[];
   // The word without niqqud, which the examples should use.
   word: string;
@@ -124,15 +129,21 @@ function lacksAnswer(prompt: VariantPrompt) {
         {:else}
           <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML,
                except that a new line becomes `<br>` on save. -->
-          <textarea
-            id="field-{field}"
-            dir="auto"
-            rows="2"
-            class="w-full font-hebrew text-xl"
-            aria-describedby={describedBy}
-            value={edits[field] ?? ''}
-            oninput={(event) => onedit(field, event.currentTarget.value)}
-          ></textarea>
+          <ChangedFrom
+            {label}
+            change={textChange(held && (held[field] ?? ''), edits[field] ?? '')}
+            onrestore={() => onedit(field, held?.[field] ?? '')}
+          >
+            <textarea
+              id="field-{field}"
+              dir="auto"
+              rows="2"
+              class="w-full font-hebrew text-xl"
+              aria-describedby={describedBy}
+              value={edits[field] ?? ''}
+              oninput={(event) => onedit(field, event.currentTarget.value)}
+            ></textarea>
+          </ChangedFrom>
         {/if}
         {#if prompt !== undefined}
           {@const promptText = ankiFieldHtmlToText(edits[field] ?? '').trim()}

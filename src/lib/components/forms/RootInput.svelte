@@ -4,9 +4,11 @@ import TextInput from '../ui/TextInput.svelte';
 
 let {
   root = $bindable(),
+  held,
   choices,
 }: {
   root: string;
+  held: string | undefined;
   choices: readonly string[] | undefined;
 } = $props();
 
@@ -19,6 +21,7 @@ const formattedRoot = $derived(formatRoot(root));
     lang="he"
     required={false}
     {choices}
+    {held}
     bind:value={root}
   />
   {#if root.trim() !== ''}
