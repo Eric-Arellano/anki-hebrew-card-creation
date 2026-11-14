@@ -14,7 +14,7 @@ those two facts.
 
 - **Call only the allowlisted AnkiConnect actions**: `version`, `deckNames`, `modelNames`,
   `modelFieldNames`, `modelFieldDescriptions`, `modelTemplates`, `findNotes`, `notesInfo`,
-  `guiAddCards`, `guiBrowse` and `storeMediaFile` — from code and from `curl` alike. Nothing here
+  `guiAddCards`, `guiBrowse`, `retrieveMediaFile`, and `storeMediaFile` — from code and from `curl` alike. Nothing here
   creates, edits or deletes a note; I click Add myself.
 - **Don't call `guiAddCards`, `guiBrowse` or `storeMediaFile` against my real Anki without
   asking.** `guiAddCards` replaces the open Add window and discards whatever I had typed there, and

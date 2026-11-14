@@ -56,6 +56,11 @@ export async function storeMedia(filename: string, blob: Blob): Promise<string> 
   return stored.filename;
 }
 
+/** Where the browser reads a file already in Anki's media folder. */
+export function storedMediaUrl(filename: string): string {
+  return `/api/anki/media/${encodeURIComponent(filename)}`;
+}
+
 /** Opens Anki's Add window, pre-filled with `fields`, keyed by Anki field name. */
 export function openAddWindow(fields: Record<string, string>): Promise<void> {
   return postJson('/api/anki/add', { fields });

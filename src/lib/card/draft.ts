@@ -4,7 +4,6 @@ import { type CardInputsDraft, emptyDraft, INPUT_NAMES, missingInputs } from '#l
 import type { Attachment } from '#lib/media/attach.ts';
 import type { FieldValues, VariantPrompt } from '#lib/note-type.ts';
 
-/** Attachments not yet stored, under the names the browser gave them. */
 export type MediaDraft = {
   images: Attachment[];
   noImage: boolean;

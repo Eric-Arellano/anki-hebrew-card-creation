@@ -64,11 +64,11 @@ beside the writer it undoes (`formsByLabel` by `formsHtml`, `nounDraftFrom` by `
 - **Required inputs are the same as for a new note.** `missingInputs` and the image-or-opt-out check
   gate every save, with nothing specific to edits. "No image for this word" has no field to live in,
   so it is ticked again each time.
-- **A stored file stays a name.** `draftFromNote` gives a note's media as `StoredMedia`, plain
-  names, and an `Audio` naming more than one recording fills none. Attachments become
-  `{ kind: 'new', filename, blob }` or `{ kind: 'stored', filename }`, and `StoredMedia` folds into
-  `MediaDraft` as stored ones. A stored one previews from `GET /api/anki/media/[filename]`, and only
-  new ones go through `storeMedia`.
+- **A stored file stays a name.** `draftFromNote` fills `MediaDraft` with `StoredAttachment`s,
+  `{ kind: 'stored', filename }` beside the `{ kind: 'new', filename, blob }` the widgets attach,
+  and an `Audio` naming more than one recording fills none. The widgets already show a stored one
+  from `GET /api/anki/media/[filename]`, `attachmentsToStore` leaves it out, and `handOffFields`
+  writes its name as it stands.
 - **A variant prompt splits into its text and images** with `splitImages`, the one reader of image HTML.
 - **Loading is a remount.** `{#key card}` already gives each card a fresh editor, so `+page.svelte`
   passes the note as a seed. It replaces the draft, so it asks first when anything beyond the word
@@ -140,21 +140,7 @@ AnkiConnect behind the same action names, so upstream's docs aren't a safe guide
 *Rejected: `updateNote`, because it can also rewrite tags. The `audio` and `picture` parameters stay
 out for the reason `storeMediaFile`'s `url` does.*
 
-## PR 1 — Stored media in the widgets
-
-A prefactor: nothing creates a stored attachment yet.
-
-- `retrieveMediaFile` on the allowlist: the AGENTS.md rule, `client.ts`, and read-only in
-  `anki-guard.sh`. It answers `false` for a missing file.
-- `GET /api/anki/media/[filename]` serves bytes only for the extensions the deck holds, matched
-  without regard to case: `.jpg`, `.jpeg`, `.png`, `.webp` and `.mp3`. The 16 images that aren't
-  `.jpg` would otherwise show broken. It sets the type from the extension, with `nosniff` and a
-  sandboxing CSP, because the media folder can hold anything, and an SVG or HTML file served from
-  this origin could script `/api/anki/add`.
-- The attachment type above, through `ImagesInput`, the audio widget and the bar's store step, and
-  `draftFromNote` filling `MediaDraft` in place of `StoredMedia`.
-
-## PR 2 — Open a note in the editor
+## PR 1 — Open a note in the editor
 
 Ships with no way to save, so the human can open notes and see how they read before anything writes.
 
@@ -166,7 +152,7 @@ Ships with no way to save, so the human can open notes and see how they read bef
   `src/lib/hebrew/normalize.ts` per the Hebrew text rules.
 - The bar refuses while a note is loaded, because Open in Anki would add a duplicate.
 
-## PR 3 — Save an edit
+## PR 2 — Save an edit
 
 - `updateNoteFields` in `client.ts`, `anki-guard.sh`, and the AGENTS.md rule.
 - `POST /api/anki/notes/[noteId]`, taking `{ fields, mod }`: refuse unknown fields as
@@ -175,7 +161,7 @@ Ships with no way to save, so the human can open notes and see how they read bef
 - `request-guard.ts`'s header comment and the README: the server can now change notes, which raises
   the stakes of "Don't expose it".
 
-## PR 4 — Add without the Add window
+## PR 3 — Add without the Add window
 
 - `addNote` in `client.ts` and `POST /api/anki/notes`, answering 409 on Anki's duplicate refusal.
 - "Add to deck" and "Add anyway", and the move into editing the new note.
@@ -189,9 +175,6 @@ Ships with no way to save, so the human can open notes and see how they read bef
   `Part of speech` is the query.
 - **Open:** a card preview in the app, since the Add window's Preview goes with it. Browse → Preview
   still works.
-- **Open:** offer Wiktionary's recording as a link for a word Forvo lacks. About 15% of dictionary
-  entries carry a Wikimedia Commons `mp3_url`, which `source.ts` doesn't read yet. It stays a link
-  under Never reach a third-party site.
 - **Open:** once the deck has roots, search for a note's root in `findExistingNotes`, so its word
   family lands in Related. The substring search can't find למד from תלמיד.
 
@@ -201,17 +184,17 @@ Ships with no way to save, so the human can open notes and see how they read bef
   until clean. Route tests use `fakeAnki`, covering a missing note, another note type, a stale `mod`,
   a duplicate and an Anki failure.
 - `request-guard.ts`'s logic and its tests stay unchanged.
-- After PR 2, by hand and with nothing able to write: open a noun, a verb, a note with a labelled
+- After PR 1, by hand and with nothing able to write: open a noun, a verb, a note with a labelled
   `Pointed`, a two-image note and כלב, and check each input, image, player and variant. The labelled
   `Pointed` shows its warning.
 - Before the first real save, the human backs up the collection. Then, by hand in real Anki and only
-  with the human's go-ahead, for PR 3:
+  with the human's go-ahead, for PR 2:
   - Finish a note with a labelled `Pointed`, leaving that field alone. Browse shows only the listed
     fields changed, `Pointed` keeps its line breaks, and Preview shows the note's cards.
   - Anki's Undo takes the save back.
   - Save with the note open in Browse: refused, with the message. Close it and save again.
   - Load a note, edit it in Anki, then save: refused, and Load again shows Anki's version.
   - Add audio to a note with none: a Listening card appears. Then sync and check the phone.
-- For PR 4, the same way: add a noun, then change it and save, and one note exists. Add a second note
+- For PR 3, the same way: add a noun, then change it and save, and one note exists. Add a second note
   with the same `Hebrew`, and it needs Add anyway.
 - Under `npm start`, not only `npm run dev`: save a note with new media.

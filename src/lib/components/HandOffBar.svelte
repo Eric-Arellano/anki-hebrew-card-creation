@@ -1,7 +1,7 @@
 <script lang="ts">
 import { openAddWindow, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage } from '#lib/api/http.ts';
-import type { Attachment } from '#lib/media/attach.ts';
+import type { NewAttachment } from '#lib/media/attach.ts';
 
 let {
   attachments,
@@ -10,8 +10,8 @@ let {
   ankiBlocker,
   inputsBlocker,
 }: {
-  // Each file the note will hold, once.
-  attachments: readonly Attachment[];
+  // Each file the note will hold that Anki doesn't yet, once.
+  attachments: readonly NewAttachment[];
   // Keyed by Anki field name, as `/api/anki/add` takes them. Fields need the names Anki stored the
   // media under, which only exist once it has been stored, so this takes each name requested to
   // the one Anki used.

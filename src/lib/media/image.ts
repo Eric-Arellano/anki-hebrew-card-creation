@@ -1,6 +1,6 @@
 // Media syncs to the phone, and Copy Image tends to hand over a PNG whatever the original was, so
 // every image is re-encoded here before it reaches the media folder.
-import type { Attachment } from '#lib/media/attach.ts';
+import type { NewAttachment } from '#lib/media/attach.ts';
 
 const LONG_EDGE = 1000;
 const JPEG_QUALITY = 0.85;
@@ -36,7 +36,7 @@ function canvasToJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
  * `file` as a JPEG named as Anki names a paste, so one image always gets one name. Rejects when the
  * browser can't decode it, which is also how anything that isn't an image gets refused.
  */
-export async function encodeImage(file: Blob): Promise<Attachment> {
+export async function encodeImage(file: Blob): Promise<NewAttachment> {
   const bitmap = await createImageBitmap(file);
   const canvas = document.createElement('canvas');
   Object.assign(canvas, fitWithinLongEdge(bitmap));
@@ -51,5 +51,5 @@ export async function encodeImage(file: Blob): Promise<Attachment> {
   bitmap.close();
 
   const blob = await canvasToJpeg(canvas);
-  return { filename: `paste-${await hexSha1(blob)}.jpg`, blob };
+  return { kind: 'new', filename: `paste-${await hexSha1(blob)}.jpg`, blob };
 }

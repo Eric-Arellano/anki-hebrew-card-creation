@@ -9,7 +9,13 @@ import {
   forvoDownloadUrl,
 } from '#lib/api/forvo.ts';
 import { errorMessage } from '#lib/api/http.ts';
-import { type Attachment, audioAttachment, isAudio, pastedFiles } from '#lib/media/attach.ts';
+import {
+  type Attachment,
+  audioAttachment,
+  isAudio,
+  pastedFiles,
+  showingAttachment,
+} from '#lib/media/attach.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 
 let { audio = $bindable(), word }: { audio: Attachment | undefined; word: string } = $props();
@@ -124,14 +130,6 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
   // Otherwise picking the same file again, after removing it, fires no change.
   event.currentTarget.value = '';
 }
-
-function playing(blob: Blob) {
-  return (player: HTMLAudioElement) => {
-    const url = URL.createObjectURL(blob);
-    player.src = url;
-    return () => URL.revokeObjectURL(url);
-  };
-}
 </script>
 
 <svelte:window {onpaste} {ondrop} onfocus={lookInDownloads} />
@@ -152,7 +150,7 @@ function playing(blob: Blob) {
   {:else}
     <div class="flex flex-wrap items-center gap-2">
       <!-- biome-ignore lint/a11y/useMediaCaption: A pronunciation is one word, named beside it. -->
-      <audio controls aria-label="Recording" {@attach playing(audio.blob)}></audio>
+      <audio controls aria-label="Recording" {@attach showingAttachment(audio)}></audio>
       <span>{audio.filename}</span>
       <button
         type="button"

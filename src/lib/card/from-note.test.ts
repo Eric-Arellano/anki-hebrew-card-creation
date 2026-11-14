@@ -6,7 +6,7 @@ import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with
 import { realNote } from '#tests/real-notes.ts';
 import { composeFields } from './compose.ts';
 import { emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
-import { draftFromNote, type StoredMedia } from './from-note.ts';
+import { draftFromNote } from './from-note.ts';
 import { handOffFields } from './hand-off.ts';
 import { type CardInputs, type CardInputsDraft, completeInputs } from './inputs.ts';
 
@@ -16,29 +16,8 @@ function shownFields(partOfSpeech: PartOfSpeech): FieldKey[] {
   return shownFieldGroups(fieldNames, partOfSpeech).flatMap(({ fields }) => fields);
 }
 
-// Each name as Anki already stores it, so nothing new is stored.
-function mediaDraft({ images, promptImages, audio }: StoredMedia): MediaDraft {
-  function attach(filename: string) {
-    return { filename, blob: new Blob() };
-  }
-  return {
-    images: images.map(attach),
-    noImage: false,
-    promptImages: {
-      variant1Prompt: promptImages.variant1Prompt.map(attach),
-      variant2Prompt: promptImages.variant2Prompt.map(attach),
-    },
-    audio: audio === undefined ? undefined : attach(audio),
-  };
-}
-
-function filenames(media: MediaDraft): string[] {
-  return [
-    ...media.images,
-    ...media.promptImages.variant1Prompt,
-    ...media.promptImages.variant2Prompt,
-    ...(media.audio === undefined ? [] : [media.audio]),
-  ].map(({ filename }) => filename);
+function stored(filename: string) {
+  return { kind: 'stored', filename } as const;
 }
 
 /** Every field the editor would save for `held` once loaded, with `change` made to its inputs. */
@@ -49,33 +28,25 @@ function saved(
   const { inputs, edits, media } = draftFromNote(held);
   const completed = completeInputs(change(inputs));
   if (completed === undefined) throw new Error('The loaded note is missing a required input');
-  const draftMedia = mediaDraft(media);
   return handOffFields({
     composed: composeFields(completed),
     edits,
     shownFields: shownFields(completed.partOfSpeech),
-    media: draftMedia,
-    storedAs: new Map(filenames(draftMedia).map((name) => [name, name])),
+    media,
   });
 }
 
-/** `inputs` saved as a new note, with `edits` in its textareas and `media` attached. */
+/** `inputs` saved as a new note, with `edits` in its textareas and `media`, already stored. */
 function savedNew(
   inputs: CardInputs,
   edits: Partial<Record<FieldKey, string>> = {},
-  media: StoredMedia = {
-    images: [],
-    promptImages: { variant1Prompt: [], variant2Prompt: [] },
-    audio: undefined,
-  },
+  media: MediaDraft = emptyCardDraft().media,
 ): Record<string, string> {
-  const draftMedia = mediaDraft(media);
   return handOffFields({
     composed: composeFields(inputs),
     edits,
     shownFields: shownFields(inputs.partOfSpeech),
-    media: draftMedia,
-    storedAs: new Map(filenames(draftMedia).map((name) => [name, name])),
+    media,
   });
 }
 
@@ -114,14 +85,17 @@ describe('draftFromNote', () => {
           notes: '',
         },
         media: {
-          images: ['image-48258e0538aecfb7c668bfea2657cf398428fd72.jpg'],
+          images: [stored('image-48258e0538aecfb7c668bfea2657cf398428fd72.jpg')],
+          noImage: false,
           promptImages: {
             variant1Prompt: [
-              'shutterstock_628340135-cute-siberian-husky-puppy-with-flowers-on-a-pink-background-background-1.jpg',
+              stored(
+                'shutterstock_628340135-cute-siberian-husky-puppy-with-flowers-on-a-pink-background-background-1.jpg',
+              ),
             ],
             variant2Prompt: [],
           },
-          audio: 'pronunciation_he_כלב.mp3',
+          audio: stored('pronunciation_he_כלב.mp3'),
         },
         // The note's `טוב` is no preposition, which matters only once the note is called a verb.
         unoffered: { preposition: 'טוב' },
@@ -170,10 +144,7 @@ describe('draftFromNote', () => {
 
     test('can’t be saved until they are filled', () => {
       expect(completeInputs(loaded.inputs)).toBeUndefined();
-      expect(stillNeeded({ ...loaded, media: mediaDraft(loaded.media) })).toEqual([
-        'English meaning',
-        'part of speech',
-      ]);
+      expect(stillNeeded(loaded)).toEqual(['English meaning', 'part of speech']);
     });
   });
 
@@ -198,10 +169,11 @@ describe('draftFromNote', () => {
   describe('for each part of speech', () => {
     const word = { word: 'דבר', pointed: 'דָּבָר', definitions: ['thing', 'word & co'] } as const;
     const prompt = { variant1Prompt: 'a <b>prompt</b>\nover lines', variant1Answer: 'דְּבָרִים' };
-    const everyMedia: StoredMedia = {
-      images: ['a.jpg', 'b.JPG'],
-      promptImages: { variant1Prompt: ['c.png'], variant2Prompt: [] },
-      audio: 'pronunciation_he_דבר.mp3',
+    const everyMedia: MediaDraft = {
+      images: [stored('a.jpg'), stored('b.JPG')],
+      noImage: false,
+      promptImages: { variant1Prompt: [stored('c.png')], variant2Prompt: [] },
+      audio: stored('pronunciation_he_דבר.mp3'),
     };
 
     test.each<CardInputs>([

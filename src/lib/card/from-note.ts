@@ -13,6 +13,7 @@ import { type VerbDraft, verbDraftFrom } from '#lib/card/verb.ts';
 import { toBinyan } from '#lib/hebrew/binyan.ts';
 import { GENDERS } from '#lib/hebrew/gender.ts';
 import { GOVERNED_PREPOSITIONS } from '#lib/hebrew/preposition.ts';
+import type { StoredAttachment } from '#lib/media/attach.ts';
 import {
   FIELDS,
   type Field,
@@ -20,25 +21,14 @@ import {
   fromAnkiFields,
   isVariantPrompt,
   PARTS_OF_SPEECH,
-  type VariantPrompt,
 } from '#lib/note-type.ts';
-
-/** The files a note's media fields name, already in Anki's media folder. */
-export type StoredMedia = {
-  images: string[];
-  promptImages: Record<VariantPrompt, string[]>;
-  audio: string | undefined;
-};
 
 type ChipInput = 'partOfSpeech' | 'gender' | 'binyan' | 'preposition';
 
 /** What the note holds for each input it fills with a value no chip offers, which stays unchosen. */
 export type UnofferedValues = Partial<Record<ChipInput, string>>;
 
-export type NoteDraft = Omit<CardDraft, 'media'> & {
-  media: StoredMedia;
-  unoffered: UnofferedValues;
-};
+export type NoteDraft = CardDraft & { unoffered: UnofferedValues };
 
 type ChipReading<T> = { value: T | undefined; unoffered: string | undefined };
 
@@ -81,6 +71,10 @@ function readPreposition(
   return readChip(ending, oneOf(GOVERNED_PREPOSITIONS));
 }
 
+function stored(filename: string): StoredAttachment {
+  return { kind: 'stored', filename };
+}
+
 const TEXTAREA_FIELDS = (Object.keys(FIELDS) as FieldKey[]).filter((key) => {
   const field: Field = FIELDS[key];
   return 'group' in field;
@@ -95,8 +89,8 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
   function text(key: FieldKey): string {
     return ankiFieldHtmlToText(html(key));
   }
-  function imagesIn(key: FieldKey): string[] {
-    return splitImages(html(key)).images;
+  function imagesIn(key: FieldKey): StoredAttachment[] {
+    return splitImages(html(key)).images.map(stored);
   }
 
   const word = text('unpointed');
@@ -113,7 +107,7 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
     chips.partOfSpeech.value === 'verb',
   );
   const definitions = definitionsFromHtml(html('definitions'));
-  const sounds = soundsInAnkiField(html('audio'));
+  const [sound, ...otherSounds] = soundsInAnkiField(html('audio'));
 
   return {
     inputs: {
@@ -135,12 +129,14 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
     ),
     media: {
       images: imagesIn('images'),
+      // No field holds the choice, so it is made again on each save.
+      noImage: false,
       promptImages: {
         variant1Prompt: imagesIn('variant1Prompt'),
         variant2Prompt: imagesIn('variant2Prompt'),
       },
       // `Audio` holds one recording, so a field naming several fills none.
-      audio: sounds.length === 1 ? sounds[0] : undefined,
+      audio: sound === undefined || otherSounds.length > 0 ? undefined : stored(sound),
     },
     unoffered: Object.fromEntries(
       Object.entries({ ...chips, preposition }).flatMap(([input, { unoffered }]) =>
