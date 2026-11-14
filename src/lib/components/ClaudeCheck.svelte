@@ -47,14 +47,14 @@ onMount(() => {
         class="size-4 animate-spin rounded-full border-2 border-gray-300 border-t-violet-700"
         aria-hidden="true"
       ></span>
-      Claude is checking the note. You can save without waiting.
+      Claude is checking the note…
     </p>
   {:else if checking.kind === 'failed'}
     <p class="text-red-700">Couldn't check the note: {checking.message}</p>
   {:else if checking.findings.length === 0}
     <p class="text-gray-600">Claude found no problems.</p>
   {:else}
-    <p>Claude found these. Fix what you agree with, or save as it is:</p>
+    <p>Claude found these. Fix what you agree with:</p>
     <ul class="space-y-2">
       {#each checking.findings as { field, problem, rewrite }, index (index)}
         <li>

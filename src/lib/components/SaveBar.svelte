@@ -46,6 +46,8 @@ type Saving =
   | { kind: 'idle' }
   // `check` is the note as Claude is asked to check it, absent without a key.
   | { kind: 'reviewing'; check?: CheckRequest }
+  // A check the human asked for outside a review, which saves nothing.
+  | { kind: 'checked'; check: CheckRequest }
   | { kind: 'sending' }
   | { kind: 'added' }
   | { kind: 'saved' }
@@ -69,16 +71,27 @@ const blocker = $derived(
     (held !== undefined && Object.keys(changes).length === 0 ? NOTHING_CHANGED : undefined),
 );
 
+const checks = $derived(aiAvailable && partOfSpeech !== undefined);
+
+function noteToCheck(): CheckRequest | undefined {
+  return partOfSpeech !== undefined && aiAvailable
+    ? { partOfSpeech, fields: fromAnkiFields(fieldsWith(unstored)) }
+    : undefined;
+}
+
 // A save overwrites the note, so it shows what will change first. A new note overwrites nothing,
 // so it is reviewed only when Claude can check it.
 function submit() {
   if (blocker !== undefined || saving.kind === 'sending') return;
-  const check =
-    aiAvailable && partOfSpeech !== undefined
-      ? { partOfSpeech, fields: fromAnkiFields(fieldsWith(unstored)) }
-      : undefined;
+  const check = noteToCheck();
   if (held === undefined && check === undefined) add({ allowDuplicate: false });
   else saving = { kind: 'reviewing', check };
+}
+
+// Even when nothing changed, so a finished note can be checked again.
+function checkNow() {
+  const check = noteToCheck();
+  if (check !== undefined && saving.kind !== 'sending') saving = { kind: 'checked', check };
 }
 
 // Whether or not the check has answered, since it only advises.
@@ -211,10 +224,23 @@ function focus(element: HTMLElement) {
       title={blocker}
       onclick={submit}
     >
-      {held === undefined ? 'Add to deck' : 'Save'}
+      {#if held === undefined}
+        {checks ? 'Check and add' : 'Add to deck'}
+      {:else}
+        {checks ? 'Check and save' : 'Save'}
+      {/if}
     </button>
     <kbd>⌘↵</kbd>
-    {#if saving.kind === 'added' || saving.kind === 'saved'}
+    {#if checks}
+      <button type="button" disabled={saving.kind === 'sending'} onclick={checkNow}>
+        Check only
+      </button>
+    {/if}
+    {#if saving.kind === 'checked'}
+      {#key saving}
+        <ClaudeCheck request={saving.check} />
+      {/key}
+    {:else if saving.kind === 'added' || saving.kind === 'saved'}
       <p>{saving.kind === 'added' ? 'Added to the deck.' : 'Saved to Anki.'}</p>
       <!-- Focused, so Enter is all the next word takes. -->
       <button type="button" {@attach focus} onclick={onnextcard}>Next word</button>

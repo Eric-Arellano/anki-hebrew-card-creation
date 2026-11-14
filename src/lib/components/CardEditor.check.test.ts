@@ -19,6 +19,12 @@ import {
   typeInto,
 } from './CardEditor.harness.ts';
 
+// With its part of speech filled in, the one input the fixture lacks.
+const kelev: LoadedNote = (() => {
+  const note = loadedNote('כלב');
+  return { ...note, fields: { ...note.fields, 'Part of speech': 'noun' } };
+})();
+
 const wrongGender: NoteCheck = {
   findings: [
     {
@@ -114,10 +120,10 @@ describe('CardEditor', () => {
     test('shows each finding with its field and rewrite', async () => {
       await renderWithKey();
       await fillDagWithKey();
-      await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Check and add' }));
       await within(checkSection()).findByText(/should be גדול/);
       expect(checkSection().textContent?.replace(/\s+/g, ' ').trim()).toBe(
-        'Claude found these. Fix what you agree with, or save as it is: ' +
+        'Claude found these. Fix what you agree with: ' +
           'Examples: דג is masculine, so גדולה should be גדול. Try: הדג גדול. — The fish is big.',
       );
     });
@@ -151,7 +157,7 @@ describe('CardEditor', () => {
         const requests = await renderWithKey({ check });
         await fillDagWithKey();
         await pressCmdEnter();
-        expect(screen.getByText(/Claude is checking the note/)).toBeTruthy();
+        expect(screen.getByText('Claude is checking the note…')).toBeTruthy();
         await pressCmdEnter();
         await screen.findByText('Added to the deck.');
         expect(addRequests(requests)).toHaveLength(1);
@@ -169,7 +175,7 @@ describe('CardEditor', () => {
         await pressCmdEnter();
         await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
         expect(signal()?.aborted).toBe(true);
-        expect(screen.getByRole('button', { name: 'Add to deck' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Check and add' })).toBeTruthy();
         expect(addRequests(requests)).toEqual([]);
       });
     });
@@ -177,10 +183,6 @@ describe('CardEditor', () => {
 
   describe('checking an edit, with a key', () => {
     test('shows the findings beside what will change', async () => {
-      const kelev = (() => {
-        const note = loadedNote('כלב');
-        return { ...note, fields: { ...note.fields, 'Part of speech': 'noun' } };
-      })();
       const requests = await renderWithKey({ notes: [kelev] }, kelev);
       await screen.findByRole('button', { name: 'Suggest' });
       await typeInto(input('English meaning'), 'hound');
@@ -195,6 +197,46 @@ describe('CardEditor', () => {
       await pressCmdEnter();
       await screen.findByText('Saved to Anki.');
       expect(saveRequests(requests)).toHaveLength(1);
+    });
+  });
+
+  describe('checking only', () => {
+    function checkOnly() {
+      return screen.getByRole('button', { name: 'Check only' });
+    }
+
+    test('checks a loaded note with nothing changed, saving nothing', async () => {
+      const requests = await renderWithKey({ notes: [kelev] }, kelev);
+      await screen.findByRole('button', { name: 'Suggest' });
+      expect(
+        (screen.getByRole('button', { name: 'Check and save' }) as HTMLButtonElement).disabled,
+      ).toBe(true);
+      await fireEvent.click(checkOnly());
+      await within(checkSection()).findByText(/should be גדול/);
+      expect(checkRequests(requests)[0]?.body).toMatchObject({
+        partOfSpeech: 'noun',
+        fields: { unpointed: 'כלב', definitions: 'dog' },
+      });
+      expect(saveRequests(requests)).toEqual([]);
+    });
+
+    test('asks again on each click', async () => {
+      const requests = await renderWithKey({ notes: [kelev] }, kelev);
+      await screen.findByRole('button', { name: 'Suggest' });
+      await fireEvent.click(checkOnly());
+      await within(checkSection()).findByText(/should be גדול/);
+      await fireEvent.click(checkOnly());
+      await within(checkSection()).findByText(/should be גדול/);
+      expect(checkRequests(requests)).toHaveLength(2);
+    });
+
+    test('gives way to the review on Cmd+Enter', async () => {
+      const requests = await renderWithKey();
+      await fillDagWithKey();
+      await fireEvent.click(checkOnly());
+      await pressCmdEnter();
+      expect(screen.getByText('Adding this note to the deck.')).toBeTruthy();
+      expect(checkRequests(requests)).toHaveLength(2);
     });
   });
 });
