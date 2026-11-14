@@ -27,7 +27,15 @@ const kelev = loadedNote('כלב');
 async function renderPageFindingKelev() {
   const requests = await renderPage({
     existing: {
-      exactMatches: [{ noteId: kelev.noteId, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+      exactMatches: [
+        {
+          noteId: kelev.noteId,
+          unpointed: 'כלב',
+          pointed: 'כֶּלֶב',
+          partOfSpeech: '',
+          definitions: '',
+        },
+      ],
       relatedMatches: [],
     },
     notes: [kelev],
@@ -38,7 +46,7 @@ async function renderPageFindingKelev() {
 
 async function clickFoundNote() {
   const check = screen.getByRole('region', { name: 'Already in the deck' });
-  await fireEvent.click(await within(check).findByRole('button', { name: 'כֶּלֶב' }));
+  await fireEvent.click(await within(check).findByRole('button', { name: /כֶּלֶב/ }));
 }
 
 describe('the page', () => {
@@ -115,9 +123,9 @@ describe('the page', () => {
         await typeAndClick();
         expect(screen.getByRole('alert').textContent).toContain("replaces what you've typed");
         expect(document.activeElement).toBe(
-          screen.getByRole('button', { name: 'Replace and open' }),
+          screen.getByRole('button', { name: 'Replace and edit' }),
         );
-        await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Replace and edit' }));
         expect(await screen.findByRole('region', { name: 'Editing' })).toBeTruthy();
         expect(input('English meaning').value).toBe('dog');
       });
@@ -134,7 +142,15 @@ describe('the page', () => {
       test('says so, and keeps the draft', async () => {
         await renderPage({
           existing: {
-            exactMatches: [{ noteId: kelev.noteId, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+            exactMatches: [
+              {
+                noteId: kelev.noteId,
+                unpointed: 'כלב',
+                pointed: 'כֶּלֶב',
+                partOfSpeech: '',
+                definitions: '',
+              },
+            ],
             relatedMatches: [],
           },
         });

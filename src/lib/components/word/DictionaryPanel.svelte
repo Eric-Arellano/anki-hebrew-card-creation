@@ -5,15 +5,25 @@ import { errorMessage } from '#lib/api/http.ts';
 let {
   lookup,
   picked,
+  editing,
   onpick,
   onunpick,
 }: {
   // `undefined` while there's nothing to look up; resolves to `undefined` while typing goes on.
   lookup: Promise<DictionaryLookup | undefined> | undefined;
   picked: DictionaryCandidate | undefined;
+  // While editing, a pick fills only what the note leaves blank, rather than starting a new one.
+  editing: boolean;
   onpick: (candidate: DictionaryCandidate) => void;
   onunpick: () => void;
 } = $props();
+
+function heading(match: DictionaryLookup['match']): string {
+  const prompt = editing ? 'Fill in the blanks from Wiktionary' : 'New note';
+  return match === 'exact'
+    ? `${prompt}: which word is it?`
+    : `${prompt}: not in the dictionary as typed. Possible matches, spelled differently:`;
+}
 </script>
 
 {#snippet headline(
@@ -36,7 +46,9 @@ let {
   {#if picked !== undefined}
     <div class="space-y-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span class="text-sm text-gray-600">Filled in from Wiktionary:</span>
+        <span class="text-sm text-gray-600">
+          {editing ? 'Filled in the blanks from Wiktionary:' : 'Filled in from Wiktionary:'}
+        </span>
         {@render headline(picked)}
         <button type="button" class="ms-auto text-sm" onclick={onunpick}>Choose another</button>
       </div>
@@ -63,11 +75,13 @@ let {
         {#if result.candidates.length === 0}
           <p class="hint">Not in the dictionary.</p>
         {:else}
-          <p class="mb-2 font-medium">
-            {result.match === 'exact'
-              ? 'Which word is it?'
-              : 'Not in the dictionary as typed. Possible matches, spelled differently:'}
-          </p>
+          <p class={['font-medium', !editing && 'mb-2']}>{heading(result.match)}</p>
+          {#if editing}
+            <p class="hint mb-2">
+              Keeps everything the note already has. Where Wiktionary differs, its value is offered
+              beside the input.
+            </p>
+          {/if}
           <ul class="grid gap-2 sm:grid-cols-2">
             {#each result.candidates as candidate (candidate.id)}
               <li class="grid">

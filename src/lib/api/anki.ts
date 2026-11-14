@@ -19,7 +19,15 @@ export type AnkiStatus =
       noteType: NoteTypeStatus;
     };
 
-export type ExistingNote = { noteId: number; unpointed: string; pointed: string };
+// As plain text, for a reader choosing which note to open. `partOfSpeech` is as the note holds it,
+// often blank in old notes.
+export type ExistingNote = {
+  noteId: number;
+  unpointed: string;
+  pointed: string;
+  partOfSpeech: string;
+  definitions: string;
+};
 
 export type ExistingNotes = { exactMatches: ExistingNote[]; relatedMatches: ExistingNote[] };
 
@@ -38,10 +46,6 @@ export function fetchExistingNotes(words: readonly string[]): Promise<ExistingNo
 
 export function fetchNote(noteId: number): Promise<LoadedNote> {
   return getJson(`/api/anki/notes/${noteId}`);
-}
-
-export function browseNotes(noteIds: readonly number[]): Promise<void> {
-  return postJson('/api/anki/browse', { noteIds });
 }
 
 function toBase64(blob: Blob): Promise<string> {

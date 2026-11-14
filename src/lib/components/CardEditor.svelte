@@ -11,6 +11,7 @@ import { attachmentsToStore, handOffFields } from '#lib/card/hand-off.ts';
 import { type CardInputsDraft, completeInputs } from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
+  prefillBlanks,
   prefillDraft,
   stillSpellsEntry,
   undoPrefill,
@@ -99,7 +100,7 @@ const replacesDraft = $derived(changedBeyondWord(start, draft));
 
 function pick(candidate: DictionaryCandidate) {
   const before = $state.snapshot(draft.inputs);
-  const prefill = prefillDraft(before, candidate);
+  const prefill = (note === undefined ? prefillDraft : prefillBlanks)(before, candidate);
   draft.inputs = prefill.draft;
   picked = { candidate, choices: prefill.choices, before, filledWord: prefill.draft.word };
 }
@@ -168,17 +169,24 @@ onMount(checkAnki);
         label="Hebrew word, without niqqud"
         lang="he"
         takesFocus
+        choices={choices.word}
         bind:value={draft.inputs.word}
         oninput={retype}
       />
       <DefinitionsInput bind:definitions={draft.inputs.definitions} />
     </div>
-    <DictionaryPanel {lookup} picked={picked?.candidate} onpick={pick} onunpick={unpick} />
     <ExistingNotesPanel
       words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]}
       editingNoteId={note?.noteId}
       {replacesDraft}
       onopen={(opened) => onopennote?.(opened)}
+    />
+    <DictionaryPanel
+      {lookup}
+      picked={picked?.candidate}
+      editing={note !== undefined}
+      onpick={pick}
+      onunpick={unpick}
     />
     <LookupLinks word={draft.inputs.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
     <section aria-label="Media" class="space-y-2">

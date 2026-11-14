@@ -1,6 +1,5 @@
 <script lang="ts">
 import {
-  browseNotes,
   type ExistingNote,
   type ExistingNotes,
   fetchExistingNotes,
@@ -38,7 +37,6 @@ const search = $derived(
         async () => withoutEditedNote(await fetchExistingNotes(searchedWords)),
       ),
 );
-let browseFailure: string | undefined = $state();
 let confirming: ExistingNote | undefined = $state.raw();
 let opening = $state(false);
 let openFailure: string | undefined = $state();
@@ -55,16 +53,6 @@ function withoutEditedNote({ exactMatches, relatedMatches }: ExistingNotes): Exi
 
 function displayed(note: ExistingNote): string {
   return note.pointed || note.unpointed;
-}
-
-async function browse(notes: ExistingNotes) {
-  browseFailure = undefined;
-  const noteIds = [...notes.exactMatches, ...notes.relatedMatches].map((note) => note.noteId);
-  try {
-    await browseNotes(noteIds);
-  } catch (error) {
-    browseFailure = errorMessage(error);
-  }
 }
 
 function askToOpen(note: ExistingNote) {
@@ -90,25 +78,33 @@ function focus(element: HTMLElement) {
 }
 </script>
 
+<!-- Laid out like the dictionary's choices below it, since both are a choice of where the note
+     starts: from one already in the deck, or from a dictionary entry. -->
 {#snippet noteList(
   label: string,
   notes: ExistingNote[],
 )}
   {#if notes.length > 0}
-    <p class="font-medium">{label}</p>
-    <ul class="flex flex-wrap gap-x-2 text-xl">
+    <p class="mb-2 font-medium">{label}</p>
+    <ul class="grid gap-2 sm:grid-cols-2">
       {#each notes as note (note.noteId)}
-        <li>
+        <li class="grid">
           <button
             type="button"
-            class="border-transparent bg-transparent px-2"
-            lang="he"
-            dir="rtl"
-            title="Open this note in the editor"
+            class="grid gap-1 rounded-lg bg-white px-4 py-2 text-start"
             disabled={opening}
             onclick={() => askToOpen(note)}
           >
-            {displayed(note)}
+            <span class="flex flex-wrap items-baseline gap-x-3">
+              <span class="text-2xl" lang="he" dir="rtl">{displayed(note)}</span>
+              {#if note.partOfSpeech !== ''}
+                <span class="text-sm text-gray-600">{note.partOfSpeech}</span>
+              {/if}
+              <span class="ms-auto text-sm font-medium text-blue-700">Edit</span>
+            </span>
+            {#if note.definitions !== ''}
+              <span class="line-clamp-2 text-sm">{note.definitions}</span>
+            {/if}
           </button>
         </li>
       {/each}
@@ -136,32 +132,28 @@ function focus(element: HTMLElement) {
         {@const found = notes.exactMatches.length > 0}
         <div
           class={[
-            'space-y-2 rounded-lg border px-4 py-3',
+            'space-y-3 rounded-lg border px-4 py-3',
             found ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-gray-50',
           ]}
         >
-          {@render noteList('Already in the deck', notes.exactMatches)}
-          {@render noteList(found ? 'Related' : 'Related notes in the deck', notes.relatedMatches)}
+          {@render noteList('Already in your deck. Edit it?', notes.exactMatches)}
+          {@render noteList(
+            found ? 'Related notes' : 'Related notes in your deck',
+            notes.relatedMatches,
+          )}
           {#if confirming !== undefined}
             {@const note = confirming}
             <p role="alert">
-              Opening <bdi lang="he">{displayed(note)}</bdi> replaces what you've typed here.
+              Editing <bdi lang="he">{displayed(note)}</bdi> replaces what you've typed here.
             </p>
             <!-- Focused, so a second Enter is a deliberate one. -->
             <button type="button" class="button-primary" {@attach focus} onclick={() => open(note)}>
-              Replace and open
+              Replace and edit
             </button>
             <button type="button" onclick={() => (confirming = undefined)}>Cancel</button>
-          {:else}
-            <button type="button" class="text-sm" onclick={() => browse(notes)}>
-              Browse in Anki
-            </button>
           {/if}
           {#if openFailure !== undefined}
             <p role="alert" class="text-red-700">{openFailure}</p>
-          {/if}
-          {#if browseFailure !== undefined}
-            <p role="alert" class="text-red-700">{browseFailure}</p>
           {/if}
         </div>
       {/if}

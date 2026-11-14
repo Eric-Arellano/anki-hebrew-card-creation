@@ -1,5 +1,6 @@
 <script lang="ts">
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
+import WiktionaryHas from './WiktionaryHas.svelte';
 
 let {
   label,
@@ -16,7 +17,7 @@ let {
   required?: boolean;
   takesFocus?: boolean;
   value: string;
-  // Values the dictionary offers when it has more than one, for the human to choose between.
+  // Values the dictionary offers when it has more than one, or one that differs from a note's.
   choices?: readonly string[];
   // Called after a choice fills the input, for an input whose choice fills another input too.
   onchoose?: (choice: string) => void;
@@ -48,20 +49,12 @@ function choose(choice: string) {
     >
   </label>
   {#if choices.length > 0}
-    <fieldset class="flex flex-wrap items-center gap-1">
-      <legend class="sr-only">Choices for {label}</legend>
-      <span class="hint" aria-hidden="true">Wiktionary has</span>
-      {#each choices as choice (choice)}
-        <button
-          type="button"
-          class="chip text-lg aria-pressed:border-blue-700 aria-pressed:bg-blue-700 aria-pressed:text-white"
-          {lang}
-          aria-pressed={isSamePointedText(value, choice)}
-          onclick={() => choose(choice)}
-        >
-          {choice}
-        </button>
-      {/each}
-    </fieldset>
+    <WiktionaryHas
+      {label}
+      {lang}
+      options={choices}
+      isChosen={(choice) => isSamePointedText(value, choice)}
+      onchoose={choose}
+    />
   {/if}
 </div>

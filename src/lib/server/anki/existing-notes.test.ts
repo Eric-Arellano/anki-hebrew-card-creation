@@ -25,7 +25,15 @@ describe('findExistingNotes', () => {
     test('finds it as an exact match', async () => {
       const { anki, calls } = ankiWithNotes(kelevNotes);
       expect(await findExistingNotes(anki, ['כלב'])).toEqual({
-        exactMatches: [{ noteId: 1751686072898, unpointed: 'כלב', pointed: 'כֶּלֶב' }],
+        exactMatches: [
+          {
+            noteId: 1751686072898,
+            unpointed: 'כלב',
+            pointed: 'כֶּלֶב',
+            partOfSpeech: '',
+            definitions: 'dog',
+          },
+        ],
         relatedMatches: [],
       });
       expect(calls[0]).toEqual({
@@ -46,17 +54,43 @@ describe('findExistingNotes', () => {
       const { anki } = ankiWithNotes(bayitNotes);
       expect(await findExistingNotes(anki, ['בית'])).toEqual({
         exactMatches: [
-          { noteId: 1752114960166, unpointed: 'בית', pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים` },
+          {
+            noteId: 1752114960166,
+            unpointed: 'בית',
+            pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים`,
+            partOfSpeech: '',
+            definitions: 'house',
+          },
         ],
         relatedMatches: [
-          { noteId: 1752426864218, unpointed: 'בית משפט', pointed: 'בֵּית מִשְׁפָּט' },
+          {
+            noteId: 1752426864218,
+            unpointed: 'בית משפט',
+            pointed: 'בֵּית מִשְׁפָּט',
+            partOfSpeech: '',
+            definitions: '',
+          },
           {
             noteId: 1752427043636,
             unpointed: 'בית ספר',
             pointed: `[ms] בֵּית סֵפֶר [ps]${NBSP}בָּתֵּי סֵפֶר`,
+            partOfSpeech: '',
+            definitions: 'school',
           },
-          { noteId: 1752428275813, unpointed: 'בית חולים', pointed: 'בֵּית חוֹלִים' },
-          { noteId: 1752428348888, unpointed: 'בית כנסת', pointed: 'בֵּית כְּנֶסֶת' },
+          {
+            noteId: 1752428275813,
+            unpointed: 'בית חולים',
+            pointed: 'בֵּית חוֹלִים',
+            partOfSpeech: '',
+            definitions: '',
+          },
+          {
+            noteId: 1752428348888,
+            unpointed: 'בית כנסת',
+            pointed: 'בֵּית כְּנֶסֶת',
+            partOfSpeech: '',
+            definitions: '',
+          },
         ],
       });
     });

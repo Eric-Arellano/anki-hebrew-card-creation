@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
+import { loadedNote } from '#tests/real-notes.ts';
+import { draftFromNote } from './from-note.ts';
 import { type CardInputsDraft, emptyDraft } from './inputs.ts';
-import { prefillDraft, stillSpellsEntry, undoPrefill } from './prefill.ts';
+import { prefillBlanks, prefillDraft, stillSpellsEntry, undoPrefill } from './prefill.ts';
 
 // As the lookup answers for the fixture dictionary.
 const kelev: DictionaryCandidate = {
@@ -343,6 +345,72 @@ describe('prefillDraft', () => {
         ).toEqual({ draft: { ...typed, word: title, pointed, partOfSpeech }, choices: {} });
       },
     );
+  });
+});
+
+describe('prefillBlanks', () => {
+  // The deck's כלב note, which holds every form the entry gives but no part of speech.
+  const held = draftFromNote(loadedNote('כלב').fields).inputs;
+
+  test('fills only what the note leaves blank', () => {
+    const blankPlural = { ...held, noun: { ...held.noun, plural: '' } };
+    expect(prefillBlanks(blankPlural, kelev)).toEqual({
+      draft: { ...held, partOfSpeech: 'noun' },
+      choices: {},
+    });
+  });
+
+  test("keeps what the note holds, offering the entry's value where it differs", () => {
+    const oldFormat = { ...held, pointed: '(ms) כֶּלֶב', root: 'כ־ל־ב' };
+    expect(prefillBlanks(oldFormat, kelev)).toEqual({
+      draft: { ...oldFormat, partOfSpeech: 'noun' },
+      choices: { pointed: ['כֶּלֶב'] },
+    });
+  });
+
+  test("keeps the part of speech, gender and word the note holds, offering the entry's", () => {
+    const note = {
+      ...held,
+      word: 'כלבים',
+      partOfSpeech: 'adjective' as const,
+      noun: { ...held.noun, gender: 'f' as const, pluralOnly: true },
+    };
+    expect(prefillBlanks(note, kelev)).toEqual({
+      draft: note,
+      choices: { word: ['כלב'], partOfSpeech: ['noun'], gender: ['m'] },
+    });
+  });
+
+  describe('with two plurals', () => {
+    test("keeps the note's plural and offers both", () => {
+      const plurals = ['שָׁנִים', 'שָׁנוֹת'];
+      const { draft, choices } = prefillBlanks(held, {
+        ...kelev,
+        noun: { ...kelev.noun, plurals },
+      });
+      expect(draft.noun.plural).toBe('כְּלָבִים');
+      expect(choices).toEqual({ plural: plurals });
+    });
+  });
+
+  describe('for a verb filed under its past', () => {
+    test('keeps the word, and offers the infinitive', () => {
+      const past = { ...emptyDraft(), word: 'דיבר', pointed: 'דִּבֵּר' };
+      const { draft, choices } = prefillBlanks(past, diber);
+      expect([draft.word, draft.pointed, draft.verb.past]).toEqual(['דיבר', 'דִּבֵּר', 'דִּבֵּר']);
+      expect(choices).toEqual({ infinitives: diber.verb.infinitives });
+    });
+
+    test("keeps the note's binyan, offering the entry's", () => {
+      const note = {
+        ...emptyDraft(),
+        word: 'לדבר',
+        verb: { ...emptyDraft().verb, binyan: "pa'al" as const },
+      };
+      const { draft, choices } = prefillBlanks(note, diber);
+      expect(draft.verb.binyan).toBe("pa'al");
+      expect(choices.binyan).toEqual(["pi'el"]);
+    });
   });
 });
 

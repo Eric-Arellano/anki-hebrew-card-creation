@@ -3,6 +3,7 @@ import { fireEvent, screen, within } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
 import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
+import { loadedNote } from '#tests/real-notes.ts';
 import {
   choosePartOfSpeech,
   handOff,
@@ -104,6 +105,48 @@ describe('CardEditor', () => {
       });
     });
 
+    describe('while editing a note', () => {
+      test('offers to fill in the blanks, without offering a new note', async () => {
+        await renderConnectedEditor({ lookup: found(kelev) }, loadedNote('כלב'));
+        expect(
+          await screen.findByText('Fill in the blanks from Wiktionary: which word is it?'),
+        ).toBeTruthy();
+        expect(screen.queryByText(/New note/)).toBeNull();
+      });
+
+      test("keeps the note's values, offering the entry's beside them", async () => {
+        const note = loadedNote('כלב');
+        await renderConnectedEditor(
+          { lookup: found(kelev) },
+          { ...note, fields: { ...note.fields, Pointed: '(ms) כֶּלֶב' } },
+        );
+        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+        await fireEvent.click(await within(dictionary).findByRole('button', { name: /כֶּלֶב/ }));
+
+        expect(screen.getByText('Filled in the blanks from Wiktionary:')).toBeTruthy();
+        expect(input('Hebrew word, with niqqud').value).toBe('(ms) כֶּלֶב');
+        expect(screen.getByRole('radio', { name: 'Noun', checked: true })).toBeTruthy();
+        const offered = screen.getByRole('group', { name: 'Choices for Hebrew word, with niqqud' });
+        await fireEvent.click(within(offered).getByRole('button', { name: 'כֶּלֶב' }));
+        expect(input('Hebrew word, with niqqud').value).toBe('כֶּלֶב');
+      });
+
+      test("keeps the note's part of speech, offering the entry's", async () => {
+        const note = loadedNote('כלב');
+        await renderConnectedEditor(
+          { lookup: found(kelev) },
+          { ...note, fields: { ...note.fields, 'Part of speech': 'adjective' } },
+        );
+        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+        await fireEvent.click(await within(dictionary).findByRole('button', { name: /כֶּלֶב/ }));
+
+        expect(screen.getByRole('radio', { name: 'Adjective', checked: true })).toBeTruthy();
+        const offered = screen.getByRole('group', { name: 'Choices for Part of speech' });
+        await fireEvent.click(within(offered).getByRole('button', { name: 'Noun' }));
+        expect(screen.getByRole('radio', { name: 'Noun', checked: true })).toBeTruthy();
+      });
+    });
+
     describe('once another word is typed over the one it filled', () => {
       test('looks that word up, and clears what the entry filled', async () => {
         const requests = await renderConnectedEditor({ lookup: found(kelev) });
@@ -111,7 +154,7 @@ describe('CardEditor', () => {
         expect(lookups(requests)).toHaveLength(1);
 
         await typeInto(input('Hebrew word, without niqqud'), 'חתול');
-        expect(await screen.findByText('Which word is it?')).toBeTruthy();
+        expect(await screen.findByText('New note: which word is it?')).toBeTruthy();
         expect(lookups(requests).map((request) => request.path)).toEqual([
           `/api/lookup?word=${encodeURIComponent('כלבים')}`,
           `/api/lookup?word=${encodeURIComponent('חתול')}`,
@@ -144,7 +187,7 @@ describe('CardEditor', () => {
 
         expect(input('Hebrew word, without niqqud').value).toBe('כלבים');
         expect(input('Hebrew word, with niqqud').value).toBe('');
-        expect(await screen.findByText('Which word is it?')).toBeTruthy();
+        expect(await screen.findByText('New note: which word is it?')).toBeTruthy();
         const dictionary = screen.getByRole('region', { name: 'Dictionary' });
         expect(within(dictionary).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
       });

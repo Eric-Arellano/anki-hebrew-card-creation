@@ -2,15 +2,27 @@
 // inputs compose. An input the entry gives one value fills with it; one it gives several stays
 // blank, with the values offered as choices; one it gives none stays blank.
 //
+// Editing a note, `prefillBlanks` fills only what the note leaves blank instead.
+//
 // The English meaning is left alone: the human writes their own, with the definitions beside them.
 // **Open:** whether it should ever start from the definitions.
 import type { DictionaryCandidate, DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
-import { toDefectiveKey } from '#lib/hebrew/normalize.ts';
+import type { Binyan } from '#lib/hebrew/binyan.ts';
+import type { Gender } from '#lib/hebrew/gender.ts';
+import { isSamePointedText, toDefectiveKey } from '#lib/hebrew/normalize.ts';
+import type { PartOfSpeech } from '#lib/note-type.ts';
 
-// Each list holds two or more values.
+// Each list holds two or more values, except where `prefillBlanks` offers the one value a note
+// already holds differently.
 export type PrefillChoices = {
   infinitives?: DictionaryInfinitive[];
+  word?: string[];
+  pointed?: string[];
+  partOfSpeech?: PartOfSpeech[];
+  gender?: Gender[];
+  binyan?: Binyan[];
+  past?: string[];
   plural?: string[];
   feminine?: string[];
   masculinePlural?: string[];
@@ -111,6 +123,96 @@ export function prefillDraft(
     case 'other':
       return { draft: { ...draft, ...word, partOfSpeech: candidate.partOfSpeech }, choices: {} };
   }
+}
+
+/**
+ * `prefillDraft` for a note being edited: an input the note already holds keeps its value, and
+ * the entry's value, where it differs, becomes a choice beside it.
+ */
+export function prefillBlanks(
+  draft: CardInputsDraft,
+  candidate: DictionaryCandidate,
+): { draft: CardInputsDraft; choices: PrefillChoices } {
+  const { draft: filled, choices } = prefillDraft(draft, candidate);
+  const offered: PrefillChoices = { ...choices };
+
+  function keep<K extends OfferedKey>(
+    key: K,
+    held: OfferedValue<K> | undefined,
+    fill: OfferedValue<K> | undefined,
+  ): OfferedValue<K> | undefined {
+    if (isBlank(held)) return fill;
+    if (offered[key] === undefined && !isBlank(fill) && !isSamePointedText(held, fill)) {
+      offered[key] = [fill] as PrefillChoices[K];
+    }
+    return held;
+  }
+
+  const isVerb = candidate.partOfSpeech === 'verb';
+  const keepsGender = draft.noun.gender !== undefined;
+  const next: CardInputsDraft = {
+    ...filled,
+    // A verb's word and pointed word are its infinitive, which is offered as a pair.
+    word:
+      isVerb && !isBlank(draft.word) ? draft.word : (keep('word', draft.word, filled.word) ?? ''),
+    pointed: isVerb
+      ? keepInfinitive(draft.pointed, filled.pointed, candidate.verb.infinitives, offered)
+      : (keep('pointed', draft.pointed, filled.pointed) ?? ''),
+    partOfSpeech: keep('partOfSpeech', draft.partOfSpeech, filled.partOfSpeech),
+    root: keep('root', draft.root, filled.root) ?? '',
+    noun: {
+      gender: keep('gender', draft.noun.gender, filled.noun.gender),
+      pluralOnly: keepsGender ? draft.noun.pluralOnly : filled.noun.pluralOnly,
+      plural: keep('plural', draft.noun.plural, filled.noun.plural) ?? '',
+      feminine: keep('feminine', draft.noun.feminine, filled.noun.feminine) ?? '',
+      femininePlural:
+        keep('femininePlural', draft.noun.femininePlural, filled.noun.femininePlural) ?? '',
+    },
+    verb: {
+      ...filled.verb,
+      binyan: keep('binyan', draft.verb.binyan, filled.verb.binyan),
+      past: keep('past', draft.verb.past, filled.verb.past) ?? '',
+      present: keep('present', draft.verb.present, filled.verb.present) ?? '',
+      future: keep('future', draft.verb.future, filled.verb.future) ?? '',
+    },
+    adjective: {
+      feminine: keep('feminine', draft.adjective.feminine, filled.adjective.feminine) ?? '',
+      masculinePlural:
+        keep(
+          'masculinePlural',
+          draft.adjective.masculinePlural,
+          filled.adjective.masculinePlural,
+        ) ?? '',
+      femininePlural:
+        keep('femininePlural', draft.adjective.femininePlural, filled.adjective.femininePlural) ??
+        '',
+    },
+  };
+  return { draft: next, choices: offered };
+}
+
+type OfferedKey = Exclude<keyof PrefillChoices, 'infinitives'>;
+type OfferedValue<K extends OfferedKey> = NonNullable<PrefillChoices[K]>[number];
+
+function isBlank(value: string | undefined): value is undefined | '' {
+  return value === undefined || value.trim() === '';
+}
+
+function keepInfinitive(
+  held: string,
+  fill: string,
+  infinitives: readonly DictionaryInfinitive[],
+  offered: PrefillChoices,
+): string {
+  if (isBlank(held)) return fill;
+  if (
+    offered.infinitives === undefined &&
+    infinitives.length === 1 &&
+    !infinitives.some((infinitive) => isSamePointedText(held, infinitive.pointed))
+  ) {
+    offered.infinitives = [...infinitives];
+  }
+  return held;
 }
 
 /** `draft` with each input `prefillDraft` writes back as it was in `before`, the draft it was given. */

@@ -2,18 +2,25 @@ import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import { searchByFieldContainingKey, searchByNoteType, searchForAny } from '#lib/anki/search.ts';
 import type { ExistingNotes } from '#lib/api/anki.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
-import { FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
+import { FIELDS, type Field, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient, NoteInfo } from '#lib/server/anki/client.ts';
 
 function partitionByExactMatch(
   notes: readonly NoteInfo[],
   comparisonKeys: readonly string[],
 ): ExistingNotes {
-  const existingNotes = notes.map((note) => ({
-    noteId: note.noteId,
-    unpointed: ankiFieldHtmlToText(note.fields[FIELDS.unpointed.name]?.value ?? ''),
-    pointed: ankiFieldHtmlToText(note.fields[FIELDS.pointed.name]?.value ?? ''),
-  }));
+  const existingNotes = notes.map((note) => {
+    function text(field: Field) {
+      return ankiFieldHtmlToText(note.fields[field.name]?.value ?? '');
+    }
+    return {
+      noteId: note.noteId,
+      unpointed: text(FIELDS.unpointed),
+      pointed: text(FIELDS.pointed),
+      partOfSpeech: text(FIELDS.partOfSpeech),
+      definitions: text(FIELDS.definitions),
+    };
+  });
   const exactMatches = existingNotes.filter((note) =>
     comparisonKeys.includes(toComparisonKey(note.unpointed)),
   );

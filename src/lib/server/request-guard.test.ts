@@ -37,13 +37,13 @@ describe('whyRequestIsRefused', () => {
     test('lets JSON from this origin through', () => {
       expect(
         whyRequestIsRefused(
-          requestTo('/api/anki/browse', { host, origin, ...JSON_CONTENT_TYPE }, 'POST'),
+          requestTo('/api/anki/add', { host, origin, ...JSON_CONTENT_TYPE }, 'POST'),
         ),
       ).toBe(undefined);
       expect(
         whyRequestIsRefused(
           requestTo(
-            '/api/anki/browse',
+            '/api/anki/add',
             { host, origin, 'content-type': 'application/json; charset=utf-8' },
             'POST',
           ),
@@ -55,7 +55,7 @@ describe('whyRequestIsRefused', () => {
       'refuses Content-Type %j',
       (contentType) => {
         const headers = { host, origin, 'content-type': contentType };
-        expect(whyRequestIsRefused(requestTo('/api/anki/browse', headers, 'POST'))).toBe(
+        expect(whyRequestIsRefused(requestTo('/api/anki/add', headers, 'POST'))).toBe(
           'Content-Type must be JSON',
         );
       },
@@ -65,7 +65,7 @@ describe('whyRequestIsRefused', () => {
       'refuses Origin %s',
       (otherOrigin) => {
         const headers = { host, origin: otherOrigin, ...JSON_CONTENT_TYPE };
-        expect(whyRequestIsRefused(requestTo('/api/anki/browse', headers, 'POST'))).toBe(
+        expect(whyRequestIsRefused(requestTo('/api/anki/add', headers, 'POST'))).toBe(
           'Origin must be this server',
         );
       },
@@ -73,15 +73,13 @@ describe('whyRequestIsRefused', () => {
 
     test('refuses a request without an Origin', () => {
       expect(
-        whyRequestIsRefused(requestTo('/api/anki/browse', { host, ...JSON_CONTENT_TYPE }, 'POST')),
+        whyRequestIsRefused(requestTo('/api/anki/add', { host, ...JSON_CONTENT_TYPE }, 'POST')),
       ).toBe('Origin must be this server');
     });
 
     test('checks other methods that change state too', () => {
       expect(
-        whyRequestIsRefused(
-          requestTo('/api/anki/browse', { host, ...JSON_CONTENT_TYPE }, 'DELETE'),
-        ),
+        whyRequestIsRefused(requestTo('/api/anki/add', { host, ...JSON_CONTENT_TYPE }, 'DELETE')),
       ).toBe('Origin must be this server');
     });
   });
@@ -95,7 +93,7 @@ describe('whyRequestIsRefused', () => {
   });
 
   describe('for a POST outside the API', () => {
-    test.each(['/', '/%61pi/anki/browse'])('checks %s the same way', (path) => {
+    test.each(['/', '/%61pi/anki/add'])('checks %s the same way', (path) => {
       const headers = { host: 'localhost:5173', 'content-type': 'text/plain' };
       expect(whyRequestIsRefused(requestTo(path, headers, 'POST'))).toBe(
         'Content-Type must be JSON',
