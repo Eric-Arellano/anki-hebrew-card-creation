@@ -1,18 +1,21 @@
 <script lang="ts">
 import {
   fetchSuggestions,
-  SUGGESTED_FIELDS,
+  SUGGESTED_HINTS,
   type SuggestRequest,
   type Suggestions,
 } from '#lib/api/ai.ts';
 import { errorMessage } from '#lib/api/http.ts';
+import { type Example, isBlankExample } from '#lib/card/examples.ts';
 import type { FieldKey, FieldValues } from '#lib/note-type.ts';
 
 let {
   request,
   blocker,
   edits,
+  examples,
   onedit,
+  onexamples,
   suggested = $bindable(),
 }: {
   // What Claude is asked about, as the inputs hold it now.
@@ -20,7 +23,9 @@ let {
   // Why there is nothing to ask for yet.
   blocker: string | undefined;
   edits: FieldValues;
+  examples: readonly Example[];
   onedit: (field: FieldKey, value: string) => void;
+  onexamples: (examples: Example[]) => void;
   // What Claude last wrote into each field, which the field's badge compares with what it holds.
   suggested: Suggestions;
 } = $props();
@@ -51,14 +56,23 @@ async function ask() {
       return;
     }
     // Only fields still blank as the reply lands, so typing during the call wins.
-    const filled = SUGGESTED_FIELDS.flatMap((field) => {
+    const filledHints = SUGGESTED_HINTS.flatMap((field) => {
       const value = suggestions[field];
       return value !== undefined && isBlank(field) ? [[field, value] as const] : [];
     });
-    for (const [field, value] of filled) onedit(field, value);
-    suggested = { ...suggested, ...Object.fromEntries(filled) };
+    const filledExamples =
+      suggestions.examples !== undefined && examples.every(isBlankExample)
+        ? suggestions.examples
+        : undefined;
+    for (const [field, value] of filledHints) onedit(field, value);
+    if (filledExamples !== undefined) onexamples(filledExamples);
+    suggested = {
+      ...suggested,
+      ...Object.fromEntries(filledHints),
+      ...(filledExamples === undefined ? {} : { examples: filledExamples }),
+    };
     asking =
-      filled.length === 0
+      filledHints.length === 0 && filledExamples === undefined
         ? { kind: 'answered', message: 'Claude had nothing to add to the blank fields.' }
         : { kind: 'idle' };
   } catch (error) {

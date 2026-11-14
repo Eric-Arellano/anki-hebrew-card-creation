@@ -1,5 +1,7 @@
 // Everything the editor holds of the card itself, which a note loaded from Anki would fill. The
 // dictionary entry picked and Anki's status belong to the session, not the card, so they stay out.
+
+import { blankExample, type Example } from '#lib/card/examples.ts';
 import {
   type CardInputsDraft,
   emptyInputsDraft,
@@ -22,6 +24,8 @@ export type CardDraft = {
   inputs: CardInputsDraft;
   // Each shown field's textarea, as the human typed it.
   edits: FieldValues;
+  // `Examples`, a row each, which has no textarea in `edits`.
+  examples: Example[];
   media: MediaDraft;
 };
 
@@ -29,6 +33,7 @@ export function emptyCardDraft(): CardDraft {
   return {
     inputs: emptyInputsDraft(),
     edits: {},
+    examples: [blankExample()],
     media: {
       images: [],
       noImage: false,

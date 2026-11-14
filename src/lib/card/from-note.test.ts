@@ -6,6 +6,7 @@ import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with
 import { realNote } from '#tests/real-notes.ts';
 import { composeFields } from './compose.ts';
 import { emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
+import { examplesToAnkiFieldHtml } from './examples.ts';
 import { draftFromNote } from './from-note.ts';
 import { type CardInputs, type CardInputsDraft, completeInputs } from './inputs.ts';
 import { noteFields } from './to-note.ts';
@@ -25,11 +26,11 @@ function saved(
   held: Record<string, string>,
   change: (inputs: CardInputsDraft) => CardInputsDraft = (inputs) => inputs,
 ): Record<string, string> {
-  const { inputs, edits, media } = draftFromNote(held);
+  const { inputs, edits, examples, media } = draftFromNote(held);
   const completed = completeInputs(change(inputs));
   if (completed === undefined) throw new Error('The loaded note is missing a required input');
   return noteFields({
-    composed: composeFields(completed),
+    composed: { ...composeFields(completed), examples: examplesToAnkiFieldHtml(examples) },
     edits,
     shownFields: shownFields(completed.partOfSpeech),
     media,
@@ -81,9 +82,9 @@ describe('draftFromNote', () => {
           variant1Answer: 'כַּלְבָּה',
           variant2Prompt: '',
           variant2Answer: '',
-          examples: '',
           notes: '',
         },
+        examples: emptyCardDraft().examples,
         media: {
           images: [stored('image-48258e0538aecfb7c668bfea2657cf398428fd72.jpg')],
           noImage: false,
@@ -145,6 +146,21 @@ describe('draftFromNote', () => {
     test('can’t be saved until they are filled', () => {
       expect(completeInputs(loaded.inputs)).toBeUndefined();
       expect(stillNeeded(loaded)).toEqual(['English meaning', 'part of speech']);
+    });
+  });
+
+  describe('for a real note with an example in another format, finished as a noun', () => {
+    test('wraps the line whole, so the review shows the change', () => {
+      const held = realNote('כרטיס');
+      const finished = saved(held, (inputs) => ({
+        ...inputs,
+        definitions: ['ticket'],
+        partOfSpeech: 'noun',
+        noun: { ...inputs.noun, gender: 'm' },
+      }));
+      expect(changedFields(held, finished)).toMatchObject({
+        Examples: '<bdi lang="he">כרטיס רכבת (train ticket)</bdi>',
+      });
     });
   });
 

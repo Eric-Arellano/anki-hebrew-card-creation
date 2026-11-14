@@ -10,21 +10,25 @@ const rakevet: CardInputsDraft = {
 };
 
 describe('examplesWithoutWord', () => {
-  test('gives the lines that use no form of the word, as Anki shows them', () => {
+  test('gives the rows whose Hebrew uses no form of the word', () => {
     expect(
       examplesWithoutWord({
-        examples: 'כרטיס רכבת (train ticket)\n\nהאוטובוס <b>מאחר</b> (the bus is late)\n',
+        examples: [
+          { hebrew: 'כרטיס רכבת.', english: 'A train ticket.' },
+          { hebrew: ' ', english: 'The bus is late.' },
+          { hebrew: 'האוטובוס מאחר.', english: 'The bus is late.' },
+        ],
         inputs: rakevet,
         formsField: '',
       }),
-    ).toEqual(['האוטובוס מאחר (the bus is late)']);
+    ).toEqual([2]);
   });
 
   describe('while the word is blank', () => {
     test('gives none', () => {
       expect(
         examplesWithoutWord({
-          examples: 'האוטובוס מאחר (the bus is late)',
+          examples: [{ hebrew: 'האוטובוס מאחר', english: 'the bus is late' }],
           inputs: { ...rakevet, word: ' ' },
           formsField: '',
         }),
@@ -36,7 +40,7 @@ describe('examplesWithoutWord', () => {
     test('accepts its plural', () => {
       expect(
         examplesWithoutWord({
-          examples: 'הרכבות מאחרות (the trains are late)',
+          examples: [{ hebrew: 'הרכבות מאחרות', english: 'the trains are late' }],
           inputs: { ...rakevet, noun: { ...rakevet.noun, plural: 'רַכָּבוֹת' } },
           formsField: '',
         }),
@@ -56,7 +60,7 @@ describe('examplesWithoutWord', () => {
     test('accepts any conjugation of its root', () => {
       expect(
         examplesWithoutWord({
-          examples: 'דיברתי עם אמא (I talked with Mom)',
+          examples: [{ hebrew: 'דיברתי עם אמא', english: 'I talked with Mom' }],
           inputs: ledaber,
           formsField: '',
         }),
@@ -67,11 +71,14 @@ describe('examplesWithoutWord', () => {
       test('accepts only its forms', () => {
         expect(
           examplesWithoutWord({
-            examples: 'דיברתי עם אמא (I talked with Mom)\nהוא מדבר מהר (he talks fast)',
+            examples: [
+              { hebrew: 'דיברתי עם אמא', english: 'I talked with Mom' },
+              { hebrew: 'הוא מדבר מהר', english: 'he talks fast' },
+            ],
             inputs: { ...ledaber, root: '', verb: { ...ledaber.verb, present: 'מְדַבֵּר' } },
             formsField: '',
           }),
-        ).toEqual(['דיברתי עם אמא (I talked with Mom)']);
+        ).toEqual([0]);
       });
     });
   });
@@ -80,11 +87,11 @@ describe('examplesWithoutWord', () => {
     test('accepts no other word of the root', () => {
       expect(
         examplesWithoutWord({
-          examples: 'הספרייה סגורה (the library is closed)',
+          examples: [{ hebrew: 'הספרייה סגורה', english: 'the library is closed' }],
           inputs: { ...emptyInputsDraft(), word: 'ספר', partOfSpeech: 'noun', root: 'ס־פ־ר' },
           formsField: '',
         }),
-      ).toEqual(['הספרייה סגורה (the library is closed)']);
+      ).toEqual([0]);
     });
   });
 
@@ -92,7 +99,7 @@ describe('examplesWithoutWord', () => {
     test('accepts the forms typed after their labels', () => {
       expect(
         examplesWithoutWord({
-          examples: 'הוא עמד לפניי (he stood before me)',
+          examples: [{ hebrew: 'הוא עמד לפניי', english: 'he stood before me' }],
           inputs: {
             ...emptyInputsDraft(),
             word: 'לפני',

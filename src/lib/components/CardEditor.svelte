@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { fetchAiStatus, SUGGESTED_FIELDS, type Suggestions } from '#lib/api/ai.ts';
+import { fetchAiStatus, SUGGESTED_HINTS, type Suggestions } from '#lib/api/ai.ts';
 import {
   type AnkiStatus,
   fetchAnkiStatus,
@@ -14,6 +14,7 @@ import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
+import { examplesToAnkiFieldHtml, isBlankExample } from '#lib/card/examples.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {
@@ -136,7 +137,10 @@ const suggestBlocker = $derived.by(() => {
   if (draft.inputs.word.trim() === '' || meanings.length === 0) {
     return 'Type the word and a meaning first.';
   }
-  if (SUGGESTED_FIELDS.every((field) => (draft.edits[field] ?? '').trim() !== '')) {
+  if (
+    !draft.examples.every(isBlankExample) &&
+    SUGGESTED_HINTS.every((field) => (draft.edits[field] ?? '').trim() !== '')
+  ) {
     return 'The examples and both hints are filled. Clear one to have it suggested again.';
   }
   return undefined;
@@ -171,7 +175,13 @@ function setEdit(field: FieldKey, value: string) {
 }
 
 function ankiFields(storedAs: ReadonlyMap<string, string>) {
-  return noteFields({ composed, edits: draft.edits, shownFields, media: draft.media, storedAs });
+  return noteFields({
+    composed: { ...composed, examples: examplesToAnkiFieldHtml(draft.examples) },
+    edits: draft.edits,
+    shownFields,
+    media: draft.media,
+    storedAs,
+  });
 }
 
 async function loadAgain() {
@@ -287,7 +297,9 @@ onMount(() => {
         }}
         blocker={suggestBlocker}
         edits={draft.edits}
+        examples={draft.examples}
         onedit={setEdit}
+        onexamples={(examples) => (draft.examples = examples)}
         bind:suggested
       />
     {/if}
@@ -296,8 +308,9 @@ onMount(() => {
       partOfSpeech={draft.inputs.partOfSpeech}
       edits={draft.edits}
       word={draft.inputs.word.trim()}
+      bind:examples={draft.examples}
       examplesWithoutWord={examplesWithoutWord({
-        examples: draft.edits.examples ?? '',
+        examples: draft.examples,
         inputs: draft.inputs,
         formsField: draft.edits.forms ?? '',
       })}
