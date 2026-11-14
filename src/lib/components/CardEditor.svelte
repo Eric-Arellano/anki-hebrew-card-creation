@@ -14,7 +14,12 @@ import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
-import { examplesToAnkiFieldHtml, isBlankExample, labeledForms } from '#lib/card/examples.ts';
+import {
+  examplesToAnkiFieldHtml,
+  isBlankExample,
+  labeledForms,
+  wordUsage,
+} from '#lib/card/examples.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {
@@ -176,7 +181,13 @@ function setEdit(field: FieldKey, value: string) {
 
 function ankiFields(storedAs: ReadonlyMap<string, string>) {
   return noteFields({
-    composed: { ...composed, examples: examplesToAnkiFieldHtml(draft.examples) },
+    composed: {
+      ...composed,
+      examples: examplesToAnkiFieldHtml(
+        draft.examples,
+        wordUsage(draft.inputs, draft.edits.forms ?? ''),
+      ),
+    },
     edits: draft.edits,
     shownFields,
     media: draft.media,

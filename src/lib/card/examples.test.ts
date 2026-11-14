@@ -7,15 +7,22 @@ import {
   examplesFromHtml,
   examplesToAnkiFieldHtml,
   labeledForms,
+  wordUsage,
 } from './examples.ts';
+
+const rakevet = { forms: ['רכבת', 'רַכֶּבֶת'] };
+const noWord = { forms: [] };
 
 describe('examplesToAnkiFieldHtml', () => {
   test('keeps the punctuation ending the Hebrew inside its own line', () => {
     expect(
-      examplesToAnkiFieldHtml([
-        { hebrew: 'נסענו ברכבת לחיפה.', english: 'We took the train to Haifa.' },
-        { hebrew: ' איפה הרכבת? ', english: ' Where is the train? ' },
-      ]),
+      examplesToAnkiFieldHtml(
+        [
+          { hebrew: 'נסענו ברכבת לחיפה.', english: 'We took the train to Haifa.' },
+          { hebrew: ' איפה הרכבת? ', english: ' Where is the train? ' },
+        ],
+        noWord,
+      ),
     ).toBe(
       '<bdi lang="he">נסענו ברכבת לחיפה.</bdi><span class="sep"> — </span>' +
         '<span lang="en">We took the train to Haifa.</span><br>' +
@@ -25,23 +32,41 @@ describe('examplesToAnkiFieldHtml', () => {
   });
 
   test('escapes what would be markup', () => {
-    expect(examplesToAnkiFieldHtml([{ hebrew: 'א<ב', english: 'cats & dogs' }])).toBe(
+    expect(examplesToAnkiFieldHtml([{ hebrew: 'א<ב', english: 'cats & dogs' }], noWord)).toBe(
       '<bdi lang="he">א&lt;ב</bdi><span class="sep"> — </span><span lang="en">cats &amp; dogs</span>',
     );
   });
 
   test('writes only the side that is filled, and drops blank rows', () => {
     expect(
-      examplesToAnkiFieldHtml([
-        { hebrew: 'רכבת.', english: ' ' },
-        blankExample(),
-        { hebrew: '', english: 'A train.' },
-      ]),
+      examplesToAnkiFieldHtml(
+        [{ hebrew: 'רכבת.', english: ' ' }, blankExample(), { hebrew: '', english: 'A train.' }],
+        noWord,
+      ),
     ).toBe('<bdi lang="he">רכבת.</bdi><br><span lang="en">A train.</span>');
   });
 
   test('gives an empty field for no examples', () => {
-    expect(examplesToAnkiFieldHtml([blankExample()])).toBe('');
+    expect(examplesToAnkiFieldHtml([blankExample()], rakevet)).toBe('');
+  });
+
+  describe('with the word in the Hebrew', () => {
+    test('bolds each use, prefixes and all, but never the English', () => {
+      expect(
+        examplesToAnkiFieldHtml([{ hebrew: ' רכבת אחרי הרכבת. ', english: 'Train after train.' }], {
+          forms: ['רכבת', 'train'],
+        }),
+      ).toBe(
+        '<bdi lang="he"><b>רכבת</b> אחרי <b>הרכבת</b>.</bdi><span class="sep"> — </span>' +
+          '<span lang="en">Train after train.</span>',
+      );
+    });
+
+    test('escapes around the bold and inside it', () => {
+      expect(
+        examplesToAnkiFieldHtml([{ hebrew: 'א<ב צה"ל & ג', english: '' }], { forms: ['צה״ל'] }),
+      ).toBe('<bdi lang="he">א&lt;ב <b>צה"ל</b> &amp; ג</bdi>');
+    });
   });
 });
 
@@ -57,8 +82,9 @@ describe('examplesFromHtml', () => {
     ['markup characters', [{ hebrew: 'א<ב & ג', english: 'cats & (big) dogs' }]],
     ['only the Hebrew', [{ hebrew: 'רכבת!', english: '' }]],
     ['only the English', [{ hebrew: '', english: 'A train.' }]],
+    ['the word bolded', [{ hebrew: 'הרכבת & רכבת<', english: 'The train.' }]],
   ])('reads back what composition writes, with %s', (_, examples) => {
-    expect(examplesFromHtml(examplesToAnkiFieldHtml(examples))).toEqual(examples);
+    expect(examplesFromHtml(examplesToAnkiFieldHtml(examples, rakevet))).toEqual(examples);
   });
 
   test('skips blank lines', () => {
@@ -156,5 +182,32 @@ describe('labeledForms', () => {
     test('gives a line with no label a blank one', () => {
       expect(labeledForms(inputsFor(partOfSpeech), 'לְפָנַי')).toEqual([{ label: '', form: 'לְפָנַי' }]);
     });
+  });
+});
+
+describe('wordUsage', () => {
+  const ledaber: CardInputsDraft = {
+    ...emptyInputsDraft(),
+    word: 'לדבר',
+    pointed: 'לְדַבֵּר',
+    partOfSpeech: 'verb',
+    root: 'ד.ב.ר',
+    verb: { ...emptyInputsDraft().verb, present: 'מְדַבֵּר' },
+  };
+
+  test('gives the word, pointed and not, its other forms, and a verb’s root', () => {
+    expect(wordUsage(ledaber, '')).toEqual({
+      forms: ['לדבר', 'לְדַבֵּר', 'מְדַבֵּר'],
+      root: 'ד־ב־ר',
+    });
+  });
+
+  test.each(['noun', 'adjective'] as const)('leaves out a %s’s root', (partOfSpeech) => {
+    expect(wordUsage({ ...ledaber, partOfSpeech }, '').root).toBeUndefined();
+  });
+
+  test('takes a preposition’s forms from the Forms field', () => {
+    const lifnei = { ...emptyInputsDraft(), word: 'לפני', partOfSpeech: 'preposition' } as const;
+    expect(wordUsage(lifnei, 'me: לְפָנַי').forms).toEqual(['לפני', '', 'לְפָנַי']);
   });
 });
