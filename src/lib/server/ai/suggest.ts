@@ -2,40 +2,13 @@
 // forms and its homographs' meanings go in the request.
 import { z } from 'zod';
 import type { Suggestions, SuggestRequest } from '#lib/api/ai.ts';
-import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { Example } from '#lib/card/examples.ts';
 import { FIELD_HELP } from '#lib/field-help.ts';
 import { hasHebrewLetters, hasLatinLetters } from '#lib/hebrew/letters.ts';
-import { hasNiqqud, isSamePointedText, toLookupKey } from '#lib/hebrew/normalize.ts';
+import { hasNiqqud } from '#lib/hebrew/normalize.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 import { askForStructured, type ClaudeMessages, type StructuredRequest } from './client.ts';
-
-export type Homograph = { pointed: string; partOfSpeech: PartOfSpeech; definitions: string[] };
-
-/**
- * The other words `word` could be read as without niqqud: the entries titled with its spelling
- * whose pointing isn't `pointed`. None when `pointed` is blank, since then nothing tells the
- * note's own entry apart.
- */
-export function homographsOf(lookup: DictionaryLookup, word: string, pointed: string): Homograph[] {
-  if (lookup.match !== 'exact' || pointed.trim() === '') return [];
-  // A lemma the lookup reached through one of its forms isn't a reading of this spelling: `כלב`
-  // finds `כַּלְבָּה` through its masculine, and `לדבר` finds `דִּבֵּר`, the verb's own entry.
-  const key = toLookupKey(word);
-  return lookup.candidates.flatMap((candidate) =>
-    candidate.pointed !== undefined &&
-    toLookupKey(candidate.title) === key &&
-    !isSamePointedText(candidate.pointed, pointed)
-      ? [
-          {
-            pointed: candidate.pointed,
-            partOfSpeech: candidate.partOfSpeech,
-            definitions: candidate.definitions,
-          },
-        ]
-      : [],
-  );
-}
+import { type Homograph, homographLines } from './homographs.ts';
 
 const exampleSchema = z.object({ hebrew: z.string(), english: z.string() });
 const answerSchema = z.object({
@@ -113,18 +86,7 @@ export function suggestionRequest(
             .map(({ label, form }) => (label === '' ? `- ${form}` : `- ${label}: ${form}`))
             .join('\n')}`,
         ]),
-    ...(withReading
-      ? [
-          'Without niqqud, its spelling could also be:\n' +
-            homographs
-              .map(
-                (homograph) =>
-                  `- ${homograph.pointed} (${homograph.partOfSpeech}): ` +
-                  homograph.definitions.join('; '),
-              )
-              .join('\n'),
-        ]
-      : []),
+    ...(withReading ? [homographLines(homographs)] : []),
   ].join('\n');
 
   return { system, user, schema: withReading ? answerWithReadingSchema : answerSchema };

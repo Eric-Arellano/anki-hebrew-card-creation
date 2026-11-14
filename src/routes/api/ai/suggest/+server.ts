@@ -2,13 +2,9 @@ import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { PARTS_OF_SPEECH } from '#lib/note-type.ts';
 import { AiError, type ClaudeMessages, isAiAvailable } from '#lib/server/ai/client.ts';
-import { homographsOf, suggest } from '#lib/server/ai/suggest.ts';
+import { lookUpHomographs } from '#lib/server/ai/homographs.ts';
+import { suggest } from '#lib/server/ai/suggest.ts';
 import { DICTIONARY_PATHS, type DictionaryPaths } from '#lib/server/dictionary/files.ts';
-import {
-  DictionaryUnavailableError,
-  lookUp,
-  withDictionary,
-} from '#lib/server/dictionary/lookup.ts';
 import { parseJsonBody } from '#lib/server/http.ts';
 import type { RequestHandler } from './$types';
 
@@ -37,23 +33,12 @@ export async function _suggest(
   if (word === '' || definitions.length === 0) error(400, 'Type the word and a meaning first.');
   if (!isAiAvailable()) error(503, 'Set ANTHROPIC_API_KEY to use Claude.');
 
-  const homographs = findHomographs(paths, word, body.pointed);
+  // Looked up here, because the editor stops looking up once an entry is picked.
+  const homographs = lookUpHomographs(paths, word, body.pointed);
   try {
     return Response.json(await suggest({ ...body, word, definitions }, homographs, messages));
   } catch (cause) {
     if (cause instanceof AiError) error(502, cause.message);
-    throw cause;
-  }
-}
-
-// Looked up here, because the editor stops looking up once an entry is picked.
-function findHomographs(paths: DictionaryPaths, word: string, pointed: string) {
-  try {
-    return withDictionary(paths, (db, staleIndex) =>
-      homographsOf(lookUp(db, word, staleIndex), word, pointed),
-    );
-  } catch (cause) {
-    if (cause instanceof DictionaryUnavailableError) error(503, cause.message);
     throw cause;
   }
 }
