@@ -1,5 +1,5 @@
 <script lang="ts">
-import { blankExample, type Example } from '#lib/card/examples.ts';
+import { blankExample, type Example, isBlankExample } from '#lib/card/examples.ts';
 
 let {
   examples = $bindable(),
@@ -16,6 +16,11 @@ let {
   // The index of each row whose Hebrew uses no form of the word.
   withoutWord: readonly number[];
 } = $props();
+
+// The last row is cleared rather than removed, so there is always one to type in.
+function remove(index: number) {
+  examples = examples.length === 1 ? [blankExample()] : examples.toSpliced(index, 1);
+}
 </script>
 
 <!-- `grid-cols-1` lets a row shrink below its inputs' intrinsic width, which overflows a phone. -->
@@ -49,19 +54,15 @@ let {
             bind:value={example.english}
           >
         </div>
-        {#if index > 0}
-          <button
-            type="button"
-            class="w-8 shrink-0 self-center px-0"
-            aria-label="Remove example {number}"
-            onclick={() => (examples = examples.toSpliced(index, 1))}
-          >
-            ×
-          </button>
-        {:else}
-          <!-- Holds the remove button's place, so the first row's inputs line up with the rest. -->
-          <span class="w-8 shrink-0"></span>
-        {/if}
+        <button
+          type="button"
+          class="w-8 shrink-0 self-center px-0"
+          aria-label="{examples.length === 1 ? 'Clear' : 'Remove'} example {number}"
+          disabled={examples.length === 1 && isBlankExample(example)}
+          onclick={() => remove(index)}
+        >
+          ×
+        </button>
       </div>
       {#if withoutWord.includes(index)}
         <p id="example-{index}-without-word" class="hint text-amber-700" aria-live="polite">
