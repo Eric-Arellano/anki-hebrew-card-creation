@@ -1,5 +1,6 @@
 <script lang="ts">
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
+import type { SameMeaningNote } from '#lib/api/anki.ts';
 import { fieldDisplay, GROUP_HELP } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import type { Attachment } from '#lib/media/attach.ts';
@@ -12,9 +13,10 @@ import {
   VARIANT_ANSWERS,
   type VariantPrompt,
 } from '#lib/note-type.ts';
-import ImagesInput from './media/ImagesInput.svelte';
-import LinkChip from './ui/LinkChip.svelte';
-import QuotedText from './ui/QuotedText.svelte';
+import ImagesInput from '../media/ImagesInput.svelte';
+import LinkChip from '../ui/LinkChip.svelte';
+import QuotedText from '../ui/QuotedText.svelte';
+import SameMeaningNotes from './SameMeaningNotes.svelte';
 
 // The meanings' own image search, here searched with a variant's English prompt.
 const imagesLink = LINKS['images-en'];
@@ -25,6 +27,7 @@ let {
   edits,
   word,
   examplesWithoutWord,
+  sameMeaningSearch,
   onedit,
   promptImages = $bindable(),
 }: {
@@ -34,6 +37,8 @@ let {
   // The word without niqqud, which the examples should use.
   word: string;
   examplesWithoutWord: string[];
+  // The deck's other words for this English, which the Production context tells apart.
+  sameMeaningSearch: Promise<SameMeaningNote[] | undefined> | undefined;
   onedit: (field: FieldKey, value: string) => void;
   promptImages: Record<VariantPrompt, Attachment[]>;
 } = $props();
@@ -97,6 +102,12 @@ function lacksAnswer(prompt: VariantPrompt) {
                   No card shows these images until this variant has a Hebrew answer.
                 </p>
               {/if}
+            {/if}
+            {#if field === 'productionContext'}
+              <SameMeaningNotes
+                search={sameMeaningSearch}
+                hintBlank={(edits.productionContext ?? '').trim() === ''}
+              />
             {/if}
             {#if field === 'examples' && examplesWithoutWord.length > 0}
               <div class="hint text-amber-700" aria-live="polite">

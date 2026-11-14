@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   quoteSearchTerm,
   searchByFieldContainingKey,
+  searchByFieldHavingPhrase,
   searchByNoteIds,
   searchByNoteType,
   searchForAny,
@@ -20,6 +21,30 @@ describe('searchByNoteType', () => {
 
   test('escapes the characters special inside quotes', () => {
     expect(searchByNoteType('a\\b"c*d_e')).toBe('"note:a\\\\b\\"c\\*d\\_e"');
+  });
+});
+
+describe('searchByFieldHavingPhrase', () => {
+  test('searches for the phrase between word edges', () => {
+    expect(searchByFieldHavingPhrase('Definitions', 'car')).toBe(
+      String.raw`"Definitions:re:\bcar\b"`,
+    );
+  });
+
+  test('lets any spaces or `&nbsp;` part its words', () => {
+    expect(searchByFieldHavingPhrase('Definitions', 'to  go')).toBe(
+      String.raw`"Definitions:re:\bto(\s|&nbsp;)+go\b"`,
+    );
+  });
+
+  test('escapes what is special to a regex, and a quote', () => {
+    expect(searchByFieldHavingPhrase('Definitions', 'e.g. (a|b)*"\\')).toBe(
+      String.raw`"Definitions:re:\be\.g\.(\s|&nbsp;)+\(a\|b\)\*\"\\\b"`,
+    );
+  });
+
+  test('escapes a field name as any search does', () => {
+    expect(searchByFieldHavingPhrase('My_field', 'car')).toBe(String.raw`"My\_field:re:\bcar\b"`);
   });
 });
 

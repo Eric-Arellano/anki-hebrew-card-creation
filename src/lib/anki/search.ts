@@ -32,6 +32,17 @@ export function searchByFieldEquals(fieldName: string, text: string): string {
   return quoteSearchTerm(`${escapeInsideQuotedTerm(fieldName)}:${escapeInsideQuotedTerm(text)}`);
 }
 
+// A regular expression, which Anki matches without regard to case. Inside quotes Anki passes a
+// backslash escape on to the regex untouched, except `\"`, which it reads as a quote. Words may be
+// apart by `&nbsp;` in a field's HTML, as typed in Anki.
+export function searchByFieldHavingPhrase(fieldName: string, phrase: string): string {
+  const pattern = phrase
+    .split(/\s+/)
+    .map((word) => word.replace(/[\\^$.*+?()[\]{}|"]/g, '\\$&'))
+    .join(String.raw`(\s|&nbsp;)+`);
+  return quoteSearchTerm(`${escapeInsideQuotedTerm(fieldName)}:re:\\b${pattern}\\b`);
+}
+
 /** Notes any of `terms` finds. One term needs no grouping, which keeps the common query plain. */
 export function searchForAny(terms: readonly string[]): string {
   return terms.length === 1 ? (terms[0] ?? '') : `(${terms.join(' OR ')})`;

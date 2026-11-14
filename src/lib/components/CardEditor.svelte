@@ -1,7 +1,13 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
 import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
-import { type AnkiStatus, fetchAnkiStatus, fetchNote, type LoadedNote } from '#lib/api/anki.ts';
+import {
+  type AnkiStatus,
+  fetchAnkiStatus,
+  fetchNote,
+  fetchSameMeaningNotes,
+  type LoadedNote,
+} from '#lib/api/anki.ts';
 import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
@@ -24,7 +30,7 @@ import WordForms from './forms/WordForms.svelte';
 import SaveBar from './SaveBar.svelte';
 import AudioInput from './media/AudioInput.svelte';
 import ImagesInput from './media/ImagesInput.svelte';
-import NoteFields from './NoteFields.svelte';
+import NoteFields from './fields/NoteFields.svelte';
 import Checkbox from './ui/Checkbox.svelte';
 import TextInput from './ui/TextInput.svelte';
 import DefinitionsInput from './word/DefinitionsInput.svelte';
@@ -99,6 +105,24 @@ const wiktionaryEntry = $derived(
   picked !== undefined ? true : lookup?.then((result) => result?.titleHasEntry),
 );
 const choices = $derived(picked?.choices ?? {});
+const deckWords = $derived([draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]);
+const meanings = $derived(
+  draft.inputs.definitions.map((meaning) => meaning.trim()).filter((meaning) => meaning !== ''),
+);
+const sameMeaningQuery = $derived(JSON.stringify([meanings, deckWords]));
+const sameMeaningSearch = $derived(
+  meanings.length === 0
+    ? undefined
+    : afterTypingPauses(
+        sameMeaningQuery,
+        () => sameMeaningQuery,
+        async () =>
+          // The note being edited, with its word retyped, would otherwise list itself.
+          (await fetchSameMeaningNotes(meanings, deckWords)).filter(
+            (found) => found.noteId !== note?.noteId,
+          ),
+      ),
+);
 const replacesDraft = $derived(changedBeyondWord(start, draft));
 
 function pick(candidate: DictionaryCandidate) {
@@ -183,7 +207,7 @@ onMount(checkAnki);
       <DefinitionsInput bind:definitions={draft.inputs.definitions} />
     </div>
     <ExistingNotesPanel
-      words={[draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]}
+      words={deckWords}
       root={draftRoot(draft.inputs)}
       editingNoteId={note?.noteId}
       {replacesDraft}
@@ -235,6 +259,7 @@ onMount(checkAnki);
         inputs: draft.inputs,
         formsField: draft.edits.forms ?? '',
       })}
+      {sameMeaningSearch}
       onedit={setEdit}
       bind:promptImages={draft.media.promptImages}
     />

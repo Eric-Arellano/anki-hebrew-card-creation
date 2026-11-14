@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { FIELD_HELP } from '#lib/field-help.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
+import { loadedNote } from '#tests/real-notes.ts';
 import {
   addRequests,
   addToDeck,
@@ -253,6 +254,78 @@ describe('CardEditor', () => {
         expect(
           document.getElementById(answer.getAttribute('aria-describedby') ?? '')?.textContent,
         ).toBe(FIELD_HELP.variant1Answer.verb);
+      });
+    });
+
+    describe('for the production context', () => {
+      const mechonit = {
+        noteId: 1751762491688,
+        unpointed: 'מכונית',
+        pointed: 'מְכוֹנִית',
+        sharedMeanings: ['car'],
+        productionContext: '',
+      };
+
+      async function fillOto() {
+        await fillInputs({ word: 'אוטו', pointed: 'אוֹטוֹ', gloss: 'car' });
+        await choosePartOfSpeech('Other');
+      }
+
+      test('asks for a hint while the deck has another word for the English', async () => {
+        const requests = await renderConnectedEditor({ sameMeaning: [mechonit] });
+        await fillOto();
+        const listed = await screen.findByText(/also means/);
+        expect(listed.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+          'מְכוֹנִית also means “car”, and has no hint yet.',
+        );
+        expect(
+          screen.getByText(/so say which one you want/).closest('.text-amber-700'),
+        ).toBeTruthy();
+        expect(requests.map((request) => request.path)).toContain(
+          `/api/anki/same-meaning?meaning=car&word=${encodeURIComponent('אוטו')}`,
+        );
+
+        await typeInto(
+          noteField('Hint for recalling the Hebrew from its English meaning'),
+          'slang',
+        );
+        expect(screen.getByText('Make sure your hint tells it apart from:')).toBeTruthy();
+        expect(screen.queryByText(/so say which one you want/)).toBeNull();
+      });
+
+      test("shows the other word's hint", async () => {
+        await renderConnectedEditor({
+          sameMeaning: [{ ...mechonit, productionContext: 'formal' }],
+        });
+        await fillOto();
+        expect((await screen.findByText(/also means/)).textContent).toContain(
+          'with the hint “formal”.',
+        );
+      });
+
+      test('says nothing while the deck has no other word for the English', async () => {
+        const requests = await renderConnectedEditor();
+        await fillOto();
+        await vi.waitFor(() =>
+          expect(requests.map((request) => request.path)).toContain(
+            `/api/anki/same-meaning?meaning=car&word=${encodeURIComponent('אוטו')}`,
+          ),
+        );
+        // The reply lands after the request is made.
+        await new Promise((resolve) => setTimeout(resolve));
+        expect(screen.queryByText(/also means/)).toBeNull();
+      });
+
+      describe('while editing a note', () => {
+        test('leaves the note itself out', async () => {
+          const oto = loadedNote('אוטו');
+          const otoFound = { ...mechonit, noteId: oto.noteId, unpointed: 'אוטו', pointed: 'אוֹטוֹ' };
+          await renderConnectedEditor({ sameMeaning: [otoFound, mechonit], notes: [oto] }, oto);
+          await choosePartOfSpeech('Other');
+          expect(
+            (await screen.findAllByText(/also means/)).map((item) => item.textContent),
+          ).toEqual([expect.stringContaining('מְכוֹנִית')]);
+        });
       });
     });
 

@@ -1,0 +1,174 @@
+[
+  {
+    "noteId": 1751762491688,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "מכונית",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "מְכוֹנִית",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "car (formal register)",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<div><img alt=\"25 of the most luxurious cars ever | Classic &amp; Sports Car\" src=\"paste-3abbe0381a01490b6b4d495936afc25b3091fa52.jpg\"></div>",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_מכונית-adf6a331c0b46a4867ddab30e9f036406b7f8999.mp3]",
+        "order": 7
+      },
+      "Part of speech": {
+        "value": "",
+        "order": 8
+      },
+      "Gender": {
+        "value": "",
+        "order": 9
+      },
+      "Forms": {
+        "value": "",
+        "order": 10
+      },
+      "Binyan": {
+        "value": "",
+        "order": 11
+      },
+      "Root": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 15
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 16
+      },
+      "Examples": {
+        "value": "",
+        "order": 17
+      },
+      "Notes": {
+        "value": "",
+        "order": 18
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793575634,
+    "cards": [1751762491689, 1751762491690, 1751819077552]
+  },
+  {
+    "noteId": 1751762573921,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "אוטו",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "אוֹטוֹ",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "car (informal register)",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<div><img alt=\"Cars 2 Pixar Desktop PNG - animation, automotive design, car, cars ...\" src=\"paste-06190fddc1f747970f9b3aae48658495fcef4de0.jpg\"></div>",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_אוטו.mp3]",
+        "order": 7
+      },
+      "Part of speech": {
+        "value": "",
+        "order": 8
+      },
+      "Gender": {
+        "value": "",
+        "order": 9
+      },
+      "Forms": {
+        "value": "",
+        "order": 10
+      },
+      "Binyan": {
+        "value": "",
+        "order": 11
+      },
+      "Root": {
+        "value": "",
+        "order": 12
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 15
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 16
+      },
+      "Examples": {
+        "value": "",
+        "order": 17
+      },
+      "Notes": {
+        "value": "",
+        "order": 18
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1793575634,
+    "cards": [1751762573922, 1751762573923, 1751819027348]
+  }
+]

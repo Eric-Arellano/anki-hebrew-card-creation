@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { vi } from 'vitest';
-import type { AnkiStatus, ExistingNotes, LoadedNote } from '#lib/api/anki.ts';
+import type { AnkiStatus, ExistingNotes, LoadedNote, SameMeaningNote } from '#lib/api/anki.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { ForvoDownloads } from '#lib/api/forvo.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
@@ -42,6 +42,7 @@ const notInDictionary: DictionaryLookup = {
 export type ServerReplies = {
   status?: AnkiStatus;
   existing?: ExistingNotes;
+  sameMeaning?: SameMeaningNote[];
   // The notes Anki holds, by id, joined by each one added; any other id answers 404.
   notes?: readonly LoadedNote[];
   // By default, a save writes its fields over the note and bumps its `mod`.
@@ -58,6 +59,7 @@ export type ServerReplies = {
 export function stubServer({
   status = connectedStatus,
   existing = { exactMatches: [], sameRootMatches: [], relatedMatches: [] },
+  sameMeaning = [],
   notes = [],
   saveNote = savedNote,
   addNote = addedNote,
@@ -75,6 +77,7 @@ export function stubServer({
     if (input.startsWith('/api/anki/existing')) {
       return Response.json(existing);
     }
+    if (input.startsWith('/api/anki/same-meaning')) return Response.json(sameMeaning);
     if (input === '/api/anki/notes') {
       const response = addNote(body);
       if (response.ok) held.push(await response.clone().json());

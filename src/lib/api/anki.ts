@@ -36,6 +36,16 @@ export type ExistingNotes = {
   relatedMatches: ExistingNote[];
 };
 
+// Another word whose English is this one's, so the Production card needs a hint to say which word
+// it wants. `sharedMeanings` are as this word writes them.
+export type SameMeaningNote = {
+  noteId: number;
+  unpointed: string;
+  pointed: string;
+  sharedMeanings: string[];
+  productionContext: string;
+};
+
 /** A note as Anki holds it, with its fields keyed by Anki name. */
 export type LoadedNote = { noteId: number; mod: number; fields: Record<string, string> };
 
@@ -51,6 +61,18 @@ export function fetchExistingNotes(
   const query = new URLSearchParams(words.map((word) => ['word', word]));
   if (root !== undefined) query.append('root', root);
   return getJson(`/api/anki/existing?${query}`);
+}
+
+/** The notes sharing any of `meanings`, except those for any of `words`. */
+export function fetchSameMeaningNotes(
+  meanings: readonly string[],
+  words: readonly string[],
+): Promise<SameMeaningNote[]> {
+  const query = new URLSearchParams([
+    ...meanings.map((meaning) => ['meaning', meaning]),
+    ...words.map((word) => ['word', word]),
+  ]);
+  return getJson(`/api/anki/same-meaning?${query}`);
 }
 
 export function fetchNote(noteId: number): Promise<LoadedNote> {
