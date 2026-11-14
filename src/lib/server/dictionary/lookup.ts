@@ -7,9 +7,13 @@ import {
   toDefectiveKey,
   toLookupKey,
 } from '#lib/hebrew/normalize.ts';
-import { toCandidates } from './candidate.ts';
-import { type Entry, entriesTitled, entriesWithKey } from './entries.ts';
-import { type DictionaryPaths, INDEX_SCHEMA_VERSION, sourceStamp } from './files.ts';
+import { toCandidates } from '#lib/server/dictionary/candidate.ts';
+import { type Entry, entriesTitled, entriesWithKey } from '#lib/server/dictionary/entries.ts';
+import {
+  type DictionaryPaths,
+  INDEX_SCHEMA_VERSION,
+  sourceStamp,
+} from '#lib/server/dictionary/files.ts';
 
 /** The index is missing or was built by older code; the message says how to fix it. */
 export class DictionaryUnavailableError extends Error {

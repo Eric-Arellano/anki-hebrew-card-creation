@@ -1,6 +1,4 @@
-// Our `/api/lookup` endpoint: what it answers, and the browser's one way to call it. The reply
-// types live here rather than beside the server code that builds them, so the browser never
-// imports from `#lib/server/`.
+// Our `/api/lookup` endpoint: what it answers, and the browser's one way to call it.
 import { getJson } from '#lib/api/http.ts';
 import type { Binyan } from '#lib/hebrew/binyan.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';

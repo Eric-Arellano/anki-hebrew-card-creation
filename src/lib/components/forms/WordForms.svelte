@@ -35,7 +35,7 @@ const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
 }));
 
 let {
-  draft = $bindable(),
+  inputs = $bindable(),
   choices,
   unoffered,
   candidate,
@@ -43,7 +43,7 @@ let {
   shownFields,
   onedit,
 }: {
-  draft: CardInputsDraft;
+  inputs: CardInputsDraft;
   choices: PrefillChoices;
   // What a loaded note holds for a chip that no chip offers.
   unoffered: UnofferedValues;
@@ -56,13 +56,15 @@ let {
 
 // Only a warning, since a correct spelling can fail the comparison.
 const misspellsWord = $derived(
-  draft.word.trim() !== '' && draft.pointed.trim() !== '' && !spellsWord(draft.pointed, draft.word),
+  inputs.word.trim() !== '' &&
+    inputs.pointed.trim() !== '' &&
+    !spellsWord(inputs.pointed, inputs.word),
 );
 
 // An infinitive is chosen as a pair, so choosing its pointed spelling writes its unpointed one.
 function chooseInfinitive(pointed: string) {
   const infinitive = choices.infinitives?.find((choice) => choice.pointed === pointed);
-  draft.word = infinitive?.unpointed ?? '';
+  inputs.word = infinitive?.unpointed ?? '';
 }
 </script>
 
@@ -74,10 +76,10 @@ function chooseInfinitive(pointed: string) {
       options={partOfSpeechOptions}
       offered={choices.partOfSpeech}
       unoffered={unoffered.partOfSpeech}
-      bind:value={draft.partOfSpeech}
+      bind:value={inputs.partOfSpeech}
     />
-    {#if draft.partOfSpeech !== undefined}
-      <p class="hint"><QuotedText text={PART_OF_SPEECH_HELP[draft.partOfSpeech]} /></p>
+    {#if inputs.partOfSpeech !== undefined}
+      <p class="hint"><QuotedText text={PART_OF_SPEECH_HELP[inputs.partOfSpeech]} /></p>
     {/if}
   </div>
   {#snippet pointedInput()}
@@ -87,32 +89,32 @@ function chooseInfinitive(pointed: string) {
         lang="he"
         choices={choices.pointed ?? choices.infinitives?.map((infinitive) => infinitive.pointed)}
         onchoose={choices.infinitives === undefined ? undefined : chooseInfinitive}
-        bind:value={draft.pointed}
+        bind:value={inputs.pointed}
       />
       {#if misspellsWord}
         <p class="text-sm text-amber-700" aria-live="polite">
-          Doesn't spell <bdi lang="he">{draft.word.trim()}</bdi>, the word without niqqud.
+          Doesn't spell <bdi lang="he">{inputs.word.trim()}</bdi>, the word without niqqud.
         </p>
       {/if}
     </div>
   {/snippet}
-  {#if draft.partOfSpeech === 'noun'}
-    <NounInputs bind:noun={draft.noun} bind:root={draft.root} {choices} {unoffered}>
+  {#if inputs.partOfSpeech === 'noun'}
+    <NounInputs bind:noun={inputs.noun} bind:root={inputs.root} {choices} {unoffered}>
       {@render pointedInput()}
     </NounInputs>
-    <PluralHints noun={draft.noun} pointed={draft.pointed} {edits} {shownFields} onuse={onedit} />
-  {:else if draft.partOfSpeech === 'verb'}
+    <PluralHints noun={inputs.noun} pointed={inputs.pointed} {edits} {shownFields} onuse={onedit} />
+  {:else if inputs.partOfSpeech === 'verb'}
     <VerbInputs
-      bind:verb={draft.verb}
-      bind:root={draft.root}
+      bind:verb={inputs.verb}
+      bind:root={inputs.root}
       {choices}
       suggestedPrepositions={candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : []}
       {unoffered}
     >
       {@render pointedInput()}
     </VerbInputs>
-  {:else if draft.partOfSpeech === 'adjective'}
-    <AdjectiveInputs bind:adjective={draft.adjective} bind:root={draft.root} {choices}>
+  {:else if inputs.partOfSpeech === 'adjective'}
+    <AdjectiveInputs bind:adjective={inputs.adjective} bind:root={inputs.root} {choices}>
       {@render pointedInput()}
     </AdjectiveInputs>
   {:else}

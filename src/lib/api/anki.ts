@@ -1,6 +1,4 @@
-// Our `/api/anki/` endpoints: what each answers, and the browser's one way to call each. The reply
-// types live here rather than beside the server code that builds them, so the browser never
-// imports from `#lib/server/`.
+// Our `/api/anki/` endpoints: what each answers, and the browser's one way to call each.
 import { getJson, postJsonForReply } from '#lib/api/http.ts';
 
 export type FieldDrift = { missingFromAnki: string[]; unexpectedInAnki: string[] };

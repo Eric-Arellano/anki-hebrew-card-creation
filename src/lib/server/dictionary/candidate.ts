@@ -3,8 +3,8 @@ import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { toBinyan } from '#lib/hebrew/binyan.ts';
 import { isSamePointedText, toLookupKey, uniquePointedText } from '#lib/hebrew/normalize.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
-import { governedPreposition, nounGender, partOfSpeechOf } from './convert.ts';
-import { type Entry, entriesWithKey } from './entries.ts';
+import { governedPreposition, nounGender, partOfSpeechOf } from '#lib/server/dictionary/convert.ts';
+import { type Entry, entriesWithKey } from '#lib/server/dictionary/entries.ts';
 
 // A form shared by many words, like a common possessive, shouldn't list them all.
 const MAX_CANDIDATES = 12;

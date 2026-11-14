@@ -13,7 +13,11 @@ import {
   withoutDirectionControls,
 } from '#lib/hebrew/normalize.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
-import { infinitives, isWordForm, pointedFormsTagged } from './source-forms.ts';
+import {
+  infinitives,
+  isWordForm,
+  pointedFormsTagged,
+} from '#lib/server/dictionary/source-forms.ts';
 
 // A word or form, without the direction controls that wrap some of them.
 const hebrewText = z.string().transform((text) => withoutDirectionControls(text).trim());

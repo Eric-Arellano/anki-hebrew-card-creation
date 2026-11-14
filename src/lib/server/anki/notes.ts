@@ -6,9 +6,14 @@ import { FIELD_NAMES, type Field, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient, NoteInfo } from '#lib/server/anki/client.ts';
 import { withAnkiErrorsAs502 } from '#lib/server/http.ts';
 
+/** A field of `note` as Anki stores it, blank when the note lacks it. */
+export function fieldHtml(note: NoteInfo, field: Field): string {
+  return note.fields[field.name]?.value ?? '';
+}
+
 /** A field of `note` as plain text, blank when the note lacks it. */
 export function fieldText(note: NoteInfo, field: Field): string {
-  return ankiFieldHtmlToText(note.fields[field.name]?.value ?? '');
+  return ankiFieldHtmlToText(fieldHtml(note, field));
 }
 
 /** The note of our note type with `noteId`, or `undefined` when Anki has none. */
