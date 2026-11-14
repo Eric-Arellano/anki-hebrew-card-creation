@@ -15,7 +15,12 @@ import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '
 import { examplesWithoutWord } from '#lib/card/examples.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
-import { type CardInputsDraft, completeInputs, draftRoot } from '#lib/card/inputs.ts';
+import {
+  type CardInputsDraft,
+  completeInputs,
+  draftRoot,
+  filledDefinitions,
+} from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
   prefillBlanks,
@@ -69,8 +74,8 @@ let picked:
       filledWord: string;
     }
   | undefined = $state.raw();
-// `undefined` while the check is in flight.
-let status: AnkiStatus | undefined = $state.raw();
+// `undefined` while Anki is being checked.
+let ankiStatus: AnkiStatus | undefined = $state.raw();
 
 // Composition waits for every input, since each one shapes it. The fields shown depend only on
 // the part of speech.
@@ -79,11 +84,11 @@ const composed = $derived(completed === undefined ? {} : composeFields(completed
 const shownGroups = $derived(
   draft.inputs.partOfSpeech === undefined
     ? []
-    : shownFieldGroups(fieldOrder(status), draft.inputs.partOfSpeech),
+    : shownFieldGroups(fieldOrder(ankiStatus), draft.inputs.partOfSpeech),
 );
 const shownFields = $derived(shownGroups.flatMap((group) => group.fields));
 const attachments = $derived(attachmentsToStore(draft.media, shownFields));
-const ankiProblem = $derived(status && ankiStatusProblem(status));
+const ankiProblem = $derived(ankiStatus && ankiStatusProblem(ankiStatus));
 const stillNeededMessage = $derived.by(() => {
   const needed = stillNeeded(draft);
   return needed.length === 0 ? undefined : `Still needed: ${needed.join(', ')}`;
@@ -106,9 +111,7 @@ const wiktionaryEntry = $derived(
 );
 const choices = $derived(picked?.choices ?? {});
 const deckWords = $derived([draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]);
-const meanings = $derived(
-  draft.inputs.definitions.map((meaning) => meaning.trim()).filter((meaning) => meaning !== ''),
-);
+const meanings = $derived(filledDefinitions(draft.inputs.definitions));
 const sameMeaningQuery = $derived(JSON.stringify([meanings, deckWords]));
 const sameMeaningSearch = $derived(
   meanings.length === 0
@@ -162,11 +165,11 @@ async function loadAgain() {
 }
 
 async function checkAnki() {
-  status = undefined;
+  ankiStatus = undefined;
   try {
-    status = await fetchAnkiStatus();
+    ankiStatus = await fetchAnkiStatus();
   } catch (error) {
-    status = { kind: 'error', message: errorMessage(error) };
+    ankiStatus = { kind: 'error', message: errorMessage(error) };
   }
 }
 
@@ -176,7 +179,7 @@ onMount(checkAnki);
 <main class="mx-auto max-w-240 space-y-8 p-4">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <h1>Hebrew card helper</h1>
-    <ConnectionStatus {status} problem={ankiProblem} onrecheck={checkAnki} />
+    <ConnectionStatus status={ankiStatus} problem={ankiProblem} onrecheck={checkAnki} />
   </header>
 
   {#if note !== undefined}
@@ -239,7 +242,7 @@ onMount(checkAnki);
   </section>
 
   <WordForms
-    bind:draft={draft.inputs}
+    bind:inputs={draft.inputs}
     {choices}
     {unoffered}
     candidate={picked?.candidate}
@@ -272,7 +275,7 @@ onMount(checkAnki);
     {held}
     onsaved={(saved) => (held = saved)}
     onloadagain={loadAgain}
-    ankiBlocker={status === undefined ? 'Checking Anki…' : ankiProblem}
+    ankiBlocker={ankiStatus === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={stillNeededMessage}
   />
 </main>

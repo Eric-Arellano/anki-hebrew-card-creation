@@ -5,7 +5,7 @@ import {
   isSamePointedText,
   uniquePointedText,
 } from '#lib/hebrew/normalize.ts';
-import type { Form } from './source.ts';
+import type { Form } from '#lib/server/dictionary/source.ts';
 
 // A `wv` head template lists each form only pointed; a `dwv` one lists the ktiv male spelling and
 // then the pointed one. Only the pointed ones are kept.

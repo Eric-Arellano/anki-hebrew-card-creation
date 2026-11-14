@@ -1,6 +1,4 @@
-// Our `/api/forvo/` endpoints: what each answers, and the browser's one way to call each. The reply
-// types live here rather than beside the server code that builds them, so the browser never
-// imports from `#lib/server/`.
+// Our `/api/forvo/` endpoints: what each answers, and the browser's one way to call each.
 import { getBlob, getJson } from '#lib/api/http.ts';
 
 /** A pronunciation in Downloads, and the name to store it under, without a browser's ` (1)`. */

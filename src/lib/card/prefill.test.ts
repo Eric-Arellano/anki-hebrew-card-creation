@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { loadedNote } from '#tests/real-notes.ts';
 import { draftFromNote } from './from-note.ts';
-import { type CardInputsDraft, emptyDraft } from './inputs.ts';
+import { type CardInputsDraft, emptyInputsDraft } from './inputs.ts';
 import { prefillBlanks, prefillDraft, stillSpellsEntry, undoPrefill } from './prefill.ts';
 
 // As the lookup answers for the fixture dictionary.
@@ -63,7 +63,7 @@ const kelevNoun = {
 } as const;
 
 // What the human typed before picking.
-const typed: CardInputsDraft = { ...emptyDraft(), word: 'כלבים', definitions: ['dog'] };
+const typed: CardInputsDraft = { ...emptyInputsDraft(), word: 'כלבים', definitions: ['dog'] };
 
 describe('prefillDraft', () => {
   describe('for a noun', () => {
@@ -395,7 +395,7 @@ describe('prefillBlanks', () => {
 
   describe('for a verb filed under its past', () => {
     test('keeps the word, and offers the infinitive', () => {
-      const past = { ...emptyDraft(), word: 'דיבר', pointed: 'דִּבֵּר' };
+      const past = { ...emptyInputsDraft(), word: 'דיבר', pointed: 'דִּבֵּר' };
       const { draft, choices } = prefillBlanks(past, diber);
       expect([draft.word, draft.pointed, draft.verb.past]).toEqual(['דיבר', 'דִּבֵּר', 'דִּבֵּר']);
       expect(choices).toEqual({ infinitives: diber.verb.infinitives });
@@ -403,9 +403,9 @@ describe('prefillBlanks', () => {
 
     test("keeps the note's binyan, offering the entry's", () => {
       const note = {
-        ...emptyDraft(),
+        ...emptyInputsDraft(),
         word: 'לדבר',
-        verb: { ...emptyDraft().verb, binyan: "pa'al" as const },
+        verb: { ...emptyInputsDraft().verb, binyan: "pa'al" as const },
       };
       const { draft, choices } = prefillBlanks(note, diber);
       expect(draft.verb.binyan).toBe("pa'al");

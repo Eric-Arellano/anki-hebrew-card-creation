@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { toLookupKey } from '#lib/hebrew/normalize.ts';
-import type { EntryFacts } from './source.ts';
+import type { EntryFacts } from '#lib/server/dictionary/source.ts';
 
 type EntryRow = { id: number; word: string; pos: string; pointed: string | null; is_lemma: number };
 

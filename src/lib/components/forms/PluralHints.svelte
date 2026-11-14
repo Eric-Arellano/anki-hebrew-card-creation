@@ -3,7 +3,7 @@ import type { NounDraft } from '#lib/card/noun.ts';
 import { pluralHints } from '#lib/card/plural-hints.ts';
 import { includesPointedText } from '#lib/hebrew/normalize.ts';
 import type { IrregularPlural } from '#lib/hebrew/plural.ts';
-import type { FieldKey, FieldValues } from '#lib/note-type.ts';
+import { type FieldKey, type FieldValues, VARIANT_ANSWERS } from '#lib/note-type.ts';
 
 const REASONS = {
   'masculine-with-ot': 'a masculine noun, but its plural ends in ־ות',
@@ -11,10 +11,11 @@ const REASONS = {
   'changed-stem': 'its plural changes the word itself',
 } satisfies Record<IrregularPlural, string>;
 
-const VARIANT_ANSWERS = [
-  { field: 'variant1Answer', number: 1 },
-  { field: 'variant2Answer', number: 2 },
-] as const satisfies readonly { field: FieldKey; number: number }[];
+// Each variant's answer field, and the number the editor's labels give it.
+const ANSWER_FIELDS = Object.values(VARIANT_ANSWERS).map((field, index) => ({
+  field,
+  number: index + 1,
+}));
 
 let {
   noun,
@@ -33,7 +34,7 @@ let {
 
 const hints = $derived(pluralHints(noun, pointed));
 const variants = $derived(
-  VARIANT_ANSWERS.filter(({ field }) => shownFields.includes(field)).map((variant) => ({
+  ANSWER_FIELDS.filter(({ field }) => shownFields.includes(field)).map((variant) => ({
     ...variant,
     answer: edits[variant.field] ?? '',
   })),

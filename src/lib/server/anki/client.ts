@@ -55,12 +55,12 @@ export type ActionParams = {
       options: { allowDuplicate: boolean };
     };
   };
-  // The add-on replaces an existing file by default, which would silently change another note's
-  // media. With `false`, different bytes under a taken name get a new name. Its `url` stays out
-  // because that has Anki fetch a third-party site on this tool's behalf.
   // Only the fields named change. Its `audio` and `picture` stay out for the reason
   // `storeMediaFile`'s `url` does.
   updateNoteFields: { note: { id: number; fields: Record<string, string> } };
+  // The add-on replaces an existing file by default, which would silently change another note's
+  // media. With `false`, different bytes under a taken name get a new name. Its `url` stays out
+  // because that has Anki fetch a third-party site on this tool's behalf.
   storeMediaFile: { filename: string; data: string; deleteExisting: false };
   retrieveMediaFile: { filename: string };
 };

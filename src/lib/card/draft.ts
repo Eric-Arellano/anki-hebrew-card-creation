@@ -1,6 +1,11 @@
 // Everything the editor holds of the card itself, which a note loaded from Anki would fill. The
 // dictionary entry picked and Anki's status belong to the session, not the card, so they stay out.
-import { type CardInputsDraft, emptyDraft, INPUT_NAMES, missingInputs } from '#lib/card/inputs.ts';
+import {
+  type CardInputsDraft,
+  emptyInputsDraft,
+  INPUT_NAMES,
+  missingInputs,
+} from '#lib/card/inputs.ts';
 import type { Attachment } from '#lib/media/attach.ts';
 import type { FieldValues, VariantPrompt } from '#lib/note-type.ts';
 
@@ -22,7 +27,7 @@ export type CardDraft = {
 
 export function emptyCardDraft(): CardDraft {
   return {
-    inputs: emptyDraft(),
+    inputs: emptyInputsDraft(),
     edits: {},
     media: {
       images: [],

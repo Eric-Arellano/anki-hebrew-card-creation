@@ -5,7 +5,7 @@ import { senseKeys, sharedSenses } from '#lib/card/meanings.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 import { FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
-import { fieldText } from '#lib/server/anki/notes.ts';
+import { fieldHtml, fieldText } from '#lib/server/anki/notes.ts';
 
 /** The notes that share a sense with `meanings`, other than the notes for any of `words`. */
 export async function findSameMeaningNotes(
@@ -33,7 +33,7 @@ export async function findSameMeaningNotes(
       pointed: fieldText(note, FIELDS.pointed),
       sharedMeanings: sharedSenses(
         meanings,
-        definitionsFromHtml(note.fields[FIELDS.definitions.name]?.value ?? ''),
+        definitionsFromHtml(fieldHtml(note, FIELDS.definitions)),
       ),
       productionContext: fieldText(note, FIELDS.productionContext),
     }))

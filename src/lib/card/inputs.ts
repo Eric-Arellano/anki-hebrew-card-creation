@@ -38,7 +38,7 @@ export type CardInputsDraft = WordInputs & {
   adjective: AdjectiveInputs;
 };
 
-export function emptyDraft(): CardInputsDraft {
+export function emptyInputsDraft(): CardInputsDraft {
   return {
     word: '',
     pointed: '',
@@ -72,7 +72,7 @@ export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
   root: 'root',
 };
 
-function filledDefinitions(definitions: readonly string[]): string[] {
+export function filledDefinitions(definitions: readonly string[]): string[] {
   return definitions
     .map((definition) => definition.trim())
     .filter((definition) => definition !== '');
