@@ -1,7 +1,7 @@
 import { textareaToAnkiFieldHtml } from '#lib/anki/html.ts';
 import { imagesToAnkiFieldHtml, soundToAnkiField } from '#lib/anki/media.ts';
 import type { MediaDraft } from '#lib/card/draft.ts';
-import type { Attachment } from '#lib/media/attach.ts';
+import type { Attachment, NewAttachment } from '#lib/media/attach.ts';
 import {
   type FieldKey,
   type FieldValues,
@@ -33,12 +33,14 @@ function attachmentsReachingNote(
   };
 }
 
-/** Each file the note will hold, once, to store before its fields can be composed. */
+/** Each new file the note will hold, once, to store before its fields can be composed. */
 export function attachmentsToStore(
   media: MediaDraft,
   shownFields: readonly FieldKey[],
-): Attachment[] {
-  const all = Object.values(attachmentsReachingNote(media, shownFields)).flat();
+): NewAttachment[] {
+  const all = Object.values(attachmentsReachingNote(media, shownFields))
+    .flat()
+    .filter((attachment) => attachment.kind === 'new');
   return all.filter(
     ({ filename }, index) => all.findIndex((a) => a.filename === filename) === index,
   );
@@ -46,8 +48,8 @@ export function attachmentsToStore(
 
 /**
  * Every field as `/api/anki/add` takes it: a shown field's edit, else what composition gives it,
- * followed by its media under the names in `storedAs`, which maps each name requested to the one
- * Anki used.
+ * followed by its media under the names Anki holds them as: a new file's from `storedAs`, which
+ * maps each name requested to the one Anki used.
  */
 export function handOffFields({
   composed,
@@ -62,9 +64,10 @@ export function handOffFields({
   media?: MediaDraft;
   storedAs?: ReadonlyMap<string, string>;
 }): Record<string, string> {
-  function storedName({ filename }: Attachment): string {
-    const name = storedAs.get(filename);
-    if (name === undefined) throw new Error(`${filename} was never stored`);
+  function storedName(attachment: Attachment): string {
+    if (attachment.kind === 'stored') return attachment.filename;
+    const name = storedAs.get(attachment.filename);
+    if (name === undefined) throw new Error(`${attachment.filename} was never stored`);
     return name;
   }
   const attachments = media === undefined ? {} : attachmentsReachingNote(media, shownFields);

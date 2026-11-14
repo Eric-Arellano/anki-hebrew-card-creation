@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { type CardDraft, emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
 
-const image = { filename: 'paste-a.jpg', blob: new Blob(['jpeg']) };
+const image = { kind: 'new', filename: 'paste-a.jpg', blob: new Blob(['jpeg']) } as const;
 
 function dagDraft(media: Pick<MediaDraft, 'images' | 'noImage'>): CardDraft {
   const empty = emptyCardDraft();

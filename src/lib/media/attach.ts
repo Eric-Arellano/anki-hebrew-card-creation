@@ -1,9 +1,15 @@
 // The one intake for media. Paste, drop and the file picker differ only in how the files arrive,
 // so a new source needs nothing here.
+import { storedMediaUrl } from '#lib/api/anki.ts';
 import { encodeImage } from '#lib/media/image.ts';
 
 /** A file ready for Anki, under the name it asks for. */
-export type Attachment = { filename: string; blob: Blob };
+export type NewAttachment = { kind: 'new'; filename: string; blob: Blob };
+
+/** A file already in Anki's media folder, under the name Anki stored it as. */
+export type StoredAttachment = { kind: 'stored'; filename: string };
+
+export type Attachment = NewAttachment | StoredAttachment;
 
 /** The files on a clipboard. Most copies carry none, and paste as usual. */
 export function pastedFiles(clipboard: DataTransfer | null): File[] {
@@ -28,10 +34,23 @@ const MP3_NAME = /\.mp3$/i;
  * `file` under its own name, or `undefined` unless it is an MP3. Audio is stored as it came, and
  * every recording in the deck, like every Forvo download, is an MP3 that plays wherever Anki does.
  */
-export function audioAttachment(file: File): Attachment | undefined {
+export function audioAttachment(file: File): NewAttachment | undefined {
   if (!MP3_NAME.test(file.name)) return undefined;
   // The media route takes only a lowercase extension.
-  return { filename: file.name.replace(MP3_NAME, '.mp3'), blob: file };
+  return { kind: 'new', filename: file.name.replace(MP3_NAME, '.mp3'), blob: file };
+}
+
+/** Points an `<img>` or `<audio>` at `attachment`, for as long as the element shows it. */
+export function showingAttachment(attachment: Attachment) {
+  return (element: HTMLImageElement | HTMLAudioElement) => {
+    if (attachment.kind === 'stored') {
+      element.src = storedMediaUrl(attachment.filename);
+      return;
+    }
+    const url = URL.createObjectURL(attachment.blob);
+    element.src = url;
+    return () => URL.revokeObjectURL(url);
+  };
 }
 
 /**
@@ -46,7 +65,7 @@ export function imageFieldAt(element: EventTarget | null): string | undefined {
 /** Each of `files` the browser can decode, encoded, and a message naming any it can't. */
 export async function encodeImages(
   files: readonly File[],
-): Promise<{ encoded: Attachment[]; refusal: string | undefined }> {
+): Promise<{ encoded: NewAttachment[]; refusal: string | undefined }> {
   const results = await Promise.allSettled(files.map(encodeImage));
   const refused = files.filter((_, index) => results[index]?.status === 'rejected');
   return {

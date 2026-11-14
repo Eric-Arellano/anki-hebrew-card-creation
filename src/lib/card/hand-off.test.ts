@@ -39,7 +39,7 @@ describe('handOffFields', () => {
   describe('with media', () => {
     const requested = 'paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437.jpg';
     const stored = 'paste-997ad7d7a4d8a304cb811c9453e72c85a2fe5437-1.jpg';
-    const image = { filename: requested, blob: new Blob(['jpeg']) };
+    const image = { kind: 'new', filename: requested, blob: new Blob(['jpeg']) } as const;
     const imageHtml = `<div><img src="${stored}"></div>`;
     const storedAs = new Map([[requested, stored]]);
 
@@ -95,7 +95,11 @@ describe('handOffFields', () => {
     });
 
     test('fills Audio with a sound under the name Anki used', () => {
-      const recording = { filename: 'pronunciation_he_דג.mp3', blob: new Blob(['mp3']) };
+      const recording = {
+        kind: 'new',
+        filename: 'pronunciation_he_דג.mp3',
+        blob: new Blob(['mp3']),
+      } as const;
       expect(
         handOffFields({
           composed: {},
@@ -105,6 +109,26 @@ describe('handOffFields', () => {
           storedAs: new Map([[recording.filename, 'pronunciation_he_דג-1.mp3']]),
         }),
       ).toEqual({ ...blankFields, Audio: '[sound:pronunciation_he_דג-1.mp3]' });
+    });
+
+    describe('when a file is already in Anki', () => {
+      test('uses the name Anki holds it under', () => {
+        expect(
+          handOffFields({
+            composed: {},
+            edits: {},
+            shownFields: [],
+            media: media({
+              images: [{ kind: 'stored', filename: 'Synagogue_Plzen_087.JPG' }],
+              audio: { kind: 'stored', filename: 'pronunciation_he_בית_כנסת.mp3' },
+            }),
+          }),
+        ).toEqual({
+          ...blankFields,
+          Images: '<div><img src="Synagogue_Plzen_087.JPG"></div>',
+          Audio: '[sound:pronunciation_he_בית_כנסת.mp3]',
+        });
+      });
     });
 
     describe('when a file was never stored', () => {
@@ -123,8 +147,8 @@ describe('handOffFields', () => {
 });
 
 describe('attachmentsToStore', () => {
-  const first = { filename: 'paste-a.jpg', blob: new Blob(['a']) };
-  const second = { filename: 'paste-b.jpg', blob: new Blob(['b']) };
+  const first = { kind: 'new', filename: 'paste-a.jpg', blob: new Blob(['a']) } as const;
+  const second = { kind: 'new', filename: 'paste-b.jpg', blob: new Blob(['b']) } as const;
   const media: MediaDraft = {
     ...emptyCardDraft().media,
     images: [first],
@@ -143,10 +167,24 @@ describe('attachmentsToStore', () => {
   });
 
   test('gives the audio too', () => {
-    const recording = { filename: 'pronunciation_he_דג.mp3', blob: new Blob(['mp3']) };
+    const recording = {
+      kind: 'new',
+      filename: 'pronunciation_he_דג.mp3',
+      blob: new Blob(['mp3']),
+    } as const;
     expect(attachmentsToStore({ ...media, audio: recording }, ['notes'])).toEqual([
       first,
       recording,
     ]);
+  });
+
+  test('leaves out what Anki already holds', () => {
+    const held = { kind: 'stored', filename: 'cat2-1024x676.jpg' } as const;
+    expect(
+      attachmentsToStore(
+        { ...media, images: [held, first], audio: { kind: 'stored', filename: 'a.mp3' } },
+        ['notes'],
+      ),
+    ).toEqual([first]);
   });
 });

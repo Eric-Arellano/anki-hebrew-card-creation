@@ -11,6 +11,7 @@ import {
   isAudio,
   isImage,
   pastedFiles,
+  showingAttachment,
   withAttached,
 } from '#lib/media/attach.ts';
 import type { VariantPrompt } from '#lib/note-type.ts';
@@ -110,14 +111,6 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
   // Otherwise picking the same file again, after removing it, fires no change.
   event.currentTarget.value = '';
 }
-
-function showing(blob: Blob) {
-  return (image: HTMLImageElement) => {
-    const url = URL.createObjectURL(blob);
-    image.src = url;
-    return () => URL.revokeObjectURL(url);
-  };
-}
 </script>
 
 <svelte:window {onpaste} onfocusin={followFocus} {onfocusout} {ondragover} {ondragleave} {ondrop} />
@@ -150,7 +143,7 @@ function showing(blob: Blob) {
           <img
             class="h-24 rounded-md border border-gray-200"
             alt="Attachment {index + 1}"
-            {@attach showing(image.blob)}
+            {@attach showingAttachment(image)}
           >
           <button
             type="button"

@@ -7,6 +7,7 @@ import {
   imageFieldAt,
   isAudio,
   pastedFiles,
+  showingAttachment,
   withAttached,
 } from './attach.ts';
 
@@ -61,7 +62,11 @@ describe('isAudio', () => {
 describe('audioAttachment', () => {
   test('keeps the name and the bytes as they came', () => {
     const file = new File(['mp3'], 'pronunciation_he_בית.mp3', { type: 'audio/mpeg' });
-    expect(audioAttachment(file)).toEqual({ filename: 'pronunciation_he_בית.mp3', blob: file });
+    expect(audioAttachment(file)).toEqual({
+      kind: 'new',
+      filename: 'pronunciation_he_בית.mp3',
+      blob: file,
+    });
   });
 
   test('lowercases the extension, which the media route needs', () => {
@@ -70,6 +75,32 @@ describe('audioAttachment', () => {
 
   test('refuses another format', () => {
     expect(audioAttachment(new File(['ogg'], 'a.ogg', { type: 'audio/ogg' }))).toBeUndefined();
+  });
+});
+
+describe('showingAttachment', () => {
+  describe('for a new file', () => {
+    test('shows its bytes, until the element stops showing it', () => {
+      URL.createObjectURL = vi.fn(() => 'blob:preview');
+      URL.revokeObjectURL = vi.fn();
+      const image = document.createElement('img');
+      const stopShowing = showingAttachment({ kind: 'new', filename: 'a.jpg', blob: new Blob() })(
+        image,
+      );
+      expect(image.getAttribute('src')).toBe('blob:preview');
+      stopShowing?.();
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
+    });
+  });
+
+  describe('for a file Anki holds', () => {
+    test('shows it from the media route, by its encoded name', () => {
+      const player = document.createElement('audio');
+      showingAttachment({ kind: 'stored', filename: 'pronunciation_he_בית_ספר.mp3' })(player);
+      expect(player.getAttribute('src')).toBe(
+        `/api/anki/media/${encodeURIComponent('pronunciation_he_בית_ספר.mp3')}`,
+      );
+    });
   });
 });
 
@@ -117,15 +148,20 @@ describe('encodeImages', () => {
 });
 
 describe('withAttached', () => {
-  const first = { filename: 'paste-a.jpg', blob: new Blob(['a']) };
-  const second = { filename: 'paste-b.jpg', blob: new Blob(['b']) };
+  const first = { kind: 'new', filename: 'paste-a.jpg', blob: new Blob(['a']) } as const;
+  const second = { kind: 'new', filename: 'paste-b.jpg', blob: new Blob(['b']) } as const;
 
   test('adds after what is attached', () => {
     expect(withAttached([first], [second])).toEqual([first, second]);
   });
 
   test('keeps the first image under a name it already has', () => {
-    const repeat = { filename: 'paste-a.jpg', blob: new Blob(['a again']) };
+    const repeat = { kind: 'new', filename: 'paste-a.jpg', blob: new Blob(['a again']) } as const;
     expect(withAttached([first], [repeat, second, second])).toEqual([first, second]);
+  });
+
+  test('keeps an image Anki holds over a paste of it', () => {
+    const held = { kind: 'stored', filename: 'paste-a.jpg' } as const;
+    expect(withAttached([held], [first])).toEqual([held]);
   });
 });

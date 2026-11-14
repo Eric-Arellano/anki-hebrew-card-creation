@@ -39,7 +39,7 @@ fi
 prompt_reason=''
 for action in $actions; do
   case $action in
-    version | deckNames | modelNames | modelFieldNames | modelFieldDescriptions | modelTemplates | findNotes | notesInfo) ;;
+    version | deckNames | modelNames | modelFieldNames | modelFieldDescriptions | modelTemplates | findNotes | retrieveMediaFile | notesInfo) ;;
     guiAddCards | guiBrowse) prompt_reason="AnkiConnect $action changes what is open in your Anki" ;;
     storeMediaFile) prompt_reason='AnkiConnect storeMediaFile writes a file into your Anki media folder' ;;
     *) decide deny "AnkiConnect action $action is not on the allowlist in AGENTS.md" ;;
