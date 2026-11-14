@@ -7,8 +7,6 @@ import { buildFixtureIndex } from '#tests/dictionary-index.ts';
 import { realNote } from '#tests/real-notes.ts';
 import { _check } from './+server.ts';
 
-vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
-
 let index: Awaited<ReturnType<typeof buildFixtureIndex>>;
 
 beforeAll(async () => {

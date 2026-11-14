@@ -1,3 +1,5 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { defineEnvVars } from '@sveltejs/kit/env';
 
 export const variables = defineEnvVars({
@@ -9,5 +11,10 @@ export const variables = defineEnvVars({
       if (!value) throw new Error('Set ANTHROPIC_API_KEY. See the README.');
       return value;
     },
+  },
+  FORVO_DOWNLOADS: {
+    description: 'The folder the browser saves downloads to, where Forvo pronunciations land.',
+    // Blank counts as unset, like the API key.
+    schema: (value) => value || join(homedir(), 'Downloads'),
   },
 });

@@ -53,8 +53,7 @@ a `.env` file at the top of this folder, which git ignores:
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Restart the server to pick it up. `npm start` doesn't read `.env`, so export the variable there
-instead.
+Restart the server to pick it up.
 
 The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can change the
 notes in your collection, add new ones and add files to its media folder.
@@ -64,8 +63,8 @@ notes in your collection, add new ones and add files to its media folder.
 - **The dictionary** you saved in `data/`, and the index built from it.
 - **Your Downloads folder, for Forvo pronunciations.** Download a word's MP3 from Forvo, come back
   to the tab, and the editor attaches it. It lists the folder's names, reads only the files that
-  look like Forvo downloads, and never writes there. Set `FORVO_DOWNLOADS` to look in another
-  folder. On macOS, the first look asks whether your terminal may read Downloads.
+  look like Forvo downloads, and never writes there. Set `FORVO_DOWNLOADS` in `.env` to look in
+  another folder. On macOS, the first look asks whether your terminal may read Downloads.
 
 ## What it sends over the network
 

@@ -8,14 +8,13 @@ The UI revamp landed fast, and it left names and folders describing the editor a
 `anki/changes.ts` with an unrelated job. Pure logic about Claude's suggestions grew inside three
 components, where only DOM tests reach it.
 
-This pass changes no behaviour except in PR 1, which makes `FORVO_DOWNLOADS` load from `.env`
-like `ANTHROPIC_API_KEY` does. Each PR is a prefactor: a reviewer should be able to read it as
+This pass changes no behaviour. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
 
 Two pieces of work are still to come: the Claude correctness check and the verb revamp
 (`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet). Neither should wait on
 this pass, and the order among these PRs is loose. When the verb plan is adopted, its paths need
-updating for PR 3 and PR 5. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
+updating for PR 2 and PR 4. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
 `fields/SuggestButton.svelte`, and `suggestBlocker` in `CardEditor.svelte`.
 
 ## Decisions
@@ -42,21 +41,7 @@ updating for PR 3 and PR 5. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceC
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: Read `FORVO_DOWNLOADS` like `ANTHROPIC_API_KEY`, and let `npm start` read `.env`
-
-- **Declare `FORVO_DOWNLOADS` in `src/env.ts`**, optional, with Downloads as the default. Read it
-  through `$app/env/private` in `server/forvo-downloads.ts` instead of `process.env`, which
-  `vite dev` doesn't fill from `.env`, so today a `.env` line is silently ignored. Look up
-  `defineEnvVars`' optional/default form with the Svelte MCP server rather than recalling it.
-- **Mock `$app/env/private` once, in `tests/setup.ts`**, with both variables, and drop the five
-  per-file `vi.mock`s (`server/ai/{client,check,suggest}.test.ts` and the two AI route tests).
-  Confirm that a `vi.mock` in a setup file applies to every test file. If it doesn't, keep the
-  per-file mocks and add one for the Forvo tests.
-- `start` becomes `node --env-file-if-exists=.env build`, keeping `HOST` and `BODY_SIZE_LIMIT`.
-  Drop the README's "`npm start` doesn't read `.env`" caveat, and say `FORVO_DOWNLOADS` goes in
-  `.env` too.
-
-## PR 2: Rename the `lib/` modules whose names collide or mislead
+## PR 1: Rename the `lib/` modules whose names collide or mislead
 
 Moves and renames, then import updates. No logic changes.
 
@@ -83,7 +68,7 @@ Moves and renames, then import updates. No logic changes.
 
   Re-grep each one first.
 
-## PR 3: One home for the server's HTTP errors, and a clearer dictionary index
+## PR 2: One home for the server's HTTP errors, and a clearer dictionary index
 
 - `server/http.ts` → `server/route-errors.ts`, so it no longer shares a name with `api/http.ts`.
   It gains `withAiErrorsAs502`, replacing the try/catch copied into
@@ -109,7 +94,7 @@ Moves and renames, then import updates. No logic changes.
   - Fix the drifted copy of the gender codes at `source.ts:68`: point at `convert.ts`, which has
     the full list.
 
-## PR 4: Move form gathering out of `card/examples.ts`
+## PR 3: Move form gathering out of `card/examples.ts`
 
 The bottom half of `card/examples.ts` gathers a word's labelled forms: `LabeledForm`,
 `labeledForms`, `formsFieldLines`, `allLabeledForms` and `wordUsage`. It is not about the
@@ -124,7 +109,7 @@ Merge them only if the existing tests show they agree on every input each one se
 add one line on each saying why they differ. Move `wordUsage`'s rationale paragraph out of its
 doc comment, onto the line it explains.
 
-## PR 5: Component directories follow the editor's sections
+## PR 4: Component directories follow the editor's sections
 
 Renames and moves first (`git mv`), then imports and test queries.
 
@@ -151,7 +136,7 @@ Renames and moves first (`git mv`), then imports and test queries.
     Move it there.
 - Run `svelte-autofixer` on every moved file.
 
-## PR 6: Claude's suggestions, as pure functions with unit tests
+## PR 5: Claude's suggestions, as pure functions with unit tests
 
 A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
 
@@ -159,12 +144,12 @@ A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
   branching that is tested only through the DOM today; the second is the inline `SuggestRequest`.
 - `filledBlanks(suggestions, edits, examples)` from `SuggestButton.svelte`'s `ask`: which hints
   and examples a reply fills, given that typing during the call wins.
-- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 5).
+- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 4).
 
 The components keep the state and the calls. Their DOM tests stay as integration tests, but drop
 any case that the unit tests now cover exhaustively.
 
-## PR 7: One list-row algebra for meanings and examples, and one `Held` type
+## PR 6: One list-row algebra for meanings and examples, and one `Held` type
 
 - `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
   `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
@@ -174,7 +159,7 @@ any case that the unit tests now cover exhaustively.
   replaces the nine copies of that comment on `held` props. `SaveBar`'s and `CardEditor`'s `held`
   is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
 
-## PR 8: Shared fixtures for the editor's tests
+## PR 7: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -189,7 +174,7 @@ any case that the unit tests now cover exhaustively.
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 9: Shared fakes for the server's tests
+## PR 8: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.
@@ -204,11 +189,7 @@ any case that the unit tests now cover exhaustively.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   touched until it reports nothing. No test reaches the network, a real Anki or the real API.
-- PRs 2–5: after the move, `grep -rn` for each old module and component name across `src/`,
+- PRs 1–4: after the move, `grep -rn` for each old module and component name across `src/`,
   `tests/`, `scripts/`, `AGENTS.md` and `README.md` comes back empty.
-- PR 1, by hand: put `FORVO_DOWNLOADS` in `.env` pointing at a folder holding a Forvo-named MP3,
-  run `npm run dev`, type the word, and the editor offers it. Then run `npm run build && npm start`
-  and check the server starts with the key from `.env`. Do this without clicking Add to deck,
-  Save or any Claude button.
-- PR 5, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
+- PR 4, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
   as before. Nothing is clicked that writes to Anki or calls Claude.

@@ -1,8 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { DOWNLOADS_DIRECTORY, readForvoDownload } from '#lib/server/forvo-downloads.ts';
+import { readForvoDownload } from '#lib/server/forvo-downloads.ts';
+import { FORVO_DOWNLOADS } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = ({ url }) => _readForvoDownload(DOWNLOADS_DIRECTORY, url);
+export const GET: RequestHandler = ({ url }) => _readForvoDownload(FORVO_DOWNLOADS, url);
 
 export async function _readForvoDownload(directory: string, url: URL): Promise<Response> {
   const filename = url.searchParams.get('filename');
