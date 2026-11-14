@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { vi } from 'vitest';
-import type { AiStatus, CheckRequest, SuggestRequest } from '#lib/api/ai.ts';
+import type { CheckRequest, SuggestRequest } from '#lib/api/ai.ts';
 import type { AnkiStatus, ExistingNotes, LoadedNote, SameMeaningNote } from '#lib/api/anki.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { ForvoDownloads } from '#lib/api/forvo.ts';
@@ -55,15 +55,10 @@ export type ServerReplies = {
   storeMedia?: (body: { filename: string }) => Response;
   forvoDownloads?: (word: string) => ForvoDownloads;
   forvoFile?: (filename: string) => Response;
-  // By default, the server has no Anthropic API key.
-  ai?: AiStatus;
+  // By default, Claude suggests nothing and finds no problems.
   suggest?: (body: SuggestRequest) => Response | Promise<Response>;
   check?: (body: CheckRequest, signal: AbortSignal | undefined) => Response | Promise<Response>;
 };
-
-function noKey() {
-  return Response.json({ message: 'Set ANTHROPIC_API_KEY to use Claude.' }, { status: 503 });
-}
 
 /** Our server, answering the editor's API calls, and recording every request. */
 export function stubServer({
@@ -77,9 +72,8 @@ export function stubServer({
   storeMedia = ({ filename }) => Response.json({ filename }),
   forvoDownloads = () => ({ kind: 'found', downloads: [] }),
   forvoFile = () => new Response('mp3 bytes'),
-  ai = { available: false },
-  suggest = noKey,
-  check = noKey,
+  suggest = () => Response.json({}),
+  check = () => Response.json({ findings: [] }),
 }: ServerReplies = {}) {
   const requests: ServerRequest[] = [];
   const held = [...notes];
@@ -107,7 +101,6 @@ export function stubServer({
       return lookup instanceof Response ? lookup : Response.json(lookup);
     }
     if (input === '/api/anki/media') return storeMedia(body);
-    if (input === '/api/ai/status') return Response.json(ai);
     if (input === '/api/ai/suggest') return suggest(body);
     if (input === '/api/ai/check') return check(body, init?.signal ?? undefined);
     const url = new URL(input, 'http://127.0.0.1');
@@ -210,8 +203,9 @@ export async function fillVerb(binyan: string, root: string) {
   await typeInto(input('Root, like דבר or ד.ב.ר'), root);
 }
 
-/** Clicks Add to deck, and answers with the body of the first add sent. */
+/** Clicks Check and add, then Add to deck, and answers with the body of the first add sent. */
 export async function addToDeck(requests: ServerRequest[]) {
+  await fireEvent.click(screen.getByRole('button', { name: 'Check and add' }));
   await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
   await screen.findByText('Added to the deck.');
   return addRequests(requests)[0]?.body;

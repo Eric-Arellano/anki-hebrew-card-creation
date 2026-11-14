@@ -24,7 +24,7 @@ const kelev: LoadedNote = (() => {
 })();
 
 function saveButton() {
-  return screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement;
+  return screen.getByRole('button', { name: 'Check and save' }) as HTMLButtonElement;
 }
 
 async function changeMeaning(meaning: string) {
@@ -43,14 +43,19 @@ describe('CardEditor', () => {
     };
 
     function addButton() {
-      return screen.getByRole('button', { name: 'Add to deck' }) as HTMLButtonElement;
+      return screen.getByRole('button', { name: 'Check and add' }) as HTMLButtonElement;
+    }
+
+    async function add() {
+      await fireEvent.click(addButton());
+      await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
     }
 
     test('sends every field, refusing a duplicate', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await skipImage();
-      await fireEvent.click(addButton());
+      await add();
       await screen.findByText('Added to the deck.');
       expect(addRequests(requests)).toEqual([
         {
@@ -68,7 +73,7 @@ describe('CardEditor', () => {
       await typeExample(1, { hebrew: 'איפה הדג?', english: 'Where is the fish?' });
       await fireEvent.click(screen.getByRole('button', { name: '+ Another example' }));
       await typeExample(2, { hebrew: 'דג & צ׳יפס.', english: '' });
-      await fireEvent.click(addButton());
+      await add();
       await screen.findByText('Added to the deck.');
       expect(addRequests(requests)[0]?.body).toEqual({
         fields: {
@@ -82,10 +87,12 @@ describe('CardEditor', () => {
       });
     });
 
-    test('adds on Cmd+Enter too, without asking first', async () => {
+    test('takes Cmd+Enter twice', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await skipImage();
+      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      expect(addRequests(requests)).toEqual([]);
       await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
       await screen.findByText('Added to the deck.');
       expect(addRequests(requests)).toHaveLength(1);
@@ -96,12 +103,12 @@ describe('CardEditor', () => {
         const requests = await renderConnectedEditor();
         await fillDag();
         await skipImage();
-        await fireEvent.click(addButton());
+        await add();
         await screen.findByText('Added to the deck.');
-        expect(screen.queryByRole('button', { name: 'Add to deck' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Check and add' })).toBeNull();
 
         await typeInto(input('English meaning'), 'carp');
-        await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await fireEvent.click(saveButton());
         await fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await screen.findByText('Saved to Anki.');
         expect(addRequests(requests)).toHaveLength(1);
@@ -130,7 +137,7 @@ describe('CardEditor', () => {
         });
         await fillDag();
         await skipImage();
-        await fireEvent.click(addButton());
+        await add();
         await screen.findByRole('button', { name: 'Add anyway' });
         expect(refused).toBe(true);
         return requests;
@@ -159,7 +166,7 @@ describe('CardEditor', () => {
         });
         await fillDag();
         await skipImage();
-        await fireEvent.click(addButton());
+        await add();
         expect((await screen.findByRole('alert')).textContent).toBe('collection is not available');
         expect(addButton().disabled).toBe(false);
       });

@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { PARTS_OF_SPEECH } from '#lib/note-type.ts';
 import { checkNote, fieldTexts } from '#lib/server/ai/check.ts';
-import { AiError, type ClaudeMessages, isAiAvailable } from '#lib/server/ai/client.ts';
+import { AiError, type ClaudeMessages } from '#lib/server/ai/client.ts';
 import { lookUpHomographs } from '#lib/server/ai/homographs.ts';
 import { DICTIONARY_PATHS, type DictionaryPaths } from '#lib/server/dictionary/files.ts';
 import { parseJsonBody } from '#lib/server/http.ts';
@@ -27,7 +27,6 @@ export async function _check(
   );
   const { unpointed, pointed = '' } = fieldTexts(body.fields);
   if (unpointed === undefined) error(400, 'Type the word first.');
-  if (!isAiAvailable()) error(503, 'Set ANTHROPIC_API_KEY to use Claude.');
 
   const homographs = lookUpHomographs(paths, unpointed, pointed);
   try {

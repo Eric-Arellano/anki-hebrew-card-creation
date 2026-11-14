@@ -172,7 +172,7 @@ describe('CardEditor', () => {
     }
 
     function addButton() {
-      return screen.getByRole('button', { name: 'Add to deck' }) as HTMLButtonElement;
+      return screen.getByRole('button', { name: 'Check and add' }) as HTMLButtonElement;
     }
 
     test('blocks adding and says an image is still needed', async () => {
@@ -270,6 +270,7 @@ describe('CardEditor', () => {
         await pasteImage();
         await screen.findByRole('img');
 
+        await fireEvent.click(screen.getByRole('button', { name: 'Check and add' }));
         await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
         await waitFor(() =>
           expect(screen.getByRole('alert').textContent).toBe(

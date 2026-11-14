@@ -33,12 +33,7 @@ export type ClaudeMessages = {
 
 export type StructuredRequest<T> = { system: string; user: string; schema: z.ZodType<T> };
 
-export function isAiAvailable(): boolean {
-  return ANTHROPIC_API_KEY !== undefined;
-}
-
 function defaultMessages(): ClaudeMessages {
-  if (ANTHROPIC_API_KEY === undefined) throw new AiError('Set ANTHROPIC_API_KEY to use Claude.');
   return new Anthropic({ apiKey: ANTHROPIC_API_KEY }).beta.messages;
 }
 

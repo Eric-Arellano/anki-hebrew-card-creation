@@ -51,9 +51,8 @@ function isMarkedSuggested(fieldName: string): boolean {
   return description(noteField(fieldName)).includes('Suggested');
 }
 
-async function renderWithKey(replies: Omit<ServerReplies, 'status' | 'ai'> = {}) {
+async function renderWithSuggestions(replies: Omit<ServerReplies, 'status'> = {}) {
   return renderConnectedEditor({
-    ai: { available: true },
     suggest: () => Response.json(seferSuggestions),
     ...replies,
   });
@@ -85,7 +84,7 @@ function heldReply() {
 describe('CardEditor', () => {
   describe('suggesting', () => {
     test('asks with the word, its niqqud, its part of speech, its meanings and its forms', async () => {
-      const requests = await renderWithKey();
+      const requests = await renderWithSuggestions();
       await fillSefer();
       await typeInto(input('Masculine plural, with niqqud'), 'סְפָרִים');
       await clickSuggest();
@@ -105,7 +104,7 @@ describe('CardEditor', () => {
     });
 
     test('fills the blank fields, and leaves a filled one alone', async () => {
-      await renderWithKey();
+      await renderWithSuggestions();
       await fillSefer();
       await typeInto(noteField(READING_CONTEXT), 'ספר טוב');
       await clickSuggest();
@@ -116,7 +115,7 @@ describe('CardEditor', () => {
 
     test('fills only what is still blank when the reply lands', async () => {
       const { suggest, send } = heldReply();
-      await renderWithKey({ suggest });
+      await renderWithSuggestions({ suggest });
       await fillSefer();
       await fireEvent.click(suggestButton());
       expect(suggestButton().disabled).toBe(true);
@@ -129,7 +128,7 @@ describe('CardEditor', () => {
 
     describe('the Suggested badge', () => {
       test('marks each field Claude filled, until it is edited', async () => {
-        await renderWithKey();
+        await renderWithSuggestions();
         await fillSefer();
         await clickSuggest();
         expect(isMarkedSuggested(EXAMPLES)).toBe(true);
@@ -142,7 +141,7 @@ describe('CardEditor', () => {
       });
 
       test('comes back if the edit is undone', async () => {
-        await renderWithKey();
+        await renderWithSuggestions();
         await fillSefer();
         await clickSuggest();
         await typeInto(noteField(READING_CONTEXT), 'קראתי');
@@ -154,7 +153,7 @@ describe('CardEditor', () => {
     describe('when the word changes while Claude answers', () => {
       test('fills nothing, saying why', async () => {
         const { suggest, send } = heldReply();
-        await renderWithKey({ suggest });
+        await renderWithSuggestions({ suggest });
         await fillSefer();
         await fireEvent.click(suggestButton());
         await typeInto(input('English meaning'), 'barber');
@@ -166,7 +165,7 @@ describe('CardEditor', () => {
 
     describe('when Claude has nothing for the blank fields', () => {
       test('says so', async () => {
-        await renderWithKey({ suggest: () => Response.json({}) });
+        await renderWithSuggestions({ suggest: () => Response.json({}) });
         await fillSefer();
         await clickSuggest();
         expect(screen.getByText('Claude had nothing to add to the blank fields.')).toBeTruthy();
@@ -175,7 +174,7 @@ describe('CardEditor', () => {
 
     describe('when the call fails', () => {
       test('says why, and fills nothing', async () => {
-        await renderWithKey({
+        await renderWithSuggestions({
           suggest: () => Response.json({ message: 'Claude declined to answer.' }, { status: 502 }),
         });
         await fillSefer();
@@ -190,7 +189,7 @@ describe('CardEditor', () => {
 
     describe('before there is a word and a meaning', () => {
       test('is disabled, saying why', async () => {
-        await renderWithKey();
+        await renderWithSuggestions();
         await chooseNoun('Masculine');
         expect(suggestButton().disabled).toBe(true);
         expect(description(suggestButton())).toEqual(['Type the word and a meaning first.']);
@@ -199,7 +198,7 @@ describe('CardEditor', () => {
 
     describe('once all three fields are filled', () => {
       test('is disabled, saying why', async () => {
-        await renderWithKey();
+        await renderWithSuggestions();
         await fillSefer();
         await typeExample(1, newBook);
         await typeInto(noteField(PRODUCTION_CONTEXT), 'something you read');
@@ -208,16 +207,6 @@ describe('CardEditor', () => {
         expect(description(suggestButton())).toEqual([
           'The examples and both hints are filled. Clear one to have it suggested again.',
         ]);
-      });
-    });
-
-    describe('without a key', () => {
-      test('is not offered', async () => {
-        const requests = await renderConnectedEditor();
-        await fillSefer();
-        expect(requests.some((request) => request.path === '/api/ai/status')).toBe(true);
-        expect(screen.queryByRole('button', { name: 'Suggest' })).toBeNull();
-        expect(noteField(EXAMPLES)).toBeTruthy();
       });
     });
   });

@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { PARTS_OF_SPEECH } from '#lib/note-type.ts';
-import { AiError, type ClaudeMessages, isAiAvailable } from '#lib/server/ai/client.ts';
+import { AiError, type ClaudeMessages } from '#lib/server/ai/client.ts';
 import { lookUpHomographs } from '#lib/server/ai/homographs.ts';
 import { suggest } from '#lib/server/ai/suggest.ts';
 import { DICTIONARY_PATHS, type DictionaryPaths } from '#lib/server/dictionary/files.ts';
@@ -31,7 +31,6 @@ export async function _suggest(
   const word = body.word.trim();
   const definitions = body.definitions.map((meaning) => meaning.trim()).filter(Boolean);
   if (word === '' || definitions.length === 0) error(400, 'Type the word and a meaning first.');
-  if (!isAiAvailable()) error(503, 'Set ANTHROPIC_API_KEY to use Claude.');
 
   // Looked up here, because the editor stops looking up once an entry is picked.
   const homographs = lookUpHomographs(paths, word, body.pointed);

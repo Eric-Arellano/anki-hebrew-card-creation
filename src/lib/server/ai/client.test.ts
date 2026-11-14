@@ -1,19 +1,9 @@
 import Anthropic, { type APIError } from '@anthropic-ai/sdk';
-import { afterEach, describe, expect, type Mock, test, vi } from 'vitest';
+import { describe, expect, type Mock, test, vi } from 'vitest';
 import { z } from 'zod';
-import { AiError, askForStructured, type ClaudeMessages, isAiAvailable } from './client.ts';
+import { AiError, askForStructured, type ClaudeMessages } from './client.ts';
 
-const env = vi.hoisted(() => ({ apiKey: undefined as string | undefined }));
-
-vi.mock('$app/env/private', () => ({
-  get ANTHROPIC_API_KEY() {
-    return env.apiKey;
-  },
-}));
-
-afterEach(() => {
-  env.apiKey = undefined;
-});
+vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
 
 const request = {
   system: 'Answer with the word’s gender.',
@@ -49,17 +39,6 @@ function apiError(status: number, message: string): APIError {
     new Headers(),
   );
 }
-
-describe('isAiAvailable', () => {
-  test('is true with a key', () => {
-    env.apiKey = 'test-key';
-    expect(isAiAvailable()).toBe(true);
-  });
-
-  test('is false without one', () => {
-    expect(isAiAvailable()).toBe(false);
-  });
-});
 
 describe('askForStructured', () => {
   describe('when Claude answers', () => {
@@ -143,14 +122,6 @@ describe('askForStructured', () => {
     test('lets an error from outside the SDK through', async () => {
       const bug = new TypeError('not a function');
       await expect(askForStructured(request, failingWith(bug))).rejects.toBe(bug);
-    });
-  });
-
-  describe('without a key', () => {
-    test('rejects saying how to set one', async () => {
-      await expect(askForStructured(request)).rejects.toThrow(
-        new AiError('Set ANTHROPIC_API_KEY to use Claude.'),
-      );
     });
   });
 });
