@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
 import { anki } from '#lib/server/anki/connection.ts';
-import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/http.ts';
+import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/route-errors.ts';
 import type { RequestHandler } from './$types';
 
 // Card webviews load from the media folder, so a stored `.html` or `.svg` could run script there.

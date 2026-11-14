@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import { buildFixtureIndex } from '#tests/dictionary-index.ts';
-import type { DictionaryPaths } from './files.ts';
+import type { DictionaryPaths } from './paths.ts';
 import { DictionaryUnavailableError, lookUp, withDictionary } from './lookup.ts';
 
 let index: Awaited<ReturnType<typeof buildFixtureIndex>>;

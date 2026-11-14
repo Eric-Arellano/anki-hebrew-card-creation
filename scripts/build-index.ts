@@ -1,6 +1,6 @@
 // `npm run build-index`: indexes the dictionary the human downloaded into data/, for lookups.
 import { buildIndex } from '#lib/server/dictionary/build.ts';
-import { DICTIONARY_PATHS } from '#lib/server/dictionary/files.ts';
+import { DICTIONARY_PATHS } from '#lib/server/dictionary/paths.ts';
 
 const started = performance.now();
 const { entries, unreadableLines } = await buildIndex(DICTIONARY_PATHS);

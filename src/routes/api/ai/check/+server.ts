@@ -1,17 +1,18 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { CheckRequest } from '#lib/api/ai.ts';
 import { PARTS_OF_SPEECH } from '#lib/note-type.ts';
 import { checkNote, fieldTexts } from '#lib/server/ai/check.ts';
-import { AiError, type ClaudeMessages } from '#lib/server/ai/client.ts';
+import type { ClaudeMessages } from '#lib/server/ai/client.ts';
 import { lookUpHomographs } from '#lib/server/ai/homographs.ts';
-import { DICTIONARY_PATHS, type DictionaryPaths } from '#lib/server/dictionary/files.ts';
-import { parseJsonBody } from '#lib/server/http.ts';
+import { DICTIONARY_PATHS, type DictionaryPaths } from '#lib/server/dictionary/paths.ts';
+import { parseJsonBody, withAiErrorsAs502, withDictionaryAs503 } from '#lib/server/route-errors.ts';
 import type { RequestHandler } from './$types';
 
 const checkRequestBodySchema = z.strictObject({
   partOfSpeech: z.enum(PARTS_OF_SPEECH),
   fields: z.record(z.string(), z.string()),
-});
+}) satisfies z.ZodType<CheckRequest>;
 
 export const POST: RequestHandler = ({ request }) => _check(DICTIONARY_PATHS, request);
 
@@ -28,11 +29,6 @@ export async function _check(
   const { unpointed, pointed = '' } = fieldTexts(body.fields);
   if (unpointed === undefined) error(400, 'Type the word first.');
 
-  const homographs = lookUpHomographs(paths, unpointed, pointed);
-  try {
-    return Response.json(await checkNote(body, homographs, messages));
-  } catch (cause) {
-    if (cause instanceof AiError) error(502, cause.message);
-    throw cause;
-  }
+  const homographs = withDictionaryAs503(() => lookUpHomographs(paths, unpointed, pointed));
+  return Response.json(await withAiErrorsAs502(() => checkNote(body, homographs, messages)));
 }

@@ -65,7 +65,7 @@ export type EntryFacts = {
   // Joined with maqafs, without shin and sin dots. Those of the entry's `he-rootbox`, to which the
   // index adds others for an entry without one.
   roots: string[];
-  // `m` or `f`, with `-p` for a noun that is only plural and `-d` for one only dual.
+  // The head template's gender codes, which `nounGender` in `convert.ts` reads.
   genders: string[];
   binyanCode?: string;
   plurals: string[];

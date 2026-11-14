@@ -3,7 +3,7 @@ import { formatRoot } from '#lib/hebrew/root.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
 import { anki } from '#lib/server/anki/connection.ts';
 import { findExistingNotes } from '#lib/server/anki/existing-notes.ts';
-import { withAnkiErrorsAs502 } from '#lib/server/http.ts';
+import { withAnkiErrorsAs502 } from '#lib/server/route-errors.ts';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = ({ url }) => _findExisting(anki, url);

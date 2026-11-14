@@ -9,10 +9,6 @@ export const DICTIONARY_PATHS: DictionaryPaths = {
   index: 'data/hebrew.sqlite',
 };
 
-// Bump it whenever the index's tables or what goes in them changes, so an index built by older
-// code is refused rather than misread.
-export const INDEX_SCHEMA_VERSION = '6';
-
 /** What tells one download of the source from the next, or `undefined` while there is none. */
 export function sourceStamp(source: string): string | undefined {
   if (!existsSync(source)) return undefined;

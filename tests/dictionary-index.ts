@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildIndex } from '#lib/server/dictionary/build.ts';
-import type { DictionaryPaths } from '#lib/server/dictionary/files.ts';
+import type { DictionaryPaths } from '#lib/server/dictionary/paths.ts';
 
 export const DICTIONARY_FIXTURE = fileURLToPath(
   new URL('./fixtures/kaikki/hebrew.jsonl', import.meta.url),
