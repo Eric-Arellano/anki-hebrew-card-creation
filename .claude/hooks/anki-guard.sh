@@ -2,7 +2,8 @@
 # Guards Bash commands that reach AnkiConnect (port 8765), which talks to the human's real
 # collection. Enforces the allowlist in AGENTS.md: read-only actions pass through to the normal
 # permission flow, `storeMediaFile` prompts, and every other action is denied, `addNote` and
-# `updateNoteFields` included: only the app's buttons send them.
+# `updateNoteFields` included: only the app's buttons send them. The app's own copy of the list is
+# `src/lib/server/anki/client.ts`: change all three together.
 #
 # *Rejected: an `ask` rule on `Bash(curl *:8765*)`, because it prompted on every read-only query
 # and never covered a request sent any way other than curl.*
@@ -42,7 +43,7 @@ for action in $actions; do
     version | deckNames | modelNames | modelFieldNames | modelFieldDescriptions | modelTemplates | findNotes | retrieveMediaFile | notesInfo) ;;
     storeMediaFile) prompt_reason='AnkiConnect storeMediaFile writes a file into your Anki media folder' ;;
     addNote) decide deny 'AnkiConnect addNote adds a note, which only Add to deck in the app may do' ;;
-    updateNoteFields) decide deny 'AnkiConnect updateNoteFields edits a note, which only Save in the app may do' ;;
+    updateNoteFields) decide deny 'AnkiConnect updateNoteFields edits a note, which only Save changes in the app may do' ;;
     *) decide deny "AnkiConnect action $action is not on the allowlist in AGENTS.md" ;;
   esac
 done

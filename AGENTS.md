@@ -16,14 +16,15 @@ those two facts.
   `modelFieldNames`, `modelFieldDescriptions`, `modelTemplates`, `findNotes`, `notesInfo`,
   `retrieveMediaFile`, and `storeMediaFile` — from code and from `curl` alike — and `addNote` and
   `updateNoteFields` from the app's buttons alone, never from `curl`. Nothing here deletes a note,
-  and a note is written only when I click Add to deck or Save.
-- **Don't call `storeMediaFile`, or click Add to deck or Save in a running app, against my real
-  Anki without asking.** `storeMediaFile` writes into my media folder, Add to deck adds a note, and
-  Save edits one.
-- **Never reach a third-party site, except `api.anthropic.com`.** No module calls `fetch` on an
-  outside host; the tool only builds links I click. The one exception is Claude, reached only from
-  `src/lib/server/ai/` and only when I click a button or Save. No test reaches the network, a real
-  Anki or the real Anthropic API.
+  and a note is written only when I click Add to deck or Save changes. `server/anki/client.ts`
+  and `.claude/hooks/anki-guard.sh` enforce this list, so a change to it changes all three.
+- **Don't call `storeMediaFile`, or click Add to deck or Save changes in a running app, against my
+  real Anki without asking.** `storeMediaFile` writes into my media folder, Add to deck adds a note,
+  and Save changes edits one.
+- **The app never reaches a third-party site, except `api.anthropic.com`.** No module calls `fetch`
+  on an outside host; the tool only builds links I click. The one exception is Claude, reached only
+  from `src/lib/server/ai/` and only when I click a button, Add to deck or Save changes. No test
+  reaches the network, a real Anki or the real Anthropic API.
 - **Don't call Claude against the real API without asking**, whether by clicking in a running app
   or from a script. Every call costs money.
 - **Never download the dictionary, and never load it whole.** I put the kaikki.org JSONL in
@@ -105,7 +106,10 @@ allow:
 - `media/` is what the browser does with an attachment before it is stored.
 - `anki/` is Anki's own formats, shared by the browser and the server.
 - `api/` is the browser's calls to our routes, and the types those routes answer with.
-- `server/` is whatever reaches AnkiConnect or the disk. Nothing the browser loads imports it.
+- `server/` is whatever reaches AnkiConnect, Anthropic or the disk. Nothing the browser loads
+  imports it.
+- The top-level `src/lib/*.ts` files are pure editor copy and config with no narrower home, which
+  the server's prompts may read too (`field-help.ts`).
 - A component wires these together. Logic worth a unit test moves out into one of them.
 - `components/` is grouped by the section of the editor a component renders, with `ui/` for
   widgets no section owns. A section of one component stays beside `CardEditor`.
@@ -148,7 +152,7 @@ Our worry is not too few docs; it is docs that quietly stop being true.
 - We deeply value tests to make it easier for us to maintain and extend the tool. Whenever
   adding new functionality, you should generally add tests.
 - Keep tests fast and independent. Put the logic worth testing in pure functions, and test
-  server code through a fake AnkiConnect client and a mocked `fetch`.
+  server code through a fake AnkiConnect client, a fake `ClaudeMessages` and a mocked `fetch`.
 - Don't re-test something that already carries its own guarantee — the standard library, a
   dependency, or a leaf module with its own exhaustive tests. Test the integration point
   instead: does *this* code call it correctly and handle the edges it exposes.
