@@ -7,8 +7,8 @@ import { realNote } from '#tests/real-notes.ts';
 import { composeFields } from './compose.ts';
 import { emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
 import { draftFromNote } from './from-note.ts';
-import { handOffFields } from './hand-off.ts';
 import { type CardInputs, type CardInputsDraft, completeInputs } from './inputs.ts';
+import { noteFields } from './to-note.ts';
 
 const blankNote = Object.fromEntries(fieldNames.map((name) => [name, '']));
 
@@ -28,7 +28,7 @@ function saved(
   const { inputs, edits, media } = draftFromNote(held);
   const completed = completeInputs(change(inputs));
   if (completed === undefined) throw new Error('The loaded note is missing a required input');
-  return handOffFields({
+  return noteFields({
     composed: composeFields(completed),
     edits,
     shownFields: shownFields(completed.partOfSpeech),
@@ -42,7 +42,7 @@ function savedNew(
   edits: Partial<Record<FieldKey, string>> = {},
   media: MediaDraft = emptyCardDraft().media,
 ): Record<string, string> {
-  return handOffFields({
+  return noteFields({
     composed: composeFields(inputs),
     edits,
     shownFields: shownFields(inputs.partOfSpeech),

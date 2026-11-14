@@ -3,12 +3,11 @@ import { fireEvent, screen, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import {
-  addRequests,
+  addToDeck,
   chooseNoun,
   choosePartOfSpeech,
   fillInputs,
   fillVerb,
-  handOff,
   input,
   noteField,
   renderConnectedEditor,
@@ -27,7 +26,8 @@ describe('CardEditor', () => {
       await typeInto(input('Feminine plural, with niqqud'), 'כְּלָבוֹת');
 
       await skipImage();
-      expect(await handOff(requests)).toEqual({
+      expect(await addToDeck(requests)).toEqual({
+        allowDuplicate: false,
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'כלב',
@@ -62,7 +62,7 @@ describe('CardEditor', () => {
       await typeInto(input('Root, like דבר or ד.ב.ר'), 'כתב');
 
       await skipImage();
-      expect(await handOff(requests)).toMatchObject({ fields: { Root: 'כ־ת־ב' } });
+      expect(await addToDeck(requests)).toMatchObject({ fields: { Root: 'כ־ת־ב' } });
     });
 
     describe('of feminine gender', () => {
@@ -76,7 +76,8 @@ describe('CardEditor', () => {
         await typeInto(input('Plural, with niqqud'), 'שָׁנִים');
 
         await skipImage();
-        expect(await handOff(requests)).toEqual({
+        expect(await addToDeck(requests)).toEqual({
+          allowDuplicate: false,
           fields: {
             ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
             Hebrew: 'שנה',
@@ -101,7 +102,8 @@ describe('CardEditor', () => {
         expect(screen.queryByLabelText(/plural, with niqqud/i)).toBeNull();
 
         await skipImage();
-        expect(await handOff(requests)).toEqual({
+        expect(await addToDeck(requests)).toEqual({
+          allowDuplicate: false,
           fields: {
             ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
             Hebrew: 'מים',
@@ -154,10 +156,8 @@ describe('CardEditor', () => {
       );
 
       await skipImage();
-      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-      await screen.findByText(/Opened in Anki/);
-      expect(addRequests(requests)[0]?.body).toEqual({
+      expect(await addToDeck(requests)).toEqual({
+        allowDuplicate: false,
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'לדבר',
@@ -190,7 +190,7 @@ describe('CardEditor', () => {
         await fireEvent.click(screen.getByRole('radio', { name: 'עם' }));
 
         await skipImage();
-        expect(await handOff(requests)).toMatchObject({ fields: { Root: '' } });
+        expect(await addToDeck(requests)).toMatchObject({ fields: { Root: '' } });
       });
     });
 
@@ -224,7 +224,8 @@ describe('CardEditor', () => {
       await typeInto(input('Feminine plural, with niqqud'), 'גְּדוֹלוֹת');
 
       await skipImage();
-      expect(await handOff(requests)).toEqual({
+      expect(await addToDeck(requests)).toEqual({
+        allowDuplicate: false,
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'גדול',
@@ -244,7 +245,7 @@ describe('CardEditor', () => {
       await typeInto(input('Root, like דבר or ד.ב.ר'), 'גדל');
 
       await skipImage();
-      expect(await handOff(requests)).toMatchObject({ fields: { Root: 'ג־ד־ל' } });
+      expect(await addToDeck(requests)).toMatchObject({ fields: { Root: 'ג־ד־ל' } });
     });
 
     describe('with a root that is not only letters', () => {
@@ -285,7 +286,8 @@ describe('CardEditor', () => {
       expect(screen.queryByText('Unusual variants')).toBeNull();
 
       await skipImage();
-      expect(await handOff(requests)).toEqual({
+      expect(await addToDeck(requests)).toEqual({
+        allowDuplicate: false,
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'מהר',
@@ -306,7 +308,7 @@ describe('CardEditor', () => {
         await choosePartOfSpeech('Adverb');
 
         await skipImage();
-        expect(await handOff(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
+        expect(await addToDeck(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
       });
     });
   });
@@ -321,7 +323,8 @@ describe('CardEditor', () => {
       await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'אִתִּי');
 
       await skipImage();
-      expect(await handOff(requests)).toEqual({
+      expect(await addToDeck(requests)).toEqual({
+        allowDuplicate: false,
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'עם',
@@ -342,7 +345,7 @@ describe('CardEditor', () => {
       await choosePartOfSpeech('Preposition');
 
       await skipImage();
-      expect(await handOff(requests)).toMatchObject({
+      expect(await addToDeck(requests)).toMatchObject({
         fields: { Hebrew: 'חוץ מ־', 'Production answer': 'חוץ מ', 'Part of speech': 'preposition' },
       });
     });
@@ -358,7 +361,8 @@ describe('CardEditor', () => {
       await typeInto(noteField('Variant 1: Hebrew answer, with niqqud'), 'בְּרוּכָה הַבָּאָה');
 
       await skipImage();
-      expect(await handOff(requests)).toEqual({
+      expect(await addToDeck(requests)).toEqual({
+        allowDuplicate: false,
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'ברוך הבא',

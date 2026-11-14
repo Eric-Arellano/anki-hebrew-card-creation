@@ -5,8 +5,8 @@ import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { loadedNote } from '#tests/real-notes.ts';
 import {
+  addToDeck,
   choosePartOfSpeech,
-  handOff,
   input,
   renderConnectedEditor,
   type ServerRequest,
@@ -91,7 +91,8 @@ describe('CardEditor', () => {
         'scoundrel',
       );
       await skipImage();
-      expect(await handOff(requests)).toEqual({
+      expect(await addToDeck(requests)).toEqual({
+        allowDuplicate: false,
         fields: {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'כלב',

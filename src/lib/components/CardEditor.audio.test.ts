@@ -3,8 +3,8 @@ import { fireEvent, screen, within } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
 import {
+  addToDeck,
   fillDag,
-  handOff,
   mediaRequests,
   noteField,
   renderConnectedEditor,
@@ -117,16 +117,16 @@ describe('CardEditor', () => {
       expect(screen.queryByText(NO_LISTENING_CARD)).toBeNull();
     });
 
-    test('still hands off, with Audio blank', async () => {
+    test('still adds, with Audio blank', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await skipImage();
-      expect(await handOff(requests)).toMatchObject({ fields: { Audio: '' } });
+      expect(await addToDeck(requests)).toMatchObject({ fields: { Audio: '' } });
     });
   });
 
   describe('removing the audio', () => {
-    test('drops it from the hand-off and frees the player', async () => {
+    test('drops it from the note and frees the player', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await skipImage();
@@ -134,12 +134,12 @@ describe('CardEditor', () => {
       await fireEvent.click(screen.getByRole('button', { name: 'Remove audio' }));
       expect(player()).toBeNull();
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:recording');
-      expect(await handOff(requests)).toMatchObject({ fields: { Audio: '' } });
+      expect(await addToDeck(requests)).toMatchObject({ fields: { Audio: '' } });
       expect(mediaRequests(requests)).toEqual([]);
     });
   });
 
-  describe('handing off with audio', () => {
+  describe('adding with audio', () => {
     test('stores its bytes unchanged, then fills Audio with the name Anki used', async () => {
       const stored = 'pronunciation_he_דג-adf6a331.mp3';
       const requests = await renderConnectedEditor({
@@ -149,7 +149,7 @@ describe('CardEditor', () => {
       await skipImage();
       await drop([mp3]);
 
-      expect(await handOff(requests)).toMatchObject({ fields: { Audio: `[sound:${stored}]` } });
+      expect(await addToDeck(requests)).toMatchObject({ fields: { Audio: `[sound:${stored}]` } });
       expect(mediaRequests(requests)).toEqual([
         {
           method: 'POST',

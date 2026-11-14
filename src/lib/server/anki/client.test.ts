@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { AnkiError, createAnkiClient } from './client.ts';
+import { AnkiError, AnkiRefusal, createAnkiClient } from './client.ts';
 
 const ANKI_URL = 'http://127.0.0.1:8765';
 
@@ -35,15 +35,14 @@ describe('createAnkiClient', () => {
 
     test('rejects with what AnkiConnect said when it refuses', async () => {
       stubFetchReplyingWith({ result: null, error: 'model was not found: No such note type' });
-      await expect(
-        createAnkiClient(ANKI_URL)('modelFieldNames', {
-          modelName: 'No such note type',
-        }),
-      ).rejects.toThrow(
-        new AnkiError(
-          'AnkiConnect refused modelFieldNames: model was not found: No such note type',
-        ),
-      );
+      const refusal = await createAnkiClient(ANKI_URL)('modelFieldNames', {
+        modelName: 'No such note type',
+      }).catch((error: unknown) => error);
+      expect(refusal).toBeInstanceOf(AnkiRefusal);
+      expect(refusal).toMatchObject({
+        message: 'AnkiConnect refused modelFieldNames: model was not found: No such note type',
+        reason: 'model was not found: No such note type',
+      });
     });
 
     test('rejects a result of the wrong shape', async () => {

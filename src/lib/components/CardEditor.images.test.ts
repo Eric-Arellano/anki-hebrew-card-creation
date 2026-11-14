@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
 import {
   addRequests,
+  addToDeck,
   choosePartOfSpeech,
   fillDag,
-  handOff,
   input,
   mediaRequests,
   noteField,
@@ -171,13 +171,13 @@ describe('CardEditor', () => {
       return requests;
     }
 
-    function openButton() {
-      return screen.getByRole('button', { name: 'Open in Anki' }) as HTMLButtonElement;
+    function addButton() {
+      return screen.getByRole('button', { name: 'Add to deck' }) as HTMLButtonElement;
     }
 
-    test('blocks the hand-off and says an image is still needed', async () => {
+    test('blocks adding and says an image is still needed', async () => {
       await renderFilledEditor();
-      expect(openButton().disabled).toBe(true);
+      expect(addButton().disabled).toBe(true);
       expect(screen.getByText('Still needed: image')).toBeTruthy();
     });
 
@@ -191,20 +191,20 @@ describe('CardEditor', () => {
       ).toBeTruthy();
     });
 
-    test('hands off once the human says the word has none', async () => {
+    test('adds once the human says the word has none', async () => {
       const requests = await renderFilledEditor();
       await skipImage();
       expect(screen.queryByText(/Still needed/)).toBeNull();
-      expect(await handOff(requests)).toMatchObject({ fields: { Images: '' } });
+      expect(await addToDeck(requests)).toMatchObject({ fields: { Images: '' } });
     });
 
-    test('hands off once an image is attached, and drops the checkbox', async () => {
+    test('adds once an image is attached, and drops the checkbox', async () => {
       const requests = await renderFilledEditor();
       await pasteImage();
       await screen.findByRole('img');
       expect(screen.queryByRole('checkbox', { name: 'No image for this word' })).toBeNull();
-      expect(openButton().disabled).toBe(false);
-      await handOff(requests);
+      expect(addButton().disabled).toBe(false);
+      await addToDeck(requests);
       expect(mediaRequests(requests)).toHaveLength(1);
     });
 
@@ -220,7 +220,7 @@ describe('CardEditor', () => {
   });
 
   describe('removing an image', () => {
-    test('drops it from the hand-off and frees its preview', async () => {
+    test('drops it from the note and frees its preview', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await pasteImage();
@@ -231,12 +231,12 @@ describe('CardEditor', () => {
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
 
       await skipImage();
-      expect(await handOff(requests)).toMatchObject({ fields: { Images: '' } });
+      expect(await addToDeck(requests)).toMatchObject({ fields: { Images: '' } });
       expect(mediaRequests(requests)).toEqual([]);
     });
   });
 
-  describe('handing off with an image', () => {
+  describe('adding with an image', () => {
     test('stores it, then fills Images with the name Anki used', async () => {
       const stored = 'paste-2ee409c9-1.jpg';
       const requests = await renderConnectedEditor({
@@ -247,7 +247,7 @@ describe('CardEditor', () => {
       await screen.findByRole('img');
 
       expect(mediaRequests(requests)).toEqual([]);
-      expect(await handOff(requests)).toMatchObject({
+      expect(await addToDeck(requests)).toMatchObject({
         fields: { Images: `<div><img src="${stored}"></div>` },
       });
       expect(mediaRequests(requests)).toEqual([
@@ -257,11 +257,11 @@ describe('CardEditor', () => {
           body: { filename: FILENAME, data: BASE64 },
         },
       ]);
-      expect(requests.at(-1)?.path).toBe('/api/anki/add');
+      expect(requests.at(-1)?.path).toBe('/api/anki/notes');
     });
 
     describe('when storing fails', () => {
-      test('says so and never opens the Add window', async () => {
+      test('says so and never adds the note', async () => {
         const requests = await renderConnectedEditor({
           storeMedia: () =>
             Response.json({ message: 'collection is not available' }, { status: 502 }),
@@ -270,11 +270,10 @@ describe('CardEditor', () => {
         await pasteImage();
         await screen.findByRole('img');
 
-        await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-        await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
         await waitFor(() =>
           expect(screen.getByRole('alert').textContent).toBe(
-            'Add window not opened: storing media failed. collection is not available',
+            'Not saved: storing media failed. collection is not available',
           ),
         );
         expect(addRequests(requests)).toEqual([]);
@@ -345,7 +344,7 @@ describe('CardEditor', () => {
       });
     });
 
-    describe('handing off', () => {
+    describe('adding', () => {
       test('stores it, then puts it after the prompt under the name Anki used', async () => {
         const stored = 'paste-2ee409c9-1.jpg';
         const requests = await renderConnectedEditor({
@@ -358,7 +357,7 @@ describe('CardEditor', () => {
         await pasteImage();
         await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
 
-        expect(await handOff(requests)).toMatchObject({
+        expect(await addToDeck(requests)).toMatchObject({
           fields: { 'Variant 1 prompt': `female fish<div><img src="${stored}"></div>` },
         });
         expect(mediaRequests(requests)).toEqual([
@@ -375,7 +374,7 @@ describe('CardEditor', () => {
           await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
 
           await choosePartOfSpeech('Adverb');
-          expect(await handOff(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
+          expect(await addToDeck(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
           expect(mediaRequests(requests)).toEqual([]);
         });
 

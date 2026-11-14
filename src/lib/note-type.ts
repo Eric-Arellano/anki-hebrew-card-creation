@@ -159,7 +159,7 @@ const FIELD_KEYS = Object.keys(FIELDS) as FieldKey[];
 
 export const FIELD_NAMES: readonly string[] = FIELD_KEYS.map((key) => FIELDS[key].name);
 
-/** Every field, keyed by its Anki name as `guiAddCards` takes it, blank where `valueFor` has none. */
+/** Every field, keyed by its Anki name as `addNote` takes it, blank where `valueFor` has none. */
 export function toAnkiFields(
   valueFor: (key: FieldKey) => string | undefined,
 ): Record<string, string> {

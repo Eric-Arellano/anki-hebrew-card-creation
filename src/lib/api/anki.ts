@@ -1,7 +1,7 @@
 // Our `/api/anki/` endpoints: what each answers, and the browser's one way to call each. The reply
 // types live here rather than beside the server code that builds them, so the browser never
 // imports from `#lib/server/`.
-import { getJson, postJson, postJsonForReply } from '#lib/api/http.ts';
+import { getJson, postJsonForReply } from '#lib/api/http.ts';
 
 export type FieldDrift = { missingFromAnki: string[]; unexpectedInAnki: string[] };
 
@@ -65,6 +65,18 @@ export function saveNote(held: LoadedNote, fields: Record<string, string>): Prom
   return postJsonForReply(`/api/anki/notes/${held.noteId}`, { fields, mod: held.mod });
 }
 
+/**
+ * Adds a note with `fields`, keyed by Anki field name, and answers with it as Anki holds it. A
+ * `RouteError` with status 409 means Anki holds a note with the same `Hebrew`, which only
+ * `allowDuplicate` lets through.
+ */
+export function addNote(
+  fields: Record<string, string>,
+  { allowDuplicate }: { allowDuplicate: boolean },
+): Promise<LoadedNote> {
+  return postJsonForReply('/api/anki/notes', { fields, allowDuplicate });
+}
+
 function toBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -87,9 +99,4 @@ export async function storeMedia(filename: string, blob: Blob): Promise<string> 
 /** Where the browser reads a file already in Anki's media folder. */
 export function storedMediaUrl(filename: string): string {
   return `/api/anki/media/${encodeURIComponent(filename)}`;
-}
-
-/** Opens Anki's Add window, pre-filled with `fields`, keyed by Anki field name. */
-export function openAddWindow(fields: Record<string, string>): Promise<void> {
-  return postJson('/api/anki/add', { fields });
 }

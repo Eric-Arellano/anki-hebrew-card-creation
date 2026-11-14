@@ -1,7 +1,9 @@
+import { error } from '@sveltejs/kit';
 import { searchByNoteIds, searchByNoteType } from '#lib/anki/search.ts';
 import type { LoadedNote } from '#lib/api/anki.ts';
-import { NOTE_TYPE } from '#lib/note-type.ts';
+import { FIELD_NAMES, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
+import { withAnkiErrorsAs502 } from '#lib/server/http.ts';
 
 /** The note of our note type with `noteId`, or `undefined` when Anki has none. */
 export async function readNote(anki: AnkiClient, noteId: number): Promise<LoadedNote | undefined> {
@@ -20,4 +22,17 @@ export async function readNote(anki: AnkiClient, noteId: number): Promise<Loaded
       Object.entries(note.fields).map(([name, { value }]) => [name, value]),
     ),
   };
+}
+
+/** The note `readNote` finds, else a 404, or a 502 when Anki fails. */
+export async function readNoteOr404(anki: AnkiClient, noteId: number): Promise<LoadedNote> {
+  const note = await withAnkiErrorsAs502(() => readNote(anki, noteId));
+  if (note === undefined) error(404, `Anki has no Hebrew note ${noteId}. Was it deleted?`);
+  return note;
+}
+
+/** A 400 when `fields` names a field the note type doesn't have. */
+export function refuseUnknownFields(fields: Record<string, string>): void {
+  const unknownFieldNames = Object.keys(fields).filter((name) => !FIELD_NAMES.includes(name));
+  if (unknownFieldNames.length > 0) error(400, `Unknown fields: ${unknownFieldNames.join(', ')}`);
 }

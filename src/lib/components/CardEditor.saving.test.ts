@@ -112,7 +112,7 @@ describe('CardEditor', () => {
         await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
         await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
 
-        const bar = screen.getByRole('region', { name: 'Hand-off' });
+        const bar = screen.getByRole('region', { name: 'Save' });
         expect((await within(bar).findByRole('alert')).textContent).toContain(
           'The note changed in Anki since it loaded here.',
         );
