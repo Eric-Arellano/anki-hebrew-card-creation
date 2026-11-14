@@ -29,7 +29,7 @@ export function toComparisonKey(text: string): string {
 }
 
 // Without the global flag, whose `lastIndex` would carry over from one `test` to the next.
-const POINT_OR_CANTILLATION = new RegExp(POINTS_AND_CANTILLATION.source);
+export const POINT_OR_CANTILLATION = new RegExp(POINTS_AND_CANTILLATION.source);
 
 export function hasNiqqud(text: string): boolean {
   return POINT_OR_CANTILLATION.test(text);

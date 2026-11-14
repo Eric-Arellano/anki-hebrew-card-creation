@@ -6,7 +6,7 @@ import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with
 import { realNote } from '#tests/real-notes.ts';
 import { composeFields } from './compose.ts';
 import { emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
-import { examplesToAnkiFieldHtml } from './examples.ts';
+import { examplesToAnkiFieldHtml, wordUsage } from './examples.ts';
 import { draftFromNote } from './from-note.ts';
 import { type CardInputs, type CardInputsDraft, completeInputs } from './inputs.ts';
 import { noteFields } from './to-note.ts';
@@ -21,16 +21,23 @@ function stored(filename: string) {
   return { kind: 'stored', filename } as const;
 }
 
-/** Every field the editor would save for `held` once loaded, with `change` made to its inputs. */
+/**
+ * Every field the editor would save for `held` once loaded, with `change` made to its inputs.
+ * `Examples` is composed as `CardEditor`'s `ankiFields` composes it, so a change there goes here.
+ */
 function saved(
   held: Record<string, string>,
   change: (inputs: CardInputsDraft) => CardInputsDraft = (inputs) => inputs,
 ): Record<string, string> {
   const { inputs, edits, examples, media } = draftFromNote(held);
-  const completed = completeInputs(change(inputs));
+  const changed = change(inputs);
+  const completed = completeInputs(changed);
   if (completed === undefined) throw new Error('The loaded note is missing a required input');
   return noteFields({
-    composed: { ...composeFields(completed), examples: examplesToAnkiFieldHtml(examples) },
+    composed: {
+      ...composeFields(completed),
+      examples: examplesToAnkiFieldHtml(examples, wordUsage(changed, edits.forms ?? '')),
+    },
     edits,
     shownFields: shownFields(completed.partOfSpeech),
     media,
@@ -150,7 +157,7 @@ describe('draftFromNote', () => {
   });
 
   describe('for a real note with an example in another format, finished as a noun', () => {
-    test('wraps the line whole, so the review shows the change', () => {
+    test('wraps the line whole and bolds the word, so the review shows the change', () => {
       const held = realNote('כרטיס');
       const finished = saved(held, (inputs) => ({
         ...inputs,
@@ -159,7 +166,7 @@ describe('draftFromNote', () => {
         noun: { ...inputs.noun, gender: 'm' },
       }));
       expect(changedFields(held, finished)).toMatchObject({
-        Examples: '<bdi lang="he">כרטיס רכבת (train ticket)</bdi>',
+        Examples: '<bdi lang="he"><b>כרטיס</b> רכבת (train ticket)</bdi>',
       });
     });
   });

@@ -6,8 +6,13 @@
 // Hebrew would jump to the far side of its sentence. The note type's styling puts the English on
 // its own line under the Hebrew and hides `.sep`, which is there for where that styling doesn't
 // reach, like the Browse table, so the two sentences don't run together.
+//
+// The word is bolded in the Hebrew wherever `examplesWithoutWord` would find it, so the warning
+// and the bold can't disagree.
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
+import { formatRoot } from '#lib/hebrew/root.ts';
+import { usageRanges, type WordUsage } from '#lib/hebrew/usage.ts';
 
 // Each part is plain text, as a meaning is, not HTML.
 export type Example = { hebrew: string; english: string };
@@ -22,22 +27,32 @@ export function isBlankExample({ hebrew, english }: Example): boolean {
 
 const SEPARATOR = '<span class="sep"> — </span>';
 
-function exampleHtml({ hebrew, english }: Example): string {
+function boldedHtml(text: string, word: WordUsage): string {
+  const ranges = usageRanges(text, word);
+  const pieces = ranges.flatMap(({ start, end }, index) => [
+    textToAnkiFieldHtml(text.slice(ranges[index - 1]?.end ?? 0, start)),
+    `<b>${textToAnkiFieldHtml(text.slice(start, end))}</b>`,
+  ]);
+  return [...pieces, textToAnkiFieldHtml(text.slice(ranges.at(-1)?.end ?? 0))].join('');
+}
+
+function exampleHtml({ hebrew, english }: Example, word: WordUsage): string {
   const he =
-    hebrew.trim() === '' ? [] : [`<bdi lang="he">${textToAnkiFieldHtml(hebrew.trim())}</bdi>`];
+    hebrew.trim() === '' ? [] : [`<bdi lang="he">${boldedHtml(hebrew.trim(), word)}</bdi>`];
   const en =
     english.trim() === '' ? [] : [`<span lang="en">${textToAnkiFieldHtml(english.trim())}</span>`];
   return [...he, ...en].join(SEPARATOR);
 }
 
-export function examplesToAnkiFieldHtml(examples: readonly Example[]): string {
+export function examplesToAnkiFieldHtml(examples: readonly Example[], word: WordUsage): string {
   return examples
     .filter((example) => !isBlankExample(example))
-    .map(exampleHtml)
+    .map((example) => exampleHtml(example, word))
     .join('<br>');
 }
 
-// The Hebrew may hold markup inside its `<bdi>`; the English, escaped, holds none.
+// The Hebrew may hold markup inside its `<bdi>`, like the `<b>` around the word, which reading
+// drops and the next save puts back; the English, escaped, holds none.
 const COMPOSED_LINE = new RegExp(
   '^(?:<bdi lang="he">((?:(?!</bdi>).)*)</bdi>' +
     `(?:${SEPARATOR}<span lang="en">([^<]*)</span>)?` +
@@ -116,4 +131,20 @@ export function labeledForms(inputs: CardInputsDraft, formsField: string): Label
   return allLabeledForms(inputs, formsField)
     .map(({ label, form }) => ({ label, form: form.trim() }))
     .filter(({ form }) => form !== '');
+}
+
+/**
+ * The forms an example may use the word by: the word itself, pointed or not, its other forms, and
+ * a verb's root, since a verb's forms are for “he” while an example may conjugate it any way:
+ * `דיברתי` for `לְדַבֵּר`.
+ */
+export function wordUsage(inputs: CardInputsDraft, formsField: string): WordUsage {
+  return {
+    forms: [
+      inputs.word,
+      inputs.pointed,
+      ...labeledForms(inputs, formsField).map(({ form }) => form),
+    ],
+    root: inputs.partOfSpeech === 'verb' ? formatRoot(inputs.root) : undefined,
+  };
 }
