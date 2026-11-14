@@ -79,6 +79,11 @@ const pageTitle = `${editedWord === undefined ? 'New word' : `Editing ${editedWo
 let held: LoadedNote | undefined = $state.raw(untrack(() => note));
 // A state proxy never writes back to `start`, so it stays what the editor began with.
 let draft: CardDraft = $state(start);
+// The draft as Anki last held it, which changes are marked against: `start`, then as each save
+// left it, so the markers clear after a save.
+let baseline: CardDraft = $state.raw(start);
+// Only while there is a note in Anki to differ from.
+const marked = $derived(held === undefined ? undefined : baseline);
 // The dictionary entry the inputs were last filled from, until the human types another word. The
 // inputs from before, and the word the entry filled in, are what undo it.
 let picked:
@@ -142,7 +147,7 @@ const sameMeaningSearch = $derived(
           ),
       ),
 );
-const replacesDraft = $derived(changedBeyondWord(start, draft));
+const replacesDraft = $derived(changedBeyondWord(baseline, draft));
 const suggestBlocker = $derived.by(() => {
   if (draft.inputs.word.trim() === '' || meanings.length === 0) {
     return 'Type the word and a meaning first.';
@@ -200,6 +205,11 @@ function ankiFields(storedAs: ReadonlyMap<string, string>) {
   });
 }
 
+function saved(note: LoadedNote) {
+  held = note;
+  baseline = $state.snapshot(draft);
+}
+
 async function loadAgain() {
   if (held !== undefined) onopennote?.(await fetchNote(held.noteId));
 }
@@ -243,6 +253,7 @@ onMount(checkAnki);
         lang="he"
         takesFocus={note === undefined}
         choices={choices.word}
+        held={marked?.inputs.word}
         bind:value={draft.inputs.word}
         oninput={retype}
       />
@@ -276,6 +287,7 @@ onMount(checkAnki);
     {/snippet}
     <WordForms
       bind:inputs={draft.inputs}
+      held={marked?.inputs}
       {choices}
       {unoffered}
       candidate={picked?.candidate}
@@ -330,6 +342,7 @@ onMount(checkAnki);
       {fields}
       {partOfSpeech}
       edits={draft.edits}
+      held={marked?.edits}
       word={draft.inputs.word.trim()}
       bind:examples={draft.examples}
       examplesWithoutWord={examplesWithoutWord({
@@ -379,7 +392,7 @@ onMount(checkAnki);
     fieldsWith={ankiFields}
     {onnextcard}
     {held}
-    onsaved={(saved) => (held = saved)}
+    onsaved={saved}
     onloadagain={loadAgain}
     ankiBlocker={ankiStatus === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={stillNeededMessage}

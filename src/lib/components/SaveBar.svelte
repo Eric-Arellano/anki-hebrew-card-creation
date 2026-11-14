@@ -188,11 +188,14 @@ function focus(element: HTMLElement) {
         {#each Object.entries(changes) as [name, after] (name)}
           <div>
             <dt class="font-medium">{name}</dt>
-            <dd>
+            <dd class="rounded bg-red-950/40 px-2 py-1">
               <span class="text-neutral-400">Before:</span>
               {@render fieldHtml(held.fields[name] ?? '')}
             </dd>
-            <dd><span class="text-neutral-400">After:</span> {@render fieldHtml(after)}</dd>
+            <dd class="mt-1 rounded bg-green-950/40 px-2 py-1">
+              <span class="text-neutral-400">After:</span>
+              {@render fieldHtml(after)}
+            </dd>
           </div>
         {/each}
       </dl>
@@ -253,6 +256,8 @@ function focus(element: HTMLElement) {
       <p class="text-neutral-400">{inputsBlocker}</p>
     {:else if blocker === NOTHING_CHANGED}
       <p class="text-neutral-400">{NOTHING_CHANGED}</p>
+    {:else if held !== undefined && Object.keys(changes).length > 0}
+      <p class="text-neutral-400">Will change: {Object.keys(changes).join(', ')}</p>
     {/if}
   {/if}
 </section>

@@ -19,6 +19,8 @@ const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label
 let {
   verb = $bindable(),
   root = $bindable(),
+  held,
+  heldRoot,
   choices,
   suggestedPrepositions,
   unoffered,
@@ -26,6 +28,9 @@ let {
 }: {
   verb: VerbDraft;
   root: string;
+  // What Anki holds, while editing a note.
+  held: VerbDraft | undefined;
+  heldRoot: string | undefined;
   choices: PrefillChoices;
   // From the dictionary, which names one for few verbs.
   suggestedPrepositions: readonly GovernedPreposition[];
@@ -66,6 +71,7 @@ function setBinyan(value: Binyan | '') {
       lang="he"
       required={false}
       choices={choices.past}
+      held={held?.past}
       bind:value={verb.past}
     />
     <TextInput
@@ -73,6 +79,7 @@ function setBinyan(value: Binyan | '') {
       lang="he"
       required={false}
       choices={choices.present}
+      held={held?.present}
       bind:value={verb.present}
     />
     <TextInput
@@ -80,6 +87,7 @@ function setBinyan(value: Binyan | '') {
       lang="he"
       required={false}
       choices={choices.future}
+      held={held?.future}
       bind:value={verb.future}
     />
     <div class="grid content-start gap-1">
@@ -110,6 +118,6 @@ function setBinyan(value: Binyan | '') {
         <UnofferedValue id={binyanErrorId} value={shownUnofferedBinyan} />
       {/if}
     </div>
-    <RootInput choices={choices.root} bind:root />
+    <RootInput choices={choices.root} held={heldRoot} bind:root />
   </div>
 </fieldset>

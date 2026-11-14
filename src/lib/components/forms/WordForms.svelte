@@ -36,6 +36,7 @@ const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
 
 let {
   inputs = $bindable(),
+  held,
   choices,
   unoffered,
   candidate,
@@ -44,6 +45,8 @@ let {
   onedit,
 }: {
   inputs: CardInputsDraft;
+  // What Anki holds, while editing a note, so each change from it is marked.
+  held: CardInputsDraft | undefined;
   choices: PrefillChoices;
   // What a loaded note holds for a chip that no chip offers.
   unoffered: UnofferedValues;
@@ -89,6 +92,7 @@ function chooseInfinitive(pointed: string) {
         lang="he"
         choices={choices.pointed ?? choices.infinitives?.map((infinitive) => infinitive.pointed)}
         onchoose={choices.infinitives === undefined ? undefined : chooseInfinitive}
+        held={held?.pointed}
         bind:value={inputs.pointed}
       />
       {#if misspellsWord}
@@ -99,7 +103,14 @@ function chooseInfinitive(pointed: string) {
     </div>
   {/snippet}
   {#if inputs.partOfSpeech === 'noun'}
-    <NounInputs bind:noun={inputs.noun} bind:root={inputs.root} {choices} {unoffered}>
+    <NounInputs
+      bind:noun={inputs.noun}
+      bind:root={inputs.root}
+      held={held?.noun}
+      heldRoot={held?.root}
+      {choices}
+      {unoffered}
+    >
       {@render pointedInput()}
     </NounInputs>
     <PluralHints noun={inputs.noun} pointed={inputs.pointed} {edits} {shownFields} onuse={onedit} />
@@ -107,6 +118,8 @@ function chooseInfinitive(pointed: string) {
     <VerbInputs
       bind:verb={inputs.verb}
       bind:root={inputs.root}
+      held={held?.verb}
+      heldRoot={held?.root}
       {choices}
       suggestedPrepositions={candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : []}
       {unoffered}
@@ -114,7 +127,13 @@ function chooseInfinitive(pointed: string) {
       {@render pointedInput()}
     </VerbInputs>
   {:else if inputs.partOfSpeech === 'adjective'}
-    <AdjectiveInputs bind:adjective={inputs.adjective} bind:root={inputs.root} {choices}>
+    <AdjectiveInputs
+      bind:adjective={inputs.adjective}
+      bind:root={inputs.root}
+      held={held?.adjective}
+      heldRoot={held?.root}
+      {choices}
+    >
       {@render pointedInput()}
     </AdjectiveInputs>
   {:else}
