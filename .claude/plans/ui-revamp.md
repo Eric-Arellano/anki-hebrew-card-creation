@@ -60,19 +60,12 @@ description. `fields/NoteFields.svelte` takes one group's `fields`, rendered thr
 `WordForms`. `FIELD_GROUPS` in `src/lib/note-type.ts` is `Grammar`, `Hints and examples`,
 `Unusual variants`, `Notes`, a UI grouping only. Since a Section is labelled by its heading, the
 Notes section and the Notes textarea share an accessible name, so the test harness's `noteField`
-looks only at textareas and fieldsets.
+looks only at textareas and fieldsets. **Suggest with Claude** is the Hints and examples
+section's `actions`, in violet like the Suggested badge, with its status line under it.
 
 ## PRs (a stack on `ui-revamp`; ask before pushing)
 
-### PR 1: Claude's section header
-
-- `fields/SuggestButton.svelte` moves from the top of the "Hints and examples" body into that
-  Section's `actions` as **Suggest with Claude**, with a violet accent that matches the badge.
-  Its idle line says what it fills ("Drafts the blank hints and examples. Each stays marked
-  Suggested until you edit it.") and keeps the blocker and error states it has now.
-- Tests: update the button name in `CardEditor.suggest.test.ts` and `CardEditor.check.test.ts`.
-
-### PR 2: links beside what they feed
+### PR 1: links beside what they feed
 
 - `media/AudioInput.svelte`: a Forvo `LinkChip` in its header, from its `word` prop. Drop "or
   download it from Forvo" from the hint.
@@ -91,7 +84,7 @@ looks only at textareas and fieldsets.
   `CardEditor.dictionary.test.ts` become "link X inside region Y". Keep the blank-input tooltip
   tests.
 
-### PR 3: edit-mode framing
+### PR 2: edit-mode framing
 
 - The header states the mode. New mode shows "New word". Edit mode shows "Editing כֶּלֶב" with a
   "Start a new word" button, which replaces the blue banner. `<title>` follows the mode in
@@ -109,7 +102,7 @@ looks only at textareas and fieldsets.
 - Tests: update the copy in `CardEditor.dictionary.test.ts` and `CardEditor.test.ts`. Add tests
   for the legacy notice, `details` open or closed by note type, and focus by mode.
 
-### PR 4: change markers against what Anki holds
+### PR 3: change markers against what Anki holds
 
 - `CardEditor`: a `baseline: CardDraft` state. It starts as `start`, and is set to
   `$state.snapshot(draft)` in `onsaved`, so markers clear after a save, including the first save
@@ -138,7 +131,7 @@ looks only at textareas and fieldsets.
 - `SaveBar.svelte`: in edit mode, show the `changes` it already computes as a live "Will change:
   Forms, Examples" line. In review, show before and after on red-50 and green-50 grounds. They
   still show raw HTML, keeping the existing reason for that.
-- This PR may split into 4a (baseline, TextInput, textareas and the SaveBar line) and 4b (chips,
+- This PR may split into 3a (baseline, TextInput, textareas and the SaveBar line) and 3b (chips,
   definitions, examples and media) if it gets large.
 - Tests:
   - A loaded note's changed plural shows "Was" with its old value, and Restore puts it back.

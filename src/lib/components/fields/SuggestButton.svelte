@@ -81,10 +81,11 @@ async function ask() {
 }
 </script>
 
-<div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-gray-100 pt-4">
+<!-- In its section's header, so the status line stacks under the button, kept narrow. -->
+<div class="flex max-w-sm flex-col items-start gap-1 sm:items-end">
   <button
     type="button"
-    class="inline-flex items-center gap-2"
+    class="inline-flex items-center gap-2 border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
     disabled={blocker !== undefined || asking.kind === 'asking'}
     aria-busy={asking.kind === 'asking'}
     aria-describedby="suggest-status"
@@ -92,13 +93,13 @@ async function ask() {
   >
     {#if asking.kind === 'asking'}
       <span
-        class="size-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-700"
+        class="size-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-700"
         aria-hidden="true"
       ></span>
     {/if}
-    Suggest
+    Suggest with Claude
   </button>
-  <p id="suggest-status" class="hint" aria-live="polite">
+  <p id="suggest-status" class="hint sm:text-right" aria-live="polite">
     {#if blocker !== undefined}
       {blocker}
     {:else if asking.kind === 'asking'}
@@ -108,7 +109,7 @@ async function ask() {
     {:else if asking.kind === 'answered'}
       {asking.message}
     {:else}
-      Claude fills in the blank Examples and hints from the word and its meanings.
+      Drafts the blank hints and examples. Each stays marked Suggested until you edit it.
     {/if}
   </p>
 </div>

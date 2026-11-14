@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, screen, waitFor, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import type { Suggestions } from '#lib/api/ai.ts';
 import {
@@ -32,7 +32,7 @@ const PRODUCTION_CONTEXT = 'Hint for recalling the Hebrew from its English meani
 const READING_CONTEXT = 'Hint for reading the Hebrew without niqqud';
 
 function suggestButton() {
-  return screen.getByRole('button', { name: 'Suggest' }) as HTMLButtonElement;
+  return screen.getByRole('button', { name: 'Suggest with Claude' }) as HTMLButtonElement;
 }
 
 function suggestRequests(requests: ServerRequest[]) {
@@ -83,6 +83,15 @@ function heldReply() {
 
 describe('CardEditor', () => {
   describe('suggesting', () => {
+    test('is offered in the section it fills', async () => {
+      await renderWithSuggestions();
+      await fillSefer();
+      const section = screen.getByRole('region', { name: 'Hints and examples' });
+      expect(within(section).getByRole('button', { name: 'Suggest with Claude' })).toBe(
+        suggestButton(),
+      );
+    });
+
     test('asks with the word, its niqqud, its part of speech, its meanings and its forms', async () => {
       const requests = await renderWithSuggestions();
       await fillSefer();

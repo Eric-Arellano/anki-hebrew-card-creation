@@ -321,26 +321,31 @@ onMount(checkAnki);
   {/snippet}
 
   {#if draft.inputs.partOfSpeech !== undefined}
+    {@const partOfSpeech = draft.inputs.partOfSpeech}
+    {#snippet suggest()}
+      <SuggestButton
+        request={{
+          word: draft.inputs.word.trim(),
+          pointed: draft.inputs.pointed.trim(),
+          partOfSpeech,
+          definitions: meanings,
+          forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
+        }}
+        blocker={suggestBlocker}
+        edits={draft.edits}
+        examples={draft.examples}
+        onedit={setEdit}
+        onexamples={(examples) => (draft.examples = examples)}
+        bind:suggested
+      />
+    {/snippet}
     {#each sectionGroups as { group, fields } (group)}
-      <Section title={group} description={GROUP_HELP[group]}>
-        {#if group === 'Hints and examples'}
-          <SuggestButton
-            request={{
-              word: draft.inputs.word.trim(),
-              pointed: draft.inputs.pointed.trim(),
-              partOfSpeech: draft.inputs.partOfSpeech,
-              definitions: meanings,
-              forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
-            }}
-            blocker={suggestBlocker}
-            edits={draft.edits}
-            examples={draft.examples}
-            onedit={setEdit}
-            onexamples={(examples) => (draft.examples = examples)}
-            bind:suggested
-          />
-        {/if}
-        {@render noteFields(fields, draft.inputs.partOfSpeech)}
+      <Section
+        title={group}
+        description={GROUP_HELP[group]}
+        actions={group === 'Hints and examples' ? suggest : undefined}
+      >
+        {@render noteFields(fields, partOfSpeech)}
       </Section>
     {/each}
   {/if}

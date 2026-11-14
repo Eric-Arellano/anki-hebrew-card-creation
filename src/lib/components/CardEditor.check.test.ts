@@ -177,7 +177,7 @@ describe('CardEditor', () => {
   describe('checking an edit', () => {
     test('shows the findings beside what will change', async () => {
       const requests = await renderWithClaude({ notes: [kelev] }, kelev);
-      await screen.findByRole('button', { name: 'Suggest' });
+      await screen.findByRole('button', { name: 'Suggest with Claude' });
       await typeInto(input('English meaning'), 'hound');
       await pressCmdEnter();
       expect(screen.getByText('Saving changes these fields in Anki:')).toBeTruthy();
@@ -200,7 +200,7 @@ describe('CardEditor', () => {
 
     test('checks a loaded note with nothing changed, saving nothing', async () => {
       const requests = await renderWithClaude({ notes: [kelev] }, kelev);
-      await screen.findByRole('button', { name: 'Suggest' });
+      await screen.findByRole('button', { name: 'Suggest with Claude' });
       expect(
         (screen.getByRole('button', { name: 'Check and save' }) as HTMLButtonElement).disabled,
       ).toBe(true);
@@ -215,7 +215,7 @@ describe('CardEditor', () => {
 
     test('asks again on each click', async () => {
       const requests = await renderWithClaude({ notes: [kelev] }, kelev);
-      await screen.findByRole('button', { name: 'Suggest' });
+      await screen.findByRole('button', { name: 'Suggest with Claude' });
       await fireEvent.click(checkOnly());
       await within(checkSection()).findByText(/should be גדול/);
       await fireEvent.click(checkOnly());
