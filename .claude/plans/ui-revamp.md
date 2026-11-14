@@ -52,32 +52,27 @@ They come in workflow order, with the sticky save bar below:
 
 Sections 4–6 still appear only once a part of speech is chosen, as they do today.
 
+The shell is in place. `ui/Section.svelte` is the card: a `title`, an optional `description`
+and an `actions` snippet that sits right of the `h2`. CardEditor renders Word, Grammar and Media
+itself, then one Section per remaining entry of `shownGroups`, with `GROUP_HELP` as its
+description. `fields/NoteFields.svelte` takes one group's `fields`, rendered through CardEditor's
+`noteFields` snippet, and the `Grammar` group's fields render inside the Grammar section under
+`WordForms`. `FIELD_GROUPS` in `src/lib/note-type.ts` is `Grammar`, `Hints and examples`,
+`Unusual variants`, `Notes`, a UI grouping only. Since a Section is labelled by its heading, the
+Notes section and the Notes textarea share an accessible name, so the test harness's `noteField`
+looks only at textareas and fieldsets.
+
 ## PRs (a stack on `ui-revamp`; ask before pushing)
 
-### PR 1: section shell and order (prefactor, no behaviour change beyond layout)
+### PR 1: Claude's section header
 
-- New `src/lib/components/ui/Section.svelte`: `<section aria-labelledby>` with an `h2`,
-  optional `description`, an `actions` snippet and children. Card styling, with a `bg-gray-50`
-  body in `src/routes/layout.css`.
-- `CardEditor.svelte`: wrap Word, Grammar (`WordForms`) and Media in Sections, in the order
-  above. Add bottom padding so the sticky bar never covers the last field.
-- `src/lib/note-type.ts` `FIELD_GROUPS` becomes `Grammar`, `Hints and examples`, `Unusual
-  variants`, `Notes`. `examples` moves to `Hints and examples` and `notes` to `Notes`. This is UI
-  grouping only, so no Anki change. Fix the group key in `GROUP_HELP` in `src/lib/field-help.ts`.
-- `fields/NoteFields.svelte` renders one group's fields and drops its own `h3` and grid. CardEditor
-  maps `shownGroups` to Sections, and renders the `Grammar` group inside the Grammar section.
-- Tests: update `note-type.test.ts` group names. Add a CardEditor test that the section headings
-  appear in order.
-
-### PR 2: Claude's section header
-
-- `fields/SuggestButton.svelte` moves into the "Hints and examples" header as **Suggest with
-  Claude**, with a violet accent that matches the badge. Its idle line says what it fills ("Drafts
-  the blank hints and examples. Each stays marked Suggested until you edit it.") and keeps the
-  blocker and error states it has now.
+- `fields/SuggestButton.svelte` moves from the top of the "Hints and examples" body into that
+  Section's `actions` as **Suggest with Claude**, with a violet accent that matches the badge.
+  Its idle line says what it fills ("Drafts the blank hints and examples. Each stays marked
+  Suggested until you edit it.") and keeps the blocker and error states it has now.
 - Tests: update the button name in `CardEditor.suggest.test.ts` and `CardEditor.check.test.ts`.
 
-### PR 3: links beside what they feed
+### PR 2: links beside what they feed
 
 - `media/AudioInput.svelte`: a Forvo `LinkChip` in its header, from its `word` prop. Drop "or
   download it from Forvo" from the hint.
@@ -88,7 +83,7 @@ Sections 4–6 still appear only once a part of speech is chosen, as they do tod
 - `word/DictionaryPanel.svelte`: takes over the Wiktionary link and its "no entry" note from
   `LookupLinks`. The link goes on the picked entry, or in the picker's heading when nothing is
   picked. `wiktionaryEntry` moves from CardEditor into the panel.
-- The Grammar section header gets the Pealim chip.
+- The Grammar section's `actions` get the Pealim chip.
 - Delete `word/LookupLinks.svelte`. In `src/lib/links.ts`, keep `LINKS` but drop the "in the order
   the editor shows them" claim, and make the image links' labels fit a "Search images" group.
   Update `PASTE_IMAGE_HELP` in `field-help.ts`.
@@ -96,7 +91,7 @@ Sections 4–6 still appear only once a part of speech is chosen, as they do tod
   `CardEditor.dictionary.test.ts` become "link X inside region Y". Keep the blank-input tooltip
   tests.
 
-### PR 4: edit-mode framing
+### PR 3: edit-mode framing
 
 - The header states the mode. New mode shows "New word". Edit mode shows "Editing כֶּלֶב" with a
   "Start a new word" button, which replaces the blue banner. `<title>` follows the mode in
@@ -114,7 +109,7 @@ Sections 4–6 still appear only once a part of speech is chosen, as they do tod
 - Tests: update the copy in `CardEditor.dictionary.test.ts` and `CardEditor.test.ts`. Add tests
   for the legacy notice, `details` open or closed by note type, and focus by mode.
 
-### PR 5: change markers against what Anki holds
+### PR 4: change markers against what Anki holds
 
 - `CardEditor`: a `baseline: CardDraft` state. It starts as `start`, and is set to
   `$state.snapshot(draft)` in `onsaved`, so markers clear after a save, including the first save
@@ -143,7 +138,7 @@ Sections 4–6 still appear only once a part of speech is chosen, as they do tod
 - `SaveBar.svelte`: in edit mode, show the `changes` it already computes as a live "Will change:
   Forms, Examples" line. In review, show before and after on red-50 and green-50 grounds. They
   still show raw HTML, keeping the existing reason for that.
-- This PR may split into 5a (baseline, TextInput, textareas and the SaveBar line) and 5b (chips,
+- This PR may split into 4a (baseline, TextInput, textareas and the SaveBar line) and 4b (chips,
   definitions, examples and media) if it gets large.
 - Tests:
   - A loaded note's changed plural shows "Was" with its old value, and Restore puts it back.
