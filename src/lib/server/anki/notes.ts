@@ -4,7 +4,7 @@ import { searchByNoteIds, searchByNoteType } from '#lib/anki/search.ts';
 import type { LoadedNote } from '#lib/api/anki.ts';
 import { FIELD_NAMES, type Field, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient, NoteInfo } from '#lib/server/anki/client.ts';
-import { withAnkiErrorsAs502 } from '#lib/server/http.ts';
+import { withAnkiErrorsAs502 } from '#lib/server/route-errors.ts';
 
 /** A field of `note` as Anki stores it, blank when the note lacks it. */
 export function fieldHtml(note: NoteInfo, field: Field): string {

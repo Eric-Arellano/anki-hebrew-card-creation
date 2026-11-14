@@ -14,7 +14,7 @@ This pass changes no behaviour. Each PR is a prefactor: a reviewer should be abl
 Two pieces of work are still to come: the Claude correctness check and the verb revamp
 (`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet). Neither should wait on
 this pass, and the order among these PRs is loose. When the verb plan is adopted, its paths need
-updating for PR 1 and PR 3. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
+updating for PR 2 and PR 3. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
 `fields/SuggestButton.svelte`, and `suggestBlocker` in `CardEditor.svelte`.
 
 ## Decisions
@@ -41,33 +41,7 @@ updating for PR 1 and PR 3. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceC
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: One home for the server's HTTP errors, and a clearer dictionary index
-
-- `server/http.ts` → `server/route-errors.ts`, so it no longer shares a name with `api/http.ts`.
-  It gains `withAiErrorsAs502`, replacing the try/catch copied into
-  `routes/api/ai/{check,suggest}/+server.ts`.
-- **Stop calling `error()` from `server/ai/`.** `server/ai/homographs.ts` lets
-  `DictionaryUnavailableError` through, and the routes map it to 503 through a
-  `withDictionaryAs503` in `route-errors.ts`, which `routes/api/lookup/+server.ts` uses as well.
-  `server/anki/notes.ts`'s `readNoteOr404` and `refuseUnknownFields` stay where they are: they
-  are Anki-specific, and moving them is churn.
-- **Tie each route's zod schema to its API type** with `satisfies z.ZodType<…>`:
-  - `CheckRequest` and `SuggestRequest` from `api/ai.ts`;
-  - the notes routes' bodies too, if they have types.
-
-  Today the schemas can drift from the types silently.
-- **Rename `check.ts`'s `isPlainLine` to say what it allows** (it permits `&`, while
-  `suggest.ts`'s doesn't). The verb plan moves `suggest.ts`'s version into a shared module, and
-  two functions with one name and different rules would be a trap.
-- **Dictionary index:**
-  - `INDEX_SCHEMA_VERSION` moves from `server/dictionary/files.ts` into `build.ts`, beside the
-    `SCHEMA` whose changes bump it. Its comment says to bump it when the tables change, and the
-    tables are in the other file.
-  - `files.ts`, which then holds only `DICTIONARY_PATHS` and `sourceStamp`, becomes `paths.ts`.
-  - Fix the drifted copy of the gender codes at `source.ts:68`: point at `convert.ts`, which has
-    the full list.
-
-## PR 2: Move form gathering out of `card/examples.ts`
+## PR 1: Move form gathering out of `card/examples.ts`
 
 The bottom half of `card/examples.ts` gathers a word's labelled forms: `LabeledForm`,
 `labeledForms`, `formsFieldLines`, `allLabeledForms` and `wordUsage`. It is not about the
@@ -82,7 +56,7 @@ Merge them only if the existing tests show they agree on every input each one se
 add one line on each saying why they differ. Move `wordUsage`'s rationale paragraph out of its
 doc comment, onto the line it explains.
 
-## PR 3: Component directories follow the editor's sections
+## PR 2: Component directories follow the editor's sections
 
 Renames and moves first (`git mv`), then imports and test queries.
 
@@ -109,7 +83,7 @@ Renames and moves first (`git mv`), then imports and test queries.
     Move it there.
 - Run `svelte-autofixer` on every moved file.
 
-## PR 4: Claude's suggestions, as pure functions with unit tests
+## PR 3: Claude's suggestions, as pure functions with unit tests
 
 A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
 
@@ -117,12 +91,12 @@ A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
   branching that is tested only through the DOM today; the second is the inline `SuggestRequest`.
 - `filledBlanks(suggestions, edits, examples)` from `SuggestButton.svelte`'s `ask`: which hints
   and examples a reply fills, given that typing during the call wins.
-- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 3).
+- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 2).
 
 The components keep the state and the calls. Their DOM tests stay as integration tests, but drop
 any case that the unit tests now cover exhaustively.
 
-## PR 5: One list-row algebra for meanings and examples, and one `Held` type
+## PR 4: One list-row algebra for meanings and examples, and one `Held` type
 
 - `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
   `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
@@ -132,7 +106,7 @@ any case that the unit tests now cover exhaustively.
   replaces the nine copies of that comment on `held` props. `SaveBar`'s and `CardEditor`'s `held`
   is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
 
-## PR 6: Shared fixtures for the editor's tests
+## PR 5: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -147,7 +121,7 @@ any case that the unit tests now cover exhaustively.
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 7: Shared fakes for the server's tests
+## PR 6: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.
@@ -162,7 +136,7 @@ any case that the unit tests now cover exhaustively.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   touched until it reports nothing. No test reaches the network, a real Anki or the real API.
-- PRs 1–3: after the move, `grep -rn` for each old module and component name across `src/`,
+- PRs 1–2: after the move, `grep -rn` for each old module and component name across `src/`,
   `tests/`, `scripts/`, `AGENTS.md` and `README.md` comes back empty.
-- PR 3, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
+- PR 2, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
   as before. Nothing is clicked that writes to Anki or calls Claude.

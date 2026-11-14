@@ -4,12 +4,12 @@ import { createReadStream, renameSync, rmSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { DatabaseSync } from 'node:sqlite';
 import { toDefectiveKey, toLookupKey } from '#lib/hebrew/normalize.ts';
-import {
-  type DictionaryPaths,
-  INDEX_SCHEMA_VERSION,
-  sourceStamp,
-} from '#lib/server/dictionary/files.ts';
+import { type DictionaryPaths, sourceStamp } from '#lib/server/dictionary/paths.ts';
 import { readEntry, type SourceEntry } from '#lib/server/dictionary/source.ts';
+
+// Bump it whenever the index's tables or what goes in them changes, so an index built by older
+// code is refused rather than misread.
+export const INDEX_SCHEMA_VERSION = '6';
 
 // `keys` files each entry under every spelling that should find it, twice: by its lookup key,
 // and by its defective key for when ktiv male and ktiv haser disagree.

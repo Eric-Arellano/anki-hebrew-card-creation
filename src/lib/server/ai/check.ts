@@ -188,7 +188,7 @@ export function checkRequest(
 }
 
 // Plain text, since the review shows it as it is.
-function isPlainLine(text: string): boolean {
+function isOneLineWithoutTags(text: string): boolean {
   return text.trim() !== '' && !/[<>\r\n]/.test(text);
 }
 
@@ -216,9 +216,9 @@ export function toNoteCheck(answer: Answer, fields: FieldValues): NoteCheck {
   const findings = answer.findings.flatMap(({ field: name, problem, rewrite }): Finding[] => {
     const field = KEY_BY_NAME.get(name);
     const text = field === undefined ? undefined : texts[field];
-    if (field === undefined || text === undefined || !isPlainLine(problem)) return [];
+    if (field === undefined || text === undefined || !isOneLineWithoutTags(problem)) return [];
     if (rewrite != null && repeatsField(rewrite, text)) return [];
-    const keepsRewrite = rewrite != null && isPlainLine(rewrite) && !hasNiqqud(rewrite);
+    const keepsRewrite = rewrite != null && isOneLineWithoutTags(rewrite) && !hasNiqqud(rewrite);
     return [
       { field, problem: problem.trim(), ...(keepsRewrite ? { rewrite: rewrite.trim() } : {}) },
     ];

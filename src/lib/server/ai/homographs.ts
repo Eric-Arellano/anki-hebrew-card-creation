@@ -1,15 +1,10 @@
 // The other words a note's spelling could be read as without niqqud, which both the suggestions
 // and the check tell Claude about, so a Reading context can be judged against them.
-import { error } from '@sveltejs/kit';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import { isSamePointedText, toLookupKey } from '#lib/hebrew/normalize.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
-import type { DictionaryPaths } from '#lib/server/dictionary/files.ts';
-import {
-  DictionaryUnavailableError,
-  lookUp,
-  withDictionary,
-} from '#lib/server/dictionary/lookup.ts';
+import { lookUp, withDictionary } from '#lib/server/dictionary/lookup.ts';
+import type { DictionaryPaths } from '#lib/server/dictionary/paths.ts';
 
 export type Homograph = { pointed: string; partOfSpeech: PartOfSpeech; definitions: string[] };
 
@@ -38,20 +33,15 @@ export function homographsOf(lookup: DictionaryLookup, word: string, pointed: st
   );
 }
 
-/** `word`'s homographs, looked up in the dictionary, or a 503 when there's no index. */
+/** `word`'s homographs, looked up in the dictionary. Throws `DictionaryUnavailableError`. */
 export function lookUpHomographs(
   paths: DictionaryPaths,
   word: string,
   pointed: string,
 ): Homograph[] {
-  try {
-    return withDictionary(paths, (db, staleIndex) =>
-      homographsOf(lookUp(db, word, staleIndex), word, pointed),
-    );
-  } catch (cause) {
-    if (cause instanceof DictionaryUnavailableError) error(503, cause.message);
-    throw cause;
-  }
+  return withDictionary(paths, (db, staleIndex) =>
+    homographsOf(lookUp(db, word, staleIndex), word, pointed),
+  );
 }
 
 /** `homographs` as a prompt lists them, under what the note's spelling could also be. */

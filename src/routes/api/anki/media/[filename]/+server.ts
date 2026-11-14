@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
 import { anki } from '#lib/server/anki/connection.ts';
-import { withAnkiErrorsAs502 } from '#lib/server/http.ts';
+import { withAnkiErrorsAs502 } from '#lib/server/route-errors.ts';
 import type { RequestHandler } from './$types';
 
 // The kinds of file the deck's notes hold, under whatever case their extensions came in. The media

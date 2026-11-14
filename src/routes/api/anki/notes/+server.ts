@@ -4,7 +4,7 @@ import { DECK, NOTE_TYPE, TAGS } from '#lib/note-type.ts';
 import { type AnkiClient, AnkiRefusal } from '#lib/server/anki/client.ts';
 import { anki } from '#lib/server/anki/connection.ts';
 import { readNoteOr404, refuseUnknownFields } from '#lib/server/anki/notes.ts';
-import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/http.ts';
+import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/route-errors.ts';
 import type { RequestHandler } from './$types';
 
 // The add-on's text when another note has the same first field, `Hebrew`. Matched exactly, since
