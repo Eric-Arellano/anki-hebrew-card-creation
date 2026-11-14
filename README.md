@@ -46,9 +46,9 @@ says when the index is older than the file.
 
 ### Claude
 
-The server won't start without an Anthropic API key. Suggest fills in the examples and hints, and
-the first ⌘↵ shows Claude's check of the note before the second one saves it, whether or not Claude
-has answered, so offline you can still save past the error. Check only checks a note without
+The server won't start without an Anthropic API key. Suggest with Claude fills in the examples and
+hints, and the first ⌘↵ shows Claude's check of the note before the second one saves it, whether or
+not Claude has answered, so offline you can still save past the error. Check only checks a note without
 saving it. Create an API key in the [Claude Console](https://platform.claude.com/), set a monthly
 spend limit there, and put the key in a `.env` file at the top of this folder, which git ignores:
 
