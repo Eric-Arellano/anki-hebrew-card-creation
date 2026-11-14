@@ -4,12 +4,12 @@
 // for the review before a save to show.
 import { ankiFieldHtmlToText, ankiFieldHtmlToTextarea } from '#lib/anki/html.ts';
 import { soundsInAnkiField, splitImages } from '#lib/anki/media.ts';
-import { adjectiveInputsFrom } from '#lib/card/adjective.ts';
 import { definitionsFromHtml } from '#lib/card/compose.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
-import { formsByLabel } from '#lib/card/forms.ts';
-import { nounDraftFrom } from '#lib/card/noun.ts';
-import { type VerbDraft, verbDraftFrom } from '#lib/card/verb.ts';
+import { adjectiveInputsFrom } from '#lib/card/parts-of-speech/adjective.ts';
+import { formsByLabel } from '#lib/card/parts-of-speech/forms.ts';
+import { nounDraftFrom } from '#lib/card/parts-of-speech/noun.ts';
+import { type VerbDraft, verbDraftFrom } from '#lib/card/parts-of-speech/verb.ts';
 import { toBinyan } from '#lib/hebrew/binyan.ts';
 import { GENDERS } from '#lib/hebrew/gender.ts';
 import { GOVERNED_PREPOSITIONS } from '#lib/hebrew/preposition.ts';

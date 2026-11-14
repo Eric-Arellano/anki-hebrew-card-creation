@@ -1,7 +1,7 @@
 import { searchByFieldHavingPhrase, searchByNoteType, searchForAny } from '#lib/anki/search.ts';
 import type { SameMeaningNote } from '#lib/api/anki.ts';
+import { senseKeys, sharedSenses } from '#lib/card/checks/meanings.ts';
 import { definitionsFromHtml } from '#lib/card/compose.ts';
-import { senseKeys, sharedSenses } from '#lib/card/meanings.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 import { FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';

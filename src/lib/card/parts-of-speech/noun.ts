@@ -1,4 +1,4 @@
-import { type FormLine, formsHtml } from '#lib/card/forms.ts';
+import { type FormLine, formsHtml } from '#lib/card/parts-of-speech/forms.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import { isPluralTov, productionTov } from '#lib/hebrew/tov.ts';
 import type { FieldValues } from '#lib/note-type.ts';
