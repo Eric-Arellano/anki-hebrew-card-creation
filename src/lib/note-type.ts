@@ -33,12 +33,7 @@ const PARTS_OF_SPEECH_WITH_VARIANTS = PARTS_OF_SPEECH.filter(
 );
 
 // The editor shows fields by what they are for, in this order, rather than in Anki's flat order.
-export const FIELD_GROUPS = [
-  'Grammar',
-  'Disambiguation hints',
-  'Unusual variants',
-  'Extras',
-] as const;
+export const FIELD_GROUPS = ['Grammar', 'Hints and examples', 'Unusual variants', 'Notes'] as const;
 
 export type FieldGroup = (typeof FIELD_GROUPS)[number];
 
@@ -75,13 +70,13 @@ export const FIELDS = {
   productionContext: {
     name: 'Production context',
     shownFor: PARTS_OF_SPEECH,
-    group: 'Disambiguation hints',
+    group: 'Hints and examples',
     label: 'Hint for recalling the Hebrew from its English meaning',
   },
   readingContext: {
     name: 'Reading context',
     shownFor: PARTS_OF_SPEECH,
-    group: 'Disambiguation hints',
+    group: 'Hints and examples',
     label: 'Hint for reading the Hebrew without niqqud',
   },
   images: { name: 'Images', shownFor: [] },
@@ -126,13 +121,13 @@ export const FIELDS = {
   examples: {
     name: 'Examples',
     shownFor: PARTS_OF_SPEECH,
-    group: 'Extras',
+    group: 'Hints and examples',
     label: 'Examples',
   },
   notes: {
     name: 'Notes',
     shownFor: PARTS_OF_SPEECH,
-    group: 'Extras',
+    group: 'Notes',
     label: 'Notes',
   },
 } as const satisfies Record<string, Field>;

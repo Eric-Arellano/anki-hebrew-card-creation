@@ -85,7 +85,7 @@ describe('CardEditor', () => {
       test('are not shown', async () => {
         await renderConnectedEditor();
         await fillInputs({ word: 'דג', pointed: 'דָּג', gloss: 'fish' });
-        expect(screen.queryByLabelText('Notes')).toBeNull();
+        expect(screen.queryByLabelText('Notes', { selector: 'textarea' })).toBeNull();
       });
     });
 
@@ -269,6 +269,37 @@ describe('CardEditor', () => {
           within(promptField).getByRole('link', { name: 'Images (EN)' }).getAttribute('href'),
         ).toBe('https://www.google.com/search?udm=2&q=good%20tables');
       });
+    });
+  });
+
+  describe('the sections', () => {
+    function sectionHeadings() {
+      return screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent);
+    }
+
+    test('wait for a part of speech before the note fields', async () => {
+      await renderConnectedEditor();
+      expect(sectionHeadings()).toEqual(['Word', 'Grammar', 'Media']);
+    });
+
+    test('come in workflow order', async () => {
+      await renderConnectedEditor();
+      await fillDag();
+      expect(sectionHeadings()).toEqual([
+        'Word',
+        'Grammar',
+        'Media',
+        'Hints and examples',
+        'Unusual variants',
+        'Notes',
+      ]);
+    });
+
+    test('put the grammar fields with the forms', async () => {
+      await renderConnectedEditor();
+      await fillDag();
+      const grammar = screen.getByRole('region', { name: 'Grammar' });
+      expect(within(grammar).getByLabelText('Other forms')).toBeTruthy();
     });
   });
 

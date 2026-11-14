@@ -87,7 +87,7 @@ describe('the page', () => {
 
         expect(input('Hebrew word, without niqqud').value).toBe('');
         expect(input('English meaning').value).toBe('');
-        expect(screen.queryByLabelText('Notes')).toBeNull();
+        expect(screen.queryByLabelText('Notes', { selector: 'textarea' })).toBeNull();
         expect(screen.queryByText('Added to the deck.')).toBeNull();
         expect(document.activeElement).toBe(input('Hebrew word, without niqqud'));
       });
