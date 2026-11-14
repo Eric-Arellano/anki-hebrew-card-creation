@@ -177,7 +177,7 @@ function focus(element: HTMLElement) {
 
 <section
   aria-label="Save"
-  class="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white py-4"
+  class="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-gray-200 bg-gray-50 py-4"
 >
   {#if saving.kind === 'reviewing'}
     {#if held === undefined}
