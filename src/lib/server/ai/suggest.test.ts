@@ -1,33 +1,13 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import type { SuggestRequest } from '#lib/api/ai.ts';
-import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import { FIELD_HELP } from '#lib/field-help.ts';
-import { lookUp, withDictionary } from '#lib/server/dictionary/lookup.ts';
-import { buildFixtureIndex } from '#tests/dictionary-index.ts';
 import suggestSefer from '#tests/fixtures/claude/suggest-sefer.json' with { type: 'json' };
 import type { ClaudeMessages } from './client.ts';
-import {
-  type Homograph,
-  homographsOf,
-  suggest,
-  suggestionRequest,
-  toSuggestions,
-} from './suggest.ts';
+import type { Homograph } from './homographs.ts';
+import { suggest, suggestionRequest, toSuggestions } from './suggest.ts';
 
 vi.mock('$app/env/private', () => ({ ANTHROPIC_API_KEY: 'test-key' }));
-
-let index: Awaited<ReturnType<typeof buildFixtureIndex>>;
-
-beforeAll(async () => {
-  index = await buildFixtureIndex();
-});
-
-afterAll(() => index.remove());
-
-function lookupOf(word: string): DictionaryLookup {
-  return withDictionary(index, (db, staleIndex) => lookUp(db, word, staleIndex));
-}
 
 const sefer: SuggestRequest = {
   word: 'ספר',
@@ -42,45 +22,6 @@ const seferHomographs: Homograph[] = [
   { pointed: 'סָפַר', partOfSpeech: 'verb', definitions: ['to count'] },
   { pointed: 'סְפָר', partOfSpeech: 'noun', definitions: ['border, frontier'] },
 ];
-
-describe('homographsOf', () => {
-  test('lists the entries with the same spelling and other niqqud', () => {
-    expect(homographsOf(lookupOf('ספר'), 'ספר', 'סֵפֶר')).toEqual(seferHomographs);
-  });
-
-  test('compares the niqqud after NFC', () => {
-    // סַפָּר with its dagesh before its qamats, the order NFC reverses.
-    const barber = 'ס\u05B7פ\u05BC\u05B8ר';
-    expect(homographsOf(lookupOf('ספר'), 'ספר', barber).map(({ pointed }) => pointed)).toEqual([
-      'סֵפֶר',
-      'סָפַר',
-      'סְפָר',
-    ]);
-  });
-
-  describe('when the lookup reached an entry through its forms', () => {
-    test('leaves it out', () => {
-      expect(lookupOf('כלב').candidates.map(({ pointed }) => pointed)).toContain('כַּלְבָּה');
-      expect(homographsOf(lookupOf('כלב'), 'כלב', 'כֶּלֶב')).toEqual([]);
-    });
-
-    test('leaves out a verb’s own entry, found by its infinitive', () => {
-      expect(homographsOf(lookupOf('לדבר'), 'לדבר', 'לְדַבֵּר')).toEqual([]);
-    });
-  });
-
-  describe('without niqqud for the note', () => {
-    test('finds none', () => {
-      expect(homographsOf(lookupOf('ספר'), 'ספר', ' ')).toEqual([]);
-    });
-  });
-
-  describe('when the match is only possible', () => {
-    test('finds none', () => {
-      expect(homographsOf({ ...lookupOf('ספר'), match: 'possible' }, 'ספר', 'סֵפֶר')).toEqual([]);
-    });
-  });
-});
 
 describe('suggestionRequest', () => {
   describe('with homographs', () => {
