@@ -2,11 +2,15 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
 import type { LoadedNote } from '#lib/api/anki.ts';
+import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { loadedNote } from '#tests/real-notes.ts';
 import {
+  addRequests,
+  fillDag,
   input,
   renderConnectedEditor,
   saveRequests,
+  skipImage,
   stubServer,
   typeInto,
 } from './CardEditor.harness.ts';
@@ -27,6 +31,146 @@ async function changeMeaning(meaning: string) {
 }
 
 describe('CardEditor', () => {
+  describe('adding to the deck', () => {
+    const dagFields = {
+      ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+      Hebrew: 'דג',
+      Pointed: 'דָּג',
+      Definitions: 'fish',
+      'Production answer': 'דג',
+      'Part of speech': 'other',
+    };
+
+    function addButton() {
+      return screen.getByRole('button', { name: 'Add to deck' }) as HTMLButtonElement;
+    }
+
+    test('sends every field, refusing a duplicate', async () => {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      await skipImage();
+      await fireEvent.click(addButton());
+      await screen.findByText('Added to the deck.');
+      expect(addRequests(requests)).toEqual([
+        {
+          method: 'POST',
+          path: '/api/anki/notes',
+          body: { fields: dagFields, allowDuplicate: false },
+        },
+      ]);
+    });
+
+    test('adds on Cmd+Enter too, without asking first', async () => {
+      const requests = await renderConnectedEditor();
+      await fillDag();
+      await skipImage();
+      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      await screen.findByText('Added to the deck.');
+      expect(addRequests(requests)).toHaveLength(1);
+    });
+
+    describe('after adding', () => {
+      test('saves a change to the added note, rather than adding another', async () => {
+        const requests = await renderConnectedEditor();
+        await fillDag();
+        await skipImage();
+        await fireEvent.click(addButton());
+        await screen.findByText('Added to the deck.');
+        expect(screen.queryByRole('button', { name: 'Add to deck' })).toBeNull();
+
+        await typeInto(input('English meaning'), 'carp');
+        await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await screen.findByText('Saved to Anki.');
+        expect(addRequests(requests)).toHaveLength(1);
+        expect(saveRequests(requests)).toEqual([
+          {
+            method: 'POST',
+            path: '/api/anki/notes/1',
+            body: { fields: { Definitions: 'carp' }, mod: 1 },
+          },
+        ]);
+      });
+    });
+
+    describe('when Anki holds a note with the same Hebrew', () => {
+      async function addDuplicate() {
+        let refused = false;
+        const requests = await renderConnectedEditor({
+          addNote: ({ fields, allowDuplicate }) => {
+            if (allowDuplicate) return Response.json({ noteId: 1, mod: 1, fields });
+            refused = true;
+            return Response.json(
+              { message: 'Anki already has a note with this Hebrew.' },
+              { status: 409 },
+            );
+          },
+        });
+        await fillDag();
+        await skipImage();
+        await fireEvent.click(addButton());
+        await screen.findByRole('button', { name: 'Add anyway' });
+        expect(refused).toBe(true);
+        return requests;
+      }
+
+      test('says so, and adds only on Add anyway', async () => {
+        const requests = await addDuplicate();
+        expect(screen.getByRole('alert').textContent).toContain(
+          'Anki already has a note with this Hebrew.',
+        );
+        expect(document.activeElement).not.toBe(screen.getByRole('button', { name: 'Add anyway' }));
+
+        await fireEvent.click(screen.getByRole('button', { name: 'Add anyway' }));
+        await screen.findByText('Added to the deck.');
+        expect(addRequests(requests).map(({ body }) => body)).toEqual([
+          { fields: dagFields, allowDuplicate: false },
+          { fields: dagFields, allowDuplicate: true },
+        ]);
+      });
+    });
+
+    describe('when Anki fails', () => {
+      test('says why, and stays a new note', async () => {
+        await renderConnectedEditor({
+          addNote: () => Response.json({ message: 'collection is not available' }, { status: 502 }),
+        });
+        await fillDag();
+        await skipImage();
+        await fireEvent.click(addButton());
+        expect((await screen.findByRole('alert')).textContent).toBe('collection is not available');
+        expect(addButton().disabled).toBe(false);
+      });
+    });
+
+    describe('while an input is blank', () => {
+      test('is disabled and says what is still needed', async () => {
+        await renderConnectedEditor();
+        await typeInto(input('Hebrew word, without niqqud'), 'דג');
+        expect(addButton().disabled).toBe(true);
+        expect(
+          screen.getByText(
+            'Still needed: English meaning, part of speech, Hebrew word with niqqud, image',
+          ),
+        ).toBeTruthy();
+      });
+    });
+
+    describe('while Anki has a problem', () => {
+      test('is disabled and says why', async () => {
+        const requests = stubServer({ status: { kind: 'error', message: 'Is Anki open?' } });
+        render(CardEditor);
+        await screen.findByText('Is Anki open?');
+        await fillDag();
+        await skipImage();
+
+        expect(addButton().disabled).toBe(true);
+        await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+        expect(addRequests(requests)).toEqual([]);
+      });
+    });
+  });
+
   describe('saving a loaded note', () => {
     test('shows what will change, then writes only that', async () => {
       const requests = await renderConnectedEditor({ notes: [kelev] }, kelev);
