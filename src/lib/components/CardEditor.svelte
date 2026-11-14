@@ -214,8 +214,8 @@ async function checkAnki() {
 onMount(checkAnki);
 </script>
 
-<!-- The bottom padding keeps the sticky save bar off the last field. -->
-<main class="mx-auto max-w-240 space-y-6 p-4 pb-32">
+<!-- No bottom padding, so the sticky save bar comes to rest on the window's edge. -->
+<main class="mx-auto max-w-240 space-y-6 px-4 pt-4">
   <header class="flex flex-wrap items-center justify-between gap-4">
     <h1>Hebrew card helper</h1>
     <ConnectionStatus status={ankiStatus} problem={ankiProblem} onrecheck={checkAnki} />
