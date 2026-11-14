@@ -65,7 +65,7 @@ function remove(index: number) {
         </button>
       </div>
       {#if withoutWord.includes(index)}
-        <p id="example-{index}-without-word" class="hint text-amber-700" aria-live="polite">
+        <p id="example-{index}-without-word" class="hint text-amber-400" aria-live="polite">
           No form of <bdi lang="he">{word}</bdi>
         </p>
       {/if}

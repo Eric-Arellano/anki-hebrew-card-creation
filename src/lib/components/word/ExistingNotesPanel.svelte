@@ -106,16 +106,16 @@ function focus(element: HTMLElement) {
         <li class="grid">
           <button
             type="button"
-            class="grid gap-1 rounded-lg bg-white px-4 py-2 text-start"
+            class="grid gap-1 rounded-lg px-4 py-2 text-start"
             disabled={opening}
             onclick={() => askToOpen(note)}
           >
             <span class="flex flex-wrap items-baseline gap-x-3">
               <span class="text-2xl" lang="he" dir="rtl">{displayed(note)}</span>
               {#if note.partOfSpeech !== ''}
-                <span class="text-sm text-gray-600">{note.partOfSpeech}</span>
+                <span class="text-sm text-neutral-400">{note.partOfSpeech}</span>
               {/if}
-              <span class="ms-auto text-sm font-medium text-blue-700">Edit</span>
+              <span class="ms-auto text-sm font-medium text-blue-400">Edit</span>
             </span>
             {#if note.definitions !== ''}
               <span class="line-clamp-2 text-sm">{note.definitions}</span>
@@ -128,7 +128,7 @@ function focus(element: HTMLElement) {
 {/snippet}
 
 {#snippet searching()}
-  <p class="text-sm text-gray-500">Searching the deck…</p>
+  <p class="text-sm text-neutral-400">Searching the deck…</p>
 {/snippet}
 
 <section aria-label="Already in the deck">
@@ -141,16 +141,11 @@ function focus(element: HTMLElement) {
       {:else if foundNone(notes)}
         <!-- While editing, the note itself was found, so the word is in the deck after all. -->
         {#if editingNoteId === undefined}
-          <p class="text-sm text-gray-500">Not in the deck yet.</p>
+          <p class="text-sm text-neutral-400">Not in the deck yet.</p>
         {/if}
       {:else}
         {@const found = notes.exactMatches.length > 0}
-        <div
-          class={[
-            'space-y-3 rounded-lg border px-4 py-3',
-            found ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-gray-50',
-          ]}
-        >
+        <div class="space-y-3">
           {@render noteList('Already in your deck. Edit it?', notes.exactMatches)}
           <!-- Its own list, since nothing in the word itself says why תלמיד is here for למד. -->
           {@render noteList('Same root', notes.sameRootMatches, root)}
@@ -170,12 +165,12 @@ function focus(element: HTMLElement) {
             <button type="button" onclick={() => (confirming = undefined)}>Cancel</button>
           {/if}
           {#if openFailure !== undefined}
-            <p role="alert" class="text-red-700">{openFailure}</p>
+            <p role="alert" class="text-red-400">{openFailure}</p>
           {/if}
         </div>
       {/if}
     {:catch error}
-      <p role="alert" class="text-red-700">{errorMessage(error)}</p>
+      <p role="alert" class="text-red-400">{errorMessage(error)}</p>
     {/await}
   {/if}
 </section>

@@ -14,7 +14,7 @@ let {
   <span class="relative grid shrink-0 place-items-center">
     <input
       type="checkbox"
-      class="peer size-5 cursor-pointer appearance-none rounded border-2 border-gray-400 bg-white p-0 hover:border-gray-600 checked:border-blue-700 checked:bg-blue-700 checked:hover:border-blue-800 checked:hover:bg-blue-800"
+      class="peer size-5 cursor-pointer appearance-none rounded border-2 border-neutral-500 bg-neutral-900 p-0 hover:border-neutral-400 checked:border-blue-600 checked:bg-blue-600 checked:hover:border-blue-500 checked:hover:bg-blue-500"
       bind:checked
     >
     <svg

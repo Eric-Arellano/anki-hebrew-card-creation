@@ -39,8 +39,8 @@ const shownUnoffered = $derived(value === undefined ? unoffered : undefined);
       {@const isSuggested = suggested.includes(option.value)}
       <label
         class={[
-          'chip cursor-pointer has-checked:border-blue-700 has-checked:bg-blue-700 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-blue-600/30',
-          isSuggested && 'border-dashed border-blue-700',
+          'chip cursor-pointer has-checked:border-blue-600 has-checked:bg-blue-600 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-blue-400/40',
+          isSuggested && 'border-dashed border-blue-600',
         ]}
         title={isSuggested ? 'Suggested by Wiktionary' : undefined}
       >

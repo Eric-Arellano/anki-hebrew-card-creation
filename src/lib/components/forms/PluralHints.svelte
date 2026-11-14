@@ -44,7 +44,7 @@ const freeVariant = $derived(variants.find((variant) => variant.answer.trim() ==
 
 {#each hints as hint (hint.plural)}
   {@const usedBy = variants.find((variant) => includesPointedText(variant.answer, hint.plural))}
-  <section aria-label="Irregular plural" class="space-y-2 rounded-lg bg-amber-50 px-4 py-3">
+  <section aria-label="Irregular plural" class="space-y-2 rounded-lg bg-amber-950/40 px-4 py-3">
     <p>
       <bdi lang="he" class="text-xl">{hint.plural}</bdi>
       is irregular: {REASONS[hint.reason]}. It may deserve a variant card.

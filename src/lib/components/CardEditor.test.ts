@@ -169,7 +169,7 @@ describe('CardEditor', () => {
           'מְכוֹנִית also means “car”, and has no hint yet.',
         );
         expect(
-          screen.getByText(/so say which one you want/).closest('.text-amber-700'),
+          screen.getByText(/so say which one you want/).closest('.text-amber-400'),
         ).toBeTruthy();
         expect(requests.map((request) => request.path)).toContain(
           `/api/anki/same-meaning?meaning=car&word=${encodeURIComponent('אוטו')}`,

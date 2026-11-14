@@ -122,25 +122,25 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
   aria-label={label}
   class={[
     'space-y-2 rounded-md border border-dashed p-3',
-    dropLandsHere ? 'border-blue-600 bg-blue-50' : 'border-gray-300',
+    dropLandsHere ? 'border-blue-400 bg-blue-950/40' : 'border-neutral-600',
   ]}
   {@attach followFocus}
 >
   <div class="flex flex-wrap items-center gap-2">
     <span class={{ 'required-mark': required }}>Images</span>
-    <label class="chip cursor-pointer text-sm hover:bg-gray-50 has-focus-visible:ring-2">
+    <label class="chip cursor-pointer text-sm hover:bg-neutral-700 has-focus-visible:ring-2">
       Choose files
       <input class="sr-only" type="file" accept="image/*" multiple {onchange}>
     </label>
     <span class="hint">or paste or drop one</span>
     {#if pasteLandsHere}
-      <span class="hint text-blue-700"><kbd>⌘V</kbd> pastes here</span>
+      <span class="hint text-blue-400"><kbd>⌘V</kbd> pastes here</span>
     {/if}
     {@render children?.()}
   </div>
   {#if links !== undefined}
     <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm text-gray-600">Search images</span>
+      <span class="text-sm text-neutral-400">Search images</span>
       {@render links()}
     </div>
   {/if}
@@ -150,7 +150,7 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
       {#each images as image, index (image.filename)}
         <li class="relative">
           <img
-            class="h-24 rounded-md border border-gray-200"
+            class="h-24 rounded-md border border-neutral-700"
             alt="Attachment {index + 1}"
             {@attach showingAttachment(image)}
           >
@@ -168,6 +168,6 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
   {/if}
 
   {#if refusal !== undefined}
-    <p role="alert" class="text-red-700">{refusal}</p>
+    <p role="alert" class="text-red-400">{refusal}</p>
   {/if}
 </fieldset>

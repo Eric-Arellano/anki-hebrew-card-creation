@@ -168,7 +168,7 @@ function focus(element: HTMLElement) {
   html: string,
 )}
   {#if html === ''}
-    <span class="text-gray-600">(blank)</span>
+    <span class="text-neutral-400">(blank)</span>
   {:else}
     <!-- The HTML itself, since a change in markup alone is a change too. -->
     <code dir="auto" class="break-all whitespace-pre-wrap">{html}</code>
@@ -177,7 +177,7 @@ function focus(element: HTMLElement) {
 
 <section
   aria-label="Save"
-  class="sticky bottom-0 flex flex-wrap items-center gap-2 rounded-t-xl border border-b-0 border-gray-300 border-t-2 border-t-blue-700 bg-white p-4 shadow-[0_-8px_24px_-6px_rgb(0_0_0/0.2)]"
+  class="sticky bottom-0 flex flex-wrap items-center gap-2 rounded-t-xl border border-b-0 border-neutral-600 border-t-2 border-t-blue-500 bg-neutral-800 p-4 shadow-[0_-8px_24px_-6px_rgb(0_0_0/0.2)]"
 >
   {#if saving.kind === 'reviewing'}
     {#if held === undefined}
@@ -189,10 +189,10 @@ function focus(element: HTMLElement) {
           <div>
             <dt class="font-medium">{name}</dt>
             <dd>
-              <span class="text-gray-600">Before:</span>
+              <span class="text-neutral-400">Before:</span>
               {@render fieldHtml(held.fields[name] ?? '')}
             </dd>
-            <dd><span class="text-gray-600">After:</span> {@render fieldHtml(after)}</dd>
+            <dd><span class="text-neutral-400">After:</span> {@render fieldHtml(after)}</dd>
           </div>
         {/each}
       </dl>
@@ -236,23 +236,23 @@ function focus(element: HTMLElement) {
       <button type="button" {@attach focus} onclick={onnextcard}>Next word</button>
     {:else if saving.kind === 'duplicate'}
       <!-- Not focused, so adding a second note with the same Hebrew always takes a click. -->
-      <p role="alert" class="text-red-700">
+      <p role="alert" class="text-red-400">
         {saving.message}
         Add this one anyway if it is another word spelled the same.
       </p>
       <button type="button" onclick={() => add({ allowDuplicate: true })}>Add anyway</button>
     {:else if saving.kind === 'stale'}
-      <p role="alert" class="text-red-700">
+      <p role="alert" class="text-red-400">
         {saving.message}
         Load it again to see Anki's version, which replaces your changes here.
       </p>
       <button type="button" onclick={loadAgain}>Load again</button>
     {:else if saving.kind === 'failed'}
-      <p role="alert" class="text-red-700">{saving.message}</p>
+      <p role="alert" class="text-red-400">{saving.message}</p>
     {:else if inputsBlocker !== undefined}
-      <p class="text-gray-600">{inputsBlocker}</p>
+      <p class="text-neutral-400">{inputsBlocker}</p>
     {:else if blocker === NOTHING_CHANGED}
-      <p class="text-gray-600">{NOTHING_CHANGED}</p>
+      <p class="text-neutral-400">{NOTHING_CHANGED}</p>
     {/if}
   {/if}
 </section>

@@ -92,7 +92,7 @@ function chooseInfinitive(pointed: string) {
         bind:value={inputs.pointed}
       />
       {#if misspellsWord}
-        <p class="text-sm text-amber-700" aria-live="polite">
+        <p class="text-sm text-amber-400" aria-live="polite">
           Doesn't spell <bdi lang="he">{inputs.word.trim()}</bdi>, the word without niqqud.
         </p>
       {/if}

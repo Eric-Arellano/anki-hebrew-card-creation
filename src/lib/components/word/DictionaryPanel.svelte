@@ -36,9 +36,9 @@ function heading(match: DictionaryLookup['match']): string {
   candidate: DictionaryCandidate,
 )}
   <span class="text-2xl" lang="he" dir="rtl">{candidate.pointed ?? candidate.title}</span>
-  <span class="text-sm text-gray-600">{candidate.wiktionaryPartOfSpeech}</span>
+  <span class="text-sm text-neutral-400">{candidate.wiktionaryPartOfSpeech}</span>
   {#if candidate.roots.length > 0}
-    <span class="text-sm text-gray-600">
+    <span class="text-sm text-neutral-400">
       root <bdi lang="he">{candidate.roots.join(', ')}</bdi>
     </span>
   {/if}
@@ -62,9 +62,9 @@ function heading(match: DictionaryLookup['match']): string {
 
 <section aria-label="Dictionary">
   {#if picked !== undefined}
-    <div class="space-y-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+    <div class="space-y-2 rounded-lg border border-blue-800 bg-blue-950/40 px-4 py-3">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span class="text-sm text-gray-600">
+        <span class="text-sm text-neutral-400">
           {editing ? 'Filled in the blanks from Wiktionary:' : 'Filled in from Wiktionary:'}
         </span>
         {@render headline(picked)}
@@ -88,7 +88,7 @@ function heading(match: DictionaryLookup['match']): string {
         {@render lookingUp()}
       {:else}
         {#if result.staleIndex}
-          <p class="mb-2 text-sm text-amber-800">
+          <p class="mb-2 text-sm text-amber-300">
             The dictionary file changed after it was indexed. Run <code>npm run build-index</code>
             to look words up in the new one.
           </p>
@@ -131,7 +131,7 @@ function heading(match: DictionaryLookup['match']): string {
       {/if}
     {:catch error}
       <p class="flex flex-wrap items-center gap-2">
-        <span role="alert" class="text-red-700">{errorMessage(error)}</span>
+        <span role="alert" class="text-red-400">{errorMessage(error)}</span>
         {@render wiktionaryChip(undefined)}
       </p>
     {/await}

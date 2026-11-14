@@ -39,20 +39,20 @@ onMount(() => {
   aria-label="Claude's check"
   aria-live="polite"
   aria-busy={checking.kind === 'checking'}
-  class="max-h-[30vh] basis-full overflow-y-auto border-l-2 border-violet-300 pl-3"
+  class="max-h-[30vh] basis-full overflow-y-auto border-l-2 border-violet-700 pl-3"
 >
   {#if checking.kind === 'checking'}
     <p class="hint flex items-center gap-2">
       <span
-        class="size-4 animate-spin rounded-full border-2 border-gray-300 border-t-violet-700"
+        class="size-4 animate-spin rounded-full border-2 border-neutral-600 border-t-violet-400"
         aria-hidden="true"
       ></span>
       Claude is checking the note…
     </p>
   {:else if checking.kind === 'failed'}
-    <p class="text-red-700">Couldn't check the note: {checking.message}</p>
+    <p class="text-red-400">Couldn't check the note: {checking.message}</p>
   {:else if checking.findings.length === 0}
-    <p class="text-gray-600">Claude found no problems.</p>
+    <p class="text-neutral-400">Claude found no problems.</p>
   {:else}
     <p>Claude found these. Fix what you agree with:</p>
     <ul class="space-y-2">
@@ -62,7 +62,7 @@ onMount(() => {
           {problem}
           {#if rewrite !== undefined}
             <span class="block">
-              <span class="text-gray-600">Try:</span>
+              <span class="text-neutral-400">Try:</span>
               <!-- Each side of an example's ` — ` isolated, so its English stays after its Hebrew. -->
               {#each rewrite.split(/ [-–—] /) as part, partIndex (partIndex)}
                 {#if partIndex > 0}

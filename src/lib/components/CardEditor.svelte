@@ -223,7 +223,7 @@ onMount(checkAnki);
   {#if note !== undefined}
     <section
       aria-label="Editing"
-      class="flex flex-wrap items-center gap-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
+      class="flex flex-wrap items-center gap-4 rounded-lg border border-blue-800 bg-blue-950/40 px-4 py-3"
     >
       <p>
         Editing the note for
@@ -311,7 +311,7 @@ onMount(checkAnki);
         {/snippet}
         <!-- The human's say that this word has no image worth finding. -->
         {#if draft.media.images.length === 0}
-          <span class="ml-auto text-sm text-gray-600">
+          <span class="ml-auto text-sm text-neutral-400">
             <Checkbox label="No image for this word" bind:checked={draft.media.noImage} />
           </span>
         {/if}
