@@ -46,6 +46,7 @@ describe('_readMedia', () => {
       ['no extension', 'jpg'],
       ['a path', '../a.jpg'],
       ['a Windows path', '..\\a.jpg'],
+      ['an extension Object.prototype has', 'a.constructor'],
     ])('answers 400 to %s without calling Anki', async (_, filename) => {
       const { anki, calls } = ankiHolding(btoa(BYTES));
       await expect(_readMedia(anki, filename)).rejects.toSatisfy((error) =>
