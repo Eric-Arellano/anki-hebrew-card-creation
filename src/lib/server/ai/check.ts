@@ -94,8 +94,8 @@ export function fieldTexts(fields: FieldValues): Partial<Record<FieldKey, string
   );
 }
 
-// An example a pair of labelled lines, since a line mixing Hebrew and English after a dash is easy
-// to misread: a Hebrew run's start and end can be taken for the whole of it.
+// An example a pair of labelled lines, so which text is the Hebrew and which its English never
+// rests on reading a dash in a line that switches direction.
 function examplesBlock(html: string): string {
   const lines = examplesFromHtml(html)
     .filter((example) => !isBlankExample(example))
@@ -202,8 +202,7 @@ function comparable(text: string): string {
     .trim();
 }
 
-// A rewrite of a field's line into that same line means Claude misread the field, which is what
-// its problem then describes.
+// A rewrite into a line the field already holds fixes nothing, so its problem is a false alarm.
 function repeatsField(rewrite: string, text: string): boolean {
   return text.split('\n').some((line) => isSamePointedText(comparable(line), comparable(rewrite)));
 }

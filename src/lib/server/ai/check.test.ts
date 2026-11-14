@@ -3,6 +3,9 @@ import { describe, expect, test, vi } from 'vitest';
 import type { CheckRequest } from '#lib/api/ai.ts';
 import { FIELD_HELP, GROUP_HELP } from '#lib/field-help.ts';
 import { fromAnkiFields } from '#lib/note-type.ts';
+import checkKelevPlanted from '#tests/fixtures/claude/check-kelev-planted.json' with {
+  type: 'json',
+};
 import { realNote } from '#tests/real-notes.ts';
 import { checkNote, checkRequest, fieldTexts, toNoteCheck } from './check.ts';
 import type { ClaudeMessages } from './client.ts';
@@ -138,7 +141,7 @@ describe('toNoteCheck', () => {
     test.each([
       ['as it is', 'יש לי כלב.'],
       ['with another dash and spacing', 'הכלב שלי גדולה.  -  My dog is big.'],
-    ])('drops the finding, as Claude misread the field: %s', (_, rewrite) => {
+    ])('drops the finding, which fixes nothing: %s', (_, rewrite) => {
       expect(
         toNoteCheck(
           answer([{ field: 'Examples', problem: 'The Hebrew is only one word.', rewrite }]),
@@ -189,6 +192,45 @@ describe('toNoteCheck', () => {
 });
 
 describe('checkNote', () => {
+  test('finds each problem planted in a real note, from Claude’s captured reply', async () => {
+    const planted: CheckRequest = {
+      ...kelev,
+      fields: {
+        ...kelev.fields,
+        productionContext: 'the animal that barks, called כלב',
+        examples:
+          '<bdi lang="he">ה<b>כלב</b> שלי גדולה ונחמדה.</bdi><span class="sep"> — </span>' +
+          '<span lang="en">My dog is big and nice.</span><br>' +
+          '<bdi lang="he">יש ל<b>כלב</b> שלנו הרבה אנרגיה.</bdi><span class="sep"> — </span>' +
+          '<span lang="en">Our dog has a lot of energy.</span>',
+        notes: 'כלב is feminine in spoken Hebrew.',
+      },
+    };
+    const create = vi.fn<ClaudeMessages['create']>(
+      async () => checkKelevPlanted as Anthropic.Beta.BetaMessage,
+    );
+    expect(await checkNote(planted, [], { create })).toEqual({
+      findings: [
+        {
+          field: 'productionContext',
+          problem: 'The hint contains the answer word כלב itself, giving it away.',
+          rewrite: 'the animal that barks',
+        },
+        {
+          field: 'examples',
+          problem:
+            'The adjectives are feminine (גדולה ונחמדה) but כלב is masculine, so they must agree as masculine.',
+          rewrite: 'הכלב שלי גדול ונחמד. — My dog is big and nice.',
+        },
+        {
+          field: 'notes',
+          problem: 'The note is wrong: כלב is masculine, and the female dog is כלבה.',
+          rewrite: 'כלב is masculine; a female dog is כלבה.',
+        },
+      ],
+    });
+  });
+
   test('sends the prompt, and answers with what passes the guards', async () => {
     const text = JSON.stringify(
       answer([
