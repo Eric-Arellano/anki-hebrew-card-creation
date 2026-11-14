@@ -106,7 +106,7 @@ function focus(element: HTMLElement) {
         <li class="grid">
           <button
             type="button"
-            class="grid gap-1 rounded-lg bg-neutral-800 px-4 py-2 text-start"
+            class="grid gap-1 rounded-lg px-4 py-2 text-start"
             disabled={opening}
             onclick={() => askToOpen(note)}
           >
@@ -145,12 +145,7 @@ function focus(element: HTMLElement) {
         {/if}
       {:else}
         {@const found = notes.exactMatches.length > 0}
-        <div
-          class={[
-            'space-y-3 rounded-lg border px-4 py-3',
-            found ? 'border-amber-700/60 bg-amber-950/40' : 'border-neutral-700 bg-neutral-900',
-          ]}
-        >
+        <div class="space-y-3">
           {@render noteList('Already in your deck. Edit it?', notes.exactMatches)}
           <!-- Its own list, since nothing in the word itself says why תלמיד is here for למד. -->
           {@render noteList('Same root', notes.sameRootMatches, root)}
