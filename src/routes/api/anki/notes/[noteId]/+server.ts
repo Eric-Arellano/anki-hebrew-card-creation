@@ -1,9 +1,8 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
-import { FIELD_NAMES } from '#lib/note-type.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
 import { anki } from '#lib/server/anki/connection.ts';
-import { readNote } from '#lib/server/anki/notes.ts';
+import { readNoteOr404, refuseUnknownFields } from '#lib/server/anki/notes.ts';
 import { parseJsonBody, withAnkiErrorsAs502 } from '#lib/server/http.ts';
 import type { RequestHandler } from './$types';
 
@@ -19,12 +18,6 @@ function parseNoteId(noteIdParam: string): number {
     error(400, 'The note id must be a number');
   }
   return noteId;
-}
-
-async function readNoteOr404(anki: AnkiClient, noteId: number) {
-  const note = await withAnkiErrorsAs502(() => readNote(anki, noteId));
-  if (note === undefined) error(404, `Anki has no Hebrew note ${noteId}. Was it deleted?`);
-  return note;
 }
 
 export async function _readNote(anki: AnkiClient, noteIdParam: string): Promise<Response> {
@@ -48,8 +41,7 @@ export async function _saveNote(
     saveRequestBodySchema,
     'The body must hold fields, mapping field names to text, and the mod the note loaded with',
   );
-  const unknownFieldNames = Object.keys(fields).filter((name) => !FIELD_NAMES.includes(name));
-  if (unknownFieldNames.length > 0) error(400, `Unknown fields: ${unknownFieldNames.join(', ')}`);
+  refuseUnknownFields(fields);
   if (Object.keys(fields).length === 0) error(400, 'No fields to save');
 
   // Checked just before writing, so an edit made in Anki, or synced in, since the editor loaded the

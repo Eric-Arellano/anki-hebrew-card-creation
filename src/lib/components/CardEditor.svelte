@@ -8,7 +8,7 @@ import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/examples.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
-import { attachmentsToStore, handOffFields } from '#lib/card/hand-off.ts';
+import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import { type CardInputsDraft, completeInputs, draftRoot } from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
@@ -21,7 +21,7 @@ import { type FieldKey, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
 import WordForms from './forms/WordForms.svelte';
-import HandOffBar from './HandOffBar.svelte';
+import SaveBar from './SaveBar.svelte';
 import AudioInput from './media/AudioInput.svelte';
 import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './NoteFields.svelte';
@@ -130,7 +130,7 @@ function setEdit(field: FieldKey, value: string) {
 }
 
 function ankiFields(storedAs: ReadonlyMap<string, string>) {
-  return handOffFields({ composed, edits: draft.edits, shownFields, media: draft.media, storedAs });
+  return noteFields({ composed, edits: draft.edits, shownFields, media: draft.media, storedAs });
 }
 
 async function loadAgain() {
@@ -240,7 +240,7 @@ onMount(checkAnki);
     />
   {/if}
 
-  <HandOffBar
+  <SaveBar
     {attachments}
     fieldsWith={ankiFields}
     {onnextcard}

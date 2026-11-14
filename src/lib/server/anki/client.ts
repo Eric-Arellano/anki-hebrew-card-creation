@@ -10,11 +10,10 @@ const noteInfoSchema = z.object({
 
 export type NoteInfo = z.infer<typeof noteInfoSchema>;
 
-// The allowlist. Nothing here creates or deletes a note: `guiAddCards` only opens the Add window,
-// and the human clicks Add, `storeMediaFile` only adds a file to the media folder, and
-// `retrieveMediaFile` only reads one. `updateNoteFields` edits a note, only when the human clicks
-// Save, and leaves its tags, deck and scheduling alone. An action missing from this object can't be
-// typed or sent.
+// The allowlist. Nothing here deletes a note. `addNote` adds one and `updateNoteFields` edits one,
+// each only when the human clicks its button, and an edit leaves tags, deck and scheduling alone.
+// `storeMediaFile` only adds a file to the media folder, and `retrieveMediaFile` only reads one. An
+// action missing from this object can't be typed or sent.
 const resultSchemaByAllowedAction = {
   version: z.number(),
   deckNames: z.array(z.string()),
@@ -25,7 +24,8 @@ const resultSchemaByAllowedAction = {
   modelTemplates: z.record(z.string(), z.object({ Front: z.string(), Back: z.string() })),
   findNotes: z.array(z.number()),
   notesInfo: z.array(noteInfoSchema),
-  guiAddCards: z.number().nullable(),
+  // The new note's id.
+  addNote: z.number(),
   updateNoteFields: z.null(),
   // The name Anki stored the file under, which may not be the one requested.
   storeMediaFile: z.string(),
@@ -44,8 +44,16 @@ export type ActionParams = {
   modelTemplates: { modelName: string };
   findNotes: { query: string };
   notesInfo: { notes: number[] };
-  guiAddCards: {
-    note: { deckName: string; modelName: string; fields: Record<string, string>; tags: string[] };
+  // Its `audio` and `picture` stay out for the reason `storeMediaFile`'s `url` does. Anki checks
+  // for a duplicate by the first field, across the collection.
+  addNote: {
+    note: {
+      deckName: string;
+      modelName: string;
+      fields: Record<string, string>;
+      tags: string[];
+      options: { allowDuplicate: boolean };
+    };
   };
   // The add-on replaces an existing file by default, which would silently change another note's
   // media. With `false`, different bytes under a taken name get a new name. Its `url` stays out
@@ -69,6 +77,17 @@ export type AnkiClient = <A extends AllowedAction>(
 /** Anki is closed, refused the request, or answered with something we don't understand. */
 export class AnkiError extends Error {
   override name = 'AnkiError';
+}
+
+/** Anki refused the request, with `reason` the error text it sent. */
+export class AnkiRefusal extends AnkiError {
+  override name = 'AnkiRefusal';
+  readonly reason: string;
+
+  constructor(action: AllowedAction, reason: string) {
+    super(`AnkiConnect refused ${action}: ${reason}`);
+    this.reason = reason;
+  }
 }
 
 const responseEnvelopeSchema = z.object({ result: z.unknown(), error: z.string().nullable() });
@@ -103,7 +122,7 @@ export function createAnkiClient(ankiConnectUrl: string): AnkiClient {
       throw new AnkiError(`AnkiConnect sent an unexpected reply to ${action}`);
     }
     if (envelope.data.error !== null) {
-      throw new AnkiError(`AnkiConnect refused ${action}: ${envelope.data.error}`);
+      throw new AnkiRefusal(action, envelope.data.error);
     }
 
     const result = resultSchemaByAllowedAction[action].safeParse(envelope.data.result);

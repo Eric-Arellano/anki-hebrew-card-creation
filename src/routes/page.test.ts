@@ -2,8 +2,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import {
+  addToDeck,
   fillDag,
-  handOff,
   input,
   noteField,
   type ServerReplies,
@@ -51,7 +51,7 @@ async function clickFoundNote() {
 }
 
 describe('the page', () => {
-  describe('before anything is handed off', () => {
+  describe('before anything is added', () => {
     test('offers no next word, and starts in the word input', async () => {
       await renderPage();
       expect(screen.queryByRole('button', { name: 'Next word' })).toBeNull();
@@ -59,41 +59,41 @@ describe('the page', () => {
     });
   });
 
-  describe('after a hand-off', () => {
-    async function handOffNote() {
+  describe('after adding a note', () => {
+    async function addNote() {
       const requests = await renderPage();
       await fillDag();
       await typeInto(noteField('Notes'), 'freshwater');
       await skipImage();
-      await handOff(requests);
+      await addToDeck(requests);
     }
 
-    test('keeps the note, in case it needs fixing and opening again', async () => {
-      await handOffNote();
+    test('keeps the note, in case it needs fixing and saving again', async () => {
+      await addNote();
       expect(input('Hebrew word, without niqqud').value).toBe('דג');
       expect(noteField('Notes').value).toBe('freshwater');
     });
 
     test('focuses Next word, so Enter is all it takes', async () => {
-      await handOffNote();
+      await addNote();
       expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Next word' }));
     });
 
     describe('on Next word', () => {
       test('starts over with every input blank and the word focused', async () => {
-        await handOffNote();
+        await addNote();
         await fireEvent.click(screen.getByRole('button', { name: 'Next word' }));
         await screen.findByText(/Connected to Anki/);
 
         expect(input('Hebrew word, without niqqud').value).toBe('');
         expect(input('English meaning').value).toBe('');
         expect(screen.queryByLabelText('Notes')).toBeNull();
-        expect(screen.queryByText(/Opened in Anki/)).toBeNull();
+        expect(screen.queryByText('Added to the deck.')).toBeNull();
         expect(document.activeElement).toBe(input('Hebrew word, without niqqud'));
       });
 
       test('asks for an image again, rather than keeping the last tick', async () => {
-        await handOffNote();
+        await addNote();
         await fireEvent.click(screen.getByRole('button', { name: 'Next word' }));
         await screen.findByText(/Connected to Anki/);
 

@@ -47,11 +47,11 @@ export function attachmentsToStore(
 }
 
 /**
- * Every field as `/api/anki/add` takes it: a shown field's edit, else what composition gives it,
+ * Every field as Anki will hold it: a shown field's edit, else what composition gives it,
  * followed by its media under the names Anki holds them as: a new file's from `storedAs`, which
  * maps each name requested to the one Anki used.
  */
-export function handOffFields({
+export function noteFields({
   composed,
   edits,
   shownFields,

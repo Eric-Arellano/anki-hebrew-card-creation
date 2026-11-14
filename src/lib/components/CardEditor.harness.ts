@@ -20,6 +20,12 @@ export const connectedStatus: AnkiStatus = {
 export type ServerRequest = { method: string; path: string; body: unknown };
 
 type SaveBody = { fields: Record<string, string>; mod: number };
+type AddBody = { fields: Record<string, string>; allowDuplicate: boolean };
+
+// The id and `mod` are made up: the stub's notes never meet a real one.
+function addedNote({ fields }: AddBody): Response {
+  return Response.json({ noteId: 1, mod: 1, fields });
+}
 
 function savedNote(held: LoadedNote, { fields }: SaveBody): Response {
   return Response.json({ ...held, mod: held.mod + 1, fields: { ...held.fields, ...fields } });
@@ -36,10 +42,12 @@ const notInDictionary: DictionaryLookup = {
 export type ServerReplies = {
   status?: AnkiStatus;
   existing?: ExistingNotes;
-  // The notes Anki holds, by id; any other id answers 404.
+  // The notes Anki holds, by id, joined by each one added; any other id answers 404.
   notes?: readonly LoadedNote[];
   // By default, a save writes its fields over the note and bumps its `mod`.
   saveNote?: (held: LoadedNote, body: SaveBody) => Response;
+  // By default, Anki adds the note as sent.
+  addNote?: (body: AddBody) => Response;
   lookup?: DictionaryLookup | Response;
   storeMedia?: (body: { filename: string }) => Response;
   forvoDownloads?: (word: string) => ForvoDownloads;
@@ -52,12 +60,14 @@ export function stubServer({
   existing = { exactMatches: [], sameRootMatches: [], relatedMatches: [] },
   notes = [],
   saveNote = savedNote,
+  addNote = addedNote,
   lookup = notInDictionary,
   storeMedia = ({ filename }) => Response.json({ filename }),
   forvoDownloads = () => ({ kind: 'found', downloads: [] }),
   forvoFile = () => new Response('mp3 bytes'),
 }: ServerReplies = {}) {
   const requests: ServerRequest[] = [];
+  const held = [...notes];
   vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
     const body = init?.body === undefined ? undefined : JSON.parse(String(init.body));
     requests.push({ method: init?.method ?? 'GET', path: input, body });
@@ -65,8 +75,13 @@ export function stubServer({
     if (input.startsWith('/api/anki/existing')) {
       return Response.json(existing);
     }
+    if (input === '/api/anki/notes') {
+      const response = addNote(body);
+      if (response.ok) held.push(await response.clone().json());
+      return response;
+    }
     if (input.startsWith('/api/anki/notes/')) {
-      const note = notes.find(({ noteId }) => input === `/api/anki/notes/${noteId}`);
+      const note = held.find(({ noteId }) => input === `/api/anki/notes/${noteId}`);
       if (note === undefined) {
         return Response.json({ message: 'Anki has no Hebrew note' }, { status: 404 });
       }
@@ -75,7 +90,6 @@ export function stubServer({
     if (input.startsWith('/api/lookup')) {
       return lookup instanceof Response ? lookup : Response.json(lookup);
     }
-    if (input === '/api/anki/add') return new Response(null, { status: 204 });
     if (input === '/api/anki/media') return storeMedia(body);
     const url = new URL(input, 'http://127.0.0.1');
     if (url.pathname === '/api/forvo/downloads') {
@@ -100,7 +114,7 @@ export function saveRequests(requests: ServerRequest[]) {
 }
 
 export function addRequests(requests: ServerRequest[]) {
-  return requests.filter((request) => request.path === '/api/anki/add');
+  return requests.filter((request) => request.path === '/api/anki/notes');
 }
 
 export async function renderConnectedEditor(
@@ -161,10 +175,10 @@ export async function fillVerb(binyan: string, root: string) {
   await typeInto(input('Root, like דבר or ד.ב.ר'), root);
 }
 
-export async function handOff(requests: ServerRequest[]) {
-  await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-  await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-  await screen.findByText(/Opened in Anki/);
+/** Clicks Add to deck, and answers with the body of the first add sent. */
+export async function addToDeck(requests: ServerRequest[]) {
+  await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
+  await screen.findByText('Added to the deck.');
   return addRequests(requests)[0]?.body;
 }
 

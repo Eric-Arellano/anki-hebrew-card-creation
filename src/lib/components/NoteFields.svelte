@@ -80,7 +80,7 @@ function lacksAnswer(prompt: VariantPrompt) {
           {/if}
           <div class="space-y-2 sm:row-start-3">
             <!-- `dir="auto"`: some fields hold Hebrew and some English. The value is Anki HTML,
-                 except that a new line becomes `<br>` at the hand-off. -->
+                 except that a new line becomes `<br>` on save. -->
             <textarea
               id="field-{field}"
               dir="auto"

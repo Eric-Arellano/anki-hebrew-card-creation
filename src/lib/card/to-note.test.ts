@@ -1,21 +1,21 @@
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { emptyCardDraft, type MediaDraft } from './draft.ts';
-import { attachmentsToStore, handOffFields } from './hand-off.ts';
+import { attachmentsToStore, noteFields } from './to-note.ts';
 
 const blankFields = Object.fromEntries(fieldNames.map((name) => [name, '']));
 
-describe('handOffFields', () => {
+describe('noteFields', () => {
   test('sends what composition gives each field, and every other field blank', () => {
     expect(
-      handOffFields({ composed: { unpointed: 'דג', gender: 'm' }, edits: {}, shownFields: [] }),
+      noteFields({ composed: { unpointed: 'דג', gender: 'm' }, edits: {}, shownFields: [] }),
     ).toEqual({ ...blankFields, Hebrew: 'דג', Gender: 'm' });
   });
 
   describe('for a shown field the human edited', () => {
     test('sends the edit over what composition gives it, with each new line as a <br>', () => {
       expect(
-        handOffFields({
+        noteFields({
           composed: { forms: 'pl: דָּגִים' },
           edits: { forms: 'f: דָּגָה\nm.pl: דָּגִים' },
           shownFields: ['forms'],
@@ -27,7 +27,7 @@ describe('handOffFields', () => {
   describe('for a hidden field the human edited', () => {
     test('ignores the edit', () => {
       expect(
-        handOffFields({
+        noteFields({
           composed: { forms: 'pl: דָּגִים' },
           edits: { forms: 'f: דָּגָה', binyan: "pi'el" },
           shownFields: ['notes'],
@@ -49,7 +49,7 @@ describe('handOffFields', () => {
 
     test('fills Images, which is never shown, with the names Anki used', () => {
       expect(
-        handOffFields({
+        noteFields({
           composed: {},
           edits: {},
           shownFields: [],
@@ -61,7 +61,7 @@ describe('handOffFields', () => {
 
     test("puts a shown variant prompt's images after its text", () => {
       expect(
-        handOffFields({
+        noteFields({
           composed: {},
           edits: { variant1Prompt: 'female dog' },
           shownFields: ['variant1Prompt'],
@@ -73,7 +73,7 @@ describe('handOffFields', () => {
 
     test('lets a variant prompt be only an image', () => {
       expect(
-        handOffFields({
+        noteFields({
           composed: {},
           edits: {},
           shownFields: ['variant2Prompt'],
@@ -85,7 +85,7 @@ describe('handOffFields', () => {
 
     test("ignores a hidden variant prompt's images", () => {
       expect(
-        handOffFields({
+        noteFields({
           composed: {},
           edits: {},
           shownFields: ['notes'],
@@ -101,7 +101,7 @@ describe('handOffFields', () => {
         blob: new Blob(['mp3']),
       } as const;
       expect(
-        handOffFields({
+        noteFields({
           composed: {},
           edits: {},
           shownFields: [],
@@ -114,7 +114,7 @@ describe('handOffFields', () => {
     describe('when a file is already in Anki', () => {
       test('uses the name Anki holds it under', () => {
         expect(
-          handOffFields({
+          noteFields({
             composed: {},
             edits: {},
             shownFields: [],
@@ -134,7 +134,7 @@ describe('handOffFields', () => {
     describe('when a file was never stored', () => {
       test('throws, rather than send a name Anki may not have', () => {
         expect(() =>
-          handOffFields({
+          noteFields({
             composed: {},
             edits: {},
             shownFields: [],

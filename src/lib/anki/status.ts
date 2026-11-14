@@ -8,7 +8,7 @@ export function fieldOrder(status: AnkiStatus | undefined): readonly string[] {
     : FIELD_NAMES;
 }
 
-/** What stops a hand-off to this Anki, or `undefined` when nothing does. */
+/** What stops a save to this Anki, or `undefined` when nothing does. */
 export function ankiStatusProblem(status: AnkiStatus): string | undefined {
   if (status.kind === 'error') return status.message;
   if (!status.deckFound) return `Anki has no deck named ${DECK}`;

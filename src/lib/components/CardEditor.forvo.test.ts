@@ -3,8 +3,8 @@ import { fireEvent, screen, within } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { ForvoDownload, ForvoDownloads } from '#lib/api/forvo.ts';
 import {
+  addToDeck,
   fillDag,
-  handOff,
   input,
   mediaRequests,
   renderConnectedEditor,
@@ -41,7 +41,7 @@ async function attachedName() {
 describe('CardEditor', () => {
   describe('finding a Forvo download', () => {
     describe('when one matches the word', () => {
-      test('attaches it, and hands it off under its own name', async () => {
+      test('attaches it, and adds it under its own name', async () => {
         const requests = await renderConnectedEditor({
           forvoDownloads: downloadsOfDag(() => [dag]),
         });
@@ -49,7 +49,7 @@ describe('CardEditor', () => {
         await skipImage();
         expect(await attachedName()).toBe(DAG);
 
-        expect(await handOff(requests)).toMatchObject({ fields: { Audio: `[sound:${DAG}]` } });
+        expect(await addToDeck(requests)).toMatchObject({ fields: { Audio: `[sound:${DAG}]` } });
         expect(mediaRequests(requests)).toEqual([
           {
             method: 'POST',

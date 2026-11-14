@@ -5,6 +5,7 @@ import { FIELD_HELP } from '#lib/field-help.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import {
   addRequests,
+  addToDeck,
   chooseNoun,
   choosePartOfSpeech,
   fillDag,
@@ -13,6 +14,7 @@ import {
   input,
   noteField,
   renderConnectedEditor,
+  saveRequests,
   skipImage,
   stubServer,
   typeInto,
@@ -20,64 +22,123 @@ import {
 import CardEditor from './CardEditor.svelte';
 
 describe('CardEditor', () => {
-  describe('handing off to Anki', () => {
-    test('asks before opening the Add window, then sends every field', async () => {
+  describe('adding to the deck', () => {
+    const dagFields = {
+      ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+      Hebrew: 'דג',
+      Pointed: 'דָּג',
+      Definitions: 'fish',
+      'Production answer': 'דג',
+      'Part of speech': 'other',
+    };
+
+    function addButton() {
+      return screen.getByRole('button', { name: 'Add to deck' }) as HTMLButtonElement;
+    }
+
+    test('sends every field, refusing a duplicate', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
-
       await skipImage();
-      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-      expect(screen.getByRole('alert').textContent).toContain("replaces whatever is in Anki's");
-      expect(addRequests(requests)).toEqual([]);
-
-      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-      await screen.findByText(/Opened in Anki/);
+      await fireEvent.click(addButton());
+      await screen.findByText('Added to the deck.');
       expect(addRequests(requests)).toEqual([
         {
           method: 'POST',
-          path: '/api/anki/add',
-          body: {
-            fields: {
-              ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
-              Hebrew: 'דג',
-              Pointed: 'דָּג',
-              Definitions: 'fish',
-              'Production answer': 'דג',
-              'Part of speech': 'other',
-            },
-          },
+          path: '/api/anki/notes',
+          body: { fields: dagFields, allowDuplicate: false },
         },
       ]);
     });
 
-    test('asks on Cmd+Enter too', async () => {
+    test('adds on Cmd+Enter too, without asking first', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
-
       await skipImage();
       await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Replace and open' }));
-      expect(addRequests(requests)).toEqual([]);
+      await screen.findByText('Added to the deck.');
+      expect(addRequests(requests)).toHaveLength(1);
     });
 
-    test('sends nothing when cancelled', async () => {
-      const requests = await renderConnectedEditor();
-      await fillDag();
+    describe('after adding', () => {
+      test('saves a change to the added note, rather than adding another', async () => {
+        const requests = await renderConnectedEditor();
+        await fillDag();
+        await skipImage();
+        await fireEvent.click(addButton());
+        await screen.findByText('Added to the deck.');
+        expect(screen.queryByRole('button', { name: 'Add to deck' })).toBeNull();
 
-      await skipImage();
-      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-      await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-      expect(screen.getByRole('button', { name: 'Open in Anki' })).toBeTruthy();
-      expect(addRequests(requests)).toEqual([]);
+        await typeInto(input('English meaning'), 'carp');
+        await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await screen.findByText('Saved to Anki.');
+        expect(addRequests(requests)).toHaveLength(1);
+        expect(saveRequests(requests)).toEqual([
+          {
+            method: 'POST',
+            path: '/api/anki/notes/1',
+            body: { fields: { Definitions: 'carp' }, mod: 1 },
+          },
+        ]);
+      });
+    });
+
+    describe('when Anki holds a note with the same Hebrew', () => {
+      async function addDuplicate() {
+        let refused = false;
+        const requests = await renderConnectedEditor({
+          addNote: ({ fields, allowDuplicate }) => {
+            if (allowDuplicate) return Response.json({ noteId: 1, mod: 1, fields });
+            refused = true;
+            return Response.json(
+              { message: 'Anki already has a note with this Hebrew.' },
+              { status: 409 },
+            );
+          },
+        });
+        await fillDag();
+        await skipImage();
+        await fireEvent.click(addButton());
+        await screen.findByRole('button', { name: 'Add anyway' });
+        expect(refused).toBe(true);
+        return requests;
+      }
+
+      test('says so, and adds only on Add anyway', async () => {
+        const requests = await addDuplicate();
+        expect(screen.getByRole('alert').textContent).toContain(
+          'Anki already has a note with this Hebrew.',
+        );
+        expect(document.activeElement).not.toBe(screen.getByRole('button', { name: 'Add anyway' }));
+
+        await fireEvent.click(screen.getByRole('button', { name: 'Add anyway' }));
+        await screen.findByText('Added to the deck.');
+        expect(addRequests(requests).map(({ body }) => body)).toEqual([
+          { fields: dagFields, allowDuplicate: false },
+          { fields: dagFields, allowDuplicate: true },
+        ]);
+      });
+    });
+
+    describe('when Anki fails', () => {
+      test('says why, and stays a new note', async () => {
+        await renderConnectedEditor({
+          addNote: () => Response.json({ message: 'collection is not available' }, { status: 502 }),
+        });
+        await fillDag();
+        await skipImage();
+        await fireEvent.click(addButton());
+        expect((await screen.findByRole('alert')).textContent).toBe('collection is not available');
+        expect(addButton().disabled).toBe(false);
+      });
     });
 
     describe('while an input is blank', () => {
       test('is disabled and says what is still needed', async () => {
         await renderConnectedEditor();
         await typeInto(input('Hebrew word, without niqqud'), 'דג');
-        expect(
-          (screen.getByRole('button', { name: 'Open in Anki' }) as HTMLButtonElement).disabled,
-        ).toBe(true);
+        expect(addButton().disabled).toBe(true);
         expect(
           screen.getByText(
             'Still needed: English meaning, part of speech, Hebrew word with niqqud, image',
@@ -92,13 +153,10 @@ describe('CardEditor', () => {
         render(CardEditor);
         await screen.findByText('Is Anki open?');
         await fillDag();
+        await skipImage();
 
-        const openButton = screen.getByRole('button', {
-          name: 'Open in Anki',
-        }) as HTMLButtonElement;
-        expect(openButton.disabled).toBe(true);
+        expect(addButton().disabled).toBe(true);
         await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-        expect(screen.queryByRole('button', { name: 'Replace and open' })).toBeNull();
         expect(addRequests(requests)).toEqual([]);
       });
     });
@@ -120,10 +178,7 @@ describe('CardEditor', () => {
         'https://www.google.com/search?udm=2&q=Pisces',
       ]);
       await skipImage();
-      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-      await screen.findByText(/Opened in Anki/);
-      expect(addRequests(requests)[0]?.body).toMatchObject({
+      expect(await addToDeck(requests)).toMatchObject({
         fields: { Definitions: '1. fish<br>2. Pisces' },
       });
     });
@@ -174,10 +229,7 @@ describe('CardEditor', () => {
       await typeInto(noteField('Hint for reading the Hebrew without niqqud'), 'הדג גדול');
 
       await skipImage();
-      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-      await screen.findByText(/Opened in Anki/);
-      expect(addRequests(requests)[0]?.body).toMatchObject({
+      expect(await addToDeck(requests)).toMatchObject({
         fields: { 'Reading context': 'הדג גדול' },
       });
     });
@@ -188,10 +240,7 @@ describe('CardEditor', () => {
       await typeInto(noteField('Notes'), 'first\nsecond');
 
       await skipImage();
-      await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-      await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-      await screen.findByText(/Opened in Anki/);
-      expect(addRequests(requests)[0]?.body).toMatchObject({
+      expect(await addToDeck(requests)).toMatchObject({
         fields: { Notes: 'first<br>second' },
       });
     });
@@ -272,10 +321,7 @@ describe('CardEditor', () => {
         await typeInto(input('Masculine plural, with niqqud'), 'דָּגִים');
 
         await skipImage();
-        await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-        await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-        await screen.findByText(/Opened in Anki/);
-        expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Forms: 'pl: דָּגִים' } });
+        expect(await addToDeck(requests)).toMatchObject({ fields: { Forms: 'pl: דָּגִים' } });
       });
 
       test('sends it blank when composition gives it nothing', async () => {
@@ -286,10 +332,7 @@ describe('CardEditor', () => {
         await fireEvent.click(screen.getByRole('radio', { name: 'None' }));
 
         await skipImage();
-        await fireEvent.click(screen.getByRole('button', { name: 'Open in Anki' }));
-        await fireEvent.click(screen.getByRole('button', { name: 'Replace and open' }));
-        await screen.findByText(/Opened in Anki/);
-        expect(addRequests(requests)[0]?.body).toMatchObject({ fields: { Forms: '' } });
+        expect(await addToDeck(requests)).toMatchObject({ fields: { Forms: '' } });
       });
     });
   });
