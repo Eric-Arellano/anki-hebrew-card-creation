@@ -27,6 +27,7 @@ import {
   completeInputs,
   draftRoot,
   filledDefinitions,
+  INPUT_NAMES,
 } from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
@@ -36,6 +37,7 @@ import {
   undoPrefill,
 } from '#lib/card/prefill.ts';
 import { GROUP_HELP } from '#lib/field-help.ts';
+import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import { type FieldKey, type PartOfSpeech, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
@@ -46,12 +48,12 @@ import ImagesInput from './media/ImagesInput.svelte';
 import NoteFields from './fields/NoteFields.svelte';
 import SuggestButton from './fields/SuggestButton.svelte';
 import Checkbox from './ui/Checkbox.svelte';
+import LinkChip from './ui/LinkChip.svelte';
 import Section from './ui/Section.svelte';
 import TextInput from './ui/TextInput.svelte';
 import DefinitionsInput from './word/DefinitionsInput.svelte';
 import DictionaryPanel from './word/DictionaryPanel.svelte';
 import ExistingNotesPanel from './word/ExistingNotesPanel.svelte';
-import LookupLinks from './word/LookupLinks.svelte';
 
 let {
   note,
@@ -119,9 +121,6 @@ const lookup = $derived(
         () => lookupWord,
         () => fetchDictionaryLookup(lookupWord),
       ),
-);
-const wiktionaryEntry = $derived(
-  picked !== undefined ? true : lookup?.then((result) => result?.titleHasEntry),
 );
 const choices = $derived(picked?.choices ?? {});
 const deckWords = $derived([draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]);
@@ -256,16 +255,23 @@ onMount(checkAnki);
       onopen={(opened) => onopennote?.(opened)}
     />
     <DictionaryPanel
+      word={draft.inputs.word}
       {lookup}
       picked={picked?.candidate}
       editing={note !== undefined}
       onpick={pick}
       onunpick={unpick}
     />
-    <LookupLinks word={draft.inputs.word} lemmaTitle={picked?.candidate.title} {wiktionaryEntry} />
   </Section>
 
   <Section title="Grammar">
+    {#snippet actions()}
+      <LinkChip
+        label={LINKS.pealim.label}
+        url={buildLinkUrl(LINKS.pealim, draft.inputs.word)}
+        blankInput={INPUT_NAMES.word}
+      />
+    {/snippet}
     <WordForms
       bind:inputs={draft.inputs}
       {choices}
@@ -287,6 +293,22 @@ onMount(checkAnki);
         required={draft.media.images.length === 0 && !draft.media.noImage}
         bind:images={draft.media.images}
       >
+        <!-- A card usually has one image per meaning, so each meaning gets its own search. -->
+        {#snippet links()}
+          {#each meanings.length === 0 ? [''] : meanings as meaning, index (index)}
+            <LinkChip
+              label={meaning || LINKS['images-en'].label}
+              url={buildLinkUrl(LINKS['images-en'], meaning)}
+              blankInput="meaning"
+            />
+          {/each}
+          <LinkChip
+            label={draft.inputs.word.trim() || LINKS['images-he'].label}
+            url={buildLinkUrl(LINKS['images-he'], draft.inputs.word)}
+            blankInput={INPUT_NAMES.word}
+            lang="he"
+          />
+        {/snippet}
         <!-- The human's say that this word has no image worth finding. -->
         {#if draft.media.images.length === 0}
           <span class="ml-auto text-sm text-gray-600">

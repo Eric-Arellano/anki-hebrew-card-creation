@@ -19,6 +19,16 @@ import {
   typeInto,
 } from './CardEditor.harness.ts';
 
+function imagesBox() {
+  return screen.getByRole('group', { name: 'Images' });
+}
+
+function imageSearches() {
+  return within(imagesBox())
+    .getAllByRole('link')
+    .map((link) => [link.textContent?.trim(), link.getAttribute('href')]);
+}
+
 describe('CardEditor', () => {
   describe('two meanings', () => {
     test('send numbered definitions, and each has its own image search', async () => {
@@ -27,13 +37,10 @@ describe('CardEditor', () => {
       await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
       await typeInto(input('English meaning 2'), 'Pisces');
 
-      expect(
-        screen
-          .getAllByRole('link', { name: 'Images (EN)' })
-          .map((link) => link.getAttribute('href')),
-      ).toEqual([
-        'https://www.google.com/search?udm=2&q=fish',
-        'https://www.google.com/search?udm=2&q=Pisces',
+      expect(imageSearches()).toEqual([
+        ['fish', 'https://www.google.com/search?udm=2&q=fish'],
+        ['Pisces', 'https://www.google.com/search?udm=2&q=Pisces'],
+        ['דג', `https://www.google.com/search?udm=2&q=${encodeURIComponent('דג')}`],
       ]);
       await skipImage();
       expect(await addToDeck(requests)).toMatchObject({
@@ -75,7 +82,7 @@ describe('CardEditor', () => {
         await typeInto(input('English meaning 2'), 'Pisces');
         await fireEvent.click(screen.getByRole('button', { name: 'Remove English meaning 2' }));
         expect(screen.queryByLabelText('English meaning 2')).toBeNull();
-        expect(screen.getAllByRole('link', { name: 'Images (EN)' })).toHaveLength(1);
+        expect(imageSearches().map(([label]) => label)).toEqual(['fish', 'דג']);
       });
     });
   });
@@ -263,10 +270,13 @@ describe('CardEditor', () => {
         await choosePartOfSpeech('Other');
         const prompt = noteField('Variant 1: English prompt');
         const promptField = prompt.closest('[data-image-field]') as HTMLElement;
-        expect(within(promptField).getByText('Images (EN)').title).toBe('Type the prompt first');
+        const promptImages = within(promptField).getByRole('group', {
+          name: 'Images for Variant 1: English prompt',
+        });
+        expect(within(promptImages).getByText('English').title).toBe('Type the prompt first');
         await typeInto(prompt, 'good tables');
         expect(
-          within(promptField).getByRole('link', { name: 'Images (EN)' }).getAttribute('href'),
+          within(promptImages).getByRole('link', { name: 'good tables' }).getAttribute('href'),
         ).toBe('https://www.google.com/search?udm=2&q=good%20tables');
       });
     });
@@ -437,17 +447,34 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('the lookup links', () => {
+    test('sit beside what they feed', async () => {
+      await renderConnectedEditor();
+      await typeInto(input('Hebrew word, without niqqud'), 'דג');
+      const grammar = screen.getByRole('region', { name: 'Grammar' });
+      expect(within(grammar).getByRole('link', { name: 'Pealim' }).getAttribute('href')).toBe(
+        `https://www.pealim.com/search/?q=${encodeURIComponent('דג')}`,
+      );
+      const audio = screen.getByRole('group', { name: 'Audio' });
+      expect(within(audio).getByRole('link', { name: 'Forvo' }).getAttribute('href')).toBe(
+        `https://forvo.com/word/${encodeURIComponent('דג')}/#he`,
+      );
+    });
+  });
+
   describe('a link that needs an input still blank', () => {
     test('is disabled and says which input to fill', async () => {
       await renderConnectedEditor();
-      const links = screen.getByRole('navigation', { name: 'Look up' });
-      expect(within(links).getByText('Wiktionary').title).toBe(
+      const grammar = screen.getByRole('region', { name: 'Grammar' });
+      expect(within(grammar).getByText('Pealim').title).toBe(
+        'Type the Hebrew word without niqqud first',
+      );
+      expect(within(imagesBox()).getByText('Hebrew').title).toBe(
         'Type the Hebrew word without niqqud first',
       );
       await typeInto(input('Hebrew word, without niqqud'), 'דג');
-      expect(within(links).getByRole('link', { name: 'Images (HE)' })).toBeTruthy();
-      expect(screen.queryByRole('link', { name: 'Images (EN)' })).toBeNull();
-      expect(screen.getByText('Images (EN)').title).toBe('Type the meaning first');
+      expect(within(imagesBox()).getByRole('link', { name: 'דג' })).toBeTruthy();
+      expect(within(imagesBox()).getByText('English').title).toBe('Type the meaning first');
     });
   });
 });

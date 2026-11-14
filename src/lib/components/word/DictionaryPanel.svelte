@@ -1,14 +1,20 @@
 <script lang="ts">
 import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
+import { INPUT_NAMES } from '#lib/card/inputs.ts';
+import { toComparisonKey } from '#lib/hebrew/normalize.ts';
+import { buildLinkUrl, LINKS } from '#lib/links.ts';
+import LinkChip from '../ui/LinkChip.svelte';
 
 let {
+  word,
   lookup,
   picked,
   editing,
   onpick,
   onunpick,
 }: {
+  word: string;
   // `undefined` while there's nothing to look up; resolves to `undefined` while typing goes on.
   lookup: Promise<DictionaryLookup | undefined> | undefined;
   picked: DictionaryCandidate | undefined;
@@ -38,6 +44,18 @@ function heading(match: DictionaryLookup['match']): string {
   {/if}
 {/snippet}
 
+<!-- The picked entry's page, or else the word's, whose titles never carry niqqud. -->
+{#snippet wiktionaryChip(
+  hasEntry: boolean | undefined,
+)}
+  <LinkChip
+    label={LINKS.wiktionary.label}
+    url={buildLinkUrl(LINKS.wiktionary, picked?.title ?? toComparisonKey(word))}
+    blankInput={INPUT_NAMES.word}
+    note={hasEntry === false ? 'no entry' : undefined}
+  />
+{/snippet}
+
 {#snippet lookingUp()}
   <p class="hint">Looking it up in the dictionary…</p>
 {/snippet}
@@ -50,7 +68,10 @@ function heading(match: DictionaryLookup['match']): string {
           {editing ? 'Filled in the blanks from Wiktionary:' : 'Filled in from Wiktionary:'}
         </span>
         {@render headline(picked)}
-        <button type="button" class="ms-auto text-sm" onclick={onunpick}>Choose another</button>
+        <span class="ms-auto flex flex-wrap items-center gap-2">
+          {@render wiktionaryChip(true)}
+          <button type="button" class="text-sm" onclick={onunpick}>Choose another</button>
+        </span>
       </div>
       <!-- Read-only: the human writes their own meaning, with these beside it. -->
       <ol aria-label="Wiktionary's meanings" class="list-decimal space-y-0.5 ps-6">
@@ -73,9 +94,15 @@ function heading(match: DictionaryLookup['match']): string {
           </p>
         {/if}
         {#if result.candidates.length === 0}
-          <p class="hint">Not in the dictionary.</p>
+          <p class="flex flex-wrap items-center gap-2">
+            <span class="hint">Not in the dictionary.</span>
+            {@render wiktionaryChip(result.titleHasEntry)}
+          </p>
         {:else}
-          <p class={['font-medium', !editing && 'mb-2']}>{heading(result.match)}</p>
+          <p class={['flex flex-wrap items-center gap-x-3 gap-y-1', !editing && 'mb-2']}>
+            <span class="font-medium">{heading(result.match)}</span>
+            {@render wiktionaryChip(result.titleHasEntry)}
+          </p>
           {#if editing}
             <p class="hint mb-2">
               Keeps everything the note already has. Where Wiktionary differs, its value is offered
@@ -103,7 +130,10 @@ function heading(match: DictionaryLookup['match']): string {
         {/if}
       {/if}
     {:catch error}
-      <p role="alert" class="text-red-700">{errorMessage(error)}</p>
+      <p class="flex flex-wrap items-center gap-2">
+        <span role="alert" class="text-red-700">{errorMessage(error)}</span>
+        {@render wiktionaryChip(undefined)}
+      </p>
     {/await}
   {/if}
 </section>

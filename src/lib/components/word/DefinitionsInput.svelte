@@ -1,11 +1,5 @@
 <script lang="ts">
-import { buildLinkUrl, LINKS } from '#lib/links.ts';
-import LinkChip from '../ui/LinkChip.svelte';
-
 let { definitions = $bindable() }: { definitions: string[] } = $props();
-
-// A card usually has one image per meaning, so each meaning gets its own search.
-const meaningLinks = Object.entries(LINKS).filter(([, link]) => link.input === 'english');
 
 // The last row is cleared rather than removed, so there is always one to type in.
 function remove(index: number) {
@@ -26,13 +20,6 @@ function remove(index: number) {
         required={index === 0}
         bind:value={definitions[index]}
       >
-      {#each meaningLinks as [id, link] (id)}
-        <LinkChip
-          label={link.label}
-          url={buildLinkUrl(link, definitions[index] ?? '')}
-          blankInput="meaning"
-        />
-      {/each}
       <button
         type="button"
         class="w-8 shrink-0 px-0"

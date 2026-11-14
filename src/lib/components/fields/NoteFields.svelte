@@ -20,9 +20,6 @@ import QuotedText from '../ui/QuotedText.svelte';
 import ExamplesInput from './ExamplesInput.svelte';
 import SameMeaningNotes from './SameMeaningNotes.svelte';
 
-// The meanings' own image search, here searched with a variant's English prompt.
-const imagesLink = LINKS['images-en'];
-
 let {
   fields,
   partOfSpeech,
@@ -111,13 +108,6 @@ function lacksAnswer(prompt: VariantPrompt) {
             </span>
           {/if}
         </span>
-        {#if prompt !== undefined}
-          <LinkChip
-            label={imagesLink.label}
-            url={buildLinkUrl(imagesLink, ankiFieldHtmlToText(edits[field] ?? ''))}
-            blankInput="prompt"
-          />
-        {/if}
       </div>
       {#if help !== undefined}
         <p id="help-{field}" class="hint"><QuotedText text={help} /></p>
@@ -145,7 +135,16 @@ function lacksAnswer(prompt: VariantPrompt) {
           ></textarea>
         {/if}
         {#if prompt !== undefined}
-          <ImagesInput label="Images for {label}" {prompt} bind:images={promptImages[prompt]} />
+          {@const promptText = ankiFieldHtmlToText(edits[field] ?? '').trim()}
+          <ImagesInput label="Images for {label}" {prompt} bind:images={promptImages[prompt]}>
+            {#snippet links()}
+              <LinkChip
+                label={promptText || LINKS['images-en'].label}
+                url={buildLinkUrl(LINKS['images-en'], promptText)}
+                blankInput="prompt"
+              />
+            {/snippet}
+          </ImagesInput>
           {#if promptImages[prompt].length > 0 && lacksAnswer(prompt)}
             <p class="hint text-amber-700">
               No card shows these images until this variant has a Hebrew answer.
