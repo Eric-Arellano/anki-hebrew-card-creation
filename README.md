@@ -4,15 +4,11 @@ A local helper for making Hebrew Anki cards. You type a word, and it does the ro
 links, the pointed forms, the plural and gender fields, and a check for whether the word is
 already in your deck. Paste, drop or pick images and an MP3 recording, and it stores them in Anki
 when you click Add to deck. Open a note already in the deck and it saves your changes to it when
-you click Save, after showing what will change. It writes a note only when you click, and never
-deletes one; review and delete cards in Anki.
+you click Save changes, after showing what will change. It writes a note only when you click, and
+never deletes one; review and delete cards in Anki.
 
 It is built for my own deck and note type, which `src/lib/note-type.ts` describes. To adapt it,
 edit that file.
-
-**Status:** early, but it works end to end. Type a word, pick the dictionary entry it is, and the
-pointed form, gender, plural, feminine forms, binyan, root and infinitive fill in from Wiktionary.
-It suggests a variant card for an irregular plural, and composes every production answer.
 
 ## Requirements
 
@@ -46,11 +42,12 @@ says when the index is older than the file.
 
 ### Claude
 
-The server won't start without an Anthropic API key. Suggest with Claude fills in the examples and
-hints, and the first ⌘↵ shows Claude's check of the note before the second one saves it, whether or
-not Claude has answered, so offline you can still save past the error. Check only checks a note without
-saving it. Create an API key in the [Claude Console](https://platform.claude.com/), set a monthly
-spend limit there, and put the key in a `.env` file at the top of this folder, which git ignores:
+Claude suggests examples and hints, and checks a note before each add or save, which you can save
+past. Both need the dictionary index too.
+
+The server won't start without an Anthropic API key. Create one in the
+[Claude Console](https://platform.claude.com/), set a monthly spend limit there, and put the key in
+a `.env` file at the top of this folder, which git ignores:
 
 ```sh
 ANTHROPIC_API_KEY=sk-ant-...
@@ -66,17 +63,18 @@ notes in your collection, add new ones and add files to its media folder.
 
 - **The dictionary** you saved in `data/`, and the index built from it.
 - **Your Downloads folder, for Forvo pronunciations.** Download a word's MP3 from Forvo, come back
-  to the tab, and the editor attaches it. It only reads the names of files that look like Forvo
-  downloads, and those files' bytes, and never writes there. Set `FORVO_DOWNLOADS` to look in
-  another folder. On macOS, the first look asks whether your terminal may read Downloads.
+  to the tab, and the editor attaches it. It lists the folder's names, reads only the files that
+  look like Forvo downloads, and never writes there. Set `FORVO_DOWNLOADS` to look in another
+  folder. On macOS, the first look asks whether your terminal may read Downloads.
 
 ## What it sends over the network
 
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
-  plus the calls that add a note, save an edited one and store images and audio in your media
-  folder.
-- **To Anthropic, only when you ask for suggestions, a check or a save:** the word you're editing
-  and its fields' text. Images, audio and the rest of your deck stay on your machine.
+  and reads of their images and audio, plus the calls that add a note, save an edited one and store
+  images and audio in your media folder.
+- **To Anthropic, only when you ask for suggestions, a check or a save:** the word you're editing,
+  its part of speech and its fields' text, and the dictionary's definitions of other entries
+  spelled the same. Images, audio and the rest of your deck stay on your machine.
 - **To other third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are
   only opened when you click them.
 

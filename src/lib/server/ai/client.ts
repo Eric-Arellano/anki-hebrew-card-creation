@@ -1,5 +1,6 @@
-// The one module that reaches api.anthropic.com. Only a route answering the human's click or Save
-// calls it, and only the note's own text goes in a request.
+// The one module that reaches api.anthropic.com. Only a route answering the human's click, add or
+// save calls it, and a request holds only the note's own text and part of speech, and the
+// dictionary's definitions of other entries spelled the same.
 import Anthropic, { type AnthropicError } from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import type { z } from 'zod';

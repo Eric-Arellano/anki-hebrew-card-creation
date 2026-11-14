@@ -13,7 +13,8 @@ export type NoteInfo = z.infer<typeof noteInfoSchema>;
 // The allowlist. Nothing here deletes a note. `addNote` adds one and `updateNoteFields` edits one,
 // each only when the human clicks its button, and an edit leaves tags, deck and scheduling alone.
 // `storeMediaFile` only adds a file to the media folder, and `retrieveMediaFile` only reads one. An
-// action missing from this object can't be typed or sent.
+// action missing from this object can't be typed or sent. The list is also spelled out in AGENTS.md
+// and enforced on Bash by `.claude/hooks/anki-guard.sh`: change all three together.
 const resultSchemaByAllowedAction = {
   version: z.number(),
   deckNames: z.array(z.string()),
