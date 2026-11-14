@@ -1,8 +1,11 @@
 <script lang="ts">
 import { changedFields } from '#lib/anki/changes.ts';
+import type { CheckRequest } from '#lib/api/ai.ts';
 import { addNote, type LoadedNote, saveNote, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage, RouteError } from '#lib/api/http.ts';
 import type { NewAttachment } from '#lib/media/attach.ts';
+import { fromAnkiFields, type PartOfSpeech } from '#lib/note-type.ts';
+import ClaudeCheck from './ClaudeCheck.svelte';
 
 let {
   attachments,
@@ -13,6 +16,8 @@ let {
   onloadagain,
   ankiBlocker,
   inputsBlocker,
+  aiAvailable,
+  partOfSpeech,
 }: {
   // Each file the note will hold that Anki doesn't yet, once.
   attachments: readonly NewAttachment[];
@@ -32,11 +37,17 @@ let {
   ankiBlocker: string | undefined;
   // Which inputs are still blank, spelled out in the bar.
   inputsBlocker: string | undefined;
+  // Whether the server has an Anthropic API key, so the review can have Claude check the note.
+  aiAvailable: boolean;
+  partOfSpeech: PartOfSpeech | undefined;
 } = $props();
 
 type Saving =
   | { kind: 'idle' }
-  | { kind: 'reviewing' }
+  // `check` is the note as Claude is asked to check it, absent without a key.
+  | { kind: 'reviewing'; check?: CheckRequest }
+  // A check the human asked for outside a review, which saves nothing.
+  | { kind: 'checked'; check: CheckRequest }
   | { kind: 'sending' }
   | { kind: 'added' }
   | { kind: 'saved' }
@@ -47,13 +58,9 @@ type Saving =
 let saving: Saving = $state.raw({ kind: 'idle' });
 
 // Before storing, a new file goes by the name requested, which is all the review shows of it.
+const unstored = $derived(new Map(attachments.map(({ filename }) => [filename, filename])));
 const changes = $derived(
-  held === undefined
-    ? {}
-    : changedFields(
-        held.fields,
-        fieldsWith(new Map(attachments.map(({ filename }) => [filename, filename]))),
-      ),
+  held === undefined ? {} : changedFields(held.fields, fieldsWith(unstored)),
 );
 
 const NOTHING_CHANGED = 'Nothing to save: every field reads as Anki holds it.';
@@ -64,11 +71,33 @@ const blocker = $derived(
     (held !== undefined && Object.keys(changes).length === 0 ? NOTHING_CHANGED : undefined),
 );
 
-// A save overwrites the note, so it shows what will change first. A new note overwrites nothing.
+const checks = $derived(aiAvailable && partOfSpeech !== undefined);
+
+function noteToCheck(): CheckRequest | undefined {
+  return partOfSpeech !== undefined && aiAvailable
+    ? { partOfSpeech, fields: fromAnkiFields(fieldsWith(unstored)) }
+    : undefined;
+}
+
+// A save overwrites the note, so it shows what will change first. A new note overwrites nothing,
+// so it is reviewed only when Claude can check it.
 function submit() {
   if (blocker !== undefined || saving.kind === 'sending') return;
+  const check = noteToCheck();
+  if (held === undefined && check === undefined) add({ allowDuplicate: false });
+  else saving = { kind: 'reviewing', check };
+}
+
+// Even when nothing changed, so a finished note can be checked again.
+function checkNow() {
+  const check = noteToCheck();
+  if (check !== undefined && saving.kind !== 'sending') saving = { kind: 'checked', check };
+}
+
+// Whether or not the check has answered, since it only advises.
+function confirm() {
   if (held === undefined) add({ allowDuplicate: false });
-  else saving = { kind: 'reviewing' };
+  else save();
 }
 
 function isConflict(error: unknown): boolean {
@@ -128,7 +157,7 @@ async function loadAgain() {
 function onkeydown(event: KeyboardEvent) {
   if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
   event.preventDefault();
-  if (saving.kind === 'reviewing') save();
+  if (saving.kind === 'reviewing') confirm();
   else submit();
 }
 
@@ -154,28 +183,36 @@ function focus(element: HTMLElement) {
   aria-label="Save"
   class="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white py-4"
 >
-  {#if saving.kind === 'reviewing' && held !== undefined}
-    <p class="basis-full">Saving changes these fields in Anki:</p>
-    <dl class="max-h-[50vh] basis-full space-y-3 overflow-y-auto">
-      {#each Object.entries(changes) as [name, after] (name)}
-        <div>
-          <dt class="font-medium">{name}</dt>
-          <dd>
-            <span class="text-gray-600">Before:</span> {@render fieldHtml(held.fields[name] ?? '')}
-          </dd>
-          <dd><span class="text-gray-600">After:</span> {@render fieldHtml(after)}</dd>
-        </div>
-      {/each}
-    </dl>
+  {#if saving.kind === 'reviewing'}
+    {#if held === undefined}
+      <p class="basis-full">Adding this note to the deck.</p>
+    {:else}
+      <p class="basis-full">Saving changes these fields in Anki:</p>
+      <dl class="max-h-[40vh] basis-full space-y-3 overflow-y-auto">
+        {#each Object.entries(changes) as [name, after] (name)}
+          <div>
+            <dt class="font-medium">{name}</dt>
+            <dd>
+              <span class="text-gray-600">Before:</span>
+              {@render fieldHtml(held.fields[name] ?? '')}
+            </dd>
+            <dd><span class="text-gray-600">After:</span> {@render fieldHtml(after)}</dd>
+          </div>
+        {/each}
+      </dl>
+    {/if}
+    {#if saving.check !== undefined}
+      <ClaudeCheck request={saving.check} />
+    {/if}
     <!-- Focused, so the Cmd+Enter that opened this step is followed by a deliberate second one. -->
     <button
       type="button"
       class="button-primary"
       disabled={blocker !== undefined}
       {@attach focus}
-      onclick={save}
+      onclick={confirm}
     >
-      Save changes
+      {held === undefined ? 'Add to deck' : 'Save changes'}
     </button>
     <kbd>⌘↵</kbd>
     <button type="button" onclick={() => (saving = { kind: 'idle' })}>Cancel</button>
@@ -187,10 +224,23 @@ function focus(element: HTMLElement) {
       title={blocker}
       onclick={submit}
     >
-      {held === undefined ? 'Add to deck' : 'Save'}
+      {#if held === undefined}
+        {checks ? 'Check and add' : 'Add to deck'}
+      {:else}
+        {checks ? 'Check and save' : 'Save'}
+      {/if}
     </button>
     <kbd>⌘↵</kbd>
-    {#if saving.kind === 'added' || saving.kind === 'saved'}
+    {#if checks}
+      <button type="button" disabled={saving.kind === 'sending'} onclick={checkNow}>
+        Check only
+      </button>
+    {/if}
+    {#if saving.kind === 'checked'}
+      {#key saving}
+        <ClaudeCheck request={saving.check} />
+      {/key}
+    {:else if saving.kind === 'added' || saving.kind === 'saved'}
       <p>{saving.kind === 'added' ? 'Added to the deck.' : 'Saved to Anki.'}</p>
       <!-- Focused, so Enter is all the next word takes. -->
       <button type="button" {@attach focus} onclick={onnextcard}>Next word</button>

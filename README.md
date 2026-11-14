@@ -45,8 +45,9 @@ says when the index is older than the file.
 
 ### Claude (optional)
 
-Without an API key, everything above works and nothing reaches Anthropic. With one, the editor can
-ask Claude for the help that needs a model. To set it up, create an API key in the
+Without an API key, everything above works and nothing reaches Anthropic. With one, Suggest fills
+in the examples and hints, and the first ⌘↵ shows Claude's check of the note before the second one
+saves it, whether or not Claude has answered. Check only checks a note without saving it. To set it up, create an API key in the
 [Claude Console](https://platform.claude.com/), set a monthly spend limit there, and put the key in
 a `.env` file at the top of this folder, which git ignores:
 

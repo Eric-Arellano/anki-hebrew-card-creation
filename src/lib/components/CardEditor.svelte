@@ -342,5 +342,7 @@ onMount(() => {
     onloadagain={loadAgain}
     ankiBlocker={ankiStatus === undefined ? 'Checking Anki…' : ankiProblem}
     inputsBlocker={stillNeededMessage}
+    {aiAvailable}
+    partOfSpeech={draft.inputs.partOfSpeech}
   />
 </main>

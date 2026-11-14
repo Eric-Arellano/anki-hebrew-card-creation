@@ -36,11 +36,16 @@ export async function getBlob(path: string): Promise<Blob> {
   return response.blob();
 }
 
-export async function postJsonForReply<T>(path: string, body: unknown): Promise<T> {
+export async function postJsonForReply<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
   const response = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   });
   if (!response.ok) throw await failure(response);
   return (await response.json()) as T;
