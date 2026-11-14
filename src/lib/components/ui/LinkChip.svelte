@@ -37,7 +37,7 @@ let {
 
 {#if url === undefined}
   <span
-    class="chip cursor-not-allowed gap-1.5 text-gray-400"
+    class="chip cursor-not-allowed gap-1.5 text-neutral-500"
     title="Type the {blankInput} first"
     {lang}
   >
@@ -46,14 +46,14 @@ let {
   </span>
 {:else}
   <a
-    class="chip gap-1.5 border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50"
+    class="chip gap-1.5 border-blue-800 text-blue-400 hover:border-blue-400 hover:bg-blue-950/40"
     href={url}
     target="_blank"
     rel="noreferrer"
   >
     <span {lang}>{label}</span>
     {#if note !== undefined}
-      <span class="text-sm text-gray-500">· {note}</span>
+      <span class="text-sm text-neutral-400">· {note}</span>
     {/if}
     {@render externalIcon()}
   </a>

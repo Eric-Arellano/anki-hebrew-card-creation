@@ -101,7 +101,7 @@ function lacksAnswer(prompt: VariantPrompt) {
           {#if unread}
             <span
               id="suggested-{field}"
-              class="chip border-violet-300 bg-violet-50 text-xs text-violet-800"
+              class="chip border-violet-700 bg-violet-950/40 text-xs text-violet-300"
               title="Claude wrote this. Read it over, and edit what's wrong."
             >
               Suggested
@@ -146,7 +146,7 @@ function lacksAnswer(prompt: VariantPrompt) {
             {/snippet}
           </ImagesInput>
           {#if promptImages[prompt].length > 0 && lacksAnswer(prompt)}
-            <p class="hint text-amber-700">
+            <p class="hint text-amber-400">
               No card shows these images until this variant has a Hebrew answer.
             </p>
           {/if}

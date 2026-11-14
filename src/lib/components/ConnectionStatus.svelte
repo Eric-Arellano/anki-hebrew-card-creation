@@ -20,15 +20,17 @@ let {
 {/snippet}
 
 {#if status !== undefined && problem !== undefined}
-  <div class="flex basis-full items-center justify-between gap-4 rounded-lg bg-red-100 px-4 py-2">
+  <div
+    class="flex basis-full items-center justify-between gap-4 rounded-lg bg-red-950/60 px-4 py-2"
+  >
     <p role="alert">{problem}</p>
     {@render recheck()}
   </div>
 {:else}
-  <div class="flex items-center gap-2 text-sm text-gray-600">
+  <div class="flex items-center gap-2 text-sm text-neutral-400">
     <span
       aria-hidden="true"
-      class={['size-2 rounded-full', status === undefined ? 'bg-gray-400' : 'bg-green-600']}
+      class={['size-2 rounded-full', status === undefined ? 'bg-neutral-500' : 'bg-green-500']}
     ></span>
     {#if status === undefined}
       <p>Checking Anki…</p>

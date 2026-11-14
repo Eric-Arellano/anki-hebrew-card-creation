@@ -18,7 +18,7 @@ const id = $props.id();
 
 <section
   aria-labelledby="{id}-title"
-  class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+  class="space-y-4 rounded-lg border border-neutral-700 bg-neutral-800 p-4"
 >
   <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
     <div class="space-y-1">

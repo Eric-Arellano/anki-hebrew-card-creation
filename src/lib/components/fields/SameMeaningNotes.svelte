@@ -23,7 +23,7 @@ function quoted(meanings: string[]): string {
   {#if search !== undefined}
     {#await search then notes}
       {#if notes !== undefined && notes.length > 0}
-        <div class={['hint', hintBlank && 'text-amber-700']}>
+        <div class={['hint', hintBlank && 'text-amber-400']}>
           <p>
             {hintBlank
               ? 'Your deck has other words for this English, so say which one you want:'

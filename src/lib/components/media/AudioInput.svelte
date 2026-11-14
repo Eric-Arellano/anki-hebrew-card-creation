@@ -137,10 +137,13 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
 
 <svelte:window {onpaste} {ondrop} onfocus={lookInDownloads} />
 
-<fieldset aria-label="Audio" class="space-y-2 rounded-md border border-dashed border-gray-300 p-3">
+<fieldset
+  aria-label="Audio"
+  class="space-y-2 rounded-md border border-dashed border-neutral-600 p-3"
+>
   <div class="flex flex-wrap items-center gap-2">
     <span>Audio</span>
-    <label class="chip cursor-pointer text-sm hover:bg-gray-50 has-focus-visible:ring-2">
+    <label class="chip cursor-pointer text-sm hover:bg-neutral-700 has-focus-visible:ring-2">
       Choose file
       <input class="sr-only" type="file" accept=".mp3,audio/mpeg" {onchange}>
     </label>
@@ -194,6 +197,6 @@ function onchange(event: Event & { currentTarget: HTMLInputElement }) {
   {/if}
 
   {#if refusal !== undefined}
-    <p role="alert" class="text-red-700">{refusal}</p>
+    <p role="alert" class="text-red-400">{refusal}</p>
   {/if}
 </fieldset>

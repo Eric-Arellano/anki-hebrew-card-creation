@@ -126,10 +126,10 @@ describe('CardEditor', () => {
         await fireEvent.dragOver(document.body, {
           dataTransfer: { ...emptyTransfer, types: ['Files'] },
         });
-        expect(zone.className).toContain('border-blue-600');
+        expect(zone.className).toContain('border-blue-400');
         // A real `relatedTarget`, since `fireEvent` leaves it undefined rather than null.
         await fireEvent(document.body, new MouseEvent('dragleave', { bubbles: true }));
-        expect(zone.className).not.toContain('border-blue-600');
+        expect(zone.className).not.toContain('border-blue-400');
       });
     });
 

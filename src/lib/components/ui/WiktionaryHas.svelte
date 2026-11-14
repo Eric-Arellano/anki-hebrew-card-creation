@@ -24,7 +24,7 @@ let {
     <button
       type="button"
       class={[
-        'chip px-2 py-0 aria-pressed:border-blue-700 aria-pressed:bg-blue-700 aria-pressed:text-white',
+        'chip px-2 py-0 aria-pressed:border-blue-600 aria-pressed:bg-blue-600 aria-pressed:text-white',
         lang === 'he' ? 'text-lg' : 'text-sm',
       ]}
       {lang}

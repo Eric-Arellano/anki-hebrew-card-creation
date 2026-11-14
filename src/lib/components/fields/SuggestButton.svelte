@@ -85,7 +85,7 @@ async function ask() {
 <div class="flex max-w-sm flex-col items-start gap-1 sm:items-end">
   <button
     type="button"
-    class="inline-flex items-center gap-2 border-violet-300 bg-violet-50 text-violet-800 hover:bg-violet-100"
+    class="inline-flex items-center gap-2 border-violet-700 bg-violet-950/40 text-violet-300 hover:bg-violet-900/50"
     disabled={blocker !== undefined || asking.kind === 'asking'}
     aria-busy={asking.kind === 'asking'}
     aria-describedby="suggest-status"
@@ -93,7 +93,7 @@ async function ask() {
   >
     {#if asking.kind === 'asking'}
       <span
-        class="size-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-700"
+        class="size-4 animate-spin rounded-full border-2 border-violet-900 border-t-violet-400"
         aria-hidden="true"
       ></span>
     {/if}
@@ -105,7 +105,7 @@ async function ask() {
     {:else if asking.kind === 'asking'}
       Asking Claude…
     {:else if asking.kind === 'failed'}
-      <span class="text-red-700">Couldn't get suggestions: {asking.message}</span>
+      <span class="text-red-400">Couldn't get suggestions: {asking.message}</span>
     {:else if asking.kind === 'answered'}
       {asking.message}
     {:else}
