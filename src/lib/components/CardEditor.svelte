@@ -6,6 +6,7 @@ import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictio
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
+import { examplesWithoutWord } from '#lib/card/examples.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, handOffFields } from '#lib/card/hand-off.ts';
 import { type CardInputsDraft, completeInputs, draftRoot } from '#lib/card/inputs.ts';
@@ -222,6 +223,12 @@ onMount(checkAnki);
       groups={shownGroups}
       partOfSpeech={draft.inputs.partOfSpeech}
       edits={draft.edits}
+      word={draft.inputs.word.trim()}
+      examplesWithoutWord={examplesWithoutWord({
+        examples: draft.edits.examples ?? '',
+        inputs: draft.inputs,
+        formsField: draft.edits.forms ?? '',
+      })}
       onedit={setEdit}
       bind:promptImages={draft.media.promptImages}
     />

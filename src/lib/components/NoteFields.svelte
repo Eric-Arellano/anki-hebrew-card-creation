@@ -23,12 +23,17 @@ let {
   groups,
   partOfSpeech,
   edits,
+  word,
+  examplesWithoutWord,
   onedit,
   promptImages = $bindable(),
 }: {
   groups: ShownFieldGroup[];
   partOfSpeech: PartOfSpeech;
   edits: FieldValues;
+  // The word without niqqud, which the examples should use.
+  word: string;
+  examplesWithoutWord: string[];
   onedit: (field: FieldKey, value: string) => void;
   promptImages: Record<VariantPrompt, Attachment[]>;
 } = $props();
@@ -92,6 +97,16 @@ function lacksAnswer(prompt: VariantPrompt) {
                   No card shows these images until this variant has a Hebrew answer.
                 </p>
               {/if}
+            {/if}
+            {#if field === 'examples' && examplesWithoutWord.length > 0}
+              <div class="hint text-amber-700" aria-live="polite">
+                <p>No form of <bdi lang="he">{word}</bdi> in:</p>
+                <ul class="list-disc ps-5">
+                  {#each examplesWithoutWord as example, index (index)}
+                    <li><bdi class="font-hebrew text-base">{example}</bdi></li>
+                  {/each}
+                </ul>
+              </div>
             {/if}
           </div>
         </div>

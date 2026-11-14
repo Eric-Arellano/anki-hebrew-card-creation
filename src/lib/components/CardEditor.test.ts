@@ -207,6 +207,25 @@ describe('CardEditor', () => {
       });
     });
 
+    describe('for the examples', () => {
+      test('warn of a line that uses no form of the word, until it does', async () => {
+        await renderConnectedEditor();
+        await fillDag();
+        const examples = noteField('Examples');
+        await typeInto(examples, 'הדג שוחה (the fish swims)\nהחתול ישן (the cat sleeps)');
+        const message = screen.getByText(/No form of/);
+        expect(message.textContent).toBe('No form of דג in:');
+        expect(
+          within(message.parentElement as HTMLElement)
+            .getAllByRole('listitem')
+            .map((item) => item.textContent),
+        ).toEqual(['החתול ישן (the cat sleeps)']);
+
+        await typeInto(examples, 'הדג שוחה (the fish swims)');
+        expect(screen.queryByText(/No form of/)).toBeNull();
+      });
+    });
+
     describe('for a variant', () => {
       test('search images for its prompt, once there is one', async () => {
         await renderConnectedEditor();

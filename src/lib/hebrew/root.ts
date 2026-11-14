@@ -1,3 +1,4 @@
+import { FINAL_BY_MEDIAL, MEDIAL_BY_FINAL } from '#lib/hebrew/final-letters.ts';
 import { GERESH_STAND_INS } from '#lib/hebrew/normalize.ts';
 
 // Hebrew letters, without niqqud, which a root never carries. Only ג, ז and צ take a geresh, for the
@@ -15,8 +16,6 @@ const SEPARATORS = /[.\-־\s]/g;
 
 // A root's last letter takes its final form, ש־ל־ם, and no other does. Wiktionary and people both
 // write ע־ל־מ too, but the same root must be the same text for a search to find it.
-const FINAL_FORMS: Readonly<Record<string, string>> = { כ: 'ך', מ: 'ם', נ: 'ן', פ: 'ף', צ: 'ץ' };
-const MEDIAL_FORMS: Readonly<Record<string, string>> = { ך: 'כ', ם: 'מ', ן: 'נ', ף: 'פ', ץ: 'צ' };
 
 /** `text`'s letters joined by maqafs, as the deck's `Root` field holds them: `ד־ב־ר`. */
 export function formatRoot(text: string): string | undefined {
@@ -31,7 +30,7 @@ export function formatRoot(text: string): string | undefined {
     .map((letter, index) =>
       letter.replace(
         /^./,
-        (base) => (index === letters.length - 1 ? FINAL_FORMS : MEDIAL_FORMS)[base] ?? base,
+        (base) => (index === letters.length - 1 ? FINAL_BY_MEDIAL : MEDIAL_BY_FINAL)[base] ?? base,
       ),
     )
     .join('־');
