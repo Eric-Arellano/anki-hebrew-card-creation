@@ -146,7 +146,12 @@ function focus(element: HTMLElement) {
       {:else}
         {@const found = notes.exactMatches.length > 0}
         <div class="space-y-3">
-          {@render noteList('Already in your deck. Edit it?', notes.exactMatches)}
+          {@render noteList(
+            editingNoteId === undefined
+              ? 'Already in your deck: edit it instead?'
+              : 'Also in your deck with this spelling',
+            notes.exactMatches,
+          )}
           <!-- Its own list, since nothing in the word itself says why תלמיד is here for למד. -->
           {@render noteList('Same root', notes.sameRootMatches, root)}
           {@render noteList(

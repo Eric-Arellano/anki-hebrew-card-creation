@@ -110,9 +110,33 @@ describe('CardEditor', () => {
       test('offers to fill in the blanks, without offering a new note', async () => {
         await renderConnectedEditor({ lookup: found(kelev) }, loadedNote('כלב'));
         expect(
-          await screen.findByText('Fill in the blanks from Wiktionary: which word is it?'),
+          await screen.findByText('Fill blanks from Wiktionary (1 entry)', { selector: 'summary' }),
         ).toBeTruthy();
-        expect(screen.queryByText(/New note/)).toBeNull();
+        expect(screen.queryByText(/Start from Wiktionary/)).toBeNull();
+      });
+
+      describe('without a part of speech yet', () => {
+        test('shows the entries', async () => {
+          await renderConnectedEditor({ lookup: found(kelev) }, loadedNote('כלב'));
+          const summary = await screen.findByText(/Fill blanks from Wiktionary/);
+          expect(summary.closest('details')?.open).toBe(true);
+        });
+      });
+
+      describe('with a part of speech', () => {
+        test('collapses the entries, leaving the Wiktionary link out', async () => {
+          const note = loadedNote('כלב');
+          await renderConnectedEditor(
+            { lookup: found(kelev) },
+            { ...note, fields: { ...note.fields, 'Part of speech': 'noun' } },
+          );
+          const summary = await screen.findByText(/Fill blanks from Wiktionary/);
+          const details = summary.closest('details');
+          expect(details?.open).toBe(false);
+          const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+          const link = within(dictionary).getByRole('link', { name: /Wiktionary/ });
+          expect(details?.contains(link)).toBe(false);
+        });
       });
 
       test("keeps the note's values, offering the entry's beside them", async () => {
@@ -138,6 +162,7 @@ describe('CardEditor', () => {
           { lookup: found(kelev) },
           { ...note, fields: { ...note.fields, 'Part of speech': 'adjective' } },
         );
+        await fireEvent.click(await screen.findByText(/Fill blanks from Wiktionary/));
         const dictionary = screen.getByRole('region', { name: 'Dictionary' });
         await fireEvent.click(await within(dictionary).findByRole('button', { name: /כֶּלֶב/ }));
 
@@ -155,7 +180,7 @@ describe('CardEditor', () => {
         expect(lookups(requests)).toHaveLength(1);
 
         await typeInto(input('Hebrew word, without niqqud'), 'חתול');
-        expect(await screen.findByText('New note: which word is it?')).toBeTruthy();
+        expect(await screen.findByText('Start from Wiktionary: which word is it?')).toBeTruthy();
         expect(lookups(requests).map((request) => request.path)).toEqual([
           `/api/lookup?word=${encodeURIComponent('כלבים')}`,
           `/api/lookup?word=${encodeURIComponent('חתול')}`,
@@ -188,7 +213,7 @@ describe('CardEditor', () => {
 
         expect(input('Hebrew word, without niqqud').value).toBe('כלבים');
         expect(input('Hebrew word, with niqqud').value).toBe('');
-        expect(await screen.findByText('New note: which word is it?')).toBeTruthy();
+        expect(await screen.findByText('Start from Wiktionary: which word is it?')).toBeTruthy();
         const dictionary = screen.getByRole('region', { name: 'Dictionary' });
         expect(within(dictionary).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
       });

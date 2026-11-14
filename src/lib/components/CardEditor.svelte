@@ -72,6 +72,9 @@ function startingDraft(): NoteDraft {
 }
 
 const { unoffered, ...start } = startingDraft();
+const editedWord =
+  untrack(() => note) === undefined ? undefined : start.inputs.pointed || start.inputs.word;
+const pageTitle = `${editedWord === undefined ? 'New word' : `Editing ${editedWord}`} · Hebrew card helper`;
 // The note as Anki last answered with it: as loaded, then as each save left it.
 let held: LoadedNote | undefined = $state.raw(untrack(() => note));
 // A state proxy never writes back to `start`, so it stays what the editor began with.
@@ -213,25 +216,23 @@ async function checkAnki() {
 onMount(checkAnki);
 </script>
 
+<svelte:head>
+  <title>{pageTitle}</title>
+</svelte:head>
+
 <!-- No bottom padding, so the sticky save bar comes to rest on the window's edge. -->
 <main class="mx-auto max-w-240 space-y-6 px-4 pt-4">
   <header class="flex flex-wrap items-center justify-between gap-4">
-    <h1>Hebrew card helper</h1>
+    <div class="flex flex-wrap items-center gap-4">
+      {#if editedWord === undefined}
+        <h1>New word</h1>
+      {:else}
+        <h1>Editing <bdi lang="he">{editedWord}</bdi></h1>
+        <button type="button" onclick={onnextcard}>Start a new word</button>
+      {/if}
+    </div>
     <ConnectionStatus status={ankiStatus} problem={ankiProblem} onrecheck={checkAnki} />
   </header>
-
-  {#if note !== undefined}
-    <section
-      aria-label="Editing"
-      class="flex flex-wrap items-center gap-4 rounded-lg border border-blue-800 bg-blue-950/40 px-4 py-3"
-    >
-      <p>
-        Editing the note for
-        <bdi lang="he" class="text-xl">{start.inputs.pointed || start.inputs.word}</bdi>
-      </p>
-      <button type="button" onclick={onnextcard}>New word</button>
-    </section>
-  {/if}
 
   <!-- The word and its meanings come first, because they are all the lookups need, and the
        lookups are where the niqqud, gender and forms below come from. -->
@@ -240,7 +241,7 @@ onMount(checkAnki);
       <TextInput
         label="Hebrew word, without niqqud"
         lang="he"
-        takesFocus
+        takesFocus={note === undefined}
         choices={choices.word}
         bind:value={draft.inputs.word}
         oninput={retype}
@@ -259,6 +260,7 @@ onMount(checkAnki);
       {lookup}
       picked={picked?.candidate}
       editing={note !== undefined}
+      startsOpen={start.inputs.partOfSpeech === undefined}
       onpick={pick}
       onunpick={unpick}
     />

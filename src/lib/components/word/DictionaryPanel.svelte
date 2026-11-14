@@ -1,4 +1,5 @@
 <script lang="ts">
+import { untrack } from 'svelte';
 import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { INPUT_NAMES } from '#lib/card/inputs.ts';
@@ -11,6 +12,7 @@ let {
   lookup,
   picked,
   editing,
+  startsOpen,
   onpick,
   onunpick,
 }: {
@@ -20,15 +22,24 @@ let {
   picked: DictionaryCandidate | undefined;
   // While editing, a pick fills only what the note leaves blank, rather than starting a new one.
   editing: boolean;
+  // While editing, whether the entries show before the human asks for them.
+  startsOpen: boolean;
   onpick: (candidate: DictionaryCandidate) => void;
   onunpick: () => void;
 } = $props();
 
+// Kept across a pick, so Choose another shows the entries again.
+let open = $state(untrack(() => startsOpen));
+
 function heading(match: DictionaryLookup['match']): string {
-  const prompt = editing ? 'Fill in the blanks from Wiktionary' : 'New note';
   return match === 'exact'
-    ? `${prompt}: which word is it?`
-    : `${prompt}: not in the dictionary as typed. Possible matches, spelled differently:`;
+    ? 'Start from Wiktionary: which word is it?'
+    : 'Start from Wiktionary: not in the dictionary as typed. Possible matches, spelled differently:';
+}
+
+function summary({ match, candidates }: DictionaryLookup): string {
+  const count = `${candidates.length} ${candidates.length === 1 ? 'entry' : 'entries'}`;
+  return `Fill blanks from Wiktionary (${match === 'exact' ? count : `${count}, spelled differently`})`;
 }
 </script>
 
@@ -54,6 +65,27 @@ function heading(match: DictionaryLookup['match']): string {
     blankInput={INPUT_NAMES.word}
     note={hasEntry === false ? 'no entry' : undefined}
   />
+{/snippet}
+
+{#snippet candidateList(
+  candidates: DictionaryCandidate[],
+)}
+  <ul class="grid gap-2 sm:grid-cols-2">
+    {#each candidates as candidate (candidate.id)}
+      <li class="grid">
+        <button
+          type="button"
+          class="grid gap-1 rounded-lg px-4 py-2 text-start"
+          onclick={() => onpick(candidate)}
+        >
+          <span class="flex flex-wrap items-baseline gap-x-3"> {@render headline(candidate)} </span>
+          {#if candidate.definitions[0] !== undefined}
+            <span class="line-clamp-2 text-sm">{candidate.definitions[0]}</span>
+          {/if}
+        </button>
+      </li>
+    {/each}
+  </ul>
 {/snippet}
 
 {#snippet lookingUp()}
@@ -99,34 +131,26 @@ function heading(match: DictionaryLookup['match']): string {
             {@render wiktionaryChip(result.titleHasEntry)}
           </p>
         {:else}
-          <p class={['flex flex-wrap items-center gap-x-3 gap-y-1', !editing && 'mb-2']}>
-            <span class="font-medium">{heading(result.match)}</span>
-            {@render wiktionaryChip(result.titleHasEntry)}
-          </p>
           {#if editing}
-            <p class="hint mb-2">
-              Keeps everything the note already has. Where Wiktionary differs, its value is offered
-              beside the input.
+            <!-- The link stays outside, so it is there while the entries are collapsed. -->
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-1">
+              <details class="min-w-0 flex-1" bind:open>
+                <summary class="cursor-pointer font-medium">{summary(result)}</summary>
+                <p class="hint my-2">
+                  Keeps everything the note already has. Where Wiktionary differs, its value is
+                  offered beside the input.
+                </p>
+                {@render candidateList(result.candidates)}
+              </details>
+              {@render wiktionaryChip(result.titleHasEntry)}
+            </div>
+          {:else}
+            <p class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span class="font-medium">{heading(result.match)}</span>
+              {@render wiktionaryChip(result.titleHasEntry)}
             </p>
+            {@render candidateList(result.candidates)}
           {/if}
-          <ul class="grid gap-2 sm:grid-cols-2">
-            {#each result.candidates as candidate (candidate.id)}
-              <li class="grid">
-                <button
-                  type="button"
-                  class="grid gap-1 rounded-lg px-4 py-2 text-start"
-                  onclick={() => onpick(candidate)}
-                >
-                  <span class="flex flex-wrap items-baseline gap-x-3">
-                    {@render headline(candidate)}
-                  </span>
-                  {#if candidate.definitions[0] !== undefined}
-                    <span class="line-clamp-2 text-sm">{candidate.definitions[0]}</span>
-                  {/if}
-                </button>
-              </li>
-            {/each}
-          </ul>
         {/if}
       {/if}
     {:catch error}
