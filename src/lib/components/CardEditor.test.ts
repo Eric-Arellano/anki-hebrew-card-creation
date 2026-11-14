@@ -41,6 +41,32 @@ describe('CardEditor', () => {
       });
     });
 
+    describe('after removing the first', () => {
+      test('keep the second', async () => {
+        await renderConnectedEditor();
+        await fillDag();
+        await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
+        await typeInto(input('English meaning 2'), 'Pisces');
+        await fireEvent.click(screen.getByRole('button', { name: 'Remove English meaning' }));
+        expect(input('English meaning').value).toBe('Pisces');
+        expect(screen.queryByLabelText('English meaning 2')).toBeNull();
+      });
+    });
+
+    describe('when only one is left', () => {
+      test('clear it rather than remove it, once there is something to clear', async () => {
+        await renderConnectedEditor();
+        function clear() {
+          return screen.getByRole('button', { name: 'Clear English meaning' }) as HTMLButtonElement;
+        }
+        expect(clear().disabled).toBe(true);
+        await typeInto(input('English meaning'), 'fish');
+        await fireEvent.click(clear());
+        expect(input('English meaning').value).toBe('');
+        expect(clear().disabled).toBe(true);
+      });
+    });
+
     describe('after removing the second', () => {
       test('send the first alone', async () => {
         await renderConnectedEditor();
@@ -203,19 +229,31 @@ describe('CardEditor', () => {
         expect(screen.queryByText(/No form of/)).toBeNull();
       });
 
-      test('remove the row whose × is clicked', async () => {
+      test('remove the row whose × is clicked, even the first', async () => {
         await renderConnectedEditor();
         await fillDag();
-        expect(screen.queryByRole('button', { name: 'Remove example 1' })).toBeNull();
-        for (const row of [2, 3]) {
-          await fireEvent.click(screen.getByRole('button', { name: '+ Another example' }));
+        for (const row of [1, 2, 3]) {
+          if (row > 1) {
+            await fireEvent.click(screen.getByRole('button', { name: '+ Another example' }));
+          }
           await typeExample(row, { hebrew: `דג ${row}.`, english: `Fish ${row}.` });
         }
         await fireEvent.click(screen.getByRole('button', { name: 'Remove example 2' }));
-        expect(exampleRows()).toEqual([
-          { hebrew: '', english: '' },
-          { hebrew: 'דג 3.', english: 'Fish 3.' },
-        ]);
+        await fireEvent.click(screen.getByRole('button', { name: 'Remove example 1' }));
+        expect(exampleRows()).toEqual([{ hebrew: 'דג 3.', english: 'Fish 3.' }]);
+      });
+
+      test('clear the last row rather than remove it', async () => {
+        await renderConnectedEditor();
+        await fillDag();
+        function clear() {
+          return screen.getByRole('button', { name: 'Clear example 1' }) as HTMLButtonElement;
+        }
+        expect(clear().disabled).toBe(true);
+        await typeExample(1, { hebrew: 'דג.', english: '' });
+        await fireEvent.click(clear());
+        expect(exampleRows()).toEqual([{ hebrew: '', english: '' }]);
+        expect(clear().disabled).toBe(true);
       });
     });
 
