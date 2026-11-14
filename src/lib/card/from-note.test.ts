@@ -6,9 +6,10 @@ import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with
 import { realNote } from '#tests/real-notes.ts';
 import { composeFields } from './compose.ts';
 import { emptyCardDraft, type MediaDraft, stillNeeded } from './draft.ts';
-import { examplesToAnkiFieldHtml, wordUsage } from './examples.ts';
+import { examplesToAnkiFieldHtml } from './examples.ts';
 import { draftFromNote } from './from-note.ts';
 import { type CardInputs, type CardInputsDraft, completeInputs } from './inputs.ts';
+import { wordUsage } from './parts-of-speech/forms.ts';
 import { noteFields } from './to-note.ts';
 
 const blankNote = Object.fromEntries(fieldNames.map((name) => [name, '']));

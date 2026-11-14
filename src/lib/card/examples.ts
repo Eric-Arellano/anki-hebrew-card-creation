@@ -10,8 +10,6 @@
 // The word is bolded in the Hebrew wherever `examplesWithoutWord` would find it, so the warning
 // and the bold can't disagree.
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
-import type { CardInputsDraft } from '#lib/card/inputs.ts';
-import { formatRoot } from '#lib/hebrew/root.ts';
 import { usageRanges, type WordUsage } from '#lib/hebrew/usage.ts';
 
 // Each part is plain text, as a meaning is, not HTML.
@@ -78,73 +76,4 @@ export function examplesFromHtml(html: string): Example[] {
     .filter((line) => ankiFieldHtmlToText(line) !== '')
     .map(exampleFromLine);
   return examples.length === 0 ? [blankExample()] : examples;
-}
-
-export type LabeledForm = { label: string; form: string };
-
-function labeled(forms: Record<string, string>): LabeledForm[] {
-  return Object.entries(forms).map(([label, form]) => ({ label, form }));
-}
-
-// A preposition's and other's are typed into `Forms` by hand, one `label: form` line each.
-function formsFieldLines(formsField: string): LabeledForm[] {
-  return formsField.split('\n').map((line) => {
-    const colon = line.indexOf(':');
-    return colon === -1
-      ? { label: '', form: line }
-      : { label: line.slice(0, colon).trim(), form: line.slice(colon + 1) };
-  });
-}
-
-function allLabeledForms(inputs: CardInputsDraft, formsField: string): LabeledForm[] {
-  switch (inputs.partOfSpeech) {
-    case 'noun':
-      return labeled({
-        plural: inputs.noun.plural,
-        feminine: inputs.noun.feminine,
-        'feminine plural': inputs.noun.femininePlural,
-      });
-    case 'verb':
-      return labeled({
-        'past (he)': inputs.verb.past,
-        'present (he)': inputs.verb.present,
-        'future (he)': inputs.verb.future,
-      });
-    case 'adjective':
-      return labeled({
-        feminine: inputs.adjective.feminine,
-        'masculine plural': inputs.adjective.masculinePlural,
-        'feminine plural': inputs.adjective.femininePlural,
-      });
-    case 'preposition':
-    case 'other':
-      return formsFieldLines(formsField);
-    case 'adverb':
-    case 'phrase':
-    case undefined:
-      return [];
-  }
-}
-
-/** The word's other forms that the inputs and `Forms` hold, trimmed, leaving out the blank. */
-export function labeledForms(inputs: CardInputsDraft, formsField: string): LabeledForm[] {
-  return allLabeledForms(inputs, formsField)
-    .map(({ label, form }) => ({ label, form: form.trim() }))
-    .filter(({ form }) => form !== '');
-}
-
-/**
- * The forms an example may use the word by: the word itself, pointed or not, its other forms, and
- * a verb's root, since a verb's forms are for “he” while an example may conjugate it any way:
- * `דיברתי` for `לְדַבֵּר`.
- */
-export function wordUsage(inputs: CardInputsDraft, formsField: string): WordUsage {
-  return {
-    forms: [
-      inputs.word,
-      inputs.pointed,
-      ...labeledForms(inputs, formsField).map(({ form }) => form),
-    ],
-    root: inputs.partOfSpeech === 'verb' ? formatRoot(inputs.root) : undefined,
-  };
 }
