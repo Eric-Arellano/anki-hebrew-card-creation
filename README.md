@@ -43,6 +43,20 @@ npm start        # http://127.0.0.1:3000
 To pick up a newer Wiktionary, download the file again and rerun `npm run build-index`. The editor
 says when the index is older than the file.
 
+### Claude (optional)
+
+Without an API key, everything above works and nothing reaches Anthropic. With one, the editor can
+ask Claude for the help that needs a model. To set it up, create an API key in the
+[Claude Console](https://platform.claude.com/), set a monthly spend limit there, and put the key in
+a `.env` file at the top of this folder, which git ignores:
+
+```sh
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Restart the server to pick it up. `npm start` doesn't read `.env`, so export the variable there
+instead.
+
 The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can change the
 notes in your collection, add new ones and add files to its media folder.
 
@@ -59,8 +73,10 @@ notes in your collection, add new ones and add files to its media folder.
 - **To AnkiConnect, on your machine:** read-only queries about your decks, note types and notes,
   plus the calls that add a note, save an edited one and store images and audio in your media
   folder.
-- **To third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are only
-  opened when you click them.
+- **To Anthropic, only with a key and only when you click:** the word you're editing and its
+  fields' text. Images, audio and the rest of your deck stay on your machine.
+- **To other third-party sites:** nothing. Links to Wiktionary, Pealim, Forvo and image search are
+  only opened when you click them.
 
 ## Licenses
 
