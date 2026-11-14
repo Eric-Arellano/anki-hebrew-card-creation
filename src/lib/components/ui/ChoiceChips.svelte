@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends string">
-import { textChange } from '#lib/card/change.ts';
+import { textChange } from '#lib/card/changed-from.ts';
 import ChangedFrom from './ChangedFrom.svelte';
 import UnofferedValue from './UnofferedValue.svelte';
 import WiktionaryHas from './WiktionaryHas.svelte';

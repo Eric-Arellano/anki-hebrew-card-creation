@@ -1,10 +1,11 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
-import { ankiStatusProblem, fieldOrder } from '#lib/anki/status.ts';
 import { SUGGESTED_HINTS, type Suggestions } from '#lib/api/ai.ts';
 import {
   type AnkiStatus,
+  ankiStatusProblem,
   fetchAnkiStatus,
+  fieldOrder,
   fetchNote,
   fetchSameMeaningNotes,
   type LoadedNote,
@@ -20,7 +21,7 @@ import {
   labeledForms,
   wordUsage,
 } from '#lib/card/examples.ts';
-import { attachmentsChange } from '#lib/card/change.ts';
+import { attachmentsChange } from '#lib/card/changed-from.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { changedFields } from '#lib/anki/changes.ts';
+import { changedFields } from '#lib/anki/changed-fields.ts';
 import { soundToAnkiField } from '#lib/anki/media.ts';
 import { type FieldKey, type PartOfSpeech, shownFieldGroups } from '#lib/note-type.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };

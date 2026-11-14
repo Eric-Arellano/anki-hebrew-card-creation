@@ -1,4 +1,4 @@
-export type Link = {
+type Link = {
   label: string;
   url: (encodedText: string) => `https://${string}`;
 };

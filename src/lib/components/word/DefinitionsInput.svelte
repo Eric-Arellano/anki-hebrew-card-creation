@@ -1,5 +1,5 @@
 <script lang="ts">
-import { removedRows, textChange } from '#lib/card/change.ts';
+import { removedRows, textChange } from '#lib/card/changed-from.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
 import RemovedRow from '../ui/RemovedRow.svelte';
 

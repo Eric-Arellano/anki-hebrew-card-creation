@@ -5,7 +5,7 @@ import type { NewAttachment } from '#lib/media/attach.ts';
 const LONG_EDGE = 1000;
 const JPEG_QUALITY = 0.85;
 
-export type Size = { width: number; height: number };
+type Size = { width: number; height: number };
 
 /** `size` scaled down so its long edge fits, keeping its shape. A smaller image stays as it is. */
 export function fitWithinLongEdge({ width, height }: Size, longEdge = LONG_EDGE): Size {

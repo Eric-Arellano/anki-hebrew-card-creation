@@ -3,7 +3,7 @@ import type { Snippet } from 'svelte';
 import type { UnofferedValues } from '#lib/card/from-note.ts';
 import type { VerbDraft } from '#lib/card/parts-of-speech/verb.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
-import { textChange } from '#lib/card/change.ts';
+import { textChange } from '#lib/card/changed-from.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';

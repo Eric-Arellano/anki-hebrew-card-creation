@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import type { Change } from '#lib/card/change.ts';
+import type { Change } from '#lib/card/changed-from.ts';
 
 let {
   label,

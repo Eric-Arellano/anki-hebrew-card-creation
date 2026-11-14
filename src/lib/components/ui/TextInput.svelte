@@ -1,5 +1,5 @@
 <script lang="ts">
-import { textChange } from '#lib/card/change.ts';
+import { textChange } from '#lib/card/changed-from.ts';
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
 import ChangedFrom from './ChangedFrom.svelte';
 import WiktionaryHas from './WiktionaryHas.svelte';
