@@ -99,7 +99,9 @@ A directory under `src/lib/` says what its files may touch, so put a module wher
 allow:
 
 - `hebrew/` knows Hebrew text, and nothing of Anki or the editor.
-- `card/` turns the editor's inputs into fields. It stays pure, with no DOM and no `fetch`.
+- `card/` turns the editor's inputs into fields and back, and fills them from the dictionary. A
+  part of speech's own inputs go in `parts-of-speech/`, and what only advises the human, never
+  filling a field, in `checks/`. It stays pure, with no DOM and no `fetch`.
 - `media/` is what the browser does with an attachment before it is stored.
 - `anki/` is Anki's own formats, shared by the browser and the server.
 - `api/` is the browser's calls to our routes, and the types those routes answer with.

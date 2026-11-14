@@ -1,4 +1,4 @@
-import { formsHtml } from '#lib/card/forms.ts';
+import { formsHtml } from '#lib/card/parts-of-speech/forms.ts';
 import type { Binyan } from '#lib/hebrew/binyan.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import type { FieldValues } from '#lib/note-type.ts';

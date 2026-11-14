@@ -1,4 +1,4 @@
-import { formsHtml } from '#lib/card/forms.ts';
+import { formsHtml } from '#lib/card/parts-of-speech/forms.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 
 // The forms are pointed, as the human copies them from a dictionary, and any may be blank.

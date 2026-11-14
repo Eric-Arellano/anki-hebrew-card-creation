@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { NounDraft } from '#lib/card/noun.ts';
-import { pluralHints } from '#lib/card/plural-hints.ts';
+import { pluralHints } from '#lib/card/checks/plural-hints.ts';
+import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
 import { includesPointedText } from '#lib/hebrew/normalize.ts';
 import type { IrregularPlural } from '#lib/hebrew/plural.ts';
 import { type FieldKey, type FieldValues, VARIANT_ANSWERS } from '#lib/note-type.ts';

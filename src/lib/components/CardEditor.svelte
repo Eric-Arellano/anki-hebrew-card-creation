@@ -12,7 +12,7 @@ import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictio
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
-import { examplesWithoutWord } from '#lib/card/examples.ts';
+import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {

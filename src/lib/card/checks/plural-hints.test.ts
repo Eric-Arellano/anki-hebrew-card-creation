@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { NounDraft } from './noun.ts';
+import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
 import { pluralHints } from './plural-hints.ts';
 
 const shulchan: NounDraft = {

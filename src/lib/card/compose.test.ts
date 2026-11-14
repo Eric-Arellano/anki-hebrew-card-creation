@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type { AdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
+import type { NounInputs } from '#lib/card/parts-of-speech/noun.ts';
 import { FIELDS, type FieldKey } from '#lib/note-type.ts';
 import notes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with { type: 'json' };
-import type { AdjectiveInputs } from './adjective.ts';
 import { composeFields } from './compose.ts';
 import type { CardInputs } from './inputs.ts';
-import type { NounInputs } from './noun.ts';
 
 const dagInputs: CardInputs = {
   word: 'דג',

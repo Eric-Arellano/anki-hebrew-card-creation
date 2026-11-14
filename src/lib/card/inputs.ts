@@ -1,12 +1,17 @@
-import { type AdjectiveInputs, emptyAdjectiveInputs } from '#lib/card/adjective.ts';
+import { type AdjectiveInputs, emptyAdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
 import {
   completeNoun,
   emptyNounDraft,
   missingNounInputs,
   type NounDraft,
   type NounInputs,
-} from '#lib/card/noun.ts';
-import { completeVerb, emptyVerbDraft, type VerbDraft, type VerbInputs } from '#lib/card/verb.ts';
+} from '#lib/card/parts-of-speech/noun.ts';
+import {
+  completeVerb,
+  emptyVerbDraft,
+  type VerbDraft,
+  type VerbInputs,
+} from '#lib/card/parts-of-speech/verb.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import type { PartOfSpeech, PlainPartOfSpeech } from '#lib/note-type.ts';
 

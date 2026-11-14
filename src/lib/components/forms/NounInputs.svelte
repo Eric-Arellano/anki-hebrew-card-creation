@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import type { UnofferedValues } from '#lib/card/from-note.ts';
-import type { NounDraft } from '#lib/card/noun.ts';
+import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import Checkbox from '../ui/Checkbox.svelte';

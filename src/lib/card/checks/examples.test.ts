@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
+import { type CardInputsDraft, emptyInputsDraft } from '#lib/card/inputs.ts';
 import { examplesWithoutWord } from './examples.ts';
-import { type CardInputsDraft, emptyInputsDraft } from './inputs.ts';
 
 const rakevet: CardInputsDraft = {
   ...emptyInputsDraft(),

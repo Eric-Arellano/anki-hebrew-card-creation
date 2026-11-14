@@ -1,4 +1,4 @@
-import type { NounDraft } from '#lib/card/noun.ts';
+import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
 import { type IrregularPlural, irregularPlural } from '#lib/hebrew/plural.ts';

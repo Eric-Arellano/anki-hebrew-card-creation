@@ -1,8 +1,8 @@
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
-import { composeAdjectiveFields } from '#lib/card/adjective.ts';
 import type { CardInputs, Definitions } from '#lib/card/inputs.ts';
-import { composeNounFields } from '#lib/card/noun.ts';
-import { composeVerbFields } from '#lib/card/verb.ts';
+import { composeAdjectiveFields } from '#lib/card/parts-of-speech/adjective.ts';
+import { composeNounFields } from '#lib/card/parts-of-speech/noun.ts';
+import { composeVerbFields } from '#lib/card/parts-of-speech/verb.ts';
 import { withoutTrailingMaqaf } from '#lib/hebrew/preposition.ts';
 import type { FieldValues } from '#lib/note-type.ts';
 

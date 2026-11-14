@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import type { AdjectiveInputs } from './adjective.ts';
+import type { AdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
+import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
+import type { VerbDraft } from '#lib/card/parts-of-speech/verb.ts';
 import { type CardInputsDraft, completeInputs, draftRoot, missingInputs } from './inputs.ts';
-import type { NounDraft } from './noun.ts';
-import type { VerbDraft } from './verb.ts';
 
 const noun: NounDraft = {
   gender: undefined,
