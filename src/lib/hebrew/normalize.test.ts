@@ -4,6 +4,7 @@ import {
   hasNiqqud,
   includesPointedText,
   isSamePointedText,
+  spellsWord,
   toComparisonKey,
   toDefectiveKey,
   toLookupKey,
@@ -114,6 +115,20 @@ describe('toDefectiveKey', () => {
 
   test('counts a word after a maqaf as a word of its own', () => {
     expect(toDefectiveKey('בית־ויטמין')).toBe('בת וטמן');
+  });
+});
+
+describe('spellsWord', () => {
+  test('matches a pointed word to its ktiv male spelling', () => {
+    expect(spellsWord('שֻׁלְחָן', 'שולחן')).toBe(true);
+  });
+
+  test('refuses a pointed field that holds more than the word', () => {
+    expect(spellsWord('(ms) בַּיִת (mp) בָּתִּים', 'בית')).toBe(false);
+  });
+
+  test('refuses another word', () => {
+    expect(spellsWord('כֶּלֶב', 'חתול')).toBe(false);
   });
 });
 

@@ -30,51 +30,25 @@ Two facts about today's deck (104 notes, read 2026-11-10) still shape the work:
 
 ## Loading a note
 
-`draftFromNote` in `src/lib/card/from-note.ts` turns a note's raw fields, keyed by Anki name, into
-everything the editor holds: a `NoteDraft`. It is composition run backwards, so each reader sits
-beside the writer it undoes (`formsByLabel` by `formsHtml`, `nounDraftFrom` by `composeNounFields`,
-`definitionsFromHtml` by `definitionsHtml`), and a change to one shows up next to the other.
+The editor already opens a note. Clicking one under "Already in the deck" fetches it from
+`GET /api/anki/notes/[noteId]` as a `LoadedNote`, and `+page.svelte` remounts `CardEditor` with it
+as `note`, which `draftFromNote` turns into the starting draft. What saving builds on:
 
-- **Every value shows as the note holds it, right or wrong.** A text input takes the field's text,
-  and a textarea its HTML with `<br>` back as new lines. Nothing checks a value for an old format, so
-  a `Pointed` of `[ms] חָבֵר<br>[fs] חֲבֵרָה` loads as `[ms] חָבֵר [fs] חֲבֵרָה`, and stays as it was unless
-  the human changes it. The word's dictionary entries are on screen too, because a loaded note has
-  no `picked`, for when they'd rather replace it.
-- **A value the chips don't offer is an error, not a quiet blank.** `Part of speech`, `Gender`,
-  `Binyan` and a verb's preposition stay unchosen, with error text under the chips naming what the
-  note holds, until the human chooses. `draftFromNote` returns that text as `unoffered`, keyed by
-  input, and the chips show it only for the part of speech that has them. They are required, so
-  `missingInputs` already blocks the save. A binyan by another of `toBinyan`'s names, like `Piel`,
-  counts as offered. A mistyped `Root` already behaves this way through `ifMistypedRoot`, and needs
-  nothing new.
-- **A `Pointed` that doesn't spell `Hebrew` gets a warning, but no block.** It's one comparison of
-  `toDefectiveKey`s, which knows nothing of any format, and it applies to new notes too, where it
-  catches a typo. On the deck it flags all 42 notes in an old format and none of the other 61. It
-  can't block, because 197 of the dictionary's 13,469 pointed lemmas (1.5%) fail it, some of them
-  correctly spelled, like `קראטה` and `קָרָטֶה`, and the human would have no way past.
-- **`Definitions` splits on `<br>`,** one row a line, and drops the `1. ` numbering.
-- **`Forms` fills every slot its labels fit,** across noun, adjective and verb, since the draft keeps
-  each part of speech's inputs anyway.
-- **A verb's preposition and a noun's `pluralOnly` come from `Production answer`,** the only place
-  either is stored: whatever follows the word. An answer of the word alone means `none` only on a
-  note whose `Part of speech` is `verb`, the one place `none` was chosen; on a note typed in Anki it
-  leaves the preposition unchosen, as a blank answer does. An unrecognized ending, or an answer that
-  doesn't start with the word, counts as a value the chips don't offer. Without the `verb` rule, a
-  verb saved with no preposition would never load complete.
-- **Required inputs are the same as for a new note.** `missingInputs` and the image-or-opt-out check
-  gate every save, with nothing specific to edits. "No image for this word" has no field to live in,
-  so it is ticked again each time.
-- **A stored file stays a name.** `draftFromNote` fills `MediaDraft` with `StoredAttachment`s,
-  `{ kind: 'stored', filename }` beside the `{ kind: 'new', filename, blob }` the widgets attach,
-  and an `Audio` naming more than one recording fills none. The widgets already show a stored one
-  from `GET /api/anki/media/[filename]`, `attachmentsToStore` leaves it out, and `handOffFields`
-  writes its name as it stands.
-- **A variant prompt splits into its text and images** with `splitImages`, the one reader of image HTML.
-- **Loading is a remount.** `{#key card}` already gives each card a fresh editor, so `+page.svelte`
-  passes the note as a seed. It replaces the draft, so it asks first when anything beyond the word
-  has been typed.
-- **Each note in `ExistingNotesPanel` becomes a button that loads it,** and the panel leaves out the
-  note being edited, which would otherwise report itself as already in the deck.
+- **Loading tolerates anything.** Every value shows as the note holds it, old formats included. A
+  value no chip offers stays unchosen, with error text naming it, so `missingInputs` already blocks
+  its save. A `Pointed` that doesn't spell `Hebrew` (`spellsWord`) only warns, because 1.5% of the
+  dictionary's pointed lemmas fail that comparison, some correctly spelled, and a block would leave
+  the human no way past.
+- **Required inputs are the same as for a new note.** `stillNeeded` gates every save, with nothing
+  specific to edits. "No image for this word" has no field to live in, so it is ticked again each
+  time.
+- **A stored file stays a name.** `attachmentsToStore` leaves a `StoredAttachment` out, and
+  `handOffFields` writes its name as it stands.
+- **The editor holds the note it edits.** `note` carries `notesInfo`'s `mod`, which the save sends
+  back. `readNote` in `src/lib/server/anki/notes.ts` finds the note before reading it, so a missing
+  note or one of another type is `undefined`, and the route's 404.
+- **While a note is loaded, the bar refuses,** through `HandOffBar`'s `editing`, because Open in
+  Anki would add a duplicate. Saving an edit replaces that refusal.
 
 *Rejected: recognizing the old `[ms]` and `(פעל)` formats, to parse them or keep them out of the
 inputs, because the deck is headed to one format, and the 42 notes that hold them are the human's to
@@ -123,8 +97,7 @@ AnkiConnect behind the same action names, so upstream's docs aren't a safe guide
   the affected editor before this API write, even if its content is saved." "Browse in Anki" can
   cause that, and the message reaches the human as it stands.
 - **`notesInfo` answers `[{}]` for a missing note,** which `noteInfoSchema` would turn into a 502.
-  So `readNote` runs `findNotes` for `note:Hebrew nid:…` first and answers 404 on nothing, which
-  also confines loading and saving to this note type.
+  That is why `readNote` runs `findNotes` first, and a save's 404 goes through it too.
 - **Filling `Audio` or a variant answer should add a card on save.** Blanking one leaves an empty
   card, for Tools → Empty Cards in Anki, since nothing here deletes.
 
@@ -140,28 +113,17 @@ AnkiConnect behind the same action names, so upstream's docs aren't a safe guide
 *Rejected: `updateNote`, because it can also rewrite tags. The `audio` and `picture` parameters stay
 out for the reason `storeMediaFile`'s `url` does.*
 
-## PR 1 — Open a note in the editor
-
-Ships with no way to save, so the human can open notes and see how they read before anything writes.
-
-- `mod` on `noteInfoSchema`, `readNote` in `src/lib/server/anki/notes.ts`,
-  `GET /api/anki/notes/[noteId]`, and `LoadedNote` in `src/lib/api/anki.ts`.
-- The panel's buttons, the confirm before replacing a draft, and the seed through `+page.svelte`.
-- An "Editing" banner with New word.
-- Error text on `ChoiceChips`, and the `Pointed` warning, with its comparison in
-  `src/lib/hebrew/normalize.ts` per the Hebrew text rules.
-- The bar refuses while a note is loaded, because Open in Anki would add a duplicate.
-
-## PR 2 — Save an edit
+## PR 1 — Save an edit
 
 - `updateNoteFields` in `client.ts`, `anki-guard.sh`, and the AGENTS.md rule.
 - `POST /api/anki/notes/[noteId]`, taking `{ fields, mod }`: refuse unknown fields as
   `/api/anki/add` does, 404 through `readNote`, 409 on `mod`, write, read back.
-- The review step in the bar, Saved with Next word, and Load again.
+- The review step in the bar in place of the `editing` refusal, Saved with Next word, and Load
+  again.
 - `request-guard.ts`'s header comment and the README: the server can now change notes, which raises
   the stakes of "Don't expose it".
 
-## PR 3 — Add without the Add window
+## PR 2 — Add without the Add window
 
 - `addNote` in `client.ts` and `POST /api/anki/notes`, answering 409 on Anki's duplicate refusal.
 - "Add to deck" and "Add anyway", and the move into editing the new note.
@@ -184,17 +146,17 @@ Ships with no way to save, so the human can open notes and see how they read bef
   until clean. Route tests use `fakeAnki`, covering a missing note, another note type, a stale `mod`,
   a duplicate and an Anki failure.
 - `request-guard.ts`'s logic and its tests stay unchanged.
-- After PR 1, by hand and with nothing able to write: open a noun, a verb, a note with a labelled
+- Before PR 1, by hand while nothing can write yet: open a noun, a verb, a note with a labelled
   `Pointed`, a two-image note and כלב, and check each input, image, player and variant. The labelled
   `Pointed` shows its warning.
 - Before the first real save, the human backs up the collection. Then, by hand in real Anki and only
-  with the human's go-ahead, for PR 2:
+  with the human's go-ahead, for PR 1:
   - Finish a note with a labelled `Pointed`, leaving that field alone. Browse shows only the listed
     fields changed, `Pointed` keeps its line breaks, and Preview shows the note's cards.
   - Anki's Undo takes the save back.
   - Save with the note open in Browse: refused, with the message. Close it and save again.
   - Load a note, edit it in Anki, then save: refused, and Load again shows Anki's version.
   - Add audio to a note with none: a Listening card appears. Then sync and check the phone.
-- For PR 3, the same way: add a noun, then change it and save, and one note exists. Add a second note
+- For PR 2, the same way: add a noun, then change it and save, and one note exists. Add a second note
   with the same `Hebrew`, and it needs Add anyway.
 - Under `npm start`, not only `npm run dev`: save a note with new media.

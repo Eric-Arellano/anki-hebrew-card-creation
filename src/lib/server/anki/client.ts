@@ -3,6 +3,8 @@ import { z } from 'zod';
 const noteInfoSchema = z.object({
   noteId: z.number(),
   modelName: z.string(),
+  // Seconds since the epoch of the note's last edit or sync, which reviewing a card leaves alone.
+  mod: z.number(),
   fields: z.record(z.string(), z.object({ value: z.string(), order: z.number() })),
 });
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import type { UnofferedValues } from '#lib/card/from-note.ts';
 import type { NounDraft } from '#lib/card/noun.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
@@ -18,11 +19,13 @@ let {
   noun = $bindable(),
   root = $bindable(),
   choices,
+  unoffered,
   children,
 }: {
   noun: NounDraft;
   root: string;
   choices: PrefillChoices;
+  unoffered: UnofferedValues;
   // The pointed word, which leads the forms so every pointed form copied from a dictionary
   // sits in one row.
   children: Snippet;
@@ -31,7 +34,13 @@ let {
 
 <fieldset class="space-y-4">
   <legend class="sr-only">Noun</legend>
-  <ChoiceChips legend="Gender" name="gender" options={GENDERS} bind:value={noun.gender} />
+  <ChoiceChips
+    legend="Gender"
+    name="gender"
+    options={GENDERS}
+    unoffered={unoffered.gender}
+    bind:value={noun.gender}
+  />
   <!-- A noun like מים has no singular, so it agrees in the plural and has no forms to copy. -->
   <Checkbox label="Only plural, like מים" bind:checked={noun.pluralOnly} />
   <div class="forms-row">

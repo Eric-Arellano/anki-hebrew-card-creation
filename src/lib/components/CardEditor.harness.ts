@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { vi } from 'vitest';
-import type { AnkiStatus, ExistingNotes } from '#lib/api/anki.ts';
+import type { AnkiStatus, ExistingNotes, LoadedNote } from '#lib/api/anki.ts';
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { ForvoDownloads } from '#lib/api/forvo.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
@@ -30,6 +30,8 @@ const notInDictionary: DictionaryLookup = {
 export type ServerReplies = {
   status?: AnkiStatus;
   existing?: ExistingNotes;
+  // The notes Anki holds, by id; any other id answers 404.
+  notes?: readonly LoadedNote[];
   lookup?: DictionaryLookup | Response;
   storeMedia?: (body: { filename: string }) => Response;
   forvoDownloads?: (word: string) => ForvoDownloads;
@@ -40,6 +42,7 @@ export type ServerReplies = {
 export function stubServer({
   status = connectedStatus,
   existing = { exactMatches: [], relatedMatches: [] },
+  notes = [],
   lookup = notInDictionary,
   storeMedia = ({ filename }) => Response.json({ filename }),
   forvoDownloads = () => ({ kind: 'found', downloads: [] }),
@@ -52,6 +55,12 @@ export function stubServer({
     if (input === '/api/anki/status') return Response.json(status);
     if (input.startsWith('/api/anki/existing')) {
       return Response.json(existing);
+    }
+    if (input.startsWith('/api/anki/notes/')) {
+      const note = notes.find(({ noteId }) => input === `/api/anki/notes/${noteId}`);
+      return note === undefined
+        ? Response.json({ message: 'Anki has no Hebrew note' }, { status: 404 })
+        : Response.json(note);
     }
     if (input.startsWith('/api/lookup')) {
       return lookup instanceof Response ? lookup : Response.json(lookup);
@@ -78,9 +87,12 @@ export function addRequests(requests: ServerRequest[]) {
   return requests.filter((request) => request.path === '/api/anki/add');
 }
 
-export async function renderConnectedEditor(replies: Omit<ServerReplies, 'status'> = {}) {
+export async function renderConnectedEditor(
+  replies: Omit<ServerReplies, 'status'> = {},
+  note?: LoadedNote,
+) {
   const requests = stubServer(replies);
-  render(CardEditor);
+  render(CardEditor, { note });
   await screen.findByText(/Connected to Anki/);
   return requests;
 }

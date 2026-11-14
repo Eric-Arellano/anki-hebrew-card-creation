@@ -40,3 +40,30 @@ export function stillNeeded({ inputs, media }: CardDraft): string[] {
   // choice because a word like גם has nothing to picture, and a hard rule would force a junk image.
   return media.images.length === 0 && !media.noImage ? [...missing, 'image'] : missing;
 }
+
+// Plain objects and arrays by their contents, and anything else, like an attachment's blob, by
+// identity.
+function isSameValue(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (!isPlainContainer(a) || !isPlainContainer(b) || Array.isArray(a) !== Array.isArray(b)) {
+    return false;
+  }
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  return [...keys].every((key) =>
+    isSameValue((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
+  );
+}
+
+function isPlainContainer(value: unknown): value is object {
+  return (
+    Array.isArray(value) ||
+    (typeof value === 'object' &&
+      value !== null &&
+      Object.getPrototypeOf(value) === Object.prototype)
+  );
+}
+
+/** Whether `now` differs from `start`, the draft the editor began with, in more than its word. */
+export function changedBeyondWord(start: CardDraft, now: CardDraft): boolean {
+  return !isSameValue({ ...now, inputs: { ...now.inputs, word: start.inputs.word } }, start);
+}

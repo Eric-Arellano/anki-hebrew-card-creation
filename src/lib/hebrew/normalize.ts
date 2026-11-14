@@ -64,6 +64,14 @@ export function toDefectiveKey(text: string): string {
   return toLookupKey(text).replace(/(?<=\S)[וי]+(?=\S)/g, '');
 }
 
+/**
+ * Whether pointed `pointed` spells unpointed `unpointed`, in ktiv male or ktiv haser. Only a
+ * warning can rest on it: some correct pairs fail, like `קראטה` and `קָרָטֶה`.
+ */
+export function spellsWord(pointed: string, unpointed: string): boolean {
+  return toDefectiveKey(pointed) === toDefectiveKey(unpointed);
+}
+
 // Sources order combining marks differently, so pointed text is compared, never displayed,
 // after NFC.
 export function isSamePointedText(a: string, b: string): boolean {

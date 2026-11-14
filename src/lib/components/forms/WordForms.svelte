@@ -1,8 +1,10 @@
 <script lang="ts">
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
+import type { UnofferedValues } from '#lib/card/from-note.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import { PART_OF_SPEECH_HELP } from '#lib/field-help.ts';
+import { spellsWord } from '#lib/hebrew/normalize.ts';
 import {
   type FieldKey,
   type FieldValues,
@@ -35,6 +37,7 @@ const partOfSpeechOptions = PARTS_OF_SPEECH.map((value) => ({
 let {
   draft = $bindable(),
   choices,
+  unoffered,
   candidate,
   edits,
   shownFields,
@@ -42,12 +45,19 @@ let {
 }: {
   draft: CardInputsDraft;
   choices: PrefillChoices;
+  // What a loaded note holds for a chip that no chip offers.
+  unoffered: UnofferedValues;
   // The dictionary entry picked, if any.
   candidate: DictionaryCandidate | undefined;
   edits: FieldValues;
   shownFields: readonly FieldKey[];
   onedit: (field: FieldKey, value: string) => void;
 } = $props();
+
+// Only a warning, since a correct spelling can fail the comparison.
+const misspellsWord = $derived(
+  draft.word.trim() !== '' && draft.pointed.trim() !== '' && !spellsWord(draft.pointed, draft.word),
+);
 
 // An infinitive is chosen as a pair, so choosing its pointed spelling writes its unpointed one.
 function chooseInfinitive(pointed: string) {
@@ -62,6 +72,7 @@ function chooseInfinitive(pointed: string) {
       legend="Part of speech"
       name="part-of-speech"
       options={partOfSpeechOptions}
+      unoffered={unoffered.partOfSpeech}
       bind:value={draft.partOfSpeech}
     />
     {#if draft.partOfSpeech !== undefined}
@@ -69,16 +80,23 @@ function chooseInfinitive(pointed: string) {
     {/if}
   </div>
   {#snippet pointedInput()}
-    <TextInput
-      label="Hebrew word, with niqqud"
-      lang="he"
-      choices={choices.infinitives?.map((infinitive) => infinitive.pointed)}
-      onchoose={chooseInfinitive}
-      bind:value={draft.pointed}
-    />
+    <div class="grid content-start gap-1">
+      <TextInput
+        label="Hebrew word, with niqqud"
+        lang="he"
+        choices={choices.infinitives?.map((infinitive) => infinitive.pointed)}
+        onchoose={chooseInfinitive}
+        bind:value={draft.pointed}
+      />
+      {#if misspellsWord}
+        <p class="text-sm text-amber-700" aria-live="polite">
+          Doesn't spell <bdi lang="he">{draft.word.trim()}</bdi>, the word without niqqud.
+        </p>
+      {/if}
+    </div>
   {/snippet}
   {#if draft.partOfSpeech === 'noun'}
-    <NounInputs bind:noun={draft.noun} bind:root={draft.root} {choices}>
+    <NounInputs bind:noun={draft.noun} bind:root={draft.root} {choices} {unoffered}>
       {@render pointedInput()}
     </NounInputs>
     <PluralHints noun={draft.noun} pointed={draft.pointed} {edits} {shownFields} onuse={onedit} />
@@ -88,6 +106,7 @@ function chooseInfinitive(pointed: string) {
       bind:root={draft.root}
       {choices}
       suggestedPrepositions={candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : []}
+      {unoffered}
     >
       {@render pointedInput()}
     </VerbInputs>

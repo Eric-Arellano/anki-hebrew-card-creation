@@ -23,6 +23,9 @@ export type ExistingNote = { noteId: number; unpointed: string; pointed: string 
 
 export type ExistingNotes = { exactMatches: ExistingNote[]; relatedMatches: ExistingNote[] };
 
+/** A note as Anki holds it, with its fields keyed by Anki name. */
+export type LoadedNote = { noteId: number; mod: number; fields: Record<string, string> };
+
 export function fetchAnkiStatus(): Promise<AnkiStatus> {
   return getJson('/api/anki/status');
 }
@@ -31,6 +34,10 @@ export function fetchAnkiStatus(): Promise<AnkiStatus> {
 export function fetchExistingNotes(words: readonly string[]): Promise<ExistingNotes> {
   const query = words.map((word) => `word=${encodeURIComponent(word)}`).join('&');
   return getJson(`/api/anki/existing?${query}`);
+}
+
+export function fetchNote(noteId: number): Promise<LoadedNote> {
+  return getJson(`/api/anki/notes/${noteId}`);
 }
 
 export function browseNotes(noteIds: readonly number[]): Promise<void> {
