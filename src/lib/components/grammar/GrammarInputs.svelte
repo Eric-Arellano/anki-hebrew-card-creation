@@ -11,10 +11,10 @@ import {
   PARTS_OF_SPEECH,
   type PartOfSpeech,
 } from '#lib/note-type.ts';
-import ChoiceChips from '../ui/ChoiceChips.svelte';
 import QuotedText from '../ui/QuotedText.svelte';
 import TextInput from '../ui/TextInput.svelte';
 import AdjectiveInputs from './AdjectiveInputs.svelte';
+import ChoiceChips from './ChoiceChips.svelte';
 import NounInputs from './NounInputs.svelte';
 import PluralHints from './PluralHints.svelte';
 import VerbInputs from './VerbInputs.svelte';
@@ -86,6 +86,8 @@ function chooseInfinitive(pointed: string) {
       <p class="hint"><QuotedText text={PART_OF_SPEECH_HELP[inputs.partOfSpeech]} /></p>
     {/if}
   </div>
+  <!-- The pointed word (a verb's infinitive) leads each part of speech's row of forms, so every
+       pointed form copied from a dictionary sits in one row. -->
   {#snippet pointedInput()}
     <div class="grid content-start gap-1">
       <TextInput

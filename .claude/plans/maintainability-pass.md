@@ -2,10 +2,10 @@
 
 ## Context
 
-The UI revamp landed fast, and it left names and folders describing the editor as it used to be.
-`components/forms/` renders the Grammar section, `NoteFields` renders one field group, and
-`ExistingNotesPanel` and `DictionaryPanel` are no longer panels. Pure logic about Claude's
-suggestions grew inside three components, where only DOM tests reach it.
+The UI revamp landed fast. Its component directories now follow the editor's sections, but pure
+logic about Claude's suggestions grew inside three components, where only DOM tests reach it, and
+the list rows, the `held` props and the tests' fixtures and fakes are copied where they should be
+shared.
 
 This pass changes no behaviour. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
@@ -13,17 +13,17 @@ This pass changes no behaviour. Each PR is a prefactor: a reviewer should be abl
 Two pieces of work are still to come: the Claude correctness check and the verb revamp
 (`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet). Neither should wait on
 this pass, and the order among these PRs is loose. When the verb plan is adopted, its paths need
-updating for PR 1 and PR 2. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceChips.svelte`,
-`fields/SuggestButton.svelte`, and `suggestBlocker` in `CardEditor.svelte`.
+updating: it says `forms/VerbInputs.svelte` and `ui/ChoiceChips.svelte`, which are now
+`grammar/VerbInputs.svelte` and `grammar/ChoiceChips.svelte`, and after PR 1 its
+`fields/SuggestButton.svelte` and `suggestBlocker` in `CardEditor.svelte` move as well.
 
 ## Decisions
 
 - **Use `git mv` for every move and rename, in a commit of its own before any edits**, so blame
   and `git log --follow` survive and the review diff shows only the import churn.
-- **Component directories follow the sections `CardEditor` renders:** Word, Grammar, Media, and the
-  field-group sections (Hints and examples, Unusual variants, Notes). A widget that two sections
-  share goes in `ui/`. `ImagesInput` stays in `media/` even though Unusual variants imports it
-  too: the Media section is where images are attached.
+- **Component directories follow the sections `CardEditor` renders:** `word/`, `grammar/`,
+  `media/`, `fields/` for the field-group sections, and `save/`. A widget that two sections share
+  goes in `ui/`. A new module goes where that rule puts it.
   *Rejected: a `hints/` directory for `ExamplesInput`, `SameMeaningNotes` and `SuggestButton`,
   because `fields/` already means "the field-group sections", and splitting it again buys nothing.*
 - **Suggestions logic moves to one module, `card/suggestions.ts`.** That covers what blocks asking,
@@ -40,34 +40,7 @@ updating for PR 1 and PR 2. The plan says `forms/VerbInputs.svelte`, `ui/ChoiceC
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: Component directories follow the editor's sections
-
-Renames and moves first (`git mv`), then imports and test queries.
-
-- `forms/` → `grammar/`, and `forms/WordForms.svelte` → `grammar/GrammarInputs.svelte`. It renders
-  the whole Grammar section: part of speech, pointed word, the per-part-of-speech inputs and
-  plural hints.
-- `ui/ChoiceChips.svelte` and `ui/UnofferedValue.svelte` → `grammar/`, since only Grammar uses
-  them.
-- `fields/NoteFields.svelte` → `fields/FieldGroup.svelte`. It renders one group's fields. The
-  new name also ends a clash in `CardEditor.svelte`, where `NoteFields`, the `noteFields`
-  imported from `card/to-note.ts` and a snippet also named `noteFields` share one file. The
-  snippet becomes `fieldGroup`.
-- `word/ExistingNotesPanel.svelte` → `word/DeckCheck.svelte`, the name the tests already use. Keep
-  the `aria-label`.
-- `word/DictionaryPanel.svelte` → `word/DictionaryEntries.svelte`.
-- `SaveBar.svelte` and `ClaudeCheck.svelte` → `save/`. AGENTS.md lets only a one-component section
-  stay beside `CardEditor`.
-- Comments to fix while there:
-  - `CardEditor.svelte:104-105` says the fields shown "depend only on the part of speech". They
-    also follow Anki's field order.
-  - The three copies of "The pointed word, which leads the row…" in `Noun/Verb/AdjectiveInputs`
-    become one, on `GrammarInputs`, which lays out the row.
-  - `DictionaryPanel.svelte:23` describes behaviour that `CardEditor.svelte`'s `pick` enacts.
-    Move it there.
-- Run `svelte-autofixer` on every moved file.
-
-## PR 2: Claude's suggestions, as pure functions with unit tests
+## PR 1: Claude's suggestions, as pure functions with unit tests
 
 A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
 
@@ -75,22 +48,22 @@ A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
   branching that is tested only through the DOM today; the second is the inline `SuggestRequest`.
 - `filledBlanks(suggestions, edits, examples)` from `SuggestButton.svelte`'s `ask`: which hints
   and examples a reply fills, given that typing during the call wins.
-- `isUnreadSuggestion(field, suggested, edits, examples)` from `FieldGroup.svelte` (PR 1).
+- `isUnreadSuggestion(field, suggested, edits, examples)` from `fields/FieldGroup.svelte`.
 
 The components keep the state and the calls. Their DOM tests stay as integration tests, but drop
 any case that the unit tests now cover exhaustively.
 
-## PR 3: One list-row algebra for meanings and examples, and one `Held` type
+## PR 2: One list-row algebra for meanings and examples, and one `Held` type
 
 - `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
   `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
   `card/changed-from.ts`, with tests for the edge cases each branches on: the last row is
   cleared, not removed, and a restore index lies past the end.
 - **A `Held<T>` type** (`T | undefined`, documented once as what Anki holds while editing a note)
-  replaces the nine copies of that comment on `held` props. `SaveBar`'s and `CardEditor`'s `held`
+  replaces the nine copies of that comment on `held` props. `save/SaveBar`'s and `CardEditor`'s `held`
   is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
 
-## PR 4: Shared fixtures for the editor's tests
+## PR 3: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -105,7 +78,7 @@ any case that the unit tests now cover exhaustively.
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 5: Shared fakes for the server's tests
+## PR 4: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.
@@ -120,7 +93,3 @@ any case that the unit tests now cover exhaustively.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte file
   touched until it reports nothing. No test reaches the network, a real Anki or the real API.
-- PR 1: after the move, `grep -rn` for each old module and component name across `src/`,
-  `tests/`, `scripts/`, `AGENTS.md` and `README.md` comes back empty.
-- PR 1, by hand: `npm run dev` and look at a new word and an opened note. Every section renders
-  as before. Nothing is clicked that writes to Anki or calls Claude.
