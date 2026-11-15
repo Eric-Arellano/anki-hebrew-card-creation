@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import type { Held } from '#lib/card/changed-from.ts';
 import type { AdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import TextInput from '../ui/TextInput.svelte';
@@ -15,8 +16,7 @@ let {
 }: {
   adjective: AdjectiveInputs;
   root: string;
-  // What Anki holds, while editing a note.
-  held: AdjectiveInputs | undefined;
+  held: Held<AdjectiveInputs>;
   heldRoot: string | undefined;
   choices: PrefillChoices;
   children: Snippet;

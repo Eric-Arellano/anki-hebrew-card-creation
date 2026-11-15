@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
+import type { Held } from '#lib/card/changed-from.ts';
 import type { UnofferedValues } from '#lib/card/from-note.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
@@ -45,8 +46,7 @@ let {
   onedit,
 }: {
   inputs: CardInputsDraft;
-  // What Anki holds, while editing a note, so each change from it is marked.
-  held: CardInputsDraft | undefined;
+  held: Held<CardInputsDraft>;
   choices: PrefillChoices;
   // What a loaded note holds for a chip that no chip offers.
   unoffered: UnofferedValues;

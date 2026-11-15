@@ -3,6 +3,10 @@
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
 import type { Attachment } from '#lib/media/attach.ts';
 
+// What Anki holds while a note is being edited, which each change is marked against, and
+// `undefined` for a new word, which has nothing to mark.
+export type Held<T> = T | undefined;
+
 export type Change =
   | { kind: 'added' }
   | { kind: 'changed'; was: string }
@@ -48,6 +52,24 @@ export function removedRows<T>(
     .map((row, index) => ({ index, row }))
     .slice(now.length)
     .filter(({ row }) => !isBlank(row));
+}
+
+/**
+ * `now` with the held rows past its end put back, up to and including the one at `index`, so that
+ * one lands back at its own index. `copy` keeps an edit to a restored row off the held one.
+ */
+export function restoredThrough<T>(
+  now: readonly T[],
+  held: readonly T[] | undefined,
+  index: number,
+  copy: (row: T) => T = (row) => row,
+): T[] {
+  return [...now, ...(held ?? []).slice(now.length, index + 1).map(copy)];
+}
+
+// The last row is cleared rather than removed, so there is always one to type in.
+export function withoutRow<T>(now: readonly T[], index: number, blank: () => T): T[] {
+  return now.length === 1 ? [blank()] : now.toSpliced(index, 1);
 }
 
 /** As `listChange`, for attachments, which are the same when their filenames are. */

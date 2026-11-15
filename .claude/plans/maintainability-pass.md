@@ -2,9 +2,10 @@
 
 ## Context
 
-The UI revamp landed fast. Its component directories now follow the editor's sections, and
-Claude's suggestions are pure functions in `card/suggestions.ts`, but the list rows, the `held`
-props and the tests' fixtures and fakes are still copied where they should be shared.
+The UI revamp landed fast. Its component directories now follow the editor's sections, Claude's
+suggestions are pure functions in `card/suggestions.ts`, and the list rows and `Held<T>` live in
+`card/changed-from.ts`, but the tests' fixtures and fakes are still copied where they should be
+shared.
 
 This pass changes no behaviour. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
@@ -36,17 +37,7 @@ updating: it says `forms/VerbInputs.svelte` and `ui/ChoiceChips.svelte`, which a
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: One list-row algebra for meanings and examples, and one `Held` type
-
-- `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
-  `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
-  `card/changed-from.ts`, with tests for the edge cases each branches on: the last row is
-  cleared, not removed, and a restore index lies past the end.
-- **A `Held<T>` type** (`T | undefined`, documented once as what Anki holds while editing a note)
-  replaces the nine copies of that comment on `held` props. `save/SaveBar`'s and `CardEditor`'s `held`
-  is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
-
-## PR 2: Shared fixtures for the editor's tests
+## PR 1: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -61,7 +52,7 @@ updating: it says `forms/VerbInputs.svelte` and `ui/ChoiceChips.svelte`, which a
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 3: Shared fakes for the server's tests
+## PR 2: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.

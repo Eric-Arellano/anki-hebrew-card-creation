@@ -1,5 +1,11 @@
 <script lang="ts">
-import { removedRows, textChange } from '#lib/card/changed-from.ts';
+import {
+  type Held,
+  removedRows,
+  restoredThrough,
+  textChange,
+  withoutRow,
+} from '#lib/card/changed-from.ts';
 import { blankExample, type Example, isBlankExample } from '#lib/card/examples.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
 import RemovedRow from '../ui/RemovedRow.svelte';
@@ -13,8 +19,8 @@ let {
   withoutWord,
 }: {
   examples: Example[];
-  // What Anki holds, while editing a note, so each change from it is marked, row by row.
-  held: readonly Example[] | undefined;
+  // Marked row by row.
+  held: Held<readonly Example[]>;
   labelledBy: string;
   describedBy: string | undefined;
   // The word without niqqud, which the examples should use.
@@ -23,17 +29,9 @@ let {
   withoutWord: readonly number[];
 } = $props();
 
-// Up to and including the row at `index`, so it lands back at its own index.
+// A copy, since a restored row's inputs write into it.
 function restoreThrough(index: number) {
-  examples = [
-    ...examples,
-    ...(held ?? []).slice(examples.length, index + 1).map((example) => ({ ...example })),
-  ];
-}
-
-// The last row is cleared rather than removed, so there is always one to type in.
-function remove(index: number) {
-  examples = examples.length === 1 ? [blankExample()] : examples.toSpliced(index, 1);
+  examples = restoredThrough(examples, held, index, (example) => ({ ...example }));
 }
 </script>
 
@@ -88,7 +86,7 @@ function remove(index: number) {
           class="w-8 shrink-0 self-center px-0"
           aria-label="{examples.length === 1 ? 'Clear' : 'Remove'} example {number}"
           disabled={examples.length === 1 && isBlankExample(example)}
-          onclick={() => remove(index)}
+          onclick={() => (examples = withoutRow(examples, index, blankExample))}
         >
           ×
         </button>

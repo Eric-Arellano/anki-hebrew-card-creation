@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import type { Held } from '#lib/card/changed-from.ts';
 import type { UnofferedValues } from '#lib/card/from-note.ts';
 import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
@@ -26,8 +27,7 @@ let {
 }: {
   noun: NounDraft;
   root: string;
-  // What Anki holds, while editing a note.
-  held: NounDraft | undefined;
+  held: Held<NounDraft>;
   heldRoot: string | undefined;
   choices: PrefillChoices;
   unoffered: UnofferedValues;

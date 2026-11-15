@@ -1,5 +1,5 @@
 <script lang="ts">
-import { textChange } from '#lib/card/changed-from.ts';
+import { type Held, textChange } from '#lib/card/changed-from.ts';
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
 import ChangedFrom from './ChangedFrom.svelte';
 import WiktionaryHas from './WiktionaryHas.svelte';
@@ -20,8 +20,7 @@ let {
   required?: boolean;
   takesFocus?: boolean;
   value: string;
-  // What Anki holds, while editing a note, so a change from it is marked.
-  held?: string;
+  held?: Held<string>;
   // Values the dictionary offers when it has more than one, or one that differs from a note's.
   choices?: readonly string[];
   // Called after a choice fills the input, for an input whose choice fills another input too.
