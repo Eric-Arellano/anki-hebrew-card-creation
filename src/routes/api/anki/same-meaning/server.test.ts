@@ -1,6 +1,6 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, test } from 'vitest';
-import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
+import { closedAnki, closedAnkiMessage, fakeAnki } from '#tests/fake-anki.ts';
 import mechonitOtoNotes from '#tests/fixtures/anki/notes-info-mechonit-oto.json' with {
   type: 'json',
 };
@@ -54,9 +54,7 @@ describe('_findSameMeaning', () => {
   describe('when Anki is closed', () => {
     test('answers 502 with the reason', async () => {
       await expect(_findSameMeaning(closedAnki, sameMeaningUrl('?meaning=car'))).rejects.toSatisfy(
-        (error) =>
-          isHttpError(error, 502) &&
-          error.body.message === "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
+        (error) => isHttpError(error, 502) && error.body.message === closedAnkiMessage,
       );
     });
   });

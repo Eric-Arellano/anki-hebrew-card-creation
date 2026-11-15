@@ -1,14 +1,13 @@
-import type Anthropic from '@anthropic-ai/sdk';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import type { CheckRequest } from '#lib/api/ai.ts';
 import { FIELD_HELP, GROUP_HELP } from '#lib/field-help.ts';
 import { fromAnkiFields } from '#lib/note-type.ts';
+import { claudeMessage, fakeClaude, textBlock } from '#tests/fake-claude.ts';
 import checkKelevPlanted from '#tests/fixtures/claude/check-kelev-planted.json' with {
   type: 'json',
 };
 import { realNote } from '#tests/real-notes.ts';
 import { checkNote, checkRequest, fieldTexts, toNoteCheck } from './check.ts';
-import type { ClaudeMessages } from './client.ts';
 import type { Homograph } from './homographs.ts';
 
 // כלב as Anki holds it, with an image and audio, and an image in its variant's prompt.
@@ -204,9 +203,7 @@ describe('checkNote', () => {
         notes: 'כלב is feminine in spoken Hebrew.',
       },
     };
-    const create = vi.fn<ClaudeMessages['create']>(
-      async () => checkKelevPlanted as Anthropic.Beta.BetaMessage,
-    );
+    const { create } = fakeClaude(checkKelevPlanted);
     expect(await checkNote(planted, [], { create })).toEqual({
       findings: [
         {
@@ -240,13 +237,7 @@ describe('checkNote', () => {
         { field: 'Reading context', problem: 'Blank.', rewrite: null },
       ]),
     );
-    const create = vi.fn<ClaudeMessages['create']>(
-      async () =>
-        ({
-          stop_reason: 'end_turn',
-          content: [{ type: 'text', text, citations: null }],
-        }) as Anthropic.Beta.BetaMessage,
-    );
+    const { create } = fakeClaude(claudeMessage('end_turn', [textBlock(text)]));
     expect(await checkNote(kelev, [], { create })).toEqual({
       findings: [{ field: 'variant1Answer', problem: 'It answers “dog”, not “female dog”.' }],
     });
@@ -257,13 +248,7 @@ describe('checkNote', () => {
   });
 
   test('sends the schema with what each field holds', async () => {
-    const create = vi.fn<ClaudeMessages['create']>(
-      async () =>
-        ({
-          stop_reason: 'end_turn',
-          content: [{ type: 'text', text: '{"findings":[]}', citations: null }],
-        }) as Anthropic.Beta.BetaMessage,
-    );
+    const { create } = fakeClaude(claudeMessage('end_turn', [textBlock('{"findings":[]}')]));
     await checkNote(kelev, [], { create });
     expect(JSON.stringify(create.mock.calls[0]?.[0].output_config?.format)).toContain(
       'One short English sentence saying what is wrong and why.',

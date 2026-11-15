@@ -1,9 +1,9 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { isHttpError } from '@sveltejs/kit';
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { fromAnkiFields } from '#lib/note-type.ts';
-import type { ClaudeMessages } from '#lib/server/ai/client.ts';
 import { buildFixtureIndex } from '#tests/dictionary-index.ts';
+import { claudeMessage, fakeClaude, textBlock } from '#tests/fake-claude.ts';
 import { realNote } from '#tests/real-notes.ts';
 import { _check } from './+server.ts';
 
@@ -31,11 +31,7 @@ function checkRequest(body: unknown) {
 }
 
 function replyingWith(stopReason: Anthropic.Beta.BetaStopReason, findings: unknown[] = []) {
-  const message = {
-    stop_reason: stopReason,
-    content: [{ type: 'text', text: JSON.stringify({ findings }), citations: null }],
-  } as Anthropic.Beta.BetaMessage;
-  return { create: vi.fn<ClaudeMessages['create']>(async () => message) };
+  return fakeClaude(claudeMessage(stopReason, [textBlock(JSON.stringify({ findings }))]));
 }
 
 describe('_check', () => {

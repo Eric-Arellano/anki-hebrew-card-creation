@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { fakeAnki } from '#tests/fake-anki.ts';
+import { ankiWithNotes, fakeAnki } from '#tests/fake-anki.ts';
 import bayitNotes from '#tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
 import kelevChatulDagNotes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
+import { noteInfo } from '#tests/real-notes.ts';
 import type { NoteInfo } from './client.ts';
 import { findExistingNotes } from './existing-notes.ts';
 
@@ -11,15 +12,7 @@ import { findExistingNotes } from './existing-notes.ts';
 const NBSP = String.fromCodePoint(0xa0);
 
 describe('findExistingNotes', () => {
-  function ankiWithNotes(notes: NoteInfo[]) {
-    return fakeAnki({
-      findNotes: () => notes.map((note) => note.noteId),
-      notesInfo: ({ notes: requestedIds }) =>
-        notes.filter((note) => requestedIds.includes(note.noteId)),
-    });
-  }
-
-  const kelevNotes = kelevChatulDagNotes.filter((note) => note.fields.Hebrew.value === 'כלב');
+  const kelevNotes = [noteInfo('כלב')];
 
   describe('when the word has its own note', () => {
     test('finds it as an exact match', async () => {
@@ -116,14 +109,9 @@ describe('findExistingNotes', () => {
   });
 
   describe('with a root', () => {
-    function noteFor(word: string): NoteInfo {
-      const note = bayitNotes.find((candidate) => candidate.fields.Hebrew.value === word);
-      if (note === undefined) throw new Error(`No fixture note for ${word}`);
-      return note;
-    }
-    const bayit = noteFor('בית');
-    const mishpat = noteFor('בית משפט');
-    const sefer = noteFor('בית ספר');
+    const bayit = noteInfo('בית');
+    const mishpat = noteInfo('בית משפט');
+    const sefer = noteInfo('בית ספר');
     const rootQuery = '"note:Hebrew" "Root:ב־י־ת"';
 
     // Anki answers the word's search and the root's apart, as each query asks.

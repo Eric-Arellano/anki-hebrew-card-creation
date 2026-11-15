@@ -2,17 +2,10 @@ import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, test } from 'vitest';
 import { AnkiRefusal } from '#lib/server/anki/client.ts';
 import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
-import kelevChatulDagNotes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
-  type: 'json',
-};
-import { realNote } from '#tests/real-notes.ts';
+import { noteInfo, realNote } from '#tests/real-notes.ts';
 import { _addNote } from './+server.ts';
 
-const kelev = (() => {
-  const note = kelevChatulDagNotes.find(({ fields }) => fields.Hebrew.value === 'כלב');
-  if (note === undefined) throw new Error('No fixture note for כלב');
-  return note;
-})();
+const kelev = noteInfo('כלב');
 
 function postRequest(body: string) {
   return new Request('http://127.0.0.1:5173/api/anki/notes', { method: 'POST', body });

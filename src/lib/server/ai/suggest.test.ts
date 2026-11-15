@@ -1,9 +1,8 @@
-import type Anthropic from '@anthropic-ai/sdk';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import type { SuggestRequest } from '#lib/api/ai.ts';
 import { FIELD_HELP } from '#lib/field-help.ts';
+import { fakeClaude } from '#tests/fake-claude.ts';
 import suggestSefer from '#tests/fixtures/claude/suggest-sefer.json' with { type: 'json' };
-import type { ClaudeMessages } from './client.ts';
 import type { Homograph } from './homographs.ts';
 import { suggest, suggestionRequest, toSuggestions } from './suggest.ts';
 
@@ -232,9 +231,7 @@ describe('toSuggestions', () => {
 
 describe('suggest', () => {
   test('sends the prompt, and answers with what passes the guards', async () => {
-    const create = vi.fn<ClaudeMessages['create']>(
-      async () => suggestSefer as Anthropic.Beta.BetaMessage,
-    );
+    const { create } = fakeClaude(suggestSefer);
     expect(await suggest(sefer, seferHomographs, { create })).toEqual({
       examples: [
         { hebrew: 'אני קורא ספר מעניין', english: "I'm reading an interesting book" },
