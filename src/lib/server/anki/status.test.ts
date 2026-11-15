@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
+import { closedAnki, closedAnkiMessage, fakeAnki } from '#tests/fake-anki.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { getAnkiStatus } from './status.ts';
 
@@ -70,7 +70,7 @@ describe('getAnkiStatus', () => {
     test('reports the error', async () => {
       expect(await getAnkiStatus(closedAnki)).toEqual({
         kind: 'error',
-        message: "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
+        message: closedAnkiMessage,
       });
     });
   });

@@ -1,15 +1,11 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, test } from 'vitest';
 import { AnkiError, type NoteInfo } from '#lib/server/anki/client.ts';
-import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
-import kelevChatulDagNotes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
-  type: 'json',
-};
-import { realNote } from '#tests/real-notes.ts';
+import { closedAnki, closedAnkiMessage, fakeAnki } from '#tests/fake-anki.ts';
+import { noteInfo, realNote } from '#tests/real-notes.ts';
 import { _readNote, _saveNote } from './+server.ts';
 
-const kelev = kelevChatulDagNotes.find((note) => note.fields.Hebrew.value === 'כלב');
-if (kelev === undefined) throw new Error('No fixture note for כלב');
+const kelev = noteInfo('כלב');
 
 describe('_readNote', () => {
   test('answers with the note, its fields keyed by Anki name', async () => {
@@ -58,9 +54,7 @@ describe('_readNote', () => {
   describe('when Anki is closed', () => {
     test('answers 502 with the reason', async () => {
       await expect(_readNote(closedAnki, '1751686072898')).rejects.toSatisfy(
-        (error) =>
-          isHttpError(error, 502) &&
-          error.body.message === "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
+        (error) => isHttpError(error, 502) && error.body.message === closedAnkiMessage,
       );
     });
   });

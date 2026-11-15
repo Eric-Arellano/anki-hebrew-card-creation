@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import type { AdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
 import type { NounInputs } from '#lib/card/parts-of-speech/noun.ts';
 import { FIELDS, type FieldKey } from '#lib/note-type.ts';
-import notes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with { type: 'json' };
+import { realNote } from '#tests/real-notes.ts';
 import { composeFields } from './compose.ts';
 import type { CardInputs } from './inputs.ts';
 
@@ -27,11 +27,8 @@ function nounInputs(noun: NounInputs): CardInputs {
 
 /** A field of the real note for `word`, read through `FIELDS` so a renamed field fails here. */
 function realField(word: string, field: FieldKey): string {
-  const note = notes.find((candidate) => candidate.fields.Hebrew.value === word);
-  if (note === undefined) throw new Error(`No fixture note for ${word}`);
-  const fields: Record<string, { value: string }> = note.fields;
   // The human typed these in Anki's editor, which keeps some spaces as `&nbsp;`.
-  return fields[FIELDS[field].name]?.value.replaceAll('&nbsp;', ' ') ?? '';
+  return (realNote(word)[FIELDS[field].name] ?? '').replaceAll('&nbsp;', ' ');
 }
 
 function realFields(word: string, fields: readonly FieldKey[]) {

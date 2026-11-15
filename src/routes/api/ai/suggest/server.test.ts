@@ -1,8 +1,7 @@
-import type Anthropic from '@anthropic-ai/sdk';
 import { isHttpError } from '@sveltejs/kit';
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
-import type { ClaudeMessages } from '#lib/server/ai/client.ts';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { buildFixtureIndex } from '#tests/dictionary-index.ts';
+import { fakeClaude } from '#tests/fake-claude.ts';
 import suggestSefer from '#tests/fixtures/claude/suggest-sefer.json' with { type: 'json' };
 import { _suggest } from './+server.ts';
 
@@ -29,15 +28,9 @@ function suggestRequest(body: unknown) {
   });
 }
 
-function replyingWith(message: unknown) {
-  return {
-    create: vi.fn<ClaudeMessages['create']>(async () => message as Anthropic.Beta.BetaMessage),
-  };
-}
-
 describe('_suggest', () => {
   test('answers with Claude’s suggestions, asking with the homographs', async () => {
-    const messages = replyingWith(suggestSefer);
+    const messages = fakeClaude(suggestSefer);
     const response = await _suggest(index, suggestRequest(sefer), messages);
     expect(await response.json()).toEqual({
       examples: [
@@ -59,7 +52,7 @@ describe('_suggest', () => {
   });
 
   test('trims the word and drops blank meanings before asking', async () => {
-    const messages = replyingWith(suggestSefer);
+    const messages = fakeClaude(suggestSefer);
     await _suggest(
       index,
       suggestRequest({ ...sefer, word: ' ספר ', definitions: ['book', ' '] }),
@@ -75,7 +68,7 @@ describe('_suggest', () => {
       ['a blank word', { ...sefer, word: ' ' }],
       ['no meaning', { ...sefer, definitions: [' '] }],
     ])('answers 400 for %s without asking Claude', async (_, body) => {
-      const messages = replyingWith(suggestSefer);
+      const messages = fakeClaude(suggestSefer);
       await expect(_suggest(index, suggestRequest(body), messages)).rejects.toSatisfy(
         (error) =>
           isHttpError(error, 400) && error.body.message === 'Type the word and a meaning first.',
@@ -92,7 +85,7 @@ describe('_suggest', () => {
 
   describe('without an index', () => {
     test('answers 503 with how to build one', async () => {
-      const messages = replyingWith(suggestSefer);
+      const messages = fakeClaude(suggestSefer);
       await expect(
         _suggest({ ...index, index: `${index.index}.missing` }, suggestRequest(sefer), messages),
       ).rejects.toSatisfy(
@@ -106,7 +99,7 @@ describe('_suggest', () => {
 
   describe('when Claude fails', () => {
     test('answers 502 with the reason', async () => {
-      const messages = replyingWith({ ...suggestSefer, stop_reason: 'refusal' });
+      const messages = fakeClaude({ ...suggestSefer, stop_reason: 'refusal' });
       await expect(_suggest(index, suggestRequest(sefer), messages)).rejects.toSatisfy(
         (error) => isHttpError(error, 502) && error.body.message === 'Claude declined to answer.',
       );

@@ -1,9 +1,7 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, test } from 'vitest';
-import { closedAnki, fakeAnki } from '#tests/fake-anki.ts';
-import kelevChatulDagNotes from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
-  type: 'json',
-};
+import { closedAnki, closedAnkiMessage, fakeAnki } from '#tests/fake-anki.ts';
+import { noteInfo } from '#tests/real-notes.ts';
 import { _findExisting } from './+server.ts';
 
 function existingUrl(query: string) {
@@ -12,7 +10,7 @@ function existingUrl(query: string) {
 
 describe('_findExisting', () => {
   test('answers with the matches for the word', async () => {
-    const dagNotes = kelevChatulDagNotes.filter((note) => note.fields.Hebrew.value === 'דג');
+    const dagNotes = [noteInfo('דג')];
     const { anki } = fakeAnki({
       findNotes: () => dagNotes.map((note) => note.noteId),
       notesInfo: () => dagNotes,
@@ -72,9 +70,7 @@ describe('_findExisting', () => {
   describe('when Anki is closed', () => {
     test('answers 502 with the reason', async () => {
       await expect(_findExisting(closedAnki, existingUrl('?word=x'))).rejects.toSatisfy(
-        (error) =>
-          isHttpError(error, 502) &&
-          error.body.message === "Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?",
+        (error) => isHttpError(error, 502) && error.body.message === closedAnkiMessage,
       );
     });
   });

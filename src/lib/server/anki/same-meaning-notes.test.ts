@@ -1,21 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import { fakeAnki } from '#tests/fake-anki.ts';
+import { ankiWithNotes } from '#tests/fake-anki.ts';
 import bayitNotes from '#tests/fixtures/anki/notes-info-bayit.json' with { type: 'json' };
 import mechonitOtoNotes from '#tests/fixtures/anki/notes-info-mechonit-oto.json' with {
   type: 'json',
 };
-import type { NoteInfo } from './client.ts';
 import { findSameMeaningNotes } from './same-meaning-notes.ts';
 
 describe('findSameMeaningNotes', () => {
-  function ankiWithNotes(notes: NoteInfo[]) {
-    return fakeAnki({
-      findNotes: () => notes.map((note) => note.noteId),
-      notesInfo: ({ notes: requestedIds }) =>
-        notes.filter((note) => requestedIds.includes(note.noteId)),
-    });
-  }
-
   describe('when other words share a meaning', () => {
     test('lists each with the meanings it shares and its hint', async () => {
       const { anki, calls } = ankiWithNotes(mechonitOtoNotes);

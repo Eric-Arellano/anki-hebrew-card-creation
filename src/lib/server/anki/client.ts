@@ -95,6 +95,10 @@ export class AnkiRefusal extends AnkiError {
 
 const responseEnvelopeSchema = z.object({ result: z.unknown(), error: z.string().nullable() });
 
+export function unreachableMessage(ankiConnectUrl: string): string {
+  return `Can't reach AnkiConnect at ${ankiConnectUrl}. Is Anki open?`;
+}
+
 export function createAnkiClient(ankiConnectUrl: string): AnkiClient {
   return async (action, ...[params]) => {
     // The types already refuse other actions; this refuses them from untyped callers too.
@@ -112,7 +116,7 @@ export function createAnkiClient(ankiConnectUrl: string): AnkiClient {
         redirect: 'error',
       });
     } catch (cause) {
-      throw new AnkiError(`Can't reach AnkiConnect at ${ankiConnectUrl}. Is Anki open?`, {
+      throw new AnkiError(unreachableMessage(ankiConnectUrl), {
         cause,
       });
     }

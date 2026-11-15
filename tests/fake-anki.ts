@@ -4,6 +4,8 @@ import {
   type AllowedAction,
   type AnkiClient,
   AnkiError,
+  type NoteInfo,
+  unreachableMessage,
 } from '#lib/server/anki/client.ts';
 
 type FakeActionHandlers = {
@@ -25,7 +27,18 @@ export function fakeAnki(handlers: FakeActionHandlers) {
   return { anki, calls };
 }
 
+/** An AnkiConnect holding only `notes`, which every search finds. */
+export function ankiWithNotes(notes: NoteInfo[]) {
+  return fakeAnki({
+    findNotes: () => notes.map((note) => note.noteId),
+    notesInfo: ({ notes: requestedIds }) =>
+      notes.filter((note) => requestedIds.includes(note.noteId)),
+  });
+}
+
+export const closedAnkiMessage = unreachableMessage('http://127.0.0.1:8765');
+
 /** An AnkiConnect that fails every action the way `createAnkiClient` does when Anki is closed. */
 export const closedAnki: AnkiClient = async () => {
-  throw new AnkiError("Can't reach AnkiConnect at http://127.0.0.1:8765. Is Anki open?");
+  throw new AnkiError(closedAnkiMessage);
 };
