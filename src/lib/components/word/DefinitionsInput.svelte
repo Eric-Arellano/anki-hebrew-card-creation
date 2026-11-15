@@ -1,5 +1,11 @@
 <script lang="ts">
-import { removedRows, textChange } from '#lib/card/changed-from.ts';
+import {
+  type Held,
+  removedRows,
+  restoredThrough,
+  textChange,
+  withoutRow,
+} from '#lib/card/changed-from.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
 import RemovedRow from '../ui/RemovedRow.svelte';
 
@@ -8,8 +14,8 @@ let {
   held,
 }: {
   definitions: string[];
-  // What Anki holds, while editing a note, so each change from it is marked, meaning by meaning.
-  held?: readonly string[];
+  // Marked meaning by meaning.
+  held?: Held<readonly string[]>;
 } = $props();
 
 function isBlank(meaning: string) {
@@ -18,16 +24,6 @@ function isBlank(meaning: string) {
 
 function labelAt(index: number) {
   return index === 0 ? 'English meaning' : `English meaning ${index + 1}`;
-}
-
-// Up to and including the meaning at `index`, so it lands back at its own index.
-function restoreThrough(index: number) {
-  definitions = [...definitions, ...(held ?? []).slice(definitions.length, index + 1)];
-}
-
-// The last row is cleared rather than removed, so there is always one to type in.
-function remove(index: number) {
-  definitions = definitions.length === 1 ? [''] : definitions.toSpliced(index, 1);
 }
 </script>
 
@@ -55,7 +51,7 @@ function remove(index: number) {
           class="w-8 shrink-0 px-0"
           aria-label="{definitions.length === 1 ? 'Clear' : 'Remove'} {label}"
           disabled={definitions.length === 1 && definitions[0]?.trim() === ''}
-          onclick={() => remove(index)}
+          onclick={() => (definitions = withoutRow(definitions, index, () => ''))}
         >
           ×
         </button>
@@ -63,7 +59,10 @@ function remove(index: number) {
     </ChangedFrom>
   {/each}
   {#each removedRows(held, definitions, isBlank) as { index, row } (index)}
-    <RemovedRow label={labelAt(index)} onrestore={() => restoreThrough(index)}>
+    <RemovedRow
+      label={labelAt(index)}
+      onrestore={() => (definitions = restoredThrough(definitions, held, index))}
+    >
       “<bdi lang="en">{row}</bdi>”
     </RemovedRow>
   {/each}

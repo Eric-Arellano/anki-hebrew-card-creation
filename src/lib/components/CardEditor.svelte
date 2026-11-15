@@ -77,14 +77,14 @@ const editedWord =
   untrack(() => note) === undefined ? undefined : start.inputs.pointed || start.inputs.word;
 const pageTitle = `${editedWord === undefined ? 'New word' : `Editing ${editedWord}`} · Hebrew card helper`;
 // The note as Anki last answered with it: as loaded, then as each save left it.
-let held: LoadedNote | undefined = $state.raw(untrack(() => note));
+let heldNote: LoadedNote | undefined = $state.raw(untrack(() => note));
 // A state proxy never writes back to `start`, so it stays what the editor began with.
 let draft: CardDraft = $state(start);
 // The draft as Anki last held it, which changes are marked against: `start`, then as each save
 // left it, so the markers clear after a save.
 let baseline: CardDraft = $state.raw(start);
 // Only while there is a note in Anki to differ from.
-const marked = $derived(held === undefined ? undefined : baseline);
+const marked = $derived(heldNote === undefined ? undefined : baseline);
 // The dictionary entry the inputs were last filled from, until the human types another word. The
 // inputs from before, and the word the entry filled in, are what undo it.
 let picked:
@@ -200,12 +200,12 @@ function ankiFields(storedAs: ReadonlyMap<string, string>) {
 }
 
 function saved(note: LoadedNote) {
-  held = note;
+  heldNote = note;
   baseline = $state.snapshot(draft);
 }
 
 async function loadAgain() {
-  if (held !== undefined) onopennote?.(await fetchNote(held.noteId));
+  if (heldNote !== undefined) onopennote?.(await fetchNote(heldNote.noteId));
 }
 
 async function checkAnki() {
@@ -400,7 +400,7 @@ onMount(checkAnki);
     {attachments}
     fieldsWith={ankiFields}
     {onnextcard}
-    {held}
+    {heldNote}
     onsaved={saved}
     onloadagain={loadAgain}
     ankiBlocker={ankiStatus === undefined ? 'Checking Anki…' : ankiProblem}

@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends string">
-import { textChange } from '#lib/card/changed-from.ts';
+import { type Held, textChange } from '#lib/card/changed-from.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
 import WiktionaryHas from '../ui/WiktionaryHas.svelte';
 import UnofferedValue from './UnofferedValue.svelte';
@@ -20,8 +20,8 @@ let {
   options: readonly { value: T; label: string }[];
   // `undefined` until the human chooses, so nothing is chosen for them.
   value: T | undefined;
-  // What Anki holds, while editing a note, so a change from it is marked: '' when unchosen.
-  held?: T | '';
+  // '' when unchosen.
+  held?: Held<T | ''>;
   // Options the dictionary suggests, marked but never chosen.
   suggested?: readonly T[];
   // What the dictionary has where a note holds something else, offered beside the options.

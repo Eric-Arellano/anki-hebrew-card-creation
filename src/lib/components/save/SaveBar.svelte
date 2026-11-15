@@ -11,7 +11,7 @@ let {
   attachments,
   fieldsWith,
   onnextcard,
-  held,
+  heldNote,
   onsaved,
   onloadagain,
   ankiBlocker,
@@ -27,7 +27,7 @@ let {
   // fix something and save again.
   onnextcard?: () => void;
   // The note being edited, as Anki last answered with it, or `undefined` for a new note.
-  held: LoadedNote | undefined;
+  heldNote: LoadedNote | undefined;
   // The note as Anki holds it after it is added or saved, which the next save builds on.
   onsaved?: (note: LoadedNote) => void;
   // Replaces the draft with the note as Anki now holds it.
@@ -57,7 +57,7 @@ let saving: Saving = $state.raw({ kind: 'idle' });
 // Before storing, a new file goes by the name requested, which is all the review shows of it.
 const unstored = $derived(new Map(attachments.map(({ filename }) => [filename, filename])));
 const changes = $derived(
-  held === undefined ? {} : changedFields(held.fields, fieldsWith(unstored)),
+  heldNote === undefined ? {} : changedFields(heldNote.fields, fieldsWith(unstored)),
 );
 
 const NOTHING_CHANGED = 'Nothing to save: every field reads as Anki holds it.';
@@ -65,7 +65,7 @@ const NOTHING_CHANGED = 'Nothing to save: every field reads as Anki holds it.';
 const blocker = $derived(
   ankiBlocker ??
     inputsBlocker ??
-    (held !== undefined && Object.keys(changes).length === 0 ? NOTHING_CHANGED : undefined),
+    (heldNote !== undefined && Object.keys(changes).length === 0 ? NOTHING_CHANGED : undefined),
 );
 
 const checks = $derived(partOfSpeech !== undefined);
@@ -92,7 +92,7 @@ function checkNow() {
 
 // Whether or not the check has answered, since it only advises.
 function confirm() {
-  if (held === undefined) add({ allowDuplicate: false });
+  if (heldNote === undefined) add({ allowDuplicate: false });
   else save();
 }
 
@@ -115,9 +115,9 @@ async function storeAttachments(): Promise<ReadonlyMap<string, string>> {
   return new Map(stored);
 }
 
-// Once added, `held` is the new note, so the next save updates it rather than adding another.
+// Once added, `heldNote` is the new note, so the next save updates it rather than adding another.
 async function add(options: { allowDuplicate: boolean }) {
-  if (held !== undefined || blocker !== undefined) return;
+  if (heldNote !== undefined || blocker !== undefined) return;
   saving = { kind: 'sending' };
   try {
     onsaved?.(await addNote(fieldsWith(await storeAttachments()), options));
@@ -129,8 +129,8 @@ async function add(options: { allowDuplicate: boolean }) {
 }
 
 async function save() {
-  if (held === undefined || blocker !== undefined) return;
-  const note = held;
+  if (heldNote === undefined || blocker !== undefined) return;
+  const note = heldNote;
   saving = { kind: 'sending' };
   try {
     const storedAs = await storeAttachments();
@@ -180,7 +180,7 @@ function focus(element: HTMLElement) {
   class="sticky bottom-0 flex flex-wrap items-center gap-2 rounded-t-xl border border-b-0 border-neutral-600 border-t-2 border-t-blue-500 bg-neutral-800 p-4 shadow-[0_-8px_24px_-6px_rgb(0_0_0/0.2)]"
 >
   {#if saving.kind === 'reviewing'}
-    {#if held === undefined}
+    {#if heldNote === undefined}
       <p class="basis-full">Adding this note to the deck.</p>
     {:else}
       <p class="basis-full">Saving changes these fields in Anki:</p>
@@ -190,7 +190,7 @@ function focus(element: HTMLElement) {
             <dt class="font-medium">{name}</dt>
             <dd class="rounded bg-red-950/40 px-2 py-1">
               <span class="text-neutral-400">Before:</span>
-              {@render fieldHtml(held.fields[name] ?? '')}
+              {@render fieldHtml(heldNote.fields[name] ?? '')}
             </dd>
             <dd class="mt-1 rounded bg-green-950/40 px-2 py-1">
               <span class="text-neutral-400">After:</span>
@@ -209,7 +209,7 @@ function focus(element: HTMLElement) {
       {@attach focus}
       onclick={confirm}
     >
-      {held === undefined ? 'Add to deck' : 'Save changes'}
+      {heldNote === undefined ? 'Add to deck' : 'Save changes'}
     </button>
     <kbd>⌘↵</kbd>
     <button type="button" onclick={() => (saving = { kind: 'idle' })}>Cancel</button>
@@ -221,7 +221,7 @@ function focus(element: HTMLElement) {
       title={blocker}
       onclick={submit}
     >
-      {held === undefined ? 'Check and add' : 'Check and save'}
+      {heldNote === undefined ? 'Check and add' : 'Check and save'}
     </button>
     <kbd>⌘↵</kbd>
     {#if checks}
@@ -256,7 +256,7 @@ function focus(element: HTMLElement) {
       <p class="text-neutral-400">{inputsBlocker}</p>
     {:else if blocker === NOTHING_CHANGED}
       <p class="text-neutral-400">{NOTHING_CHANGED}</p>
-    {:else if held !== undefined && Object.keys(changes).length > 0}
+    {:else if heldNote !== undefined && Object.keys(changes).length > 0}
       <p class="text-neutral-400">Will change: {Object.keys(changes).join(', ')}</p>
     {/if}
   {/if}

@@ -3,7 +3,7 @@ import type { Snippet } from 'svelte';
 import type { UnofferedValues } from '#lib/card/from-note.ts';
 import type { VerbDraft } from '#lib/card/parts-of-speech/verb.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
-import { textChange } from '#lib/card/changed-from.ts';
+import { type Held, textChange } from '#lib/card/changed-from.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
@@ -30,8 +30,7 @@ let {
 }: {
   verb: VerbDraft;
   root: string;
-  // What Anki holds, while editing a note.
-  held: VerbDraft | undefined;
+  held: Held<VerbDraft>;
   heldRoot: string | undefined;
   choices: PrefillChoices;
   // From the dictionary, which names one for few verbs.
