@@ -2,10 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { vi } from 'vitest';
 import type { CheckRequest, SuggestRequest } from '#lib/api/ai.ts';
 import type { AnkiStatus, ExistingNotes, LoadedNote, SameMeaningNote } from '#lib/api/anki.ts';
-import type { DictionaryLookup } from '#lib/api/dictionary.ts';
+import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { ForvoDownloads } from '#lib/api/forvo.ts';
 import type { Example } from '#lib/card/examples.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
+import { loadedNote } from '#tests/real-notes.ts';
 import CardEditor from './CardEditor.svelte';
 
 export const connectedStatus: AnkiStatus = {
@@ -16,6 +17,29 @@ export const connectedStatus: AnkiStatus = {
     found: true,
     liveFieldNames: fieldNames,
     drift: { missingFromAnki: [], unexpectedInAnki: [] },
+  },
+};
+
+/** כלב with its part of speech filled in, the one input the fixture lacks, and `fields` over it. */
+export function kelevNote(fields: Record<string, string> = {}): LoadedNote {
+  const note = loadedNote('כלב');
+  return { ...note, fields: { ...note.fields, 'Part of speech': 'noun', ...fields } };
+}
+
+// As the lookup answers for the fixture dictionary.
+export const kelevEntry: DictionaryCandidate = {
+  id: 1,
+  title: 'כלב',
+  pointed: 'כֶּלֶב',
+  wiktionaryPartOfSpeech: 'noun',
+  definitions: ['dog', '(derogatory) scoundrel, bitch'],
+  roots: [],
+  partOfSpeech: 'noun',
+  noun: {
+    gender: { gender: 'm', pluralOnly: false },
+    plurals: ['כְּלָבִים'],
+    feminineSingulars: ['כַּלְבָּה'],
+    femininePlurals: ['כְּלָבוֹת'],
   },
 };
 
@@ -217,4 +241,32 @@ export async function addToDeck(requests: ServerRequest[]) {
 export async function fillDag() {
   await fillInputs({ word: 'דג', pointed: 'דָּג', gloss: 'fish' });
   await choosePartOfSpeech('Other');
+}
+
+/**
+ * A reply the test sends once it has done what the human does while waiting, as `reply` for one of
+ * Claude's routes, and the signal the editor sent the request with.
+ */
+export function heldReply<T>() {
+  let send: (body: T) => void = () => {};
+  let signal: AbortSignal | undefined;
+  const reply = new Promise<Response>((resolve) => {
+    send = (body) => resolve(Response.json(body));
+  });
+  return {
+    reply: (_: unknown, sentWith?: AbortSignal) => {
+      signal = sentWith;
+      return reply;
+    },
+    send: (body: T) => send(body),
+    signal: () => signal,
+  };
+}
+
+export async function pressCmdEnter() {
+  await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+}
+
+export function addButton() {
+  return screen.getByRole('button', { name: 'Check and add' }) as HTMLButtonElement;
 }

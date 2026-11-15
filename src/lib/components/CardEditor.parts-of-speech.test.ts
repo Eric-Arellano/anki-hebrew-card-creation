@@ -2,6 +2,7 @@
 import { fireEvent, screen, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
+import { loadedNote } from '#tests/real-notes.ts';
 import {
   addToDeck,
   chooseNoun,
@@ -9,6 +10,7 @@ import {
   fillInputs,
   fillVerb,
   input,
+  kelevNote,
   noteField,
   renderConnectedEditor,
   skipImage,
@@ -427,6 +429,39 @@ describe('CardEditor', () => {
         await chooseNoun('Masculine');
         await typeInto(input('Masculine plural, with niqqud'), 'כְּלָבִים');
         expect(screen.queryByRole('region', { name: 'Irregular plural' })).toBeNull();
+      });
+    });
+  });
+
+  describe('the pointed word', () => {
+    describe('when it holds more than the word', () => {
+      test('warns', async () => {
+        const bayit = loadedNote('בית');
+        await renderConnectedEditor(
+          {},
+          { ...bayit, fields: { ...bayit.fields, 'Part of speech': 'noun' } },
+        );
+        expect(input('Hebrew word, with niqqud').value).toBe('(ms) בַּיִת (mp)\u00a0בָּתִּים');
+        expect(screen.getByText(/Doesn't spell/).textContent?.trim()).toBe(
+          "Doesn't spell בית, the word without niqqud.",
+        );
+      });
+    });
+
+    describe('when it spells the word', () => {
+      test('says nothing', async () => {
+        await renderConnectedEditor({}, kelevNote());
+        expect(screen.queryByText(/Doesn't spell/)).toBeNull();
+      });
+    });
+
+    describe('when a new note is mistyped', () => {
+      test('warns', async () => {
+        await renderConnectedEditor();
+        await typeInto(input('Hebrew word, without niqqud'), 'דג');
+        await choosePartOfSpeech('Other');
+        await typeInto(input('Hebrew word, with niqqud'), 'דָּד');
+        expect(screen.getByText(/Doesn't spell/)).toBeTruthy();
       });
     });
   });

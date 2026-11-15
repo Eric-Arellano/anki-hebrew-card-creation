@@ -3,6 +3,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { stubImageDecoding } from '#tests/stub-image-decoding.ts';
 import {
+  addButton,
   addRequests,
   addToDeck,
   choosePartOfSpeech,
@@ -171,10 +172,6 @@ describe('CardEditor', () => {
       return requests;
     }
 
-    function addButton() {
-      return screen.getByRole('button', { name: 'Check and add' }) as HTMLButtonElement;
-    }
-
     test('blocks adding and says an image is still needed', async () => {
       await renderFilledEditor();
       expect(addButton().disabled).toBe(true);
@@ -270,7 +267,7 @@ describe('CardEditor', () => {
         await pasteImage();
         await screen.findByRole('img');
 
-        await fireEvent.click(screen.getByRole('button', { name: 'Check and add' }));
+        await fireEvent.click(addButton());
         await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
         await waitFor(() =>
           expect(screen.getByRole('alert').textContent).toBe(
@@ -345,50 +342,48 @@ describe('CardEditor', () => {
       });
     });
 
-    describe('adding', () => {
-      test('stores it, then puts it after the prompt under the name Anki used', async () => {
-        const stored = 'paste-2ee409c9-1.jpg';
-        const requests = await renderConnectedEditor({
-          storeMedia: () => Response.json({ filename: stored }),
-        });
-        await fillDag();
+    test('stores it on adding, then puts it after the prompt under the name Anki used', async () => {
+      const stored = 'paste-2ee409c9-1.jpg';
+      const requests = await renderConnectedEditor({
+        storeMedia: () => Response.json({ filename: stored }),
+      });
+      await fillDag();
+      await skipImage();
+      await typeInto(noteField('Variant 1: English prompt'), 'female fish');
+      noteField('Variant 1: English prompt').focus();
+      await pasteImage();
+      await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
+
+      expect(await addToDeck(requests)).toMatchObject({
+        fields: { 'Variant 1 prompt': `female fish<div><img src="${stored}"></div>` },
+      });
+      expect(mediaRequests(requests)).toEqual([
+        { method: 'POST', path: '/api/anki/media', body: { filename: FILENAME, data: BASE64 } },
+      ]);
+    });
+
+    describe('when adding after switching to a part of speech without variants', () => {
+      test('neither stores the image nor sends it', async () => {
+        const requests = await renderWithVariants();
         await skipImage();
-        await typeInto(noteField('Variant 1: English prompt'), 'female fish');
         noteField('Variant 1: English prompt').focus();
         await pasteImage();
         await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
 
-        expect(await addToDeck(requests)).toMatchObject({
-          fields: { 'Variant 1 prompt': `female fish<div><img src="${stored}"></div>` },
-        });
-        expect(mediaRequests(requests)).toEqual([
-          { method: 'POST', path: '/api/anki/media', body: { filename: FILENAME, data: BASE64 } },
-        ]);
+        await choosePartOfSpeech('Adverb');
+        expect(await addToDeck(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
+        expect(mediaRequests(requests)).toEqual([]);
       });
 
-      describe('after switching to a part of speech without variants', () => {
-        test('neither stores the image nor sends it', async () => {
-          const requests = await renderWithVariants();
-          await skipImage();
-          noteField('Variant 1: English prompt').focus();
-          await pasteImage();
-          await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
+      test('keeps the image for switching back', async () => {
+        await renderWithVariants();
+        noteField('Variant 1: English prompt').focus();
+        await pasteImage();
+        await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
 
-          await choosePartOfSpeech('Adverb');
-          expect(await addToDeck(requests)).toMatchObject({ fields: { 'Variant 1 prompt': '' } });
-          expect(mediaRequests(requests)).toEqual([]);
-        });
-
-        test('keeps the image for switching back', async () => {
-          await renderWithVariants();
-          noteField('Variant 1: English prompt').focus();
-          await pasteImage();
-          await within(imagesWidget(VARIANT_1_IMAGES)).findByRole('img');
-
-          await choosePartOfSpeech('Adverb');
-          await choosePartOfSpeech('Other');
-          expect(within(imagesWidget(VARIANT_1_IMAGES)).getAllByRole('img')).toHaveLength(1);
-        });
+        await choosePartOfSpeech('Adverb');
+        await choosePartOfSpeech('Other');
+        expect(within(imagesWidget(VARIANT_1_IMAGES)).getAllByRole('img')).toHaveLength(1);
       });
     });
   });

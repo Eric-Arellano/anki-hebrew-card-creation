@@ -6,6 +6,7 @@ import {
   chooseNoun,
   exampleRows,
   fillInputs,
+  heldReply,
   input,
   noteField,
   renderConnectedEditor,
@@ -72,15 +73,6 @@ async function clickSuggest() {
   await answered();
 }
 
-// A reply the test sends once it has done what the human does while waiting.
-function heldReply() {
-  let send: (suggestions: Suggestions) => void = () => {};
-  const reply = new Promise<Response>((resolve) => {
-    send = (suggestions) => resolve(Response.json(suggestions));
-  });
-  return { suggest: () => reply, send: (suggestions: Suggestions) => send(suggestions) };
-}
-
 describe('CardEditor', () => {
   describe('suggesting', () => {
     test('is offered in the section it fills', async () => {
@@ -113,7 +105,7 @@ describe('CardEditor', () => {
     });
 
     test('fills only what is still blank when the reply lands', async () => {
-      const { suggest, send } = heldReply();
+      const { reply: suggest, send } = heldReply<Suggestions>();
       await renderWithSuggestions({ suggest });
       await fillSefer();
       await fireEvent.click(suggestButton());
@@ -142,7 +134,7 @@ describe('CardEditor', () => {
 
     describe('when the word changes while Claude answers', () => {
       test('fills nothing, saying why', async () => {
-        const { suggest, send } = heldReply();
+        const { reply: suggest, send } = heldReply<Suggestions>();
         await renderWithSuggestions({ suggest });
         await fillSefer();
         await fireEvent.click(suggestButton());

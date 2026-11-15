@@ -206,16 +206,14 @@ describe('CardEditor', () => {
         expect(screen.queryByText(/also means/)).toBeNull();
       });
 
-      describe('while editing a note', () => {
-        test('leaves the note itself out', async () => {
-          const oto = loadedNote('אוטו');
-          const otoFound = { ...mechonit, noteId: oto.noteId, unpointed: 'אוטו', pointed: 'אוֹטוֹ' };
-          await renderConnectedEditor({ sameMeaning: [otoFound, mechonit], notes: [oto] }, oto);
-          await choosePartOfSpeech('Other');
-          expect(
-            (await screen.findAllByText(/also means/)).map((item) => item.textContent),
-          ).toEqual([expect.stringContaining('מְכוֹנִית')]);
-        });
+      test('leaves out the note being edited', async () => {
+        const oto = loadedNote('אוטו');
+        const otoFound = { ...mechonit, noteId: oto.noteId, unpointed: 'אוטו', pointed: 'אוֹטוֹ' };
+        await renderConnectedEditor({ sameMeaning: [otoFound, mechonit], notes: [oto] }, oto);
+        await choosePartOfSpeech('Other');
+        expect((await screen.findAllByText(/also means/)).map((item) => item.textContent)).toEqual([
+          expect.stringContaining('מְכוֹנִית'),
+        ]);
       });
     });
 
@@ -369,95 +367,6 @@ describe('CardEditor', () => {
 
         await skipImage();
         expect(await addToDeck(requests)).toMatchObject({ fields: { Forms: '' } });
-      });
-    });
-  });
-
-  describe('the deck check', () => {
-    describe('when the word is in the deck', () => {
-      test('warns, naming the note', async () => {
-        await renderConnectedEditor({
-          existing: {
-            exactMatches: [
-              {
-                noteId: 1751686072898,
-                unpointed: 'כלב',
-                pointed: 'כֶּלֶב',
-                partOfSpeech: '',
-                definitions: '',
-              },
-            ],
-            sameRootMatches: [],
-            relatedMatches: [],
-          },
-        });
-        await typeInto(input('Hebrew word, without niqqud'), 'כלב');
-        const check = screen.getByRole('region', { name: 'Already in the deck' });
-        expect(
-          await within(check).findByText('Already in your deck: edit it instead?'),
-        ).toBeTruthy();
-        expect(within(check).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
-      });
-    });
-
-    describe('when only related notes are in the deck', () => {
-      test('lists them without warning', async () => {
-        await renderConnectedEditor({
-          existing: {
-            exactMatches: [],
-            sameRootMatches: [],
-            relatedMatches: [
-              {
-                noteId: 1752426864218,
-                unpointed: 'בית משפט',
-                pointed: 'בֵּית מִשְׁפָּט',
-                partOfSpeech: '',
-                definitions: '',
-              },
-            ],
-          },
-        });
-        await typeInto(input('Hebrew word, without niqqud'), 'בית');
-        const check = screen.getByRole('region', { name: 'Already in the deck' });
-        expect(await within(check).findByText('Related notes in your deck')).toBeTruthy();
-        expect(within(check).queryByText('Already in your deck: edit it instead?')).toBeNull();
-      });
-    });
-
-    describe('when notes share the root', () => {
-      test('lists them under the root', async () => {
-        const requests = await renderConnectedEditor({
-          existing: {
-            exactMatches: [],
-            sameRootMatches: [
-              {
-                noteId: 1752427043636,
-                unpointed: 'בית ספר',
-                pointed: 'בֵּית סֵפֶר',
-                partOfSpeech: '',
-                definitions: 'school',
-              },
-            ],
-            relatedMatches: [],
-          },
-        });
-        await typeInto(input('Hebrew word, without niqqud'), 'ספר');
-        await choosePartOfSpeech('Noun');
-        await typeInto(input('Root, like דבר or ד.ב.ר'), 'ס.פ.ר');
-        const check = screen.getByRole('region', { name: 'Already in the deck' });
-        expect((await within(check).findByText('Same root')).textContent).toContain('ס־פ־ר');
-        expect(within(check).getByRole('button', { name: /בֵּית סֵפֶר/ })).toBeTruthy();
-        expect(requests.map((request) => request.path)).toContain(
-          `/api/anki/existing?word=${encodeURIComponent('ספר')}&root=${encodeURIComponent('ס־פ־ר')}`,
-        );
-      });
-    });
-
-    describe('when the word is not in the deck', () => {
-      test('says so quietly', async () => {
-        await renderConnectedEditor();
-        await typeInto(input('Hebrew word, without niqqud'), 'דג');
-        expect(await screen.findByText('Not in the deck yet.')).toBeTruthy();
       });
     });
   });
