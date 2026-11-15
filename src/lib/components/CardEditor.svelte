@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
-import { SUGGESTED_HINTS, type Suggestions } from '#lib/api/ai.ts';
+import type { Suggestions } from '#lib/api/ai.ts';
 import {
   type AnkiStatus,
   ankiStatusProblem,
@@ -15,10 +15,10 @@ import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
-import { examplesToAnkiFieldHtml, isBlankExample } from '#lib/card/examples.ts';
+import { examplesToAnkiFieldHtml } from '#lib/card/examples.ts';
 import { attachmentsChange } from '#lib/card/changed-from.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
-import { labeledForms, wordUsage } from '#lib/card/parts-of-speech/forms.ts';
+import { wordUsage } from '#lib/card/parts-of-speech/forms.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
 import {
   type CardInputsDraft,
@@ -34,6 +34,7 @@ import {
   stillSpellsEntry,
   undoPrefill,
 } from '#lib/card/prefill.ts';
+import { suggestBlocker, suggestRequest } from '#lib/card/suggestions.ts';
 import { GROUP_HELP } from '#lib/field-help.ts';
 import type { Attachment } from '#lib/media/attach.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
@@ -148,18 +149,6 @@ const sameMeaningSearch = $derived(
       ),
 );
 const replacesDraft = $derived(changedBeyondWord(baseline, draft));
-const suggestBlocker = $derived.by(() => {
-  if (draft.inputs.word.trim() === '' || meanings.length === 0) {
-    return 'Type the word and a meaning first.';
-  }
-  if (
-    !draft.examples.every(isBlankExample) &&
-    SUGGESTED_HINTS.every((field) => (draft.edits[field] ?? '').trim() !== '')
-  ) {
-    return 'The examples and both hints are filled. Clear one to have it suggested again.';
-  }
-  return undefined;
-});
 
 // While editing, a pick fills only what the note leaves blank, rather than starting a new one.
 function pick(candidate: DictionaryCandidate) {
@@ -387,14 +376,8 @@ onMount(checkAnki);
     {@const partOfSpeech = draft.inputs.partOfSpeech}
     {#snippet suggest()}
       <SuggestButton
-        request={{
-          word: draft.inputs.word.trim(),
-          pointed: draft.inputs.pointed.trim(),
-          partOfSpeech,
-          definitions: meanings,
-          forms: labeledForms(draft.inputs, draft.edits.forms ?? ''),
-        }}
-        blocker={suggestBlocker}
+        request={suggestRequest(draft, partOfSpeech)}
+        blocker={suggestBlocker(draft)}
         edits={draft.edits}
         examples={draft.examples}
         onedit={setEdit}

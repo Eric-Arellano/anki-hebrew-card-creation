@@ -2,10 +2,9 @@
 
 ## Context
 
-The UI revamp landed fast. Its component directories now follow the editor's sections, but pure
-logic about Claude's suggestions grew inside three components, where only DOM tests reach it, and
-the list rows, the `held` props and the tests' fixtures and fakes are copied where they should be
-shared.
+The UI revamp landed fast. Its component directories now follow the editor's sections, and
+Claude's suggestions are pure functions in `card/suggestions.ts`, but the list rows, the `held`
+props and the tests' fixtures and fakes are still copied where they should be shared.
 
 This pass changes no behaviour. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
@@ -14,8 +13,9 @@ Two pieces of work are still to come: the Claude correctness check and the verb 
 (`~/.claude/plans/so-in-theory-that-unified-squid.md`, not adopted yet). Neither should wait on
 this pass, and the order among these PRs is loose. When the verb plan is adopted, its paths need
 updating: it says `forms/VerbInputs.svelte` and `ui/ChoiceChips.svelte`, which are now
-`grammar/VerbInputs.svelte` and `grammar/ChoiceChips.svelte`, and after PR 1 its
-`fields/SuggestButton.svelte` and `suggestBlocker` in `CardEditor.svelte` move as well.
+`grammar/VerbInputs.svelte` and `grammar/ChoiceChips.svelte`. Its `suggestBlocker` in
+`CardEditor.svelte` is now `suggestBlocker(draft)` in `card/suggestions.ts`, beside
+`suggestRequest`, `filledBlanks` and `isUnreadSuggestion`, which its PR 3 extends.
 
 ## Decisions
 
@@ -26,10 +26,6 @@ updating: it says `forms/VerbInputs.svelte` and `ui/ChoiceChips.svelte`, which a
   goes in `ui/`. A new module goes where that rule puts it.
   *Rejected: a `hints/` directory for `ExamplesInput`, `SameMeaningNotes` and `SuggestButton`,
   because `fields/` already means "the field-group sections", and splitting it again buys nothing.*
-- **Suggestions logic moves to one module, `card/suggestions.ts`.** That covers what blocks asking,
-  the request built from the draft, which blanks a reply fills, and whether a field still holds
-  Claude's unread text. This is the code the verb plan's PR 3 extends, so giving it unit tests now
-  makes that PR cheaper.
 - Considered, not done:
   - **Splitting `card/prefill.ts` per part of speech.** The one switch reads fine, and the verb
     revamp will reshape the verb arm anyway.
@@ -40,20 +36,7 @@ updating: it says `forms/VerbInputs.svelte` and `ui/ChoiceChips.svelte`, which a
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: Claude's suggestions, as pure functions with unit tests
-
-A new `card/suggestions.ts`, with `card/suggestions.test.ts`:
-
-- `suggestBlocker(draft)` and `suggestRequest(draft)` from `CardEditor.svelte`. The first is the
-  branching that is tested only through the DOM today; the second is the inline `SuggestRequest`.
-- `filledBlanks(suggestions, edits, examples)` from `SuggestButton.svelte`'s `ask`: which hints
-  and examples a reply fills, given that typing during the call wins.
-- `isUnreadSuggestion(field, suggested, edits, examples)` from `fields/FieldGroup.svelte`.
-
-The components keep the state and the calls. Their DOM tests stay as integration tests, but drop
-any case that the unit tests now cover exhaustively.
-
-## PR 2: One list-row algebra for meanings and examples, and one `Held` type
+## PR 1: One list-row algebra for meanings and examples, and one `Held` type
 
 - `restoreThrough` and `remove` are identical in `word/DefinitionsInput.svelte` and
   `fields/ExamplesInput.svelte`, comments included. Make them generic, beside `removedRows` in
@@ -63,7 +46,7 @@ any case that the unit tests now cover exhaustively.
   replaces the nine copies of that comment on `held` props. `save/SaveBar`'s and `CardEditor`'s `held`
   is a whole `LoadedNote`, a different thing: rename it `heldNote` there.
 
-## PR 3: Shared fixtures for the editor's tests
+## PR 2: Shared fixtures for the editor's tests
 
 - Into `CardEditor.harness.ts`:
   - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
@@ -78,7 +61,7 @@ any case that the unit tests now cover exhaustively.
   it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
   back to the two-level working depth.
 
-## PR 4: Shared fakes for the server's tests
+## PR 3: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.
