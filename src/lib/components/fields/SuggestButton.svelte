@@ -6,7 +6,8 @@ import {
   type Suggestions,
 } from '#lib/api/ai.ts';
 import { errorMessage } from '#lib/api/http.ts';
-import { type Example, isBlankExample } from '#lib/card/examples.ts';
+import type { Example } from '#lib/card/examples.ts';
+import { filledBlanks } from '#lib/card/suggestions.ts';
 import type { FieldKey, FieldValues } from '#lib/note-type.ts';
 
 let {
@@ -38,10 +39,6 @@ type Asking =
 
 let asking: Asking = $state.raw({ kind: 'idle' });
 
-function isBlank(field: FieldKey) {
-  return (edits[field] ?? '').trim() === '';
-}
-
 async function ask() {
   if (blocker !== undefined || asking.kind === 'asking') return;
   const asked = JSON.stringify(request);
@@ -55,24 +52,15 @@ async function ask() {
       };
       return;
     }
-    // Only fields still blank as the reply lands, so typing during the call wins.
-    const filledHints = SUGGESTED_HINTS.flatMap((field) => {
-      const value = suggestions[field];
-      return value !== undefined && isBlank(field) ? [[field, value] as const] : [];
-    });
-    const filledExamples =
-      suggestions.examples !== undefined && examples.every(isBlankExample)
-        ? suggestions.examples
-        : undefined;
-    for (const [field, value] of filledHints) onedit(field, value);
-    if (filledExamples !== undefined) onexamples(filledExamples);
-    suggested = {
-      ...suggested,
-      ...Object.fromEntries(filledHints),
-      ...(filledExamples === undefined ? {} : { examples: filledExamples }),
-    };
+    const filled = filledBlanks(suggestions, edits, examples);
+    for (const field of SUGGESTED_HINTS) {
+      const value = filled[field];
+      if (value !== undefined) onedit(field, value);
+    }
+    if (filled.examples !== undefined) onexamples(filled.examples);
+    suggested = { ...suggested, ...filled };
     asking =
-      filledHints.length === 0 && filledExamples === undefined
+      Object.keys(filled).length === 0
         ? { kind: 'answered', message: 'Claude had nothing to add to the blank fields.' }
         : { kind: 'idle' };
   } catch (error) {

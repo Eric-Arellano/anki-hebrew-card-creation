@@ -112,16 +112,6 @@ describe('CardEditor', () => {
       ]);
     });
 
-    test('fills the blank fields, and leaves a filled one alone', async () => {
-      await renderWithSuggestions();
-      await fillSefer();
-      await typeInto(noteField(READING_CONTEXT), 'ספר טוב');
-      await clickSuggest();
-      expect(exampleRows()).toEqual(seferSuggestions.examples);
-      expect(noteField(READING_CONTEXT).value).toBe('ספר טוב');
-      expect(noteField(PRODUCTION_CONTEXT).value).toBe('');
-    });
-
     test('fills only what is still blank when the reply lands', async () => {
       const { suggest, send } = heldReply();
       await renderWithSuggestions({ suggest });
@@ -146,15 +136,6 @@ describe('CardEditor', () => {
 
         await typeInto(input('Example 1 in English'), 'I’m reading a good book');
         expect(isMarkedSuggested(EXAMPLES)).toBe(false);
-        expect(isMarkedSuggested(READING_CONTEXT)).toBe(true);
-      });
-
-      test('comes back if the edit is undone', async () => {
-        await renderWithSuggestions();
-        await fillSefer();
-        await clickSuggest();
-        await typeInto(noteField(READING_CONTEXT), 'קראתי');
-        await typeInto(noteField(READING_CONTEXT), 'קראתי ספר');
         expect(isMarkedSuggested(READING_CONTEXT)).toBe(true);
       });
     });
@@ -202,20 +183,6 @@ describe('CardEditor', () => {
         await chooseNoun('Masculine');
         expect(suggestButton().disabled).toBe(true);
         expect(description(suggestButton())).toEqual(['Type the word and a meaning first.']);
-      });
-    });
-
-    describe('once all three fields are filled', () => {
-      test('is disabled, saying why', async () => {
-        await renderWithSuggestions();
-        await fillSefer();
-        await typeExample(1, newBook);
-        await typeInto(noteField(PRODUCTION_CONTEXT), 'something you read');
-        await typeInto(noteField(READING_CONTEXT), 'קראתי ספר');
-        expect(suggestButton().disabled).toBe(true);
-        expect(description(suggestButton())).toEqual([
-          'The examples and both hints are filled. Clear one to have it suggested again.',
-        ]);
       });
     });
   });

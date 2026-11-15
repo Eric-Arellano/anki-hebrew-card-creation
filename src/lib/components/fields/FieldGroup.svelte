@@ -5,6 +5,7 @@ import type { SameMeaningNote } from '#lib/api/anki.ts';
 import { attachmentsChange, textChange } from '#lib/card/changed-from.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
 import type { Example } from '#lib/card/examples.ts';
+import { isUnreadSuggestion } from '#lib/card/suggestions.ts';
 import { fieldDisplay } from '#lib/field-help.ts';
 import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import type { Attachment } from '#lib/media/attach.ts';
@@ -54,22 +55,6 @@ let {
   promptImages: Record<VariantPrompt, Attachment[]>;
 } = $props();
 
-// Until the human edits what Claude wrote, so it's clear what hasn't been read yet.
-function isUnreadSuggestion(field: FieldKey) {
-  switch (field) {
-    case 'examples':
-      return (
-        suggested.examples !== undefined &&
-        JSON.stringify(suggested.examples) === JSON.stringify(examples)
-      );
-    case 'productionContext':
-    case 'readingContext':
-      return suggested[field] !== undefined && suggested[field] === edits[field];
-    default:
-      return false;
-  }
-}
-
 function lacksAnswer(prompt: VariantPrompt) {
   return (edits[VARIANT_ANSWERS[prompt]] ?? '').trim() === '';
 }
@@ -82,7 +67,7 @@ function lacksAnswer(prompt: VariantPrompt) {
   {#each fields as field (field)}
     {@const { label, help } = fieldDisplay(field, partOfSpeech)}
     {@const prompt = isVariantPrompt(field) ? field : undefined}
-    {@const unread = isUnreadSuggestion(field)}
+    {@const unread = isUnreadSuggestion(field, suggested, edits, examples)}
     {@const describedBy =
       [help && `help-${field}`, unread && `suggested-${field}`].filter(Boolean).join(' ') ||
       undefined}
