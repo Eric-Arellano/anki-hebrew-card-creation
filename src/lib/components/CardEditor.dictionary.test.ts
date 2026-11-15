@@ -8,6 +8,7 @@ import {
   addToDeck,
   choosePartOfSpeech,
   input,
+  kelevEntry,
   renderConnectedEditor,
   type ServerRequest,
   skipImage,
@@ -15,339 +16,320 @@ import {
 } from './CardEditor.harness.ts';
 
 describe('CardEditor', () => {
-  describe('the dictionary', () => {
-    // As the lookup answers for the fixture dictionary.
-    const kelev: DictionaryCandidate = {
-      id: 1,
-      title: 'כלב',
-      pointed: 'כֶּלֶב',
-      wiktionaryPartOfSpeech: 'noun',
-      definitions: ['dog', '(derogatory) scoundrel, bitch'],
-      roots: [],
-      partOfSpeech: 'noun',
-      noun: {
-        gender: { gender: 'm', pluralOnly: false },
-        plurals: ['כְּלָבִים'],
-        feminineSingulars: ['כַּלְבָּה'],
-        femininePlurals: ['כְּלָבוֹת'],
+  const chika: DictionaryCandidate = {
+    id: 42,
+    title: 'חיכה',
+    pointed: 'חִכָּה',
+    wiktionaryPartOfSpeech: 'verb',
+    definitions: ['to wait, wait for [with לְ־ ‘for’]'],
+    roots: ['ח־כ־ה'],
+    partOfSpeech: 'verb',
+    verb: {
+      binyan: "pi'el",
+      infinitives: [{ pointed: 'לְחַכּוֹת', unpointed: 'לחכות' }],
+      presents: ['מְחַכֶּה'],
+      futures: ['יְחַכֶּה'],
+      prepositions: ['ל'],
+    },
+  };
+
+  const yisraeli: DictionaryCandidate = {
+    id: 53,
+    title: 'ישראלי',
+    pointed: 'יִשְׂרְאֵלִי',
+    wiktionaryPartOfSpeech: 'adj',
+    definitions: ['Israeli: of or pertaining to the State of Israel.'],
+    roots: [],
+    partOfSpeech: 'adjective',
+    adjective: {
+      feminineSingulars: ['יִשְׂרְאֵלִית'],
+      masculinePlurals: ['יִשְׂרְאֵלִים', 'יִשְׂרְאֵלִיִּים'],
+      femininePlurals: ['יִשְׂרְאֵלִיּוֹת'],
+    },
+  };
+
+  function found(...candidates: DictionaryCandidate[]): DictionaryLookup {
+    return { match: 'exact', candidates, titleHasEntry: true, staleIndex: false };
+  }
+
+  async function pick(typed: string, pointed: string) {
+    await typeInto(input('Hebrew word, without niqqud'), typed);
+    const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+    await fireEvent.click(
+      await within(dictionary).findByRole('button', { name: new RegExp(pointed) }),
+    );
+  }
+
+  function lookups(requests: ServerRequest[]) {
+    return requests.filter((request) => request.path.startsWith('/api/lookup'));
+  }
+
+  test('fills a noun’s inputs from the entry picked, and shows its meanings', async () => {
+    const requests = await renderConnectedEditor({ lookup: found(kelevEntry) });
+    await typeInto(input('English meaning'), 'dog');
+    await pick('כלבים', 'כֶּלֶב');
+
+    expect(input('Hebrew word, without niqqud').value).toBe('כלב');
+    expect(screen.getByRole('list', { name: "Wiktionary's meanings" }).textContent).toContain(
+      'scoundrel',
+    );
+    await skipImage();
+    expect(await addToDeck(requests)).toEqual({
+      allowDuplicate: false,
+      fields: {
+        ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
+        Hebrew: 'כלב',
+        Pointed: 'כֶּלֶב',
+        Definitions: 'dog',
+        'Production answer': 'כלב טוב',
+        'Part of speech': 'noun',
+        Gender: 'm',
+        Forms: 'f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת',
       },
-    };
+    });
+  });
 
-    const chika: DictionaryCandidate = {
-      id: 42,
-      title: 'חיכה',
-      pointed: 'חִכָּה',
-      wiktionaryPartOfSpeech: 'verb',
-      definitions: ['to wait, wait for [with לְ־ ‘for’]'],
-      roots: ['ח־כ־ה'],
-      partOfSpeech: 'verb',
-      verb: {
-        binyan: "pi'el",
-        infinitives: [{ pointed: 'לְחַכּוֹת', unpointed: 'לחכות' }],
-        presents: ['מְחַכֶּה'],
-        futures: ['יְחַכֶּה'],
-        prepositions: ['ל'],
-      },
-    };
+  describe('while editing a note', () => {
+    test('offers to fill in the blanks, without offering a new note', async () => {
+      await renderConnectedEditor({ lookup: found(kelevEntry) }, loadedNote('כלב'));
+      expect(
+        await screen.findByText('Fill blanks from Wiktionary (1 entry)', { selector: 'summary' }),
+      ).toBeTruthy();
+      expect(screen.queryByText(/Start from Wiktionary/)).toBeNull();
+    });
 
-    const yisraeli: DictionaryCandidate = {
-      id: 53,
-      title: 'ישראלי',
-      pointed: 'יִשְׂרְאֵלִי',
-      wiktionaryPartOfSpeech: 'adj',
-      definitions: ['Israeli: of or pertaining to the State of Israel.'],
-      roots: [],
-      partOfSpeech: 'adjective',
-      adjective: {
-        feminineSingulars: ['יִשְׂרְאֵלִית'],
-        masculinePlurals: ['יִשְׂרְאֵלִים', 'יִשְׂרְאֵלִיִּים'],
-        femininePlurals: ['יִשְׂרְאֵלִיּוֹת'],
-      },
-    };
+    describe('without a part of speech yet', () => {
+      test('shows the entries', async () => {
+        await renderConnectedEditor({ lookup: found(kelevEntry) }, loadedNote('כלב'));
+        const summary = await screen.findByText(/Fill blanks from Wiktionary/);
+        expect(summary.closest('details')?.open).toBe(true);
+      });
+    });
 
-    function found(...candidates: DictionaryCandidate[]): DictionaryLookup {
-      return { match: 'exact', candidates, titleHasEntry: true, staleIndex: false };
-    }
+    describe('with a part of speech', () => {
+      test('collapses the entries, leaving the Wiktionary link out', async () => {
+        const note = loadedNote('כלב');
+        await renderConnectedEditor(
+          { lookup: found(kelevEntry) },
+          { ...note, fields: { ...note.fields, 'Part of speech': 'noun' } },
+        );
+        const summary = await screen.findByText(/Fill blanks from Wiktionary/);
+        const details = summary.closest('details');
+        expect(details?.open).toBe(false);
+        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+        const link = within(dictionary).getByRole('link', { name: /Wiktionary/ });
+        expect(details?.contains(link)).toBe(false);
+      });
+    });
 
-    async function pick(typed: string, pointed: string) {
-      await typeInto(input('Hebrew word, without niqqud'), typed);
+    test("keeps the note's values, offering the entry's beside them", async () => {
+      const note = loadedNote('כלב');
+      await renderConnectedEditor(
+        { lookup: found(kelevEntry) },
+        { ...note, fields: { ...note.fields, Pointed: '(ms) כֶּלֶב' } },
+      );
       const dictionary = screen.getByRole('region', { name: 'Dictionary' });
-      await fireEvent.click(
-        await within(dictionary).findByRole('button', { name: new RegExp(pointed) }),
+      await fireEvent.click(await within(dictionary).findByRole('button', { name: /כֶּלֶב/ }));
+
+      expect(screen.getByText('Filled in the blanks from Wiktionary:')).toBeTruthy();
+      expect(input('Hebrew word, with niqqud').value).toBe('(ms) כֶּלֶב');
+      expect(screen.getByRole('radio', { name: 'Noun', checked: true })).toBeTruthy();
+      const offered = screen.getByRole('group', { name: 'Choices for Hebrew word, with niqqud' });
+      await fireEvent.click(within(offered).getByRole('button', { name: 'כֶּלֶב' }));
+      expect(input('Hebrew word, with niqqud').value).toBe('כֶּלֶב');
+    });
+
+    test("keeps the note's part of speech, offering the entry's", async () => {
+      const note = loadedNote('כלב');
+      await renderConnectedEditor(
+        { lookup: found(kelevEntry) },
+        { ...note, fields: { ...note.fields, 'Part of speech': 'adjective' } },
       );
-    }
+      await fireEvent.click(await screen.findByText(/Fill blanks from Wiktionary/));
+      const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+      await fireEvent.click(await within(dictionary).findByRole('button', { name: /כֶּלֶב/ }));
 
-    function lookups(requests: ServerRequest[]) {
-      return requests.filter((request) => request.path.startsWith('/api/lookup'));
-    }
+      expect(screen.getByRole('radio', { name: 'Adjective', checked: true })).toBeTruthy();
+      const offered = screen.getByRole('group', { name: 'Choices for Part of speech' });
+      await fireEvent.click(within(offered).getByRole('button', { name: 'Noun' }));
+      expect(screen.getByRole('radio', { name: 'Noun', checked: true })).toBeTruthy();
+    });
+  });
 
-    test('fills a noun’s inputs from the entry picked, and shows its meanings', async () => {
-      const requests = await renderConnectedEditor({ lookup: found(kelev) });
-      await typeInto(input('English meaning'), 'dog');
+  describe('once another word is typed over the one it filled', () => {
+    test('looks that word up, and clears what the entry filled', async () => {
+      const requests = await renderConnectedEditor({ lookup: found(kelevEntry) });
       await pick('כלבים', 'כֶּלֶב');
+      expect(lookups(requests)).toHaveLength(1);
 
-      expect(input('Hebrew word, without niqqud').value).toBe('כלב');
-      expect(screen.getByRole('list', { name: "Wiktionary's meanings" }).textContent).toContain(
-        'scoundrel',
-      );
-      await skipImage();
-      expect(await addToDeck(requests)).toEqual({
-        allowDuplicate: false,
-        fields: {
-          ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
-          Hebrew: 'כלב',
-          Pointed: 'כֶּלֶב',
-          Definitions: 'dog',
-          'Production answer': 'כלב טוב',
-          'Part of speech': 'noun',
-          Gender: 'm',
-          Forms: 'f: כַּלְבָּה<br>m.pl: כְּלָבִים<br>f.pl: כְּלָבוֹת',
-        },
-      });
+      await typeInto(input('Hebrew word, without niqqud'), 'חתול');
+      expect(await screen.findByText('Start from Wiktionary: which word is it?')).toBeTruthy();
+      expect(lookups(requests).map((request) => request.path)).toEqual([
+        `/api/lookup?word=${encodeURIComponent('כלבים')}`,
+        `/api/lookup?word=${encodeURIComponent('חתול')}`,
+      ]);
+      expect(input('Hebrew word, without niqqud').value).toBe('חתול');
+      expect(input('Hebrew word, with niqqud').value).toBe('');
+      expect(screen.queryByRole('radio', { name: 'Noun', checked: true })).toBeNull();
     });
+  });
 
-    describe('while editing a note', () => {
-      test('offers to fill in the blanks, without offering a new note', async () => {
-        await renderConnectedEditor({ lookup: found(kelev) }, loadedNote('כלב'));
-        expect(
-          await screen.findByText('Fill blanks from Wiktionary (1 entry)', { selector: 'summary' }),
-        ).toBeTruthy();
-        expect(screen.queryByText(/Start from Wiktionary/)).toBeNull();
+  describe('once another spelling of the word it filled is typed', () => {
+    test('keeps the entry and what it filled', async () => {
+      const requests = await renderConnectedEditor({
+        lookup: found({ ...kelevEntry, title: 'שולחן', pointed: 'שֻׁלְחָן' }),
       });
+      await pick('שולחנות', 'שֻׁלְחָן');
+      await typeInto(input('Hebrew word, without niqqud'), 'שלחן');
 
-      describe('without a part of speech yet', () => {
-        test('shows the entries', async () => {
-          await renderConnectedEditor({ lookup: found(kelev) }, loadedNote('כלב'));
-          const summary = await screen.findByText(/Fill blanks from Wiktionary/);
-          expect(summary.closest('details')?.open).toBe(true);
-        });
-      });
-
-      describe('with a part of speech', () => {
-        test('collapses the entries, leaving the Wiktionary link out', async () => {
-          const note = loadedNote('כלב');
-          await renderConnectedEditor(
-            { lookup: found(kelev) },
-            { ...note, fields: { ...note.fields, 'Part of speech': 'noun' } },
-          );
-          const summary = await screen.findByText(/Fill blanks from Wiktionary/);
-          const details = summary.closest('details');
-          expect(details?.open).toBe(false);
-          const dictionary = screen.getByRole('region', { name: 'Dictionary' });
-          const link = within(dictionary).getByRole('link', { name: /Wiktionary/ });
-          expect(details?.contains(link)).toBe(false);
-        });
-      });
-
-      test("keeps the note's values, offering the entry's beside them", async () => {
-        const note = loadedNote('כלב');
-        await renderConnectedEditor(
-          { lookup: found(kelev) },
-          { ...note, fields: { ...note.fields, Pointed: '(ms) כֶּלֶב' } },
-        );
-        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
-        await fireEvent.click(await within(dictionary).findByRole('button', { name: /כֶּלֶב/ }));
-
-        expect(screen.getByText('Filled in the blanks from Wiktionary:')).toBeTruthy();
-        expect(input('Hebrew word, with niqqud').value).toBe('(ms) כֶּלֶב');
-        expect(screen.getByRole('radio', { name: 'Noun', checked: true })).toBeTruthy();
-        const offered = screen.getByRole('group', { name: 'Choices for Hebrew word, with niqqud' });
-        await fireEvent.click(within(offered).getByRole('button', { name: 'כֶּלֶב' }));
-        expect(input('Hebrew word, with niqqud').value).toBe('כֶּלֶב');
-      });
-
-      test("keeps the note's part of speech, offering the entry's", async () => {
-        const note = loadedNote('כלב');
-        await renderConnectedEditor(
-          { lookup: found(kelev) },
-          { ...note, fields: { ...note.fields, 'Part of speech': 'adjective' } },
-        );
-        await fireEvent.click(await screen.findByText(/Fill blanks from Wiktionary/));
-        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
-        await fireEvent.click(await within(dictionary).findByRole('button', { name: /כֶּלֶב/ }));
-
-        expect(screen.getByRole('radio', { name: 'Adjective', checked: true })).toBeTruthy();
-        const offered = screen.getByRole('group', { name: 'Choices for Part of speech' });
-        await fireEvent.click(within(offered).getByRole('button', { name: 'Noun' }));
-        expect(screen.getByRole('radio', { name: 'Noun', checked: true })).toBeTruthy();
-      });
+      expect(screen.getByText('Filled in from Wiktionary:')).toBeTruthy();
+      expect(input('Hebrew word, with niqqud').value).toBe('שֻׁלְחָן');
+      expect(lookups(requests)).toHaveLength(1);
     });
+  });
 
-    describe('once another word is typed over the one it filled', () => {
-      test('looks that word up, and clears what the entry filled', async () => {
-        const requests = await renderConnectedEditor({ lookup: found(kelev) });
-        await pick('כלבים', 'כֶּלֶב');
-        expect(lookups(requests)).toHaveLength(1);
+  describe('after choosing another', () => {
+    test('offers the entries for the word as typed, and clears what the entry filled', async () => {
+      await renderConnectedEditor({ lookup: found(kelevEntry) });
+      await pick('כלבים', 'כֶּלֶב');
+      await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
 
-        await typeInto(input('Hebrew word, without niqqud'), 'חתול');
-        expect(await screen.findByText('Start from Wiktionary: which word is it?')).toBeTruthy();
-        expect(lookups(requests).map((request) => request.path)).toEqual([
-          `/api/lookup?word=${encodeURIComponent('כלבים')}`,
-          `/api/lookup?word=${encodeURIComponent('חתול')}`,
-        ]);
-        expect(input('Hebrew word, without niqqud').value).toBe('חתול');
-        expect(input('Hebrew word, with niqqud').value).toBe('');
-        expect(screen.queryByRole('radio', { name: 'Noun', checked: true })).toBeNull();
-      });
+      expect(input('Hebrew word, without niqqud').value).toBe('כלבים');
+      expect(input('Hebrew word, with niqqud').value).toBe('');
+      expect(await screen.findByText('Start from Wiktionary: which word is it?')).toBeTruthy();
+      const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+      expect(within(dictionary).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
     });
+  });
 
-    describe('once another spelling of the word it filled is typed', () => {
-      test('keeps the entry and what it filled', async () => {
-        const requests = await renderConnectedEditor({
-          lookup: found({ ...kelev, title: 'שולחן', pointed: 'שֻׁלְחָן' }),
-        });
-        await pick('שולחנות', 'שֻׁלְחָן');
-        await typeInto(input('Hebrew word, without niqqud'), 'שלחן');
+  test('fills a verb’s infinitive, forms, binyan and root, and only suggests its preposition', async () => {
+    const requests = await renderConnectedEditor({ lookup: found(chika) });
+    await pick('חיכה', 'חִכָּה');
 
-        expect(screen.getByText('Filled in from Wiktionary:')).toBeTruthy();
-        expect(input('Hebrew word, with niqqud').value).toBe('שֻׁלְחָן');
-        expect(lookups(requests)).toHaveLength(1);
+    expect(input('Hebrew word, without niqqud').value).toBe('לחכות');
+    expect(input('Hebrew word, with niqqud').value).toBe('לְחַכּוֹת');
+    expect(input('Past (he), with niqqud').value).toBe('חִכָּה');
+    expect(input('Present (he), with niqqud').value).toBe('מְחַכֶּה');
+    expect(input('Future (he), with niqqud').value).toBe('יְחַכֶּה');
+    expect((screen.getByRole('combobox', { name: 'Binyan' }) as HTMLSelectElement).value).toBe(
+      "pi'el",
+    );
+    expect(input('Root, like דבר or ד.ב.ר').value).toBe('ח־כ־ה');
+    expect(screen.getByText(/Wiktionary suggests/).textContent).toContain('ל');
+    expect((screen.getByRole('radio', { name: 'ל' }) as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByText('Still needed: English meaning, preposition, image')).toBeTruthy();
+    // The deck check searches the lemma too, which old notes for verbs hold, and the root.
+    await vi.waitFor(() =>
+      expect(requests.map((request) => request.path)).toContain(
+        `/api/anki/existing?word=${encodeURIComponent('לחכות')}&word=${encodeURIComponent('חיכה')}&root=${encodeURIComponent('ח־כ־ה')}`,
+      ),
+    );
+  });
+
+  describe('for a verb with two infinitives', () => {
+    test('offers both, and choosing one fills both spellings', async () => {
+      await renderConnectedEditor({
+        lookup: found({
+          ...chika,
+          verb: {
+            ...chika.verb,
+            infinitives: [
+              { pointed: 'לַחֲדֹר', unpointed: 'לחדור' },
+              { pointed: 'לַחְדֹּר', unpointed: 'לחדור' },
+            ],
+          },
+        }),
       });
+      await pick('חדר', 'חִכָּה');
+      expect(input('Hebrew word, with niqqud').value).toBe('');
+
+      await fireEvent.click(screen.getByRole('button', { name: 'לַחְדֹּר' }));
+      expect(input('Hebrew word, with niqqud').value).toBe('לַחְדֹּר');
+      expect(input('Hebrew word, without niqqud').value).toBe('לחדור');
     });
+  });
 
-    describe('after choosing another', () => {
-      test('offers the entries for the word as typed, and clears what the entry filled', async () => {
-        await renderConnectedEditor({ lookup: found(kelev) });
-        await pick('כלבים', 'כֶּלֶב');
-        await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
-
-        expect(input('Hebrew word, without niqqud').value).toBe('כלבים');
-        expect(input('Hebrew word, with niqqud').value).toBe('');
-        expect(await screen.findByText('Start from Wiktionary: which word is it?')).toBeTruthy();
-        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
-        expect(within(dictionary).getByRole('button', { name: /כֶּלֶב/ })).toBeTruthy();
+  describe('for a verb with two futures', () => {
+    test('offers both, and choosing one fills the future', async () => {
+      await renderConnectedEditor({
+        lookup: found({ ...chika, verb: { ...chika.verb, futures: ['יַחֲדֹר', 'יַחְדֹּר'] } }),
       });
-    });
+      await pick('חדר', 'חִכָּה');
+      expect(input('Future (he), with niqqud').value).toBe('');
 
-    test('fills a verb’s infinitive, forms, binyan and root, and only suggests its preposition', async () => {
-      const requests = await renderConnectedEditor({ lookup: found(chika) });
+      await fireEvent.click(screen.getByRole('button', { name: 'יַחְדֹּר' }));
+      expect(input('Future (he), with niqqud').value).toBe('יַחְדֹּר');
+    });
+  });
+
+  describe('for a verb, after choosing another', () => {
+    test('clears the forms it filled', async () => {
+      await renderConnectedEditor({ lookup: found(chika) });
       await pick('חיכה', 'חִכָּה');
+      await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
+      await choosePartOfSpeech('Verb');
 
-      expect(input('Hebrew word, without niqqud').value).toBe('לחכות');
-      expect(input('Hebrew word, with niqqud').value).toBe('לְחַכּוֹת');
-      expect(input('Past (he), with niqqud').value).toBe('חִכָּה');
-      expect(input('Present (he), with niqqud').value).toBe('מְחַכֶּה');
-      expect(input('Future (he), with niqqud').value).toBe('יְחַכֶּה');
-      expect((screen.getByRole('combobox', { name: 'Binyan' }) as HTMLSelectElement).value).toBe(
-        "pi'el",
+      expect(input('Past (he), with niqqud').value).toBe('');
+      expect(input('Present (he), with niqqud').value).toBe('');
+      expect(input('Future (he), with niqqud').value).toBe('');
+    });
+  });
+
+  describe('for a noun with a root', () => {
+    test('fills the root, and undoes it with the rest', async () => {
+      await renderConnectedEditor({ lookup: found({ ...kelevEntry, roots: ['כ־ל־ב'] }) });
+      await pick('כלבים', 'כֶּלֶב');
+      expect(input('Root, like דבר or ד.ב.ר').value).toBe('כ־ל־ב');
+
+      await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
+      await choosePartOfSpeech('Noun');
+      expect(input('Root, like דבר or ד.ב.ר').value).toBe('');
+    });
+  });
+
+  describe('for an adjective with two masculine plurals', () => {
+    test('fills its forms, and choosing one fills that form', async () => {
+      await renderConnectedEditor({ lookup: found(yisraeli) });
+      await pick('ישראלית', 'יִשְׂרְאֵלִי');
+      expect(screen.getByRole('radio', { name: 'Adjective', checked: true })).toBeTruthy();
+      expect(input('Feminine singular, with niqqud').value).toBe('יִשְׂרְאֵלִית');
+      expect(input('Feminine plural, with niqqud').value).toBe('יִשְׂרְאֵלִיּוֹת');
+      expect(input('Masculine plural, with niqqud').value).toBe('');
+
+      await fireEvent.click(screen.getByRole('button', { name: 'יִשְׂרְאֵלִים' }));
+      expect(input('Masculine plural, with niqqud').value).toBe('יִשְׂרְאֵלִים');
+    });
+  });
+
+  describe('for a word not in it', () => {
+    test('says so, and marks the Wiktionary link', async () => {
+      await renderConnectedEditor();
+      await typeInto(input('Hebrew word, without niqqud'), 'זזזז');
+      expect(await screen.findByText('Not in the dictionary.')).toBeTruthy();
+      const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+      expect(within(dictionary).getByRole('link', { name: /Wiktionary/ }).textContent).toContain(
+        'no entry',
       );
-      expect(input('Root, like דבר or ד.ב.ר').value).toBe('ח־כ־ה');
-      expect(screen.getByText(/Wiktionary suggests/).textContent).toContain('ל');
-      expect((screen.getByRole('radio', { name: 'ל' }) as HTMLInputElement).checked).toBe(false);
-      expect(screen.getByText('Still needed: English meaning, preposition, image')).toBeTruthy();
-      // The deck check searches the lemma too, which old notes for verbs hold, and the root.
-      await vi.waitFor(() =>
-        expect(requests.map((request) => request.path)).toContain(
-          `/api/anki/existing?word=${encodeURIComponent('לחכות')}&word=${encodeURIComponent('חיכה')}&root=${encodeURIComponent('ח־כ־ה')}`,
-        ),
-      );
     });
+  });
 
-    describe('for a verb with two infinitives', () => {
-      test('offers both, and choosing one fills both spellings', async () => {
-        await renderConnectedEditor({
-          lookup: found({
-            ...chika,
-            verb: {
-              ...chika.verb,
-              infinitives: [
-                { pointed: 'לַחֲדֹר', unpointed: 'לחדור' },
-                { pointed: 'לַחְדֹּר', unpointed: 'לחדור' },
-              ],
-            },
-          }),
-        });
-        await pick('חדר', 'חִכָּה');
-        expect(input('Hebrew word, with niqqud').value).toBe('');
-
-        await fireEvent.click(screen.getByRole('button', { name: 'לַחְדֹּר' }));
-        expect(input('Hebrew word, with niqqud').value).toBe('לַחְדֹּר');
-        expect(input('Hebrew word, without niqqud').value).toBe('לחדור');
-      });
+  describe('once an entry is picked', () => {
+    test('points the Wiktionary link at its page', async () => {
+      await renderConnectedEditor({ lookup: found(kelevEntry) });
+      await pick('כלבים', 'כֶּלֶב');
+      const dictionary = screen.getByRole('region', { name: 'Dictionary' });
+      expect(
+        within(dictionary).getByRole('link', { name: 'Wiktionary' }).getAttribute('href'),
+      ).toBe(`https://en.wiktionary.org/wiki/${encodeURIComponent('כלב')}#Hebrew`);
     });
+  });
 
-    describe('for a verb with two futures', () => {
-      test('offers both, and choosing one fills the future', async () => {
-        await renderConnectedEditor({
-          lookup: found({ ...chika, verb: { ...chika.verb, futures: ['יַחֲדֹר', 'יַחְדֹּר'] } }),
-        });
-        await pick('חדר', 'חִכָּה');
-        expect(input('Future (he), with niqqud').value).toBe('');
-
-        await fireEvent.click(screen.getByRole('button', { name: 'יַחְדֹּר' }));
-        expect(input('Future (he), with niqqud').value).toBe('יַחְדֹּר');
-      });
-    });
-
-    describe('for a verb, after choosing another', () => {
-      test('clears the forms it filled', async () => {
-        await renderConnectedEditor({ lookup: found(chika) });
-        await pick('חיכה', 'חִכָּה');
-        await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
-        await choosePartOfSpeech('Verb');
-
-        expect(input('Past (he), with niqqud').value).toBe('');
-        expect(input('Present (he), with niqqud').value).toBe('');
-        expect(input('Future (he), with niqqud').value).toBe('');
-      });
-    });
-
-    describe('for a noun with a root', () => {
-      test('fills the root, and undoes it with the rest', async () => {
-        await renderConnectedEditor({ lookup: found({ ...kelev, roots: ['כ־ל־ב'] }) });
-        await pick('כלבים', 'כֶּלֶב');
-        expect(input('Root, like דבר or ד.ב.ר').value).toBe('כ־ל־ב');
-
-        await fireEvent.click(screen.getByRole('button', { name: 'Choose another' }));
-        await choosePartOfSpeech('Noun');
-        expect(input('Root, like דבר or ד.ב.ר').value).toBe('');
-      });
-    });
-
-    describe('for an adjective with two masculine plurals', () => {
-      test('fills its forms, and choosing one fills that form', async () => {
-        await renderConnectedEditor({ lookup: found(yisraeli) });
-        await pick('ישראלית', 'יִשְׂרְאֵלִי');
-        expect(screen.getByRole('radio', { name: 'Adjective', checked: true })).toBeTruthy();
-        expect(input('Feminine singular, with niqqud').value).toBe('יִשְׂרְאֵלִית');
-        expect(input('Feminine plural, with niqqud').value).toBe('יִשְׂרְאֵלִיּוֹת');
-        expect(input('Masculine plural, with niqqud').value).toBe('');
-
-        await fireEvent.click(screen.getByRole('button', { name: 'יִשְׂרְאֵלִים' }));
-        expect(input('Masculine plural, with niqqud').value).toBe('יִשְׂרְאֵלִים');
-      });
-    });
-
-    describe('for a word not in it', () => {
-      test('says so, and marks the Wiktionary link', async () => {
-        await renderConnectedEditor();
-        await typeInto(input('Hebrew word, without niqqud'), 'זזזז');
-        expect(await screen.findByText('Not in the dictionary.')).toBeTruthy();
-        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
-        expect(within(dictionary).getByRole('link', { name: /Wiktionary/ }).textContent).toContain(
-          'no entry',
-        );
-      });
-    });
-
-    describe('once an entry is picked', () => {
-      test('points the Wiktionary link at its page', async () => {
-        await renderConnectedEditor({ lookup: found(kelev) });
-        await pick('כלבים', 'כֶּלֶב');
-        const dictionary = screen.getByRole('region', { name: 'Dictionary' });
-        expect(
-          within(dictionary).getByRole('link', { name: 'Wiktionary' }).getAttribute('href'),
-        ).toBe(`https://en.wiktionary.org/wiki/${encodeURIComponent('כלב')}#Hebrew`);
-      });
-    });
-
-    describe('without an index', () => {
-      test('says how to build one', async () => {
-        const message = "There's no dictionary index yet. Run npm run build-index.";
-        await renderConnectedEditor({ lookup: Response.json({ message }, { status: 503 }) });
-        await typeInto(input('Hebrew word, without niqqud'), 'כלב');
-        expect((await screen.findByRole('alert')).textContent).toBe(message);
-      });
+  describe('without an index', () => {
+    test('says how to build one', async () => {
+      const message = "There's no dictionary index yet. Run npm run build-index.";
+      await renderConnectedEditor({ lookup: Response.json({ message }, { status: 503 }) });
+      await typeInto(input('Hebrew word, without niqqud'), 'כלב');
+      expect((await screen.findByRole('alert')).textContent).toBe(message);
     });
   });
 });

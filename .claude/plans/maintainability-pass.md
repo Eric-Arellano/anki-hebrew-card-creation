@@ -3,9 +3,9 @@
 ## Context
 
 The UI revamp landed fast. Its component directories now follow the editor's sections, Claude's
-suggestions are pure functions in `card/suggestions.ts`, and the list rows and `Held<T>` live in
-`card/changed-from.ts`, but the tests' fixtures and fakes are still copied where they should be
-shared.
+suggestions are pure functions in `card/suggestions.ts`, the list rows and `Held<T>` live in
+`card/changed-from.ts`, and the editor's tests share their fixtures through
+`CardEditor.harness.ts`. The server's tests still rebuild their fakes in each file.
 
 This pass changes no behaviour. Each PR is a prefactor: a reviewer should be able to read it as
 "moved, renamed, or said more exactly" and nothing else.
@@ -37,22 +37,7 @@ updating: it says `forms/VerbInputs.svelte` and `ui/ChoiceChips.svelte`, which a
   - **A shared component for the choice-card list** in the deck check and the dictionary
     entries. Two uses that may diverge are not enough to justify one.
 
-## PR 1: Shared fixtures for the editor's tests
-
-- Into `CardEditor.harness.ts`:
-  - the כלב noun note, now built four ways in `check`, `saving`, `changes` and `loading`;
-  - the כלב `DictionaryCandidate`, copied verbatim in `changes` and `dictionary`;
-  - `heldReply` (`check`, `suggest`);
-  - `pressCmdEnter`, which `saving` inlines 14 times;
-  - `addButton` (`images`, `saving`).
-- Move the tests that landed in the wrong file:
-  - "the pointed word" leaves `loading` for `parts-of-speech`;
-  - the deck-check cases split across `CardEditor.test.ts` and `loading` go into one file.
-- Where a file's name already carries its topic, drop the second-level `describe` that restates
-  it. That brings the 4-level files (`dictionary`, `images`, `loading`, `CardEditor.test.ts`)
-  back to the two-level working depth.
-
-## PR 2: Shared fakes for the server's tests
+## PR 1: Shared fakes for the server's tests
 
 - `tests/fake-claude.ts`: the fake `ClaudeMessages` now rebuilt in `server/ai/client.test.ts` and
   both AI route tests.

@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
-import type { LoadedNote } from '#lib/api/anki.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import { loadedNote } from '#tests/real-notes.ts';
 import {
+  addButton,
   addRequests,
   fillDag,
   input,
+  kelevNote,
+  pressCmdEnter,
   renderConnectedEditor,
   saveRequests,
   skipImage,
@@ -17,11 +19,7 @@ import {
 } from './CardEditor.harness.ts';
 import CardEditor from './CardEditor.svelte';
 
-// With its part of speech filled in, the one input the fixture lacks.
-const kelev: LoadedNote = (() => {
-  const note = loadedNote('כלב');
-  return { ...note, fields: { ...note.fields, 'Part of speech': 'noun' } };
-})();
+const kelev = kelevNote();
 
 function saveButton() {
   return screen.getByRole('button', { name: 'Check and save' }) as HTMLButtonElement;
@@ -41,10 +39,6 @@ describe('CardEditor', () => {
       'Production answer': 'דג',
       'Part of speech': 'other',
     };
-
-    function addButton() {
-      return screen.getByRole('button', { name: 'Check and add' }) as HTMLButtonElement;
-    }
 
     async function add() {
       await fireEvent.click(addButton());
@@ -91,9 +85,9 @@ describe('CardEditor', () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await skipImage();
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      await pressCmdEnter();
       expect(addRequests(requests)).toEqual([]);
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      await pressCmdEnter();
       await screen.findByText('Added to the deck.');
       expect(addRequests(requests)).toHaveLength(1);
     });
@@ -194,7 +188,7 @@ describe('CardEditor', () => {
         await skipImage();
 
         expect(addButton().disabled).toBe(true);
-        await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+        await pressCmdEnter();
         expect(addRequests(requests)).toEqual([]);
       });
     });
@@ -226,9 +220,9 @@ describe('CardEditor', () => {
     test('takes Cmd+Enter twice', async () => {
       const requests = await renderConnectedEditor({ notes: [kelev] }, kelev);
       await changeMeaning('hound');
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      await pressCmdEnter();
       expect(screen.getByRole('button', { name: 'Save changes' })).toBeTruthy();
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      await pressCmdEnter();
       await screen.findByText('Saved to Anki.');
       expect(saveRequests(requests)).toHaveLength(1);
     });
@@ -236,14 +230,14 @@ describe('CardEditor', () => {
     test('builds the next save on the note as the last one left it', async () => {
       const requests = await renderConnectedEditor({ notes: [kelev] }, kelev);
       await changeMeaning('hound');
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      await pressCmdEnter();
+      await pressCmdEnter();
       await screen.findByText('Saved to Anki.');
       expect(saveButton().disabled).toBe(true);
 
       await changeMeaning('mutt');
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-      await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+      await pressCmdEnter();
+      await pressCmdEnter();
       await vi.waitFor(() => expect(saveRequests(requests)).toHaveLength(2));
       expect(saveRequests(requests)[1]?.body).toEqual({
         fields: { Definitions: 'mutt' },
@@ -282,8 +276,8 @@ describe('CardEditor', () => {
         render(CardEditor, { note: kelev, onopennote });
         await screen.findByText(/Connected to Anki/);
         await changeMeaning('hound');
-        await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-        await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+        await pressCmdEnter();
+        await pressCmdEnter();
 
         const bar = screen.getByRole('region', { name: 'Save' });
         expect((await within(bar).findByRole('alert')).textContent).toContain(
@@ -308,8 +302,8 @@ describe('CardEditor', () => {
           kelev,
         );
         await changeMeaning('hound');
-        await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-        await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
+        await pressCmdEnter();
+        await pressCmdEnter();
         expect((await screen.findByRole('alert')).textContent).toBe(
           'AnkiConnect refused updateNoteFields: Close the affected editor',
         );

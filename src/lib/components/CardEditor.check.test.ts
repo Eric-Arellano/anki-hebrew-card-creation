@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
-import type { CheckRequest, NoteCheck } from '#lib/api/ai.ts';
+import type { NoteCheck } from '#lib/api/ai.ts';
 import type { LoadedNote } from '#lib/api/anki.ts';
 import { fromAnkiFields } from '#lib/note-type.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
-import { loadedNote } from '#tests/real-notes.ts';
 import {
   addRequests,
   fillDag,
+  heldReply,
   input,
+  kelevNote,
+  pressCmdEnter,
   renderConnectedEditor,
   type ServerReplies,
   type ServerRequest,
@@ -18,12 +20,6 @@ import {
   typeExample,
   typeInto,
 } from './CardEditor.harness.ts';
-
-// With its part of speech filled in, the one input the fixture lacks.
-const kelev: LoadedNote = (() => {
-  const note = loadedNote('כלב');
-  return { ...note, fields: { ...note.fields, 'Part of speech': 'noun' } };
-})();
 
 const wrongGender: NoteCheck = {
   findings: [
@@ -41,28 +37,6 @@ function checkRequests(requests: ServerRequest[]) {
 
 function checkSection() {
   return screen.getByRole('region', { name: "Claude's check" });
-}
-
-async function pressCmdEnter() {
-  await fireEvent.keyDown(window, { key: 'Enter', metaKey: true });
-}
-
-// A reply the test sends once it has done what the human does while waiting, and the signal the
-// editor sent the request with.
-function heldReply() {
-  let send: (check: NoteCheck) => void = () => {};
-  let signal: AbortSignal | undefined;
-  const reply = new Promise<Response>((resolve) => {
-    send = (check) => resolve(Response.json(check));
-  });
-  return {
-    check: (_: CheckRequest, sentWith: AbortSignal | undefined) => {
-      signal = sentWith;
-      return reply;
-    },
-    send: (check: NoteCheck) => send(check),
-    signal: () => signal,
-  };
 }
 
 async function renderWithClaude(replies: Omit<ServerReplies, 'status'> = {}, note?: LoadedNote) {
@@ -146,7 +120,7 @@ describe('CardEditor', () => {
 
     describe('when saved before Claude answers', () => {
       test('adds at once, and abandons the check', async () => {
-        const { check, send, signal } = heldReply();
+        const { reply: check, send, signal } = heldReply<NoteCheck>();
         const requests = await renderWithClaude({ check });
         await fillDagReady();
         await pressCmdEnter();
@@ -162,7 +136,7 @@ describe('CardEditor', () => {
 
     describe('when cancelled', () => {
       test('adds nothing, and abandons the check', async () => {
-        const { check, signal } = heldReply();
+        const { reply: check, signal } = heldReply<NoteCheck>();
         const requests = await renderWithClaude({ check });
         await fillDagReady();
         await pressCmdEnter();
@@ -176,7 +150,7 @@ describe('CardEditor', () => {
 
   describe('checking an edit', () => {
     test('shows the findings beside what will change', async () => {
-      const requests = await renderWithClaude({ notes: [kelev] }, kelev);
+      const requests = await renderWithClaude({ notes: [kelevNote()] }, kelevNote());
       await screen.findByRole('button', { name: 'Suggest with Claude' });
       await typeInto(input('English meaning'), 'hound');
       await pressCmdEnter();
@@ -199,7 +173,7 @@ describe('CardEditor', () => {
     }
 
     test('checks a loaded note with nothing changed, saving nothing', async () => {
-      const requests = await renderWithClaude({ notes: [kelev] }, kelev);
+      const requests = await renderWithClaude({ notes: [kelevNote()] }, kelevNote());
       await screen.findByRole('button', { name: 'Suggest with Claude' });
       expect(
         (screen.getByRole('button', { name: 'Check and save' }) as HTMLButtonElement).disabled,
@@ -214,7 +188,7 @@ describe('CardEditor', () => {
     });
 
     test('asks again on each click', async () => {
-      const requests = await renderWithClaude({ notes: [kelev] }, kelev);
+      const requests = await renderWithClaude({ notes: [kelevNote()] }, kelevNote());
       await screen.findByRole('button', { name: 'Suggest with Claude' });
       await fireEvent.click(checkOnly());
       await within(checkSection()).findByText(/should be גדול/);
