@@ -5,8 +5,8 @@ import type { NounDraft } from '#lib/card/parts-of-speech/noun.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import Checkbox from '../ui/Checkbox.svelte';
-import ChoiceChips from '../ui/ChoiceChips.svelte';
 import TextInput from '../ui/TextInput.svelte';
+import ChoiceChips from './ChoiceChips.svelte';
 import RootInput from './RootInput.svelte';
 
 const GENDERS: readonly { value: Gender; label: string }[] = [
@@ -31,8 +31,6 @@ let {
   heldRoot: string | undefined;
   choices: PrefillChoices;
   unoffered: UnofferedValues;
-  // The pointed word, which leads the forms so every pointed form copied from a dictionary
-  // sits in one row.
   children: Snippet;
 } = $props();
 </script>

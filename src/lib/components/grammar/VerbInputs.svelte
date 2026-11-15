@@ -7,11 +7,11 @@ import { textChange } from '#lib/card/changed-from.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
 import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
-import ChoiceChips from '../ui/ChoiceChips.svelte';
 import TextInput from '../ui/TextInput.svelte';
-import UnofferedValue from '../ui/UnofferedValue.svelte';
 import WiktionaryHas from '../ui/WiktionaryHas.svelte';
+import ChoiceChips from './ChoiceChips.svelte';
 import RootInput from './RootInput.svelte';
+import UnofferedValue from './UnofferedValue.svelte';
 
 const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label: string }[] = [
   ...GOVERNED_PREPOSITIONS.map((value) => ({ value, label: value })),
@@ -37,7 +37,6 @@ let {
   // From the dictionary, which names one for few verbs.
   suggestedPrepositions: readonly GovernedPreposition[];
   unoffered: UnofferedValues;
-  // The pointed infinitive, which leads the row as the pointed word leads a noun's forms.
   children: Snippet;
 } = $props();
 

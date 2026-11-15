@@ -1,8 +1,8 @@
 <script lang="ts" generics="T extends string">
 import { textChange } from '#lib/card/changed-from.ts';
-import ChangedFrom from './ChangedFrom.svelte';
+import ChangedFrom from '../ui/ChangedFrom.svelte';
+import WiktionaryHas from '../ui/WiktionaryHas.svelte';
 import UnofferedValue from './UnofferedValue.svelte';
-import WiktionaryHas from './WiktionaryHas.svelte';
 
 let {
   legend,

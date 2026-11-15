@@ -20,7 +20,7 @@ let {
   // `undefined` while there's nothing to look up; resolves to `undefined` while typing goes on.
   lookup: Promise<DictionaryLookup | undefined> | undefined;
   picked: DictionaryCandidate | undefined;
-  // While editing, a pick fills only what the note leaves blank, rather than starting a new one.
+  // While editing, a pick only fills blanks, so the entries say so.
   editing: boolean;
   // While editing, whether the entries show before the human asks for them.
   startsOpen: boolean;

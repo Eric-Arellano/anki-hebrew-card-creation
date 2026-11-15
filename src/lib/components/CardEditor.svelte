@@ -40,20 +40,20 @@ import { buildLinkUrl, LINKS } from '#lib/links.ts';
 import { type FieldKey, type PartOfSpeech, shownFieldGroups } from '#lib/note-type.ts';
 import { afterTypingPauses } from '#lib/typing-pause.ts';
 import ConnectionStatus from './ConnectionStatus.svelte';
-import WordForms from './forms/WordForms.svelte';
-import SaveBar from './SaveBar.svelte';
+import FieldGroup from './fields/FieldGroup.svelte';
+import SuggestButton from './fields/SuggestButton.svelte';
+import GrammarInputs from './grammar/GrammarInputs.svelte';
 import AudioInput from './media/AudioInput.svelte';
 import ImagesInput from './media/ImagesInput.svelte';
-import NoteFields from './fields/NoteFields.svelte';
-import SuggestButton from './fields/SuggestButton.svelte';
+import SaveBar from './save/SaveBar.svelte';
 import ChangedFrom from './ui/ChangedFrom.svelte';
 import Checkbox from './ui/Checkbox.svelte';
 import LinkChip from './ui/LinkChip.svelte';
 import Section from './ui/Section.svelte';
 import TextInput from './ui/TextInput.svelte';
 import DefinitionsInput from './word/DefinitionsInput.svelte';
-import DictionaryPanel from './word/DictionaryPanel.svelte';
-import ExistingNotesPanel from './word/ExistingNotesPanel.svelte';
+import DeckCheck from './word/DeckCheck.svelte';
+import DictionaryEntries from './word/DictionaryEntries.svelte';
 
 let {
   note,
@@ -99,7 +99,7 @@ let ankiStatus: AnkiStatus | undefined = $state.raw();
 let suggested: Suggestions = $state.raw({});
 
 // Composition waits for every input, since each one shapes it. The fields shown depend only on
-// the part of speech.
+// the part of speech, in the order Anki's note type holds them.
 const completed = $derived(completeInputs(draft.inputs));
 const composed = $derived(completed === undefined ? {} : composeFields(completed));
 const shownGroups = $derived(
@@ -161,6 +161,7 @@ const suggestBlocker = $derived.by(() => {
   return undefined;
 });
 
+// While editing, a pick fills only what the note leaves blank, rather than starting a new one.
 function pick(candidate: DictionaryCandidate) {
   const before = $state.snapshot(draft.inputs);
   const prefill = (note === undefined ? prefillDraft : prefillBlanks)(before, candidate);
@@ -266,14 +267,14 @@ onMount(checkAnki);
         held={marked?.inputs.definitions}
       />
     </div>
-    <ExistingNotesPanel
+    <DeckCheck
       words={deckWords}
       root={draftRoot(draft.inputs)}
       editingNoteId={note?.noteId}
       {replacesDraft}
       onopen={(opened) => onopennote?.(opened)}
     />
-    <DictionaryPanel
+    <DictionaryEntries
       word={draft.inputs.word}
       {lookup}
       picked={picked?.candidate}
@@ -292,7 +293,7 @@ onMount(checkAnki);
         blankInput={INPUT_NAMES.word}
       />
     {/snippet}
-    <WordForms
+    <GrammarInputs
       bind:inputs={draft.inputs}
       held={marked?.inputs}
       {choices}
@@ -303,7 +304,7 @@ onMount(checkAnki);
       onedit={setEdit}
     />
     {#if draft.inputs.partOfSpeech !== undefined && grammarFields.length > 0}
-      {@render noteFields(grammarFields, draft.inputs.partOfSpeech)}
+      {@render fieldGroup(grammarFields, draft.inputs.partOfSpeech)}
     {/if}
   </Section>
 
@@ -359,11 +360,11 @@ onMount(checkAnki);
     </div>
   </Section>
 
-  {#snippet noteFields(
+  {#snippet fieldGroup(
     fields: readonly FieldKey[],
     partOfSpeech: PartOfSpeech,
   )}
-    <NoteFields
+    <FieldGroup
       {fields}
       {partOfSpeech}
       edits={draft.edits}
@@ -407,7 +408,7 @@ onMount(checkAnki);
         description={GROUP_HELP[group]}
         actions={group === 'Hints and examples' ? suggest : undefined}
       >
-        {@render noteFields(fields, partOfSpeech)}
+        {@render fieldGroup(fields, partOfSpeech)}
       </Section>
     {/each}
   {/if}

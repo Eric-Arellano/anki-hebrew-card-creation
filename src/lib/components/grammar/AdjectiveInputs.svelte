@@ -19,7 +19,6 @@ let {
   held: AdjectiveInputs | undefined;
   heldRoot: string | undefined;
   choices: PrefillChoices;
-  // The pointed word, which leads the row as the pointed word leads a noun's forms.
   children: Snippet;
 } = $props();
 </script>
