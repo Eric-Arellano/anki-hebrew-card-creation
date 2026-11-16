@@ -1,11 +1,12 @@
 <script lang="ts">
+import { onDestroy } from 'svelte';
 import { changedFields } from '#lib/anki/changed-fields.ts';
-import type { CheckRequest } from '#lib/api/ai.ts';
+import { type CheckRequest, fetchNoteCheck } from '#lib/api/ai.ts';
 import { addNote, type LoadedNote, saveNote, storeMedia } from '#lib/api/anki.ts';
 import { errorMessage, RouteError } from '#lib/api/http.ts';
 import type { NewAttachment } from '#lib/media/attach.ts';
 import { fromAnkiFields, type PartOfSpeech } from '#lib/note-type.ts';
-import ClaudeCheck from './ClaudeCheck.svelte';
+import ClaudeCheck, { type Checking } from './ClaudeCheck.svelte';
 
 let {
   attachments,
@@ -41,10 +42,9 @@ let {
 
 type Saving =
   | { kind: 'idle' }
-  // `check` is the note as Claude is asked to check it.
-  | { kind: 'reviewing'; check: CheckRequest }
+  | { kind: 'reviewing' }
   // A check the human asked for outside a review, which saves nothing.
-  | { kind: 'checked'; check: CheckRequest }
+  | { kind: 'checked' }
   | { kind: 'sending' }
   | { kind: 'added' }
   | { kind: 'saved' }
@@ -53,6 +53,37 @@ type Saving =
   | { kind: 'failed'; message: string };
 
 let saving: Saving = $state.raw({ kind: 'idle' });
+
+// The last note Claude was asked about, serialized, and its answer. Asking about the same note
+// again reuses the answer, since each check costs money; only a failed one is asked again.
+let claude: { asked: string; checking: Checking } | undefined = $state.raw();
+let claudeController: AbortController | undefined;
+const claudeIsChecking = $derived(claude?.checking.kind === 'checking');
+
+async function askClaude(request: CheckRequest) {
+  const asked = JSON.stringify(request);
+  if (claude?.asked === asked && claude.checking.kind !== 'failed') return;
+  claudeController?.abort();
+  const controller = new AbortController();
+  claudeController = controller;
+  claude = { asked, checking: { kind: 'checking' } };
+  try {
+    const { findings } = await fetchNoteCheck(request, controller.signal);
+    if (!controller.signal.aborted) claude = { asked, checking: { kind: 'checked', findings } };
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      claude = { asked, checking: { kind: 'failed', message: errorMessage(error) } };
+    }
+  }
+}
+
+function abandonCheck() {
+  if (!claudeIsChecking) return;
+  claudeController?.abort();
+  claude = undefined;
+}
+
+onDestroy(() => claudeController?.abort());
 
 // Before storing, a new file goes by the name requested, which is all the review shows of it.
 const unstored = $derived(new Map(attachments.map(({ filename }) => [filename, filename])));
@@ -81,17 +112,23 @@ function noteToCheck(): CheckRequest | undefined {
 function submit() {
   if (blocker !== undefined || saving.kind === 'sending') return;
   const check = noteToCheck();
-  if (check !== undefined) saving = { kind: 'reviewing', check };
+  if (check === undefined) return;
+  saving = { kind: 'reviewing' };
+  askClaude(check);
 }
 
-// Even when nothing changed, so a finished note can be checked again.
+// Even when nothing differs from Anki, so a finished note can be checked.
 function checkNow() {
   const check = noteToCheck();
-  if (check !== undefined && saving.kind !== 'sending') saving = { kind: 'checked', check };
+  if (check === undefined || saving.kind === 'sending') return;
+  saving = { kind: 'checked' };
+  askClaude(check);
 }
 
-// Whether or not the check has answered, since it only advises.
+// Only once Claude has answered, so its findings are seen before the note is saved. A failed
+// check doesn't hold the save, since the check only advises.
 function confirm() {
+  if (claudeIsChecking) return;
   if (heldNote === undefined) add({ allowDuplicate: false });
   else save();
 }
@@ -200,19 +237,31 @@ function focus(element: HTMLElement) {
         {/each}
       </dl>
     {/if}
-    <ClaudeCheck request={saving.check} />
-    <!-- Focused, so the Cmd+Enter that opened this step is followed by a deliberate second one. -->
+    {#if claude !== undefined}
+      <ClaudeCheck checking={claude.checking} />
+    {/if}
+    <!-- Focused, so the Cmd+Enter that opened this step is followed by a deliberate second one.
+         A disabled button can't take focus, so it is focused once Claude answers. -->
     <button
       type="button"
       class="button-primary"
-      disabled={blocker !== undefined}
-      {@attach focus}
+      disabled={blocker !== undefined || claudeIsChecking}
+      title={claudeIsChecking ? 'Waiting for Claude to finish checking.' : undefined}
+      {@attach claudeIsChecking ? undefined : focus}
       onclick={confirm}
     >
       {heldNote === undefined ? 'Add to deck' : 'Save changes'}
     </button>
     <kbd>⌘↵</kbd>
-    <button type="button" onclick={() => (saving = { kind: 'idle' })}>Cancel</button>
+    <button
+      type="button"
+      onclick={() => {
+        abandonCheck();
+        saving = { kind: 'idle' };
+      }}
+    >
+      Cancel
+    </button>
   {:else}
     <button
       type="button"
@@ -229,10 +278,8 @@ function focus(element: HTMLElement) {
         Check only
       </button>
     {/if}
-    {#if saving.kind === 'checked'}
-      {#key saving}
-        <ClaudeCheck request={saving.check} />
-      {/key}
+    {#if saving.kind === 'checked' && claude !== undefined}
+      <ClaudeCheck checking={claude.checking} />
     {:else if saving.kind === 'added' || saving.kind === 'saved'}
       <p>{saving.kind === 'added' ? 'Added to the deck.' : 'Saved to Anki.'}</p>
       <!-- Focused, so Enter is all the next word takes. -->

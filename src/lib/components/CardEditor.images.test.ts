@@ -7,6 +7,7 @@ import {
   addRequests,
   addToDeck,
   choosePartOfSpeech,
+  claudeAnswered,
   fillDag,
   input,
   mediaRequests,
@@ -268,6 +269,7 @@ describe('CardEditor', () => {
         await screen.findByRole('img');
 
         await fireEvent.click(addButton());
+        await claudeAnswered();
         await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
         await waitFor(() =>
           expect(screen.getByRole('alert').textContent).toBe(
