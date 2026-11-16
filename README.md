@@ -40,6 +40,24 @@ npm start        # http://127.0.0.1:3000
 To pick up a newer Wiktionary, download the file again and rerun `npm run build-index`. The editor
 says when the index is older than the file.
 
+### Keep it running (macOS)
+
+To have the built app start at login and come back if it crashes, without a terminal open, install
+it as a launchd agent. Clone this folder outside `~/Documents` and `~/Desktop`, which macOS guards
+and iCloud may sync. Then:
+
+```sh
+npm run build
+npm run launch-agent install
+```
+
+Bookmark `http://127.0.0.1:3000`. Anki desktop must be open to add cards. The log is
+`~/Library/Logs/local.anki-hebrew-card-creation.log`.
+
+After you rebuild or edit `.env`, run `npm run launch-agent restart`. To stop it for good, run
+`npm run launch-agent uninstall`. If you upgrade Node with something other than Homebrew or the
+official installer, run `install` again.
+
 ### Claude
 
 Claude suggests examples and hints, and checks a note before each add or save, which you can save
@@ -64,7 +82,8 @@ notes in your collection, add new ones and add files to its media folder.
 - **Your Downloads folder, for Forvo pronunciations.** Download a word's MP3 from Forvo, come back
   to the tab, and the editor attaches it. It lists the folder's names, reads only the files that
   look like Forvo downloads, and never writes there. Set `FORVO_DOWNLOADS` in `.env` to look in
-  another folder. On macOS, the first look asks whether your terminal may read Downloads.
+  another folder. On macOS, the first look asks whether your terminal may read Downloads, or `node` when it
+  runs at login. If you'd rather not allow it, choose or drop the MP3 instead.
 
 ## What it sends over the network
 

@@ -16,8 +16,9 @@ and send them as an `.apkg`, or may lean on Anki's own export. One decision here
 their note type is imported from an export of the original deck, not rebuilt by hand (see
 Decisions).
 
-**Open:** their OS. This plan assumes macOS. On Windows, PR 1 would become a Task Scheduler entry
-instead of a LaunchAgent.
+They use macOS. `npm run launch-agent install` keeps the built app running as a launchd user agent,
+and the README's "Keep it running (macOS)" covers it; what's left is updating their copy and
+setting up their Anki.
 
 ## Decisions
 
@@ -31,18 +32,22 @@ instead of a LaunchAgent.
   *Rejected: pm2 or forever, because each is a dependency for what launchd already does. Also
   rejected: a Login Items shell script, because it leaves a Terminal window open.*
 - **The plist is generated at install time, never committed.** It needs absolute paths: the
-  clone, the logs in `~/Library/Logs`, and the Node install. AGENTS.md forbids home paths in
-  code and config. The installer reads them from `process.cwd()`, `os.homedir()` and
-  `process.execPath`.
-- **launchd gets `PATH` from the Node that ran the installer.** `npm start` needs `node` and `npm`
-  on `PATH`, and launchd starts agents with almost nothing. The agent runs the `npm` beside
-  `process.execPath`, with `PATH` set to that directory plus `/usr/bin:/bin`. That holds for
-  the official installer, Homebrew and nvm alike. A Node upgrade that moves the binary means
-  installing the agent again. So for them, use the official installer or Homebrew, not a
-  version manager.
-- **The pure plist builder lives in `src/lib/server/`, and the script in `scripts/` stays thin**,
-  as `build-index` does. Vitest only collects `src/` and `tests/`, and the builder is what's worth
-  testing: XML escaping of paths and the exact arguments.
+  clone, the log in `~/Library/Logs`, and the Node install. AGENTS.md forbids home paths in
+  code and config.
+- **launchd gets `PATH` from where the terminal finds Node.** launchd starts agents with almost
+  nothing, so the agent runs the `npm` in the first `PATH` directory holding both `node` and
+  `npm`, with `PATH` set to that directory plus `/usr/bin:/bin`. For Homebrew that is the stable
+  `/opt/homebrew/bin`, and for the official installer `/usr/local/bin`; a version manager's
+  directory moves with each upgrade, which means installing the agent again. So for them, use the
+  official installer or Homebrew.
+  *Rejected: `process.execPath`, because Homebrew resolves it into a versioned Cellar directory
+  that the next `brew upgrade` deletes.*
+- **Forvo keeps reading Downloads under the agent.** macOS grants that to the `node` binary, so
+  every script that binary runs may read Downloads, though nothing beyond it. That is no wider than
+  a terminal that has already been allowed. Denying it costs only the automatic pickup: choosing or
+  dropping the MP3 still works, because the browser reads the file, and the README says so.
+  *Rejected: turning the pickup off for the agent, because denying the prompt already does that
+  on whichever Mac wants it.*
 - **Their note type comes from an `.apkg` export of the original deck**: one note, without
   scheduling. This copies the fields, templates and styling exactly, so `getAnkiStatus` reports
   no drift. It also keeps the note type's ID shared between the two collections, which is what
@@ -57,33 +62,7 @@ instead of a LaunchAgent.
 limit, or a separate key in its own workspace under the original account. The lean is the
 separate workspace: they never touch the Console, and the cost stays visible and revocable.
 
-## PR 1: Run the server as a LaunchAgent
-
-- `src/lib/server/launch-agent.ts`: a pure `launchAgentPlist({ label, workingDirectory, nodeBin,
-  logFile })` returning the plist XML. It runs `<nodeBin>/npm start` in `workingDirectory`, with
-  `PATH` as above, sends stdout and stderr to `logFile`, and sets `RunAtLoad` and `KeepAlive`. The
-  label is a constant (`local.anki-hebrew-card-creation`).
-- `scripts/launch-agent.ts`, run as `npm run launch-agent <install|uninstall|restart>`:
-  - `install` refuses if `build/` is missing or `npm` isn't beside `process.execPath`, and
-    says why. Otherwise it writes the plist to `~/Library/LaunchAgents/`, then runs
-    `launchctl bootout` (ignoring "not loaded") and `launchctl bootstrap gui/<uid>`.
-  - `uninstall` runs `bootout` and deletes the plist.
-  - `restart` runs `launchctl kickstart -k gui/<uid>/<label>`.
-
-  It calls `launchctl` through `execFile`, never through a shell.
-- Tests for the builder: the full XML for one input (`toEqual` on the string), and a path
-  containing `&` and `<` that comes out escaped. Use paths that are clearly placeholders and
-  not home paths, such as `/opt/example/…`.
-- README, under Setup and running: "Keep it running (macOS)", covering install, where the log
-  is, restart and uninstall. It also says that the bookmark is `http://127.0.0.1:3000` and that
-  Anki desktop must be open to add cards.
-
-**Open:** whether macOS shows the Downloads permission prompt for a LaunchAgent's `node`, or
-denies it silently. The README already says Forvo's first look asks on behalf of the terminal.
-If the prompt doesn't appear, the fallback is granting `node` access under Privacy & Security
-› Files and Folders. Find out on the first install and write down whichever is true.
-
-## PR 2: One-command updates, and setting up another learner's Anki
+## PR 1: One-command updates, and setting up another learner's Anki
 
 - `npm run self-update`: `git pull --ff-only && npm ci && npm run build && npm run build-index &&
   npm run launch-agent restart`. It's named `self-update` because `npm update` and `npm upgrade`
@@ -104,6 +83,11 @@ If the prompt doesn't appear, the fallback is granting `node` access under Priva
 
   Keep it to what someone runs; the reasons live in this plan's Decisions and in the code.
 
+**Open:** whether macOS shows the Downloads permission prompt for the agent's `node`, or
+denies it silently, and whether a Homebrew upgrade of Node asks again. If the prompt doesn't
+appear, the fallback is granting `node` access under Privacy & Security › Files and Folders. Find
+out on the first install, and write whichever is true in the README's Forvo line.
+
 ## Verification
 
 - `npm run lint && npm run check && npm test`.
@@ -115,4 +99,4 @@ If the prompt doesn't appear, the fallback is granting `node` access under Priva
   - Run `self-update` on a clean checkout.
 - On the second Mac, follow only the README, without this plan. Anything the README missed is a
   README bug. Add a card, attach a Forvo download, and confirm the card reaches their phone after
-  Anki syncs. Resolve the two **Open:** items about Downloads and App Nap there.
+  Anki syncs. Resolve the **Open:** items about Downloads and App Nap there.

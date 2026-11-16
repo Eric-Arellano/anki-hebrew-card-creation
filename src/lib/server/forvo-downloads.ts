@@ -31,7 +31,7 @@ async function forvoFilenamesIn(directory: string): Promise<Listing> {
     if (code === 'EPERM' || code === 'EACCES') {
       return {
         kind: 'unreadable',
-        message: `Can't read ${directory}. Allow your terminal to in System Settings, under Privacy & Security, then Files and Folders.`,
+        message: `Can't read ${directory}. Allow your terminal, or node if the app runs at login, in System Settings, under Privacy & Security, then Files and Folders.`,
       };
     }
     if (code === 'ENOENT') {
