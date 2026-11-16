@@ -206,7 +206,7 @@ describe('CardEditor', () => {
         expect(checkRequests(requests)).toHaveLength(1);
       });
 
-      test('reviews with the last answer on Cmd+Enter', async () => {
+      test('reviews with the last answer, and adds without waiting', async () => {
         const requests = await renderWithClaude();
         await fillDagReady();
         await fireEvent.click(checkOnly());
@@ -214,6 +214,9 @@ describe('CardEditor', () => {
         await pressCmdEnter();
         expect(screen.getByText('Adding this note to the deck.')).toBeTruthy();
         expect(within(checkSection()).getByText(/should be גדול/)).toBeTruthy();
+        await pressCmdEnter();
+        await screen.findByText('Added to the deck.');
+        expect(addRequests(requests)).toHaveLength(1);
         expect(checkRequests(requests)).toHaveLength(1);
       });
     });
