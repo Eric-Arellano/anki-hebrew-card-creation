@@ -33,7 +33,9 @@ const SENT_FIELDS = [
 
 // What a finding may name: the fields the human wrote, and the two a contradiction in the
 // examples can call into question. The rest come from Wiktionary and are only context.
+// `Definitions` is the human's: the editor never fills it from the dictionary's glosses.
 const JUDGED_FIELDS = [
+  'definitions',
   'gender',
   'binyan',
   'productionContext',
@@ -134,8 +136,9 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'the Hebrew to recall.\n' +
       '- The Examples show under the answer, each Hebrew sentence with its English under it.\n' +
       '- The Notes show under the answer too.\n' +
-      'The word, its niqqud, Definitions, Gender, Binyan, Root and Forms come from Wiktionary. ' +
-      'The other fields the learner wrote, with this help beside each:\n' +
+      'The word, its niqqud, Gender, Binyan, Root and Forms come from Wiktionary. The learner ' +
+      'wrote the Definitions in their own words, and the other fields with this help beside ' +
+      'each:\n' +
       `- Production context: ${FIELD_HELP.productionContext[partOfSpeech]}\n` +
       `- Reading context: ${FIELD_HELP.readingContext[partOfSpeech]}\n` +
       `- Variants: ${GROUP_HELP['Unusual variants']}\n` +
@@ -143,6 +146,8 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       `- Notes: ${FIELD_HELP.notes}`,
 
     'Look for these, and nothing else:\n' +
+      '- A meaning in the Definitions that the word, as it is pointed, doesn’t have, such as ' +
+      'one that belongs to another word with the same spelling.\n' +
       '- Hebrew in the Examples, the Reading context or a variant’s answer that is wrong, or ' +
       'that a native speaker in today’s Israel wouldn’t say: a wrong word, a wrong agreement or ' +
       'preposition, or stilted phrasing.\n' +
@@ -164,6 +169,8 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'choice, so never ask for one to be filled.\n' +
       '- Hebrew that is correct and natural, even where you would have phrased it differently, ' +
       'and the choice of examples.\n' +
+      '- A meaning that is right, however it is worded, and any meaning left out. The learner ' +
+      'lists only the meanings they want to learn.\n' +
       '- Spelling without niqqud, where the full and the defective spelling are both in use.',
 
     'Answer with your findings in the schema given, whose fields say what each holds.',

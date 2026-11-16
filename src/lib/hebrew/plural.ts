@@ -24,7 +24,9 @@ export function irregularPlural({
   // Duals end in ־ַיִם too, so `עַיִן` → `עֵינַיִם` counts.
   if (gender === 'm' && pluralWord.endsWith('ות')) return 'masculine-with-ot';
   if (gender === 'f' && pluralWord.endsWith('ים')) return 'feminine-with-im';
-  return startsWithStem(pluralWord, stem(singularWord, gender)) ? undefined : 'changed-stem';
+  return stems(singularWord, gender).some((stem) => addsOnlyAnEnding(pluralWord, stem))
+    ? undefined
+    : 'changed-stem';
 }
 
 // Unpointed, but with every ו and י kept: a dropped vowel letter is exactly what changes in
@@ -42,19 +44,26 @@ function firstWord(text: string): string {
   );
 }
 
-// An Aramaic loan ends in א where a Hebrew noun ends in ה: `סָבְתָא` → `סָבְתוֹת`.
-function stem(singular: string, gender: Gender): string {
-  return singular
-    .replace(gender === 'm' ? /[הא]$/ : /[התא]$/, '')
-    .replace(/[ךםןףץ](?=׳?$)/, (final) => MEDIAL_BY_FINAL[final] ?? final);
+// The singular whole, and without the ending its plural may replace: `דֶּלֶת` → `דְּלָתוֹת` keeps its
+// ת, while `מְכוֹנִית` → `מְכוֹנִיּוֹת` drops it. An Aramaic loan ends in א where a Hebrew noun ends in
+// ה: `סָבְתָא` → `סָבְתוֹת`.
+function stems(singular: string, gender: Gender): string[] {
+  return [singular, singular.replace(gender === 'm' ? /[הא]$/ : /[התא]$/, '')]
+    .filter((stem) => stem !== '')
+    .map((stem) => stem.replace(/[ךםןףץ](?=׳?$)/, (final) => MEDIAL_BY_FINAL[final] ?? final));
 }
 
 // The plural may write out a holam or hiriq the singular leaves unwritten, as in `כְּתֹבֶת` →
 // `כְּתוֹבוֹת` and `אָחוֹת` → `אֲחָיוֹת`, so a ו or י may come between the stem's letters. Only the
 // plural gains them: a singular's vowel letter missing from its plural is the irregular `יוֹם` →
 // `יָמִים`. So it still flags the few regular plurals that drop a vowel letter the singular writes
-// out, like `עוֹרֵב` → `עֹרְבִים` and `אֵיבוּס` → `אֵבוּסִים`: about a sixth of what it flags.
-function startsWithStem(pluralWord: string, stem: string): boolean {
+// out, like `עוֹרֵב` → `עֹרְבִים` and `אֵיבוּס` → `אֵבוּסִים`.
+//
+// After the stem comes only the ending: ־ים or ־ות, the ־י of a construct like `כַּרְטִיסֵי אַשְׁרַאי`, or
+// nothing the spelling shows, as in `כְּלִי טַיִס` → `כְּלֵי טַיִס`. Any other letter there is the stem
+// changing: the נ of `בַּת` → `בָּנוֹת`, the ה of `אֵם` → `אִמָּהוֹת`, the second ל of `צֵל` → `צְלָלִים`
+// and the א of `דֻּגְמָה` → `דֻּגְמָאוֹת`.
+function addsOnlyAnEnding(pluralWord: string, stem: string): boolean {
   const letters = [...stem].map((letter) => letter.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
-  return new RegExp(`^${letters.join('[וי]*')}`).test(pluralWord);
+  return new RegExp(`^${letters.join('[וי]*')}[וי]*[םת]?$`).test(pluralWord);
 }

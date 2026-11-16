@@ -42,6 +42,45 @@ describe('readEntry', () => {
     });
   });
 
+  describe('for a canonical form wiktextract split', () => {
+    test.each([
+      ['at a maqaf', 'כדור רגל', 'noun', 'כַּדּוּר־רֶגֶל'],
+      ['after a prefix', 'בדרך כלל', 'adv', 'בְּדֶרֶךְ־כְּלָל'],
+    ])('takes the head template’s spelling %s', (_, word, pos, pointed) => {
+      expect(entry(word, pos).pointed).toBe(pointed);
+    });
+  });
+
+  describe('for a canonical form followed by something that isn’t Hebrew', () => {
+    test('takes the head template’s spelling', () => {
+      expect(entry('רקד', 'verb').pointed).toBe('רָקַד');
+    });
+  });
+
+  describe('for a head that gives the title and then its pointing', () => {
+    test('takes the pointing alone', () => {
+      expect(entry('בינתיים', 'adv').pointed).toBe('בֵּינְתַיִם');
+    });
+  });
+
+  describe('for a plural wiktextract split inside a word', () => {
+    test('takes the head template’s spelling', () => {
+      expect(entry('כאב ראש', 'noun').facts.plurals).toEqual(['כְּאֵבֵי רֹאשׁ']);
+    });
+  });
+
+  describe('for an infinitive filed as a verb of its own', () => {
+    test('is no lemma', () => {
+      expect(entry('לדעת', 'verb').isLemma).toBe(false);
+    });
+  });
+
+  describe('for an infinitive whose link leaves out a י that ktiv male writes', () => {
+    test('gives it no unpointed spelling', () => {
+      expect(entry('נשאר', 'verb').facts.infinitives).toEqual([{ pointed: 'לְהִשָּׁאֵר' }]);
+    });
+  });
+
   describe('for a blend', () => {
     test('takes both roots', () => {
       expect(entry('רמקול', 'noun').facts.roots).toEqual(['ק־ו־ל', 'ר־ו־ם']);

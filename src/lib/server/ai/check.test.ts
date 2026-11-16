@@ -104,7 +104,16 @@ describe('checkRequest', () => {
     expect(schema.safeParse(answer([{ ...finding, field: 'Examples' }])).success).toBe(true);
     expect(schema.safeParse(answer([{ ...finding, field: 'Pointed' }])).success).toBe(false);
     expect(schema.safeParse(answer([{ ...finding, field: 'Notes' }])).success).toBe(true);
-    expect(schema.safeParse(answer([{ ...finding, field: 'Definitions' }])).success).toBe(false);
+    expect(schema.safeParse(answer([{ ...finding, field: 'Definitions' }])).success).toBe(true);
+    expect(schema.safeParse(answer([{ ...finding, field: 'Root' }])).success).toBe(false);
+  });
+
+  test('says the Definitions are the learner’s own, and judges only a meaning that is wrong', () => {
+    const { system } = checkRequest(kelev, []);
+    expect(system).toContain('its niqqud, Gender, Binyan, Root and Forms come from Wiktionary');
+    expect(system).toContain('The learner wrote the Definitions in their own words');
+    expect(system).toContain('A meaning in the Definitions that the word, as it is pointed');
+    expect(system).toContain('A meaning that is right, however it is worded');
   });
 });
 
@@ -131,6 +140,17 @@ describe('toNoteCheck', () => {
         },
         { field: 'gender', problem: 'The examples treat it as feminine.' },
       ],
+    });
+  });
+
+  test('keeps a finding on the Definitions, which the human wrote', () => {
+    expect(
+      toNoteCheck(
+        answer([{ field: 'Definitions', problem: 'כלב is a dog, not a cat.', rewrite: 'dog' }]),
+        { ...kelev.fields, definitions: 'cat' },
+      ),
+    ).toEqual({
+      findings: [{ field: 'definitions', problem: 'כלב is a dog, not a cat.', rewrite: 'dog' }],
     });
   });
 

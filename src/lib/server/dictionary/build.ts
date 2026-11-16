@@ -9,7 +9,7 @@ import { readEntry, type SourceEntry } from '#lib/server/dictionary/source.ts';
 
 // Bump it whenever the index's tables or what goes in them changes, so an index built by older
 // code is refused rather than misread.
-export const INDEX_SCHEMA_VERSION = '6';
+export const INDEX_SCHEMA_VERSION = '7';
 
 // `keys` files each entry under every spelling that should find it, twice: by its lookup key,
 // and by its defective key for when ktiv male and ktiv haser disagree.
