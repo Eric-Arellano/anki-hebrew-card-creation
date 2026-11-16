@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { loadedNote } from '#tests/real-notes.ts';
 import {
   choosePartOfSpeech,
+  claudeAnswered,
   exampleRows,
   fillInputs,
   input,
@@ -181,6 +182,7 @@ describe('CardEditor', () => {
         await renderConnectedEditor({ notes: [kelevNote()] }, kelevNote());
         await typeInto(input(PLURAL), 'כְּלָבוֹת');
         await fireEvent.click(screen.getByRole('button', { name: 'Check and save' }));
+        await claudeAnswered();
         await fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await screen.findByText('Saved to Anki.');
 

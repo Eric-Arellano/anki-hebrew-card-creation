@@ -1,38 +1,16 @@
-<script lang="ts">
-import { onMount } from 'svelte';
-import { type CheckRequest, fetchNoteCheck, type Finding } from '#lib/api/ai.ts';
-import { errorMessage } from '#lib/api/http.ts';
-import { FIELDS } from '#lib/note-type.ts';
+<script module lang="ts">
+import type { Finding } from '#lib/api/ai.ts';
 
-let {
-  request,
-}: {
-  // The note as it stood when the review opened.
-  request: CheckRequest;
-} = $props();
-
-type Checking =
+export type Checking =
   | { kind: 'checking' }
   | { kind: 'checked'; findings: Finding[] }
   | { kind: 'failed'; message: string };
+</script>
 
-let checking: Checking = $state.raw({ kind: 'checking' });
+<script lang="ts">
+import { FIELDS } from '#lib/note-type.ts';
 
-async function check(signal: AbortSignal) {
-  try {
-    checking = { kind: 'checked', findings: (await fetchNoteCheck(request, signal)).findings };
-  } catch (error) {
-    if (!signal.aborted) checking = { kind: 'failed', message: errorMessage(error) };
-  }
-}
-
-// Asked once per review. Leaving the review, by saving or cancelling, abandons the answer, since
-// the check only advises and a save never waits on it.
-onMount(() => {
-  const controller = new AbortController();
-  check(controller.signal);
-  return () => controller.abort();
-});
+let { checking }: { checking: Checking } = $props();
 </script>
 
 <section

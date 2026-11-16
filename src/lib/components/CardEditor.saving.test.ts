@@ -6,6 +6,7 @@ import { loadedNote } from '#tests/real-notes.ts';
 import {
   addButton,
   addRequests,
+  claudeAnswered,
   fillDag,
   input,
   kelevNote,
@@ -42,6 +43,7 @@ describe('CardEditor', () => {
 
     async function add() {
       await fireEvent.click(addButton());
+      await claudeAnswered();
       await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
     }
 
@@ -103,6 +105,7 @@ describe('CardEditor', () => {
 
         await typeInto(input('English meaning'), 'carp');
         await fireEvent.click(saveButton());
+        await claudeAnswered();
         await fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await screen.findByText('Saved to Anki.');
         expect(addRequests(requests)).toHaveLength(1);
@@ -206,6 +209,7 @@ describe('CardEditor', () => {
       ]);
       expect(saveRequests(requests)).toEqual([]);
 
+      await claudeAnswered();
       await fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
       await screen.findByText('Saved to Anki.');
       expect(saveRequests(requests)).toEqual([
@@ -231,12 +235,14 @@ describe('CardEditor', () => {
       const requests = await renderConnectedEditor({ notes: [kelev] }, kelev);
       await changeMeaning('hound');
       await pressCmdEnter();
+      await claudeAnswered();
       await pressCmdEnter();
       await screen.findByText('Saved to Anki.');
       expect(saveButton().disabled).toBe(true);
 
       await changeMeaning('mutt');
       await pressCmdEnter();
+      await claudeAnswered();
       await pressCmdEnter();
       await vi.waitFor(() => expect(saveRequests(requests)).toHaveLength(2));
       expect(saveRequests(requests)[1]?.body).toEqual({
@@ -277,6 +283,7 @@ describe('CardEditor', () => {
         await screen.findByText(/Connected to Anki/);
         await changeMeaning('hound');
         await pressCmdEnter();
+        await claudeAnswered();
         await pressCmdEnter();
 
         const bar = screen.getByRole('region', { name: 'Save' });
@@ -303,6 +310,7 @@ describe('CardEditor', () => {
         );
         await changeMeaning('hound');
         await pressCmdEnter();
+        await claudeAnswered();
         await pressCmdEnter();
         expect((await screen.findByRole('alert')).textContent).toBe(
           'AnkiConnect refused updateNoteFields: Close the affected editor',

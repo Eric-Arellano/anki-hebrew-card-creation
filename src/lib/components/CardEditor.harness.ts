@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { vi } from 'vitest';
 import type { CheckRequest, SuggestRequest } from '#lib/api/ai.ts';
 import type { AnkiStatus, ExistingNotes, LoadedNote, SameMeaningNote } from '#lib/api/anki.ts';
@@ -233,6 +233,7 @@ export async function fillVerb(binyan: string, root: string) {
 /** Clicks Check and add, then Add to deck, and answers with the body of the first add sent. */
 export async function addToDeck(requests: ServerRequest[]) {
   await fireEvent.click(screen.getByRole('button', { name: 'Check and add' }));
+  await claudeAnswered();
   await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
   await screen.findByText('Added to the deck.');
   return addRequests(requests)[0]?.body;
@@ -261,6 +262,15 @@ export function heldReply<T>() {
     send: (body: T) => send(body),
     signal: () => signal,
   };
+}
+
+/** Waits for Claude's check to answer, since the review can't be confirmed before it does. */
+export async function claudeAnswered() {
+  await waitFor(() => {
+    if (document.querySelector('[aria-label="Claude\'s check"][aria-busy="true"]') !== null) {
+      throw new Error('Claude is still checking');
+    }
+  });
 }
 
 export async function pressCmdEnter() {

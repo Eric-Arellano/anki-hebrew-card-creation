@@ -7,6 +7,7 @@ import { fromAnkiFields } from '#lib/note-type.ts';
 import fieldNames from '#tests/fixtures/anki/model-field-names-hebrew.json' with { type: 'json' };
 import {
   addRequests,
+  claudeAnswered,
   fillDag,
   heldReply,
   input,
@@ -112,25 +113,32 @@ describe('CardEditor', () => {
         expect(
           await screen.findByText("Couldn't check the note: Claude declined to answer."),
         ).toBeTruthy();
+        await claudeAnswered();
         await fireEvent.click(screen.getByRole('button', { name: 'Add to deck' }));
         await screen.findByText('Added to the deck.');
         expect(addRequests(requests)).toHaveLength(1);
       });
     });
 
-    describe('when saved before Claude answers', () => {
-      test('adds at once, and abandons the check', async () => {
-        const { reply: check, send, signal } = heldReply<NoteCheck>();
+    describe('before Claude answers', () => {
+      test('refuses to add until it does', async () => {
+        const { reply: check, send } = heldReply<NoteCheck>();
         const requests = await renderWithClaude({ check });
         await fillDagReady();
         await pressCmdEnter();
         expect(screen.getByText('Claude is checking the note…')).toBeTruthy();
+        const addToDeck = screen.getByRole('button', { name: 'Add to deck' }) as HTMLButtonElement;
+        expect(addToDeck.disabled).toBe(true);
+        await pressCmdEnter();
+        await fireEvent.click(addToDeck);
+        expect(addRequests(requests)).toEqual([]);
+
+        send(wrongGender);
+        await within(checkSection()).findByText(/should be גדול/);
+        expect(addToDeck.disabled).toBe(false);
         await pressCmdEnter();
         await screen.findByText('Added to the deck.');
         expect(addRequests(requests)).toHaveLength(1);
-        expect(signal()?.aborted).toBe(true);
-        send(wrongGender);
-        expect(screen.queryByRole('region', { name: "Claude's check" })).toBeNull();
       });
     });
 
@@ -187,22 +195,53 @@ describe('CardEditor', () => {
       expect(saveRequests(requests)).toEqual([]);
     });
 
-    test('asks again on each click', async () => {
+    describe('when nothing changed since the last check', () => {
+      test('shows the last answer rather than asking again', async () => {
+        const requests = await renderWithClaude({ notes: [kelevNote()] }, kelevNote());
+        await screen.findByRole('button', { name: 'Suggest with Claude' });
+        await fireEvent.click(checkOnly());
+        await within(checkSection()).findByText(/should be גדול/);
+        await fireEvent.click(checkOnly());
+        await within(checkSection()).findByText(/should be גדול/);
+        expect(checkRequests(requests)).toHaveLength(1);
+      });
+
+      test('reviews with the last answer on Cmd+Enter', async () => {
+        const requests = await renderWithClaude();
+        await fillDagReady();
+        await fireEvent.click(checkOnly());
+        await within(checkSection()).findByText(/should be גדול/);
+        await pressCmdEnter();
+        expect(screen.getByText('Adding this note to the deck.')).toBeTruthy();
+        expect(within(checkSection()).getByText(/should be גדול/)).toBeTruthy();
+        expect(checkRequests(requests)).toHaveLength(1);
+      });
+    });
+
+    test('asks again once a field changes', async () => {
       const requests = await renderWithClaude({ notes: [kelevNote()] }, kelevNote());
       await screen.findByRole('button', { name: 'Suggest with Claude' });
       await fireEvent.click(checkOnly());
       await within(checkSection()).findByText(/should be גדול/);
+      await typeInto(input('English meaning'), 'hound');
       await fireEvent.click(checkOnly());
       await within(checkSection()).findByText(/should be גדול/);
       expect(checkRequests(requests)).toHaveLength(2);
     });
 
-    test('gives way to the review on Cmd+Enter', async () => {
-      const requests = await renderWithClaude();
+    test('asks again after a check fails', async () => {
+      let replies = 0;
+      const requests = await renderWithClaude({
+        check: () =>
+          ++replies === 1
+            ? Response.json({ message: 'Claude declined to answer.' }, { status: 502 })
+            : Response.json(wrongGender),
+      });
       await fillDagReady();
       await fireEvent.click(checkOnly());
-      await pressCmdEnter();
-      expect(screen.getByText('Adding this note to the deck.')).toBeTruthy();
+      await screen.findByText("Couldn't check the note: Claude declined to answer.");
+      await fireEvent.click(checkOnly());
+      await within(checkSection()).findByText(/should be גדול/);
       expect(checkRequests(requests)).toHaveLength(2);
     });
   });
