@@ -1,7 +1,7 @@
 // The other words a note's spelling could be read as without niqqud, which both the suggestions
 // and the check tell Claude about, so a Reading context can be judged against them.
 import type { DictionaryLookup } from '#lib/api/dictionary.ts';
-import { isSamePointedText, toLookupKey } from '#lib/hebrew/normalize.ts';
+import { isSameReading, toLookupKey } from '#lib/hebrew/normalize.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 import { lookUp, withDictionary } from '#lib/server/dictionary/lookup.ts';
 import type { DictionaryPaths } from '#lib/server/dictionary/paths.ts';
@@ -10,7 +10,7 @@ export type Homograph = { pointed: string; partOfSpeech: PartOfSpeech; definitio
 
 /**
  * The other words `word` could be read as without niqqud: the entries titled with its spelling
- * whose pointing isn't `pointed`. None when `pointed` is blank, since then nothing tells the
+ * that `pointed` doesn't read as. None when `pointed` is blank, since then nothing tells the
  * note's own entry apart.
  */
 export function homographsOf(lookup: DictionaryLookup, word: string, pointed: string): Homograph[] {
@@ -21,7 +21,9 @@ export function homographsOf(lookup: DictionaryLookup, word: string, pointed: st
   return lookup.candidates.flatMap((candidate) =>
     candidate.pointed !== undefined &&
     toLookupKey(candidate.title) === key &&
-    !isSamePointedText(candidate.pointed, pointed)
+    // By its reading, since the note's niqqud may come from a source that points the word another
+    // way, and its own entry would then be listed as a word to tell it apart from.
+    !isSameReading(candidate.pointed, pointed)
       ? [
           {
             pointed: candidate.pointed,

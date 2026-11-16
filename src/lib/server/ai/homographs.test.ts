@@ -35,6 +35,17 @@ describe('homographsOf', () => {
     ]);
   });
 
+  describe('when the note points its word another way than the dictionary', () => {
+    test.each([
+      ['with a meteg', 'ספר', 'סֵ\u05BDפֶר', ['סַפָּר', 'סָפַר', 'סְפָר']],
+      ['without its vowel letter', 'גדול', 'גָּדֹל', []],
+    ])('leaves out its own entry, pointed %s', (_, word, pointed, others) => {
+      expect(homographsOf(lookupOf(word), word, pointed).map((other) => other.pointed)).toEqual(
+        others,
+      );
+    });
+  });
+
   describe('when the lookup reached an entry through its forms', () => {
     test('leaves it out', () => {
       expect(lookupOf('כלב').candidates.map(({ pointed }) => pointed)).toContain('כַּלְבָּה');

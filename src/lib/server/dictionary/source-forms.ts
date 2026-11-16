@@ -2,6 +2,7 @@ import type { DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import {
   hasConsonantalYodOrVav,
   hasNiqqud,
+  hasUnwrittenYod,
   isSamePointedText,
   uniquePointedText,
 } from '#lib/hebrew/normalize.ts';
@@ -29,7 +30,8 @@ export function pointedFormsTagged(forms: readonly Form[], tags: readonly string
 //
 // A form is followed by its pointed spelling when the two differ (`לספור`, `לִסְפֹּר`), and
 // otherwise is only pointed and links to its page (`לדבר#Hebrew`). That link is only the pointed
-// form stripped, so it misspells a doubled letter (`לְטַיֵּל` links to `לטיל`) and isn't used there.
+// form stripped, so it misspells a doubled letter (`לְטַיֵּל` links to `לטיל`) and a vowel that ktiv
+// male writes with a י (`לְהִשָּׁאֵר` links to `להשאר`), and isn't used there.
 export function infinitives(forms: readonly Form[]): DictionaryInfinitive[] {
   const withLamed = forms.filter((form) => form.form.startsWith('ל'));
   const fromHead = pairInfinitives(
@@ -60,9 +62,10 @@ function pairInfinitives(forms: readonly Form[]): DictionaryInfinitive[] {
       unpointed = form.form;
       continue;
     }
-    const linkTarget = hasConsonantalYodOrVav(form.form)
-      ? undefined
-      : form.links?.[0]?.[1]?.replace(/#.*$/, '');
+    const linkTarget =
+      hasConsonantalYodOrVav(form.form) || hasUnwrittenYod(form.form)
+        ? undefined
+        : form.links?.[0]?.[1]?.replace(/#.*$/, '');
     pairs.push({ pointed: form.form, unpointed: linkTarget ?? unpointed });
     unpointed = undefined;
   }

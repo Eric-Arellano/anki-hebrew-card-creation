@@ -43,6 +43,19 @@ export function hasConsonantalYodOrVav(text: string): boolean {
   return CONSONANTAL_YOD_OR_VAV.test(text.normalize('NFC'));
 }
 
+// A hiriq before a doubled letter, and the tsere a nif'al takes before a guttural. In NFC a letter's
+// dagesh comes after its vowel. The few words that keep such a hiriq unwritten, like `מִכָּאן`, are
+// not infinitives, which is all this is asked about.
+const UNWRITTEN_YOD = /\u05B4[א-טכ-ת][\u05B0-\u05BB]*\u05BC|^לְהֵ[אהחער]/;
+
+/**
+ * Whether the pointed infinitive `text` has a vowel that ktiv male writes with a י its pointed
+ * spelling lacks: `לְהִשָּׁאֵר` is `להישאר`, and `לְהֵעָלֵם` is `להיעלם`.
+ */
+export function hasUnwrittenYod(text: string): boolean {
+  return UNWRITTEN_YOD.test(text.normalize('NFC'));
+}
+
 /** The key the dictionary index files `text` under: `שְׁנַת־` and `שנת` share one. */
 export function toLookupKey(text: string): string {
   return (
@@ -76,6 +89,35 @@ export function spellsWord(pointed: string, unpointed: string): boolean {
 // after NFC.
 export function isSamePointedText(a: string, b: string): boolean {
   return a.normalize('NFC') === b.normalize('NFC');
+}
+
+// How a word is chanted or stressed, not which word it is: cantillation, the meteg, the rafe and
+// the dots over and under a letter.
+const CHANT_AND_STRESS = /[\u0591-\u05AF\u05BD\u05BF\u05C4\u05C5]/g;
+
+// What two pointings of one word may differ in. Unicode has a qamats qatan and a vav's holam haser
+// of their own, which most sources write as a plain qamats and holam. And a source may point the
+// ktiv male spelling, whose vowel letters another leaves out: `שָׁחוֹר` and `שָׁחֹר`, `שׁוּלְחָן` and
+// `שֻׁלְחָן`, `דִּיבֵּר` and `דִּבֵּר`. A ו followed straight by a dagesh is a shuruk, as in `plural.ts`.
+function toReadingKey(pointed: string): string {
+  return (
+    withoutDirectionControls(pointed)
+      .normalize('NFC')
+      .replace(CHANT_AND_STRESS, '')
+      .replaceAll('\u05C7', '\u05B8')
+      .replaceAll('\u05BA', '\u05B9')
+      .replace(/ו\u05B9/g, '\u05B9')
+      .replace(/ו\u05BC(?![\u05B0-\u05BB])/g, '\u05BB')
+      .replace(/(?<=[\u05B4\u05B5][\u05BC\u05C1\u05C2]*)י(?![\u05B0-\u05BC])/g, '')
+      // A vowel moved onto the letter before it may now sit out of NFC's order.
+      .normalize('NFC')
+      .trim()
+  );
+}
+
+/** Whether two pointed spellings are read aloud the same, so are one word pointed two ways. */
+export function isSameReading(a: string, b: string): boolean {
+  return toReadingKey(a) === toReadingKey(b);
 }
 
 export function includesPointedText(text: string, part: string): boolean {

@@ -14,6 +14,11 @@ describe('irregularPlural', () => {
       ['כַּרְטִיס אַשְׁרַאי', 'כַּרְטִיסֵי אַשְׁרַאי', 'm'],
       ['רוּחַ', 'רוּחוֹת', 'mf'],
       ['שְׁנַת־לִמּוּדִים', 'שְׁנוֹת־לִמּוּדִים', 'f'],
+      ['מְכוֹנִית', 'מְכוֹנִיּוֹת', 'f'],
+      ['נָשִׂיא', 'נְשִׂיאִים', 'm'],
+      ['יְהוּדִי', 'יְהוּדִים', 'm'],
+      ['אֵם', 'אִמּוֹת', 'f'],
+      ['כְּלִי טַיִס', 'כְּלֵי טַיִס', 'm'],
     ] as const)('passes %s → %s', (singular, plural, gender) => {
       expect(irregularPlural({ singular, plural, gender })).toBeUndefined();
     });
@@ -85,6 +90,18 @@ describe('irregularPlural', () => {
       ['יוֹם־הֻלֶּדֶת', 'יְמֵי הֻלֶּדֶת', 'm'],
     ] as const)('flags %s → %s', (singular, plural, gender) => {
       expect(irregularPlural({ singular, plural, gender })).toBe('changed-stem');
+    });
+
+    describe('by a letter between the stem and the ending', () => {
+      test.each([
+        ['בַּת', 'בָּנוֹת', 'f'],
+        ['אֵם', 'אִמָּהוֹת', 'f'],
+        ['צֵל', 'צְלָלִים', 'm'],
+        ['צַד', 'צְדָדִים', 'm'],
+        ['דֻּגְמָה', 'דֻּגְמָאוֹת', 'f'],
+      ] as const)('flags %s → %s', (singular, plural, gender) => {
+        expect(irregularPlural({ singular, plural, gender })).toBe('changed-stem');
+      });
     });
 
     // What the stem check can't tell from `יוֹם` → `יָמִים`.

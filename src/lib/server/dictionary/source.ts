@@ -9,6 +9,7 @@ import type { DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import {
   hasNiqqud,
   toComparisonKey,
+  toLookupKey,
   uniquePointedText,
   withoutDirectionControls,
 } from '#lib/hebrew/normalize.ts';
@@ -20,7 +21,11 @@ import {
 } from '#lib/server/dictionary/source-forms.ts';
 
 // A word or form, without the direction controls that wrap some of them.
-const hebrewText = z.string().transform((text) => withoutDirectionControls(text).trim());
+function withoutControls(text: string): string {
+  return withoutDirectionControls(text).trim();
+}
+
+const hebrewText = z.string().transform(withoutControls);
 
 const templateSchema = z.object({
   name: z.string(),
@@ -108,9 +113,13 @@ export function readEntry(json: unknown): SourceEntry | undefined {
   const line = parsed.data;
 
   // The head template's forms; the inflection table's carry a `source`.
-  const headForms = line.forms.filter((form) => form.source === undefined);
+  const spellings = templateSpellings(line.head_templates);
+  const forms = line.forms.map((form) =>
+    form.source === undefined ? { ...form, form: asTemplateSpells(form.form, spellings) } : form,
+  );
+  const headForms = forms.filter((form) => form.source === undefined);
   // A cell holding two spellings, `ייגש \ יִגַּשׁ`, is no word form, so its input stays blank.
-  const conjugationForms = line.forms.filter(
+  const conjugationForms = forms.filter(
     (form) => form.source === 'conjugation' && isWordForm(form),
   );
   const glossSenses = line.senses.filter(
@@ -118,15 +127,14 @@ export function readEntry(json: unknown): SourceEntry | undefined {
   );
   const glosses = glossSenses
     .map((sense) => (sense.raw_glosses ?? sense.glosses).at(-1) ?? '')
-    .filter((gloss) => gloss !== '');
-  // Missing niqqud for a few words, like `שמיים`, which then has no pointed spelling.
-  const canonical = line.forms.find((form) => form.tags.includes('canonical'))?.form;
+    .filter((gloss) => gloss !== '' && !TO_INFINITIVE_GLOSS.test(gloss));
+  const canonical = headForms.find((form) => form.tags.includes('canonical'))?.form;
 
   return {
     word: line.word,
     pos: line.pos,
     etymologyNumber: line.etymology_number?.toString(),
-    pointed: canonical !== undefined && hasNiqqud(canonical) ? canonical : undefined,
+    pointed: pointedSpelling(canonical, line.word),
     isLemma: !isFormEntry(line.head_templates) && glosses.length > 0,
     facts: {
       glosses,
@@ -141,7 +149,7 @@ export function readEntry(json: unknown): SourceEntry | undefined {
       masculinePlurals: pointedFormsTagged(headForms, ['masculine', 'plural']),
       femininePlurals: pointedFormsTagged(headForms, ['feminine', 'plural']),
       masculines: pointedFormsTagged(headForms, ['masculine']),
-      infinitives: infinitives(line.forms),
+      infinitives: infinitives(forms),
       presents: pointedFormsTagged(conjugationForms, ['masculine', 'present', 'singular']),
       futures: pointedFormsTagged(conjugationForms, [
         'future',
@@ -170,8 +178,55 @@ export function readEntry(json: unknown): SourceEntry | undefined {
       ),
     ),
     conjugationRoots: conjugationRoots(line.inflection_templates),
-    keyForms: [line.word, ...line.forms.filter(isWordForm).map((form) => form.form)],
+    keyForms: [line.word, ...forms.filter(isWordForm).map((form) => form.form)],
   };
+}
+
+// A few infinitives are filed as verbs of their own, with no `form_of` and a head template like a
+// lemma's: `לדעת`, whose one sense is "to-infinitive of ידע". Only the gloss says what it is, and
+// as a lemma it would fill a verb's past with an infinitive.
+const TO_INFINITIVE_GLOSS = /^to-infinitive of /i;
+
+// The head template's own spellings of the word and its forms, which are the source's. wiktextract
+// reads each form back off the rendered page, and can leave a space where a prefix or a maqaf joins
+// two links, or keep what the page shows after the word: `כַּדּוּר ־רֶגֶל` for `כַּדּוּר־רֶגֶל`,
+// `בְּ דֶרֶךְ־כְּלָל` for `בְּדֶרֶךְ־כְּלָל`, and `רָקַד .` for `רָקַד`.
+function templateSpellings(headTemplates: readonly Template[]): string[] {
+  return headTemplates
+    .flatMap((template) => Object.values(template.args))
+    .filter((arg): arg is string => typeof arg === 'string')
+    .map(withoutControls)
+    .filter(hasNiqqud);
+}
+
+function withoutSpaces(text: string): string {
+  return text.normalize('NFC').replace(/\s+/g, '');
+}
+
+// `form` as the template spells it, where the two differ only in spaces and in what follows the
+// word, which holds nothing Hebrew. Any other form stays as wiktextract gives it.
+function asTemplateSpells(form: string, spellings: readonly string[]): string {
+  const squeezed = withoutSpaces(form);
+  const fitting = spellings.filter((spelling) => {
+    const start = withoutSpaces(spelling);
+    return squeezed.startsWith(start) && !/[\u0590-\u05FF]/.test(squeezed.slice(start.length));
+  });
+  return fitting.toSorted((a, b) => b.length - a.length)[0] ?? form;
+}
+
+// Missing niqqud for a few words, like `שמיים`, which then has no pointed spelling. A head may
+// also give the title and then how it is pointed, as `בינתיים \ בֵּינְתַיִם`, and only the second is
+// the pointed spelling. Any other pair is left out rather than guessed apart.
+function pointedSpelling(canonical: string | undefined, title: string): string | undefined {
+  if (canonical === undefined) return undefined;
+  const [first = '', second, ...others] = canonical.split(/\s*\\\s*/);
+  if (second === undefined) return hasNiqqud(first) ? first : undefined;
+  const titleThenPointed =
+    others.length === 0 &&
+    !hasNiqqud(first) &&
+    toLookupKey(first) === toLookupKey(title) &&
+    hasNiqqud(second);
+  return titleThenPointed ? second : undefined;
 }
 
 function templateNamed(templates: readonly Template[], name: string): Template | undefined {

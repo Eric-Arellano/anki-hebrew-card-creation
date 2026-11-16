@@ -2,8 +2,10 @@ import { describe, expect, test } from 'vitest';
 import {
   hasConsonantalYodOrVav,
   hasNiqqud,
+  hasUnwrittenYod,
   includesPointedText,
   isSamePointedText,
+  isSameReading,
   spellsWord,
   toComparisonKey,
   toDefectiveKey,
@@ -81,6 +83,52 @@ describe('hasConsonantalYodOrVav', () => {
     ['יֶלֶד', false],
   ])('answers %s with %s', (text, expected) => {
     expect(hasConsonantalYodOrVav(text)).toBe(expected);
+  });
+});
+
+describe('hasUnwrittenYod', () => {
+  test.each([
+    ['לְהִשָּׁאֵר', true],
+    ['לְהִכָּנֵס', true],
+    ['לְהִשָּׂרֵף', true],
+    ['לְהֵעָלֵם', true],
+    ['לְהֵרָדֵם', true],
+    ['לְהִתְלַבֵּשׁ', false],
+    ['לִשְׁמֹר', false],
+    ['לְהַגִּיד', false],
+    ['לְדַבֵּר', false],
+    ['לְהָבִין', false],
+  ])('answers %s with %s', (text, expected) => {
+    expect(hasUnwrittenYod(text)).toBe(expected);
+  });
+
+  test('answers the same in either Unicode form', () => {
+    expect(hasUnwrittenYod('לְהִשָּׁאֵר'.normalize('NFD'))).toBe(true);
+  });
+});
+
+describe('isSameReading', () => {
+  test.each([
+    ['a meteg', 'סֵ\u05BDפֶר', 'סֵפֶר'],
+    ['cantillation', `בְּרֵאשִׁ${String.fromCodePoint(0x596)}ית`, 'בְּרֵאשִׁית'],
+    ['a qamats qatan', 'ח\u05C7כְמָה', 'חָכְמָה'],
+    ['a written holam', 'שָׁחוֹר', 'שָׁחֹר'],
+    ['a written shuruk', 'שׁוּלְחָן', 'שֻׁלְחָן'],
+    ['a written hiriq', 'דִּיבֵּר', 'דִּבֵּר'],
+    ['the order of a letter’s marks', 'ס\u05B7פ\u05BC\u05B8ר', 'סַפָּר'],
+    ['a direction control', 'סֵפֶר\u200F', 'סֵפֶר'],
+  ])('takes two pointings apart only by %s as one reading', (_, a, b) => {
+    expect(isSameReading(a, b)).toBe(true);
+  });
+
+  test.each([
+    ['a vowel', 'סֵפֶר', 'סְפָר'],
+    ['a dagesh', 'סַפָּר', 'סַפָר'],
+    ['a shin dot', 'שָׂם', 'שָׁם'],
+    ['a consonantal ו', 'עִוֵּר', 'עִיר'],
+    ['a consonantal י', 'חַיִל', 'חַל'],
+  ])('tells two pointings apart by %s', (_, a, b) => {
+    expect(isSameReading(a, b)).toBe(false);
   });
 });
 
