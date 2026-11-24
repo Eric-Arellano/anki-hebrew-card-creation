@@ -43,9 +43,7 @@ function summary({ match, candidates }: DictionaryLookup): string {
 }
 </script>
 
-{#snippet headline(
-  candidate: DictionaryCandidate,
-)}
+{#snippet headline(candidate: DictionaryCandidate)}
   <span class="text-2xl" lang="he" dir="rtl">{candidate.pointed ?? candidate.title}</span>
   <span class="text-sm text-neutral-400">{candidate.wiktionaryPartOfSpeech}</span>
   {#if candidate.roots.length > 0}
@@ -56,9 +54,7 @@ function summary({ match, candidates }: DictionaryLookup): string {
 {/snippet}
 
 <!-- The picked entry's page, or else the word's, whose titles never carry niqqud. -->
-{#snippet wiktionaryChip(
-  hasEntry: boolean | undefined,
-)}
+{#snippet wiktionaryChip(hasEntry: boolean | undefined)}
   <LinkChip
     label={LINKS.wiktionary.label}
     url={buildLinkUrl(LINKS.wiktionary, picked?.title ?? toComparisonKey(word))}
@@ -67,9 +63,7 @@ function summary({ match, candidates }: DictionaryLookup): string {
   />
 {/snippet}
 
-{#snippet candidateList(
-  candidates: DictionaryCandidate[],
-)}
+{#snippet candidateList(candidates: DictionaryCandidate[])}
   <ul class="grid gap-2 sm:grid-cols-2">
     {#each candidates as candidate (candidate.id)}
       <li class="grid">

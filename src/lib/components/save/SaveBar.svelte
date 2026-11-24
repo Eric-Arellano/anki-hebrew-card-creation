@@ -201,9 +201,7 @@ function focus(element: HTMLElement) {
 
 <svelte:window {onkeydown} />
 
-{#snippet fieldHtml(
-  html: string,
-)}
+{#snippet fieldHtml(html: string)}
   {#if html === ''}
     <span class="text-neutral-400">(blank)</span>
   {:else}
