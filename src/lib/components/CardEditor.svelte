@@ -349,10 +349,7 @@ onMount(checkAnki);
     </div>
   </Section>
 
-  {#snippet fieldGroup(
-    fields: readonly FieldKey[],
-    partOfSpeech: PartOfSpeech,
-  )}
+  {#snippet fieldGroup(fields: readonly FieldKey[], partOfSpeech: PartOfSpeech)}
     <FieldGroup
       {fields}
       {partOfSpeech}
