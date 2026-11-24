@@ -54,9 +54,32 @@ npm run launch-agent install
 Bookmark `http://127.0.0.1:3000`. Anki desktop must be open to add cards. The log is
 `~/Library/Logs/local.anki-hebrew-card-creation.log`.
 
+To update it to the latest code, run `npm run self-update`. It pulls, reinstalls, rebuilds,
+reindexes the dictionary and restarts the agent; it stops if you have local edits.
+
 After you rebuild or edit `.env`, run `npm run launch-agent restart`. To stop it for good, run
 `npm run launch-agent uninstall`. If you upgrade Node with something other than Homebrew or the
 official installer, run `install` again.
+
+### Setting up another learner's Anki
+
+For someone else to make cards for their own deck on their own Mac:
+
+1. Install Anki desktop and AnkiConnect on their Mac, and add Anki to their Login Items, so it
+   is open whenever the app is.
+2. On the original Mac, in Anki's browser, select one `Hebrew` note and choose Notes › Export
+   Notes. Pick Anki Deck Package (`.apkg`) and leave scheduling out. Their note type comes from
+   this file, not from recreating it by hand, so it matches `src/lib/note-type.ts` exactly.
+3. On their Mac, import the `.apkg` with File › Import, then delete the sample note in Anki.
+4. Create a `Hebrew::Production` deck. In Tools › Manage Note Types › `Hebrew` › Cards, check
+   that each recall card type's Deck Override points at *their* `Hebrew::Production`; an
+   override may not survive the import.
+5. Clone this folder, download the dictionary and set up `.env` as above, then follow
+   [Keep it running](#keep-it-running-macos). Install Node with Homebrew or the official
+   installer. Afterwards, `npm run self-update` is all an update takes.
+
+For their `.env`, a key from its own workspace in the Claude Console keeps their spend separate,
+with its own limit, and lets you revoke it without touching yours.
 
 ### Claude
 
