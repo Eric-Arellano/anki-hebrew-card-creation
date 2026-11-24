@@ -89,11 +89,7 @@ function focus(element: HTMLElement) {
 
 <!-- Laid out like the dictionary's choices below it, since both are a choice of where the note
      starts: from one already in the deck, or from a dictionary entry. -->
-{#snippet noteList(
-  label: string,
-  notes: ExistingNote[],
-  labelHebrew?: string,
-)}
+{#snippet noteList(label: string, notes: ExistingNote[], labelHebrew?: string)}
   {#if notes.length > 0}
     <p class="mb-2 font-medium">
       {label}
