@@ -4,7 +4,11 @@
 // is only as clean as that, so a note Claude keeps faulting may be a case to fix rather than a
 // false alarm.
 import type { CheckRequest, SuggestRequest, VerbMeaningsRequest } from '#lib/api/ai.ts';
-import type { Meaning, PrepositionChoice } from '#lib/card/definitions.ts';
+import {
+  definitionsToAnkiFieldHtml,
+  type Meaning,
+  type PrepositionChoice,
+} from '#lib/card/definitions.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import type { FieldKey, FieldValues } from '#lib/note-type.ts';
 import type { Homograph } from '#lib/server/ai/homographs.ts';
@@ -28,6 +32,15 @@ function examples(...pairs: [hebrew: string, english: string][]): string {
         `<span lang="en">${english}</span>`,
     )
     .join('<br>');
+}
+
+// A verb's Definitions as the editor saves them, each meaning with its preposition's pill.
+type Line = [english: string, preposition: PrepositionChoice];
+function meaning([english, preposition]: Line): Meaning {
+  return { english, preposition };
+}
+function meanings(first: Line, ...rest: Line[]): string {
+  return definitionsToAnkiFieldHtml([meaning(first), ...rest.map(meaning)]);
 }
 
 function note(
@@ -62,10 +75,16 @@ const sefer = {
   root: 'ס־פ־ר',
   forms: 'plural: סְפָרִים',
 };
+const lishmor = {
+  unpointed: 'לשמור',
+  pointed: 'לִשְׁמֹר',
+  binyan: "pa'al",
+  root: 'ש־מ־ר',
+};
 const lechakot = {
   unpointed: 'לחכות',
   pointed: 'לְחַכּוֹת',
-  definitions: 'to wait',
+  definitions: meanings(['to wait (for)', 'ל']),
   binyan: "pi'el",
   root: 'ח־כ־ה',
 };
@@ -130,7 +149,7 @@ export const CHECK_CASES: CheckCase[] = [
     {
       unpointed: 'ללמוד',
       pointed: 'לִלְמֹד',
-      definitions: 'to learn, study',
+      definitions: meanings(['to learn, study', 'את']),
       binyan: "pa'al",
       root: 'ל־מ־ד',
       examples: examples(
@@ -146,7 +165,7 @@ export const CHECK_CASES: CheckCase[] = [
     {
       unpointed: 'לשאול',
       pointed: 'לִשְׁאֹל',
-      definitions: 'to ask',
+      definitions: meanings(['to ask', 'את']),
       binyan: "pa'al",
       root: 'ש־א־ל',
       examples: examples(
@@ -253,7 +272,7 @@ export const CHECK_CASES: CheckCase[] = [
     {
       unpointed: 'להתקשר',
       pointed: 'לְהִתְקַשֵּׁר',
-      definitions: 'to call (on the phone)',
+      definitions: meanings(['to call (on the phone)', 'ל']),
       binyan: "hitpa'el",
       root: 'ק־ש־ר',
       examples: examples(['התקשרתי את אמא שלי.', 'I called my mom.']),
@@ -266,7 +285,7 @@ export const CHECK_CASES: CheckCase[] = [
     {
       unpointed: 'להתעניין',
       pointed: 'לְהִתְעַנְיֵן',
-      definitions: 'to be interested (in)',
+      definitions: meanings(['to be interested (in)', 'ב']),
       binyan: "hitpa'el",
       examples: examples(['אני מתעניין על היסטוריה.', 'I am interested in history.']),
     },
@@ -278,7 +297,7 @@ export const CHECK_CASES: CheckCase[] = [
     {
       unpointed: 'לעזור',
       pointed: 'לַעֲזֹר',
-      definitions: 'to help',
+      definitions: meanings(['to help', 'ל']),
       binyan: "pa'al",
       root: 'ע־ז־ר',
       examples: examples(['עזרתי אותו בשיעורי הבית.', 'I helped him with the homework.']),
@@ -318,7 +337,7 @@ export const CHECK_CASES: CheckCase[] = [
     {
       unpointed: 'לאהוב',
       pointed: 'לֶאֱהֹב',
-      definitions: 'to love, like',
+      definitions: meanings(['to love, like', 'את']),
       binyan: "pa'al",
       examples: examples(['אני אוהב מאוד אותה.', 'I love her very much.']),
     },
@@ -469,12 +488,120 @@ export const CHECK_CASES: CheckCase[] = [
     {
       unpointed: 'לפתוח',
       pointed: 'לִפְתֹּחַ',
-      definitions: 'to open',
+      definitions: meanings(['to open', 'את']),
       binyan: "pa'al",
       root: 'פ־ת־ח',
       examples: examples(
         ['הדלת פתחה לאט.', 'The door opened slowly.'],
         ['פתחתי את החלון.', 'I opened the window.'],
+      ),
+    },
+    ['examples'],
+  ),
+
+  // A verb's prepositions, as the Definitions pair them with its meanings. The clean ones hold
+  // what the prompt says to leave alone.
+  note(
+    'lishmor, a preposition per meaning, one without an example',
+    'verb',
+    {
+      ...lishmor,
+      definitions: meanings(
+        ['to keep', 'את'],
+        ['to guard, look after', 'על'],
+        ['to save (a file)', 'את'],
+      ),
+      examples: examples(
+        ['שמרתי את המכתב שלה.', 'I kept her letter.'],
+        ['היא שומרת על הילדים בערב.', 'She looks after the kids in the evening.'],
+      ),
+    },
+    [],
+  ),
+  note(
+    'ledaber, none for a language',
+    'verb',
+    {
+      unpointed: 'לדבר',
+      pointed: 'לְדַבֵּר',
+      definitions: meanings(
+        ['to talk with', 'עם'],
+        ['to talk about', 'על'],
+        ['to speak (a language)', 'none'],
+      ),
+      binyan: "pi'el",
+      root: 'ד־ב־ר',
+      examples: examples(
+        ['דיברתי עם אמא שלי.', 'I talked with my mom.'],
+        ['הם מדברים על הסרט.', 'They are talking about the movie.'],
+        ['אני מדבר עברית.', 'I speak Hebrew.'],
+      ),
+    },
+    [],
+  ),
+  note(
+    'lachshov, none before a ש clause',
+    'verb',
+    {
+      unpointed: 'לחשוב',
+      pointed: 'לַחְשֹׁב',
+      definitions: meanings(['to think about', 'על'], ['to think (that)', 'none']),
+      binyan: "pa'al",
+      root: 'ח־ש־ב',
+      examples: examples(
+        ['אני חושב על המבחן.', 'I am thinking about the test.'],
+        ['אני חושב שהוא צודק.', 'I think that he is right.'],
+      ),
+    },
+    [],
+  ),
+  note(
+    'lirot, no את before an indefinite object',
+    'verb',
+    {
+      unpointed: 'לראות',
+      pointed: 'לִרְאוֹת',
+      definitions: meanings(['to see', 'את']),
+      binyan: "pa'al",
+      root: 'ר־א־ה',
+      examples: examples(['ראיתי סרט טוב אתמול.', 'I saw a good movie yesterday.']),
+    },
+    [],
+  ),
+  note(
+    'lehistakel, ב where על fits too',
+    'verb',
+    {
+      unpointed: 'להסתכל',
+      pointed: 'לְהִסְתַּכֵּל',
+      definitions: meanings(['to look at', 'ב']),
+      binyan: "hitpa'el",
+      root: 'ס־כ־ל',
+      examples: examples(['הוא מסתכל בשעון.', 'He is looking at the clock.']),
+    },
+    [],
+  ),
+  note(
+    'laazor, את on the meaning',
+    'verb',
+    {
+      unpointed: 'לעזור',
+      pointed: 'לַעֲזֹר',
+      definitions: meanings(['to help', 'את']),
+      binyan: "pa'al",
+      root: 'ע־ז־ר',
+    },
+    ['definitions'],
+  ),
+  note(
+    'lishmor, an example’s preposition for another meaning',
+    'verb',
+    {
+      ...lishmor,
+      definitions: meanings(['to keep', 'את'], ['to guard, look after', 'על']),
+      examples: examples(
+        ['שמרתי את המכתב שלה.', 'I kept her letter.'],
+        ['אני שומר את הילדים של אחותי.', 'I look after my sister’s kids.'],
       ),
     },
     ['examples'],
