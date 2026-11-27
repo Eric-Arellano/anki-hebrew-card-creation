@@ -29,7 +29,8 @@ What is left is everything downstream of the lines seeing each preposition.
 - את counts as a preposition, so a blank always asks which preposition, never whether there is
   one. None is only for a meaning that never takes an object.
 - Each preposition is shown in an example of its own meaning.
-- Variants stay for irregular forms only, like אֵלֵךְ.
+- Variants stay for forms the infinitive and past don't predict, never for a preposition
+  (`verb-past-and-infinitive.md`).
 - A second note only for a different verb with the same spelling: לְסַפֵּר "tell" and לִסְפֹּר
   "count". `Reading context` tells them apart.
 
@@ -130,7 +131,9 @@ must hold to the same rules, or the check faults what Suggest proposed.
 Re-save the 11 verbs left in the app as infinitives, with a binyan and a preposition per
 meaning: אמר, כתב, ישב, דיבר, למד, עמד, חשב, קרא, בא, רצה, ראה (read through AnkiConnect,
 2026-11-26). They are keyed by their past, and only אמר has a `Part of speech`. Suggest meanings
-drafts each one's lines. Then reset reviews for the deck.
+drafts each one's lines. Wait for `verb-past-and-infinitive.md` too, which changes what every
+verb saves, so each is re-saved once; ללכת joins them then, and אמר becomes להגיד. Whichever
+plan is left carries this step. Then reset reviews for the deck.
 
 ## Verification
 
