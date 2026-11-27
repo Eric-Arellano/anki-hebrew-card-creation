@@ -12,5 +12,5 @@
     // SvelteKit's own types, and Node's for the server code and `scripts/`.
     "types": ["$app/types", "node"]
   },
-  "include": ["src", "tests", "scripts", "vite.config.ts"]
+  "include": ["src", "tests", "scripts", "evals", "vite.config.ts"]
 }

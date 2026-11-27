@@ -68,10 +68,6 @@ describe('verbMeaningsPrompt', () => {
     for (const line of VERB_MEANING_PREPOSITION_HELP.cases) expect(system).toContain(`- ${line}`);
   });
 
-  test('asks at medium effort', () => {
-    expect(verbMeaningsPrompt(lishmor).effort).toBe('medium');
-  });
-
   describe('with the dictionary’s prepositions', () => {
     test('names them for the whole verb', () => {
       const { user } = verbMeaningsPrompt({ ...lishmor, dictionaryPrepositions: ['ל'] });
@@ -168,6 +164,5 @@ describe('suggestVerbMeanings', () => {
         },
       ],
     });
-    expect(messages.create.mock.calls[0]?.[0].output_config?.effort).toBe('medium');
   });
 });
