@@ -362,7 +362,7 @@ describe('CardEditor', () => {
         const requests = await renderConnectedEditor();
         await fillDag();
         await typeInto(noteField('Other forms'), 'f: דָּגָה');
-        await fillVerb("pa'al", 'דוג');
+        await fillVerb("pa'al", 'דוג', 'דג');
         await fireEvent.click(screen.getByRole('radio', { name: 'None' }));
 
         await skipImage();

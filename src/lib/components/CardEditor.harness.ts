@@ -225,12 +225,13 @@ export async function fillInputs({
   await typeInto(input('Hebrew word, with niqqud'), pointed);
 }
 
-export async function fillVerb(binyan: string, root: string) {
+export async function fillVerb(binyan: string, root: string, past = '') {
   await choosePartOfSpeech('Verb');
   await fireEvent.change(screen.getByRole('combobox', { name: 'Binyan' }), {
     target: { value: binyan },
   });
   await typeInto(input('Root, like דבר or ד.ב.ר'), root);
+  if (past !== '') await typeInto(input('Past (he), without niqqud'), past);
 }
 
 /** Clicks Check and add, then Add to deck, and answers with the body of the first add sent. */

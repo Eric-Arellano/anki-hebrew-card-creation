@@ -101,7 +101,7 @@ describe('composeFields', () => {
   });
 
   describe('for a verb', () => {
-    const noForms = { past: '', present: '', future: '' };
+    const noForms = { past: '', unpointedPast: 'דיבר', present: '', future: '' };
     const ledaber = {
       word: 'לדבר',
       pointed: 'לְדַבֵּר',
@@ -110,19 +110,25 @@ describe('composeFields', () => {
       root: '',
     } as const;
 
-    test('answers with the word alone, and writes its prepositions, binyan, root and forms', () => {
+    test('answers with the infinitive and past, and writes its prepositions, binyan, root and forms', () => {
       expect(
         composeFields({
           ...ledaber,
           root: 'ד־ב־ר',
-          verb: { binyan: "pi'el", past: 'דִּבֵּר', present: 'מְדַבֵּר', future: 'יְדַבֵּר' },
+          verb: {
+            binyan: "pi'el",
+            past: 'דִּבֵּר',
+            unpointedPast: ' דיבר ',
+            present: 'מְדַבֵּר',
+            future: 'יְדַבֵּר',
+          },
         }),
       ).toEqual({
         unpointed: 'לדבר',
         partOfSpeech: 'verb',
         pointed: 'לְדַבֵּר',
         definitions: 'to speak <span class="prep"><bdi lang="he">עִם</bdi></span>',
-        productionAnswer: 'לדבר',
+        productionAnswer: 'לדבר דיבר',
         binyan: "pi'el",
         root: 'ד־ב־ר',
         forms: 'past: דִּבֵּר<br>pres: מְדַבֵּר<br>fut: יְדַבֵּר',
@@ -143,6 +149,19 @@ describe('composeFields', () => {
     describe('with none of its forms', () => {
       test('leaves them blank', () => {
         expect(composeFields({ ...ledaber, verb: { ...noForms, binyan: "pi'el" } }).forms).toBe('');
+      });
+    });
+
+    describe("in pu'al, which has no infinitive", () => {
+      test('answers with the past alone', () => {
+        expect(
+          composeFields({
+            ...ledaber,
+            word: 'דובר',
+            pointed: 'דֻּבַּר',
+            verb: { binyan: "pu'al", past: 'דֻּבַּר', present: '', future: '' },
+          }).productionAnswer,
+        ).toBe('דובר');
       });
     });
   });

@@ -41,3 +41,12 @@ export function toBinyan(text: string): Binyan | undefined {
   const binyan = BINYANIM.find((candidate) => candidate === name);
   return binyan ?? (Object.hasOwn(BINYAN_BY_ALIAS, name) ? BINYAN_BY_ALIAS[name] : undefined);
 }
+
+// The passives of pi'el and hif'il, which have no infinitive, so a verb in either goes by its past.
+const WITHOUT_INFINITIVE = ["pu'al", "huf'al"] as const satisfies readonly Binyan[];
+
+export type BinyanWithInfinitive = Exclude<Binyan, (typeof WITHOUT_INFINITIVE)[number]>;
+
+export function hasInfinitive(binyan: Binyan | undefined): binyan is BinyanWithInfinitive {
+  return !WITHOUT_INFINITIVE.some((passive) => passive === binyan);
+}

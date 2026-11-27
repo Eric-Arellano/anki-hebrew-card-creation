@@ -235,14 +235,27 @@ describe('draftFromNote', () => {
         partOfSpeech: 'verb',
         root: 'ד־ב־ר',
         definitions: verbDefinitions,
-        verb: { binyan: "pi'el", past: 'דִּבֵּר', present: 'מְדַבֵּר', future: '' },
+        verb: {
+          binyan: "pi'el",
+          past: 'דִּבֵּר',
+          unpointedPast: 'דיבר',
+          present: 'מְדַבֵּר',
+          future: '',
+        },
       },
       {
         ...word,
         partOfSpeech: 'verb',
         root: '',
         definitions: [{ english: 'to go', preposition: 'none' }],
-        verb: { binyan: "pa'al", past: '', present: '', future: 'x' },
+        verb: { binyan: "pa'al", past: '', unpointedPast: 'הלך', present: '', future: 'x' },
+      },
+      {
+        ...word,
+        partOfSpeech: 'verb',
+        root: '',
+        definitions: [{ english: 'to be spoken', preposition: 'none' }],
+        verb: { binyan: "pu'al", past: 'דֻּבַּר', present: '', future: '' },
       },
       {
         ...word,
@@ -300,8 +313,16 @@ describe('draftFromNote', () => {
       ]);
     });
 
-    test('saves it again unchanged', () => {
-      expect(changedFields(held, saved(held))).toEqual({});
+    test('leaves the past without niqqud blank, since the answer predates it', () => {
+      expect(draftFromNote(held).inputs.verb.unpointedPast).toBe('');
+    });
+
+    test('saves it again changed only in the past the answer adds', () => {
+      const withPast = saved(held, (inputs) => ({
+        ...inputs,
+        verb: { ...inputs.verb, unpointedPast: 'הלך' },
+      }));
+      expect(changedFields(held, withPast)).toEqual({ 'Production answer': 'ללכת הלך' });
     });
   });
 

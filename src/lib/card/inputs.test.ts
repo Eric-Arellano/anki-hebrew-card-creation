@@ -15,6 +15,7 @@ const noun: NounDraft = {
 const verb: VerbDraft = {
   binyan: "pi'el",
   past: 'דִּבֵּר',
+  unpointedPast: 'דיבר',
   present: 'מְדַבֵּר',
   future: 'יְדַבֵּר',
 };
@@ -84,16 +85,22 @@ describe('missingInputs', () => {
   });
 
   describe('for a verb', () => {
-    test('requires a preposition before the pointed word, and a binyan after it', () => {
+    test('requires a preposition before the pointed word, and a past and binyan after it', () => {
       expect(
         missingInputs({
           ...ledaberDraft,
           definitions: [{ english: 'to speak' }],
           pointed: '',
           root: '',
-          verb: { ...verb, binyan: undefined },
+          verb: { ...verb, unpointedPast: ' ', binyan: undefined },
         }),
-      ).toEqual(['preposition', 'pointed', 'binyan']);
+      ).toEqual(['preposition', 'pointed', 'unpointedPast', 'binyan']);
+    });
+
+    test("doesn't require a past for a binyan without an infinitive", () => {
+      expect(
+        missingInputs({ ...ledaberDraft, verb: { ...verb, binyan: "pu'al", unpointedPast: '' } }),
+      ).toEqual([]);
     });
 
     test('requires a preposition for each meaning, but not for a blank one', () => {
@@ -249,6 +256,33 @@ describe('completeInputs', () => {
       expect(
         completeInputs({ ...ledaberDraft, verb: { ...verb, past: '', present: '', future: '' } }),
       ).toMatchObject({ verb: { past: '', present: '', future: '' } });
+    });
+  });
+
+  describe('for a verb while its past without niqqud is blank', () => {
+    test('returns nothing', () => {
+      expect(
+        completeInputs({ ...ledaberDraft, verb: { ...verb, unpointedPast: '' } }),
+      ).toBeUndefined();
+    });
+  });
+
+  describe("for a pu'al, which has no infinitive", () => {
+    test('drops the past without niqqud', () => {
+      const dubar = {
+        ...ledaberDraft,
+        word: 'דובר',
+        pointed: 'דֻּבַּר',
+        verb: { ...verb, binyan: "pu'al" as const, past: 'דֻּבַּר', present: '', future: '' },
+      };
+      expect(completeInputs(dubar)).toEqual({
+        word: 'דובר',
+        partOfSpeech: 'verb',
+        definitions: [{ english: 'to speak', preposition: 'עם' }],
+        pointed: 'דֻּבַּר',
+        root: 'ד־ב־ר',
+        verb: { binyan: "pu'al", past: 'דֻּבַּר', present: '', future: '' },
+      });
     });
   });
 

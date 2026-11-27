@@ -8,7 +8,7 @@
 // **Open:** whether it should ever start from the definitions.
 import type { DictionaryCandidate, DictionaryInfinitive } from '#lib/api/dictionary.ts';
 import type { CardInputsDraft } from '#lib/card/inputs.ts';
-import type { Binyan } from '#lib/hebrew/binyan.ts';
+import { type Binyan, hasInfinitive } from '#lib/hebrew/binyan.ts';
 import type { Gender } from '#lib/hebrew/gender.ts';
 import { isSamePointedText, toDefectiveKey } from '#lib/hebrew/normalize.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
@@ -23,6 +23,7 @@ export type PrefillChoices = {
   gender?: Gender[];
   binyan?: Binyan[];
   past?: string[];
+  unpointedPast?: string[];
   plural?: string[];
   feminine?: string[];
   masculinePlural?: string[];
@@ -65,11 +66,35 @@ export function prefillDraft(
     }
     case 'verb': {
       // The deck's verbs go by their infinitive, while the dictionary's go by the past 3ms, which
-      // becomes the note's past form. The infinitive is what “to speak” asks for and what follows
-      // “I want”, and the past can't predict it: `הָלַךְ` → `לָלֶכֶת`. A passive has none to fill.
-      // *Rejected: the past 3ms, because over a quarter share their spelling with another entry,
-      // like `כתב` with the noun, where under 1% of infinitives do.*
+      // the note quizzes beside it: the past can't predict the infinitive, `הָלַךְ` → `לָלֶכֶת`,
+      // nor the infinitive the past. The infinitive is what “to speak” asks for and what follows
+      // “I want”. A pu'al or huf'al has none, so it goes by its past, as a noun goes by its title.
+      // *Rejected: the past 3ms as the word, because over a quarter share their spelling with
+      // another entry, like `כתב` with the noun, where under 1% of infinitives do.*
       const { binyan, infinitives, presents, futures } = candidate.verb;
+      const verbForms = {
+        binyan,
+        past: candidate.pointed ?? '',
+        present: onlyValue(presents),
+        future: onlyValue(futures),
+      };
+      const formChoices = {
+        present: choicesAmong(presents),
+        future: choicesAmong(futures),
+        root: choicesAmong(candidate.roots),
+      };
+      if (!hasInfinitive(binyan)) {
+        return {
+          draft: {
+            ...draft,
+            ...word,
+            partOfSpeech: 'verb',
+            root: onlyValue(candidate.roots),
+            verb: { ...verbForms, unpointedPast: '' },
+          },
+          choices: formChoices,
+        };
+      }
       const infinitive = infinitives.length === 1 ? infinitives[0] : undefined;
       return {
         draft: {
@@ -78,20 +103,10 @@ export function prefillDraft(
           pointed: infinitive?.pointed ?? '',
           partOfSpeech: 'verb',
           root: onlyValue(candidate.roots),
-          verb: {
-            ...draft.verb,
-            binyan,
-            past: candidate.pointed ?? '',
-            present: onlyValue(presents),
-            future: onlyValue(futures),
-          },
+          // The title is the dictionary's own spelling of the past.
+          verb: { ...verbForms, unpointedPast: candidate.title },
         },
-        choices: {
-          infinitives: choicesAmong(infinitives),
-          present: choicesAmong(presents),
-          future: choicesAmong(futures),
-          root: choicesAmong(candidate.roots),
-        },
+        choices: { infinitives: choicesAmong(infinitives), ...formChoices },
       };
     }
     case 'adjective': {
@@ -147,14 +162,17 @@ export function prefillBlanks(
     return held;
   }
 
-  const isVerb = candidate.partOfSpeech === 'verb';
+  const byInfinitive = candidate.partOfSpeech === 'verb' && hasInfinitive(candidate.verb.binyan);
   const keepsGender = draft.noun.gender !== undefined;
   const next: CardInputsDraft = {
     ...filled,
-    // A verb's word and pointed word are its infinitive, which is offered as a pair.
+    // A verb's word and pointed word are its infinitive, which is offered as a pair, unless it has
+    // none.
     word:
-      isVerb && !isBlank(draft.word) ? draft.word : (keep('word', draft.word, filled.word) ?? ''),
-    pointed: isVerb
+      byInfinitive && !isBlank(draft.word)
+        ? draft.word
+        : (keep('word', draft.word, filled.word) ?? ''),
+    pointed: byInfinitive
       ? keepInfinitive(draft.pointed, filled.pointed, candidate.verb.infinitives, offered)
       : (keep('pointed', draft.pointed, filled.pointed) ?? ''),
     partOfSpeech: keep('partOfSpeech', draft.partOfSpeech, filled.partOfSpeech),
@@ -171,6 +189,8 @@ export function prefillBlanks(
       ...filled.verb,
       binyan: keep('binyan', draft.verb.binyan, filled.verb.binyan),
       past: keep('past', draft.verb.past, filled.verb.past) ?? '',
+      unpointedPast:
+        keep('unpointedPast', draft.verb.unpointedPast, filled.verb.unpointedPast) ?? '',
       present: keep('present', draft.verb.present, filled.verb.present) ?? '',
       future: keep('future', draft.verb.future, filled.verb.future) ?? '',
     },

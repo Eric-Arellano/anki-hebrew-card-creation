@@ -14,7 +14,7 @@ import { type Homograph, homographLines } from './homographs.ts';
 import { PREPOSITION_RULES, verbMeaningLines } from './verb-meanings.ts';
 
 // What Claude reads, in the order a card shows them. `Production answer` stays out, since it only
-// repeats the word for the card to check a typed answer.
+// repeats the word, and a verb's past from `Forms`, for the card to check a typed answer.
 const SENT_FIELDS = [
   'unpointed',
   'pointed',
@@ -150,6 +150,8 @@ const VERB_FAULTS =
   'gives.\n';
 
 const VERB_NON_FAULTS =
+  '- A past in the Forms that belongs to another verb, where it is the one speakers use, like ' +
+  '“אָמַר” for “לְהַגִּיד”.\n' +
   '- A preposition that fits where another would too. The learner chooses the one they want to ' +
   'practice.\n' +
   '- An example with no את because its object is indefinite.\n' +

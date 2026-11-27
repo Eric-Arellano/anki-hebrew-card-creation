@@ -39,6 +39,24 @@ const diber: DictionaryCandidate = {
   },
 };
 
+// As the lookup answers for the fixture dictionary's `דובר`.
+const dubar: DictionaryCandidate = {
+  id: 53,
+  title: 'דובר',
+  pointed: 'דֻּבַּר',
+  wiktionaryPartOfSpeech: 'verb',
+  definitions: ['to be spoken'],
+  roots: ['ד־ב־ר'],
+  partOfSpeech: 'verb',
+  verb: {
+    binyan: "pu'al",
+    infinitives: [],
+    presents: ['מְדֻבָּר'],
+    futures: ['יְדֻבַּר'],
+    prepositions: [],
+  },
+};
+
 const gadol: DictionaryCandidate = {
   id: 52,
   title: 'גדול',
@@ -183,6 +201,7 @@ describe('prefillDraft', () => {
           verb: {
             binyan: "pi'el",
             past: 'דִּבֵּר',
+            unpointedPast: 'דיבר',
             present: 'מְדַבֵּר',
             future: 'יְדַבֵּר',
           },
@@ -206,13 +225,35 @@ describe('prefillDraft', () => {
       });
     });
 
-    describe('without an infinitive, like a pu’al', () => {
-      test('leaves both spellings blank', () => {
+    describe('without an infinitive the dictionary gives', () => {
+      test('leaves both spellings blank, and fills the past', () => {
         const { draft } = prefillDraft(typed, {
           ...diber,
           verb: { ...diber.verb, infinitives: [] },
         });
-        expect([draft.word, draft.pointed]).toEqual(['', '']);
+        expect([draft.word, draft.pointed, draft.verb.unpointedPast]).toEqual(['', '', 'דיבר']);
+      });
+    });
+
+    describe("in pu'al, which has no infinitive", () => {
+      test('fills the word with its past, and no second past', () => {
+        expect(prefillDraft(typed, dubar)).toEqual({
+          draft: {
+            ...typed,
+            word: 'דובר',
+            pointed: 'דֻּבַּר',
+            partOfSpeech: 'verb',
+            root: 'ד־ב־ר',
+            verb: {
+              binyan: "pu'al",
+              past: 'דֻּבַּר',
+              unpointedPast: '',
+              present: 'מְדֻבָּר',
+              future: 'יְדֻבַּר',
+            },
+          },
+          choices: {},
+        });
       });
     });
 
@@ -407,6 +448,17 @@ describe('prefillBlanks', () => {
       expect(choices).toEqual({ infinitives: diber.verb.infinitives });
     });
 
+    test("keeps the note's past, offering the entry's", () => {
+      const note = {
+        ...emptyInputsDraft(),
+        word: 'לדבר',
+        verb: { ...emptyInputsDraft().verb, unpointedPast: 'אמר' },
+      };
+      const { draft, choices } = prefillBlanks(note, diber);
+      expect(draft.verb.unpointedPast).toBe('אמר');
+      expect(choices.unpointedPast).toEqual(['דיבר']);
+    });
+
     test("keeps the note's binyan, offering the entry's", () => {
       const note = {
         ...emptyInputsDraft(),
@@ -416,6 +468,14 @@ describe('prefillBlanks', () => {
       const { draft, choices } = prefillBlanks(note, diber);
       expect(draft.verb.binyan).toBe("pa'al");
       expect(choices.binyan).toEqual(["pi'el"]);
+    });
+  });
+  describe("in pu'al", () => {
+    test("keeps the note's word, offering the entry's past as the word", () => {
+      const note = { ...emptyInputsDraft(), word: 'דבר', pointed: 'דֻּבַּר' };
+      const { draft, choices } = prefillBlanks(note, dubar);
+      expect([draft.word, draft.pointed]).toEqual(['דבר', 'דֻּבַּר']);
+      expect(choices).toEqual({ word: ['דובר'] });
     });
   });
 });
