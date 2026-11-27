@@ -19,10 +19,13 @@ Spoken Hebrew's "to say" splits along the same line between two verbs: אָמַ�
 meaning.
 
 Today a verb goes by its infinitive (the reasons are in `src/lib/card/prefill.ts`), and its
-`Production answer` is the infinitive alone (`composeVerbFields` in
-`src/lib/card/parts-of-speech/verb.ts`). Its past, present and future are pointed inputs shown in
-`Forms` and never quizzed. `Audio` holds one recording, found in Downloads by the word's spelling
-(`AudioInput.svelte`).
+`Production answer` is the infinitive and then the past for "he", unpointed: `ללכת הלך`
+(`composeVerbFields` in `src/lib/card/parts-of-speech/verb.ts`). The unpointed past is its own
+input, `unpointedPast`, filled from the entry's title, because stripping the pointed past is
+wrong: דִּבֵּר is spelled דיבר. The past, present and future are also pointed inputs, shown in
+`Forms`. A pu'al or huf'al has no infinitive (`hasInfinitive` in `src/lib/hebrew/binyan.ts`), so
+its word is its past and it has no `unpointedPast`: its Production answer is the word alone.
+`Audio` holds one recording, found in Downloads by the word's spelling (`AudioInput.svelte`).
 
 ## Decisions
 
@@ -54,40 +57,17 @@ known better.*
 
 ## The app changes, as PRs
 
-### PR 1: the Production answer adds the past
 
-- An unpointed past input in `VerbInputs.svelte`, "Past (he), without niqqud", beside the pointed
-  one, required for a verb and named in `INPUT_NAMES`. It is its own input because the Hebrew
-  rules forbid stripping the pointed past: דִּבֵּר strips to דבר, not דיבר, as `composeFields`
-  notes for the word.
-- Prefill fills it from the entry's title, since Wiktionary titles a verb with its unpointed past
-  (`הלך`, `דיבר`). `prefillBlanks` keeps a held value and offers the title beside it. The human
-  types it only with no entry picked, or to give one verb another's past, as for להגיד.
-- A warning when it doesn't spell the pointed past, as `misspellsWord` gives for the word.
-- `composeVerbFields` writes `${word} ${past}`, and `fromNote` reads the past back with
-  `afterWord`, as it reads a noun's טוב.
-- Help and comments follow:
-  - `PART_OF_SPEECH_HELP.verb` says a verb is learned by its infinitive and its past.
-  - The verb variant's example in `field-help.ts` becomes אֶלְמַד, "I will learn", since אֵלֵךְ
-    now follows from ללכת.
-  - The "never quizzed" comment in `verb.ts` and the reason in `prefill.ts` are rewritten.
-- The check's prompt (`src/lib/server/ai/check.ts`) says a verb's past may be another verb's,
-  where that is the one speakers use, as אמר for להגיד, so the check doesn't fault it.
-- A pu'al or huf'al has no infinitive, so its word is its past. Today prefill leaves the word
-  blank, so instead it fills the word and pointed word from the entry's title and pointed form,
-  as for a noun. Its second past input is hidden and not required, and its Production answer is
-  the word alone. `PART_OF_SPEECH_HELP.verb` says so in a clause. These are rare for a
-  beginner, so this only keeps the editor from asking for a form that doesn't exist.
-
-### PR 2: the backs show the answer with niqqud
+### PR 1: the backs show the answer with niqqud
 
 - A `Pointed answer` field, composed entirely, like `Production answer`:
-  - for a verb, the pointed infinitive and past, לָלֶכֶת הָלַךְ, or a passive's pointed past
-    alone;
+  - for a verb, the pointed infinitive and past, לָלֶכֶת הָלַךְ, or, for a verb without an
+    infinitive, its pointed word alone, which is its past;
   - for a noun, the pointed word and a pointed טוֹב beside `productionTov`'s, כֶּלֶב טוֹב;
   - for the rest, the pointed word.
-- A verb's past leaves `Forms`, which keeps the present and future. `fromNote` reads the pointed
-  past back from `Pointed answer` with `afterWord`.
+- A verb's past leaves `Forms`, which keeps the present and future. `draftFromNote` reads the
+  pointed past back from `Pointed answer` with `afterWord`, as it reads `unpointedPast` from
+  `Production answer`, and only for a verb, since a noun's answer holds its טוב there.
 - `note-type.ts` gains the field. `tests/fixtures/anki/` gets a `notesInfo` captured once the
   human has added it, since fixtures are real data.
 - *Rejected: the pointed past left in `Forms`, under the pointed infinitive, because half the
@@ -95,14 +75,15 @@ known better.*
 - *Rejected: both forms in `Pointed`, because the app reads `Pointed` as the headword, to check
   the word's spelling, to choose its infinitive and to tell Claude.*
 
-### PR 3: a recording of each form
+### PR 2: a recording of each form
 
-- The media's one `audio` becomes one per form: the word's and, for a verb that isn't passive,
-  the past's, which is optional. `Audio` holds them in that order, `[sound:…ללכת.mp3][sound:…הלך.mp3]`, and Anki plays
-  them in turn. `fromNote` reads a verb's two by their order. Today a field naming several
+- The media's one `audio` becomes one per form: the word's and, for a verb with an infinitive,
+  the past's, which is optional. `Audio` holds them in that order,
+  `[sound:…ללכת.mp3][sound:…הלך.mp3]`, and Anki plays them in turn. `draftFromNote` reads a
+  verb's two by their order. Today a field naming several
   recordings fills none.
 - A second `AudioInput` for the past, with its own Forvo chip and Downloads lookup keyed by the
-  unpointed past. `forvoDownloadOf` already matches any word, so downloading both from Forvo
+  `unpointedPast`. `forvoDownloadOf` already matches any word, so downloading both from Forvo
   attaches both with no typing.
 - Paste and drop listen on the window today, "since a note has only one place for it". With two
   places, a drop on a recording's box attaches there. A paste or drop anywhere else goes to the
@@ -110,32 +91,95 @@ known better.*
 
 ## In Anki, by the human
 
-The app can't edit the note type, so these steps are done by hand:
+The app can't edit the note type, so these steps are done by hand, in Tools → Manage Note Types
+→ Hebrew. The template snippets below were checked against the live templates on 2026-11-27.
 
-- **Any time:** fix the `Production answer` field description, which still says "Verb + prep or
-  את". It should read "Noun + טוב/ה. Verb: infinitive + past (he). Everything else: Hebrew
-  field."
-- **Any time:** a hint on the Production front for the shape of the answer, from the part of
-  speech, in CSS alone. It works for nouns today, and a note with no `Part of speech` shows
-  nothing. Above the type box:
+### Any time: the Production answer's description
 
-  ```html
-  <div class="answer-shape pos-{{text:Part of speech}}"></div>
-  ```
+Fields… → `Production answer` → Description. It still says "Verb + prep or את". Replace it with:
 
-  and in Styling:
+> Noun: noun + טוב or טובה. Verb: infinitive + past for he. Anything else: the Hebrew field.
 
-  ```css
-  .answer-shape.pos-noun::after { content: "noun + טוב/ה"; }
-  .answer-shape.pos-verb::after { content: "infinitive + past (he)"; }
-  ```
+### Any time: a hint for the shape of the answer
 
-- **Before using PR 2's app:** add the `Pointed answer` field, because the app writes every field
-  in `FIELDS`. On the three backs, show it in place of `{{Pointed}}` and the unpointed `chunk` div,
-  keeping both divs' classes. Fall back to `{{Pointed}}` for the notes that predate it:
-  `{{#Pointed answer}}…{{/Pointed answer}}{{^Pointed answer}}…{{Pointed}}…{{/Pointed answer}}`.
-- **Optional:** binyan and root on one line, "pa'al · ה־ל־ך", since together they decide how the
-  verb conjugates.
+The Production front says what to type, from `Part of speech`, using CSS alone. A note with no
+part of speech, or one whose answer is just the word, shows nothing.
+
+1. Cards… → Production → Front Template. The hint goes on its own line, just above the type box:
+
+   ```html
+   <div class="answer-shape pos-{{text:Part of speech}}"></div>
+   <div dir="rtl" lang="he">{{type:Production answer}}</div>
+   ```
+
+2. Styling, at the end. Without the first rule the hint inherits the card's headword size, as big
+   as the answer itself:
+
+   ```css
+   .answer-shape {
+     font-size: 0.6em;
+     opacity: 0.6;
+     margin: 0.6em 0 0.3em;
+   }
+   .answer-shape.pos-noun::after { content: "type the noun + טוב or טובה"; }
+   .answer-shape.pos-verb::after { content: "type the infinitive + its past for he"; }
+   ```
+
+   Change `font-size` if 0.6em of your card's size reads too small; it only needs to look
+   smaller and dimmer than the question.
+
+Check it with Preview on a noun's card and a verb's saved since the past joined its answer.
+
+### Before using PR 1's app: the Pointed answer field
+
+The app writes every field in `FIELDS`, so a note type without this field breaks Add to deck.
+
+1. Fields… → Add → `Pointed answer`, spelled exactly so. Its position doesn't matter. Description:
+
+   > Filled by the app: the answer with niqqud. Verb: לָלֶכֶת הָלַךְ. Noun: כֶּלֶב טוֹב.
+
+2. Cards… → Reading → Back Template. Replace these two lines:
+
+   ```html
+   <div class="he pointed g-{{text:Gender}}" dir="rtl" lang="he">{{Pointed}}</div>
+   <div class="he chunk g-{{text:Gender}} pos-{{text:Part of speech}}" dir="rtl" lang="he">{{Production answer}}</div>
+   ```
+
+   with this, which shows the one pointed line, or the old two for a note saved before PR 1:
+
+   ```html
+   {{#Pointed answer}}
+   <div class="he pointed g-{{text:Gender}} pos-{{text:Part of speech}}" dir="rtl" lang="he">{{Pointed answer}}</div>
+   {{/Pointed answer}}
+   {{^Pointed answer}}
+   <div class="he pointed g-{{text:Gender}}" dir="rtl" lang="he">{{Pointed}}</div>
+   <div class="he chunk g-{{text:Gender}} pos-{{text:Part of speech}}" dir="rtl" lang="he">{{Production answer}}</div>
+   {{/Pointed answer}}
+   ```
+
+3. Listening → Back Template: the same replacement as Reading.
+
+4. Production → Back Template. It has only the `{{Pointed}}` line, since the typed-answer check
+   already shows the unpointed answer. Replace it with:
+
+   ```html
+   {{#Pointed answer}}
+   <div class="he pointed g-{{text:Gender}} pos-{{text:Part of speech}}" dir="rtl" lang="he">{{Pointed answer}}</div>
+   {{/Pointed answer}}
+   {{^Pointed answer}}
+   <div class="he pointed g-{{text:Gender}}" dir="rtl" lang="he">{{Pointed}}</div>
+   {{/Pointed answer}}
+   ```
+
+5. Leave `Pointed` itself where it is. The app still reads it as the headword.
+
+6. Preview any old note: its backs should look as they do today, since its `Pointed answer` is
+   empty. Then tell Claude, so PR 1 can capture a `notesInfo` fixture with the new field.
+
+### Optional
+
+Binyan and root on one line, "pa'al · ה־ל־ך", since together they decide how the verb
+conjugates.
 
 ## After the PRs, by the human
 
