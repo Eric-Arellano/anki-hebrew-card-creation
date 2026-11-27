@@ -24,7 +24,7 @@ function seferDraft(changes: Partial<CardDraft> = {}): CardDraft {
       ...empty.inputs,
       word: 'ספר',
       pointed: 'סֵפֶר',
-      definitions: ['book'],
+      definitions: [{ english: 'book' }],
       partOfSpeech: 'noun',
       noun: { ...empty.inputs.noun, gender: 'm' },
     },
@@ -39,9 +39,9 @@ describe('suggestBlocker', () => {
 
   test('counts a meaning of only spaces as none', () => {
     const draft = seferDraft();
-    expect(suggestBlocker({ ...draft, inputs: { ...draft.inputs, definitions: ['  '] } })).toBe(
-      'Type the word and a meaning first.',
-    );
+    expect(
+      suggestBlocker({ ...draft, inputs: { ...draft.inputs, definitions: [{ english: '  ' }] } }),
+    ).toBe('Type the word and a meaning first.');
   });
 
   test('blocks once the examples and both hints are filled', () => {
@@ -81,7 +81,7 @@ describe('suggestRequest', () => {
           inputs: {
             ...draft.inputs,
             word: ' ספר ',
-            definitions: ['book', ' ', ' volume '],
+            definitions: [{ english: 'book' }, { english: ' ' }, { english: ' volume ' }],
             noun: { ...draft.inputs.noun, plural: 'סְפָרִים' },
           },
         },

@@ -1,3 +1,9 @@
+import {
+  blankMeaning,
+  type Definitions,
+  filledDefinitions,
+  type Meaning,
+} from '#lib/card/definitions.ts';
 import { type AdjectiveInputs, emptyAdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
 import {
   completeNoun,
@@ -17,9 +23,6 @@ import type { PartOfSpeech, PlainPartOfSpeech } from '#lib/note-type.ts';
 
 type WordInputs = { word: string; pointed: string };
 
-// Each English meaning, trimmed, in the order the human typed them. There is always a first one.
-export type Definitions = readonly [string, ...string[]];
-
 // As `formatRoot` writes it, or blank.
 type RootInputs = { root: string };
 
@@ -35,7 +38,7 @@ export type CardInputs = WordInputs & { definitions: Definitions } & (
 // another is chosen, so switching back loses nothing. A meaning row may be blank, and the root is
 // as the human typed it.
 export type CardInputsDraft = WordInputs & {
-  definitions: string[];
+  definitions: Meaning[];
   partOfSpeech: PartOfSpeech | undefined;
   root: string;
   noun: NounDraft;
@@ -47,7 +50,7 @@ export function emptyInputsDraft(): CardInputsDraft {
   return {
     word: '',
     pointed: '',
-    definitions: [''],
+    definitions: [blankMeaning()],
     partOfSpeech: undefined,
     root: '',
     noun: emptyNounDraft(),
@@ -77,12 +80,6 @@ export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
   root: 'root',
 };
 
-export function filledDefinitions(definitions: readonly string[]): string[] {
-  return definitions
-    .map((definition) => definition.trim())
-    .filter((definition) => definition !== '');
-}
-
 function ifBlank(input: RequiredInput, value: string | undefined): RequiredInput[] {
   return (value ?? '').trim() === '' ? [input] : [];
 }
@@ -109,7 +106,7 @@ export function draftRoot({ partOfSpeech, root }: CardInputsDraft): string | und
 export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
   return [
     ...ifBlank('word', draft.word),
-    ...ifBlank('definitions', filledDefinitions(draft.definitions)[0]),
+    ...ifBlank('definitions', filledDefinitions(draft.definitions)[0]?.english),
     ...ifBlank('partOfSpeech', draft.partOfSpeech),
     // A noun's gender and a verb's preposition sit before the pointed word, and a verb's binyan and
     // any root after it.

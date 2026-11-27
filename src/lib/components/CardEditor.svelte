@@ -13,6 +13,7 @@ import {
 import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
+import { filledDefinitions } from '#lib/card/definitions.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
 import { examplesToAnkiFieldHtml } from '#lib/card/examples.ts';
@@ -20,13 +21,7 @@ import { attachmentsChange } from '#lib/card/changed-from.ts';
 import { draftFromNote, type NoteDraft } from '#lib/card/from-note.ts';
 import { wordUsage } from '#lib/card/parts-of-speech/forms.ts';
 import { attachmentsToStore, noteFields } from '#lib/card/to-note.ts';
-import {
-  type CardInputsDraft,
-  completeInputs,
-  draftRoot,
-  filledDefinitions,
-  INPUT_NAMES,
-} from '#lib/card/inputs.ts';
+import { type CardInputsDraft, completeInputs, draftRoot, INPUT_NAMES } from '#lib/card/inputs.ts';
 import {
   type PrefillChoices,
   prefillBlanks,
@@ -133,7 +128,9 @@ const lookup = $derived(
 );
 const choices = $derived(picked?.choices ?? {});
 const deckWords = $derived([draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]);
-const meanings = $derived(filledDefinitions(draft.inputs.definitions));
+const meanings = $derived(
+  filledDefinitions(draft.inputs.definitions).map(({ english }) => english),
+);
 const sameMeaningQuery = $derived(JSON.stringify([meanings, deckWords]));
 const sameMeaningSearch = $derived(
   meanings.length === 0

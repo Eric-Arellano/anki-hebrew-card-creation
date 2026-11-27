@@ -121,16 +121,11 @@ land in either order.
 
 ## The app changes, as PRs
 
-### PR 1 (prefactor): a meaning is a record
+### PR 1: each of a verb's meanings takes its own preposition
 
-- `Definitions` (`src/lib/card/inputs.ts`) and the draft's `definitions` hold one record per line
-  rather than a string, so a verb's line can carry a preposition in PR 2. No change in what
-  reaches Anki.
-
-### PR 2: each of a verb's meanings takes its own preposition
-
-- `src/lib/card/compose.ts` writes a line's pill or none marker after its English, and
-  `definitionsFromHtml` reads them back. A line with neither starts unchosen.
+- `Meaning` in `src/lib/card/definitions.ts`, the record each line of `Definitions` is held as,
+  gains a `preposition`. `definitionsToAnkiFieldHtml` writes a line's pill or none marker after
+  its English, and `definitionsFromHtml` reads them back. A line with neither starts unchosen.
 - A verb's `Production answer` is the word alone. `VerbInputs` and `VerbDraft` lose their
   `preposition`. `readPreposition` in `src/lib/card/from-note.ts`, and the chips in
   `VerbInputs.svelte`, go away.
@@ -143,7 +138,7 @@ land in either order.
   parentheses, and a note saved before this. Once the human saves a verb through it, capture its
   `notesInfo` as a fixture, with their go-ahead.
 
-### PR 3: Claude suggests a verb's meanings with their prepositions
+### PR 2: Claude suggests a verb's meanings with their prepositions
 
 - `src/lib/server/ai/meanings.ts` with `POST /api/ai/meanings`, shaped like `suggest.ts` and its
   route, through `askForStructured`.
@@ -155,25 +150,25 @@ land in either order.
   `isPlainLine`, which moves out of `suggest.ts`, and has no Hebrew letters.
 - UI: a Suggest button under a verb's meanings shows Claude's lines beside the human's. "Use
   these" replaces the lines and chooses their chips. The human edits from there, and the check
-  in PR 5 looks at the result again before saving.
+  in PR 4 looks at the result again before saving.
 - Tests: the prompt, the guards, and the route through a fake `ClaudeMessages`. A real fixture
   for שמר is captured only with the human's go-ahead.
 
-### PR 4: examples use each line's preposition
+### PR 3: examples use each line's preposition
 
 - `SuggestRequest` (`src/lib/api/ai.ts`) sends a verb's lines with their prepositions. The prompt
   asks for one example per line, each using its line's preposition.
 - The fields' Suggest waits until every line's preposition is chosen: `suggestBlocker`, in
   `src/lib/card/suggestions.ts`.
 
-### PR 5: the review check sees each preposition
+### PR 4: the review check sees each preposition
 
 - `src/lib/server/ai/check.ts` sends `Definitions` as text with each preposition marked, like
   `to look after [על]`, rather than run into the English.
 - Add "a meaning takes a different preposition than the one beside it" and "an example doesn't
   use its line's preposition" to the check's list.
 
-### PR 6: an example's conjugated verb is recognized
+### PR 5: an example's conjugated verb is recognized
 
 - `examplesWithoutWord` warns that an example doesn't use the word, and `examplesToAnkiFieldHtml`
   bolds the word, both through `usageRanges` in `src/lib/hebrew/usage.ts`. For a verb it matches
@@ -198,7 +193,7 @@ land in either order.
 - *Rejected: leaving it, because the warning then fires on the examples the tool itself asks
   for, which teaches the human to ignore it.*
 
-### PR 7: a verb gets a Reading context
+### PR 6: a verb gets a Reading context
 
 - `homographsOf` in `src/lib/server/ai/homographs.ts` takes the entries titled with the note's
   spelling. A verb's entry is titled with its past, so an infinitive finds none, and Suggest

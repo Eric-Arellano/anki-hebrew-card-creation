@@ -1,5 +1,6 @@
-import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
-import type { CardInputs, Definitions } from '#lib/card/inputs.ts';
+import { textToAnkiFieldHtml } from '#lib/anki/html.ts';
+import { definitionsToAnkiFieldHtml } from '#lib/card/definitions.ts';
+import type { CardInputs } from '#lib/card/inputs.ts';
 import { composeAdjectiveFields } from '#lib/card/parts-of-speech/adjective.ts';
 import { composeNounFields } from '#lib/card/parts-of-speech/noun.ts';
 import { composeVerbFields } from '#lib/card/parts-of-speech/verb.ts';
@@ -14,7 +15,7 @@ export function composeFields(inputs: CardInputs): FieldValues {
     unpointed: word,
     partOfSpeech: inputs.partOfSpeech,
     pointed: textToAnkiFieldHtml(inputs.pointed.trim()),
-    definitions: definitionsHtml(inputs.definitions),
+    definitions: definitionsToAnkiFieldHtml(inputs.definitions),
   };
   switch (inputs.partOfSpeech) {
     case 'noun':
@@ -30,24 +31,4 @@ export function composeFields(inputs: CardInputs): FieldValues {
     case 'other':
       return { ...shared, productionAnswer: word };
   }
-}
-
-// One meaning alone, or `1. friend<br>2. companion` when there are several.
-function definitionsHtml(definitions: Definitions): string {
-  if (definitions.length === 1) return textToAnkiFieldHtml(definitions[0]);
-  return definitions
-    .map((definition, index) => `${index + 1}. ${textToAnkiFieldHtml(definition)}`)
-    .join('<br>');
-}
-
-/** Each meaning in a `Definitions` field, one a line, without the numbers `definitionsHtml` adds. */
-export function definitionsFromHtml(html: string): string[] {
-  const lines = html
-    .split(/<br\s*\/?>/i)
-    .map(ankiFieldHtmlToText)
-    .filter((line) => line !== '');
-  // Only a list numbered from 1 is one `definitionsHtml` wrote, so a meaning like `1. Kings` stays.
-  const numbered =
-    lines.length > 1 && lines.every((line, index) => line.startsWith(`${index + 1}. `));
-  return numbered ? lines.map((line) => line.replace(/^\d+\. /, '')) : lines;
 }

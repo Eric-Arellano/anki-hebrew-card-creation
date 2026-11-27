@@ -1,7 +1,7 @@
 import { searchByFieldHavingPhrase, searchByNoteType, searchForAny } from '#lib/anki/search.ts';
 import type { SameMeaningNote } from '#lib/api/anki.ts';
 import { senseKeys, sharedSenses } from '#lib/card/checks/meanings.ts';
-import { definitionsFromHtml } from '#lib/card/compose.ts';
+import { definitionsFromHtml } from '#lib/card/definitions.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 import { FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
@@ -33,7 +33,7 @@ export async function findSameMeaningNotes(
       pointed: fieldText(note, FIELDS.pointed),
       sharedMeanings: sharedSenses(
         meanings,
-        definitionsFromHtml(fieldHtml(note, FIELDS.definitions)),
+        definitionsFromHtml(fieldHtml(note, FIELDS.definitions)).map(({ english }) => english),
       ),
       productionContext: fieldText(note, FIELDS.productionContext),
     }))

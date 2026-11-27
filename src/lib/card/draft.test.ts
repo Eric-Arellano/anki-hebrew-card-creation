@@ -17,7 +17,7 @@ function dagDraft(media: Pick<MediaDraft, 'images' | 'noImage'>): CardDraft {
       ...empty.inputs,
       word: 'דג',
       pointed: 'דָּג',
-      definitions: ['fish'],
+      definitions: [{ english: 'fish' }],
       partOfSpeech: 'other',
     },
     media: { ...empty.media, ...media },
@@ -57,7 +57,7 @@ describe('changedBeyondWord', () => {
 
   describe('after a change', () => {
     test.each<[string, (draft: CardDraft) => void]>([
-      ['to an input', (draft) => (draft.inputs.definitions = ['fish'])],
+      ['to an input', (draft) => (draft.inputs.definitions = [{ english: 'fish' }])],
       ['to an input of another part of speech', (draft) => (draft.inputs.noun.gender = 'm')],
       ['to a textarea', (draft) => (draft.edits.notes = 'freshwater')],
       ['to the image opt-out', (draft) => (draft.media.noImage = true)],

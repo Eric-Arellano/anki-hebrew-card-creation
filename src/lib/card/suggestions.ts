@@ -1,9 +1,9 @@
 // What Suggest with Claude asks about, and what its reply may fill.
 
 import { SUGGESTED_HINTS, type Suggestions, type SuggestRequest } from '#lib/api/ai.ts';
+import { filledDefinitions } from '#lib/card/definitions.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
 import { type Example, isBlankExample } from '#lib/card/examples.ts';
-import { filledDefinitions } from '#lib/card/inputs.ts';
 import { labeledForms } from '#lib/card/parts-of-speech/forms.ts';
 import type { FieldKey, FieldValues, PartOfSpeech } from '#lib/note-type.ts';
 
@@ -35,7 +35,7 @@ export function suggestRequest(
     word: inputs.word.trim(),
     pointed: inputs.pointed.trim(),
     partOfSpeech,
-    definitions: filledDefinitions(inputs.definitions),
+    definitions: filledDefinitions(inputs.definitions).map(({ english }) => english),
     forms: labeledForms(inputs, edits.forms ?? ''),
   };
 }

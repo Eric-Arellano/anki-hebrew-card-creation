@@ -4,7 +4,7 @@
 // for the review before a save to show.
 import { ankiFieldHtmlToText, ankiFieldHtmlToTextarea } from '#lib/anki/html.ts';
 import { soundsInAnkiField, splitImages } from '#lib/anki/media.ts';
-import { definitionsFromHtml } from '#lib/card/compose.ts';
+import { blankMeaning, definitionsFromHtml } from '#lib/card/definitions.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
 import { examplesFromHtml } from '#lib/card/examples.ts';
 import { adjectiveInputsFrom } from '#lib/card/parts-of-speech/adjective.ts';
@@ -114,7 +114,7 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
     inputs: {
       word,
       pointed: text('pointed'),
-      definitions: definitions.length === 0 ? [''] : definitions,
+      definitions: definitions.length === 0 ? [blankMeaning()] : definitions,
       partOfSpeech: chips.partOfSpeech.value,
       root: text('root'),
       noun: nounDraftFrom({ gender: chips.gender.value, forms, tov: ending }),
