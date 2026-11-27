@@ -96,6 +96,11 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 Restart the server to pick it up.
 
+To see how Claude does after changing a prompt or its settings, `npm run eval -- check` reviews a
+set of notes with mistakes planted in them, `npm run eval -- verb-meanings` grades the
+prepositions it suggests for a set of verbs, and `npm run eval -- suggest` prints suggestions to
+read. Each bills your key, a dollar or two a run.
+
 The server only listens on `127.0.0.1`. Don't expose it: anything that can reach it can change the
 notes in your collection, add new ones and add files to its media folder.
 

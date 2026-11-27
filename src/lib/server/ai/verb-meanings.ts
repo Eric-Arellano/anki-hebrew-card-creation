@@ -120,9 +120,7 @@ export function verbMeaningsPrompt({
       ? 'The learner has written no lines yet.'
       : `The learner’s lines:\n${verbMeaningLines(meanings)}`,
   ].join('\n');
-  // Medium, since the prepositions are the one part of the card Claude alone supplies, and in
-  // trials low effort gave חשב a made-up את and kept more of the dictionary's rare senses.
-  return { system: SYSTEM, user, schema: answerSchema, effort: 'medium' };
+  return { system: SYSTEM, user, schema: answerSchema };
 }
 
 /**
