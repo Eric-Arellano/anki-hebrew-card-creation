@@ -5,18 +5,11 @@ import type { VerbDraft } from '#lib/card/parts-of-speech/verb.ts';
 import type { PrefillChoices } from '#lib/card/prefill.ts';
 import { type Held, textChange } from '#lib/card/changed-from.ts';
 import { BINYANIM, type Binyan } from '#lib/hebrew/binyan.ts';
-import { GOVERNED_PREPOSITIONS, type GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
 import TextInput from '../ui/TextInput.svelte';
 import WiktionaryHas from '../ui/WiktionaryHas.svelte';
-import ChoiceChips from './ChoiceChips.svelte';
 import RootInput from './RootInput.svelte';
 import UnofferedValue from './UnofferedValue.svelte';
-
-const PREPOSITION_OPTIONS: readonly { value: GovernedPreposition | 'none'; label: string }[] = [
-  ...GOVERNED_PREPOSITIONS.map((value) => ({ value, label: value })),
-  { value: 'none', label: 'None' },
-];
 
 let {
   verb = $bindable(),
@@ -24,7 +17,6 @@ let {
   held,
   heldRoot,
   choices,
-  suggestedPrepositions,
   unoffered,
   children,
 }: {
@@ -33,8 +25,6 @@ let {
   held: Held<VerbDraft>;
   heldRoot: string | undefined;
   choices: PrefillChoices;
-  // From the dictionary, which names one for few verbs.
-  suggestedPrepositions: readonly GovernedPreposition[];
   unoffered: UnofferedValues;
   children: Snippet;
 } = $props();
@@ -48,23 +38,8 @@ function setBinyan(value: Binyan | '') {
 }
 </script>
 
-<fieldset class="space-y-4">
+<fieldset>
   <legend class="sr-only">Verb</legend>
-  <ChoiceChips
-    legend="Preposition it takes (מילת יחס)"
-    name="preposition"
-    options={PREPOSITION_OPTIONS}
-    suggested={suggestedPrepositions}
-    unoffered={unoffered.preposition}
-    held={held && (held.preposition ?? '')}
-    bind:value={verb.preposition}
-  />
-  {#if suggestedPrepositions.length > 0}
-    <p class="hint">
-      Wiktionary suggests
-      <bdi lang="he">{suggestedPrepositions.join(', ')}</bdi>. Check it's the one you'll use.
-    </p>
-  {/if}
   <div class="forms-row">
     {@render children()}
     <TextInput

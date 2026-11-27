@@ -29,6 +29,13 @@ export const PART_OF_SPEECH_HELP: Record<PartOfSpeech, string> = {
   other: 'Other is everything else, like “אֲנִי” or “אֲבָל”.',
 };
 
+// Shown above a verb's prepositions, one for each meaning.
+export const MEANING_PREPOSITION_HELP =
+  'Choose the preposition each meaning takes. את counts as one: “to see” takes “אֶת”, and “to ' +
+  'help” takes “לְ־”. Choose None for a meaning with no object, like “to go”. Where one meaning ' +
+  'takes a different preposition for each of its parts, write a meaning for each, like “to talk ' +
+  'with” for “עִם” and “to talk about” for “עַל”.';
+
 // Help for a whole group, where help on each field would repeat itself.
 export const GROUP_HELP: Partial<Record<FieldGroup, string>> = {
   'Unusual variants':

@@ -16,6 +16,7 @@ import QuotedText from '../ui/QuotedText.svelte';
 import TextInput from '../ui/TextInput.svelte';
 import AdjectiveInputs from './AdjectiveInputs.svelte';
 import ChoiceChips from './ChoiceChips.svelte';
+import MeaningPrepositions from './MeaningPrepositions.svelte';
 import NounInputs from './NounInputs.svelte';
 import PluralHints from './PluralHints.svelte';
 import VerbInputs from './VerbInputs.svelte';
@@ -118,13 +119,17 @@ function chooseInfinitive(pointed: string) {
     </NounInputs>
     <PluralHints noun={inputs.noun} pointed={inputs.pointed} {edits} {shownFields} onuse={onedit} />
   {:else if inputs.partOfSpeech === 'verb'}
+    <MeaningPrepositions
+      bind:definitions={inputs.definitions}
+      held={held?.definitions}
+      suggested={candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : []}
+    />
     <VerbInputs
       bind:verb={inputs.verb}
       bind:root={inputs.root}
       held={held?.verb}
       heldRoot={held?.root}
       {choices}
-      suggestedPrepositions={candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : []}
       {unoffered}
     >
       {@render pointedInput()}

@@ -10,10 +10,9 @@ import { examplesFromHtml } from '#lib/card/examples.ts';
 import { adjectiveInputsFrom } from '#lib/card/parts-of-speech/adjective.ts';
 import { formsByLabel } from '#lib/card/parts-of-speech/forms.ts';
 import { nounDraftFrom } from '#lib/card/parts-of-speech/noun.ts';
-import { type VerbDraft, verbDraftFrom } from '#lib/card/parts-of-speech/verb.ts';
+import { verbDraftFrom } from '#lib/card/parts-of-speech/verb.ts';
 import { toBinyan } from '#lib/hebrew/binyan.ts';
 import { GENDERS } from '#lib/hebrew/gender.ts';
-import { GOVERNED_PREPOSITIONS } from '#lib/hebrew/preposition.ts';
 import type { StoredAttachment } from '#lib/media/attach.ts';
 import {
   FIELDS,
@@ -24,7 +23,7 @@ import {
   PARTS_OF_SPEECH,
 } from '#lib/note-type.ts';
 
-type ChipInput = 'partOfSpeech' | 'gender' | 'binyan' | 'preposition';
+type ChipInput = 'partOfSpeech' | 'gender' | 'binyan';
 
 /** What the note holds for each input it fills with a value no chip offers, which stays unchosen. */
 export type UnofferedValues = Partial<Record<ChipInput, string>>;
@@ -47,8 +46,7 @@ function singleSpaced(text: string): string {
   return text.normalize('NFC').replace(/\s+/g, ' ');
 }
 
-// What composition wrote after the word in `Production answer`: a noun's `טוב`, or a verb's
-// preposition. `undefined` for a blank answer, and one that doesn't start with the word, which
+// What composition wrote after the word in `Production answer`: a noun's `טוב`. `undefined` for a blank answer, and one that doesn't start with the word, which
 // composition didn't write.
 function afterWord(word: string, answer: string): string | undefined {
   const spacedWord = singleSpaced(word);
@@ -58,18 +56,6 @@ function afterWord(word: string, answer: string): string | undefined {
   return spacedAnswer.startsWith(`${spacedWord} `)
     ? spacedAnswer.slice(spacedWord.length + 1)
     : undefined;
-}
-
-function readPreposition(
-  answer: string,
-  ending: string | undefined,
-  savedAsVerb: boolean,
-): ChipReading<VerbDraft['preposition']> {
-  // The word alone is what composition writes for a verb with no preposition, but `none` was only
-  // chosen on a note this tool saved as a verb. On one typed in Anki, no one has chosen yet.
-  if (ending === '') return { value: savedAsVerb ? 'none' : undefined, unoffered: undefined };
-  if (ending === undefined) return readChip(answer, () => undefined);
-  return readChip(ending, oneOf(GOVERNED_PREPOSITIONS));
 }
 
 function stored(filename: string): StoredAttachment {
@@ -102,11 +88,6 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
     gender: readChip(text('gender'), oneOf(GENDERS)),
     binyan: readChip(text('binyan'), toBinyan),
   };
-  const preposition = readPreposition(
-    text('productionAnswer'),
-    ending,
-    chips.partOfSpeech.value === 'verb',
-  );
   const definitions = definitionsFromHtml(html('definitions'));
   const [sound, ...otherSounds] = soundsInAnkiField(html('audio'));
 
@@ -118,7 +99,7 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
       partOfSpeech: chips.partOfSpeech.value,
       root: text('root'),
       noun: nounDraftFrom({ gender: chips.gender.value, forms, tov: ending }),
-      verb: verbDraftFrom({ binyan: chips.binyan.value, preposition: preposition.value, forms }),
+      verb: verbDraftFrom({ binyan: chips.binyan.value, forms }),
       adjective: adjectiveInputsFrom(forms),
     },
     // A variant prompt's images go to its own image input, after its text.
@@ -141,7 +122,7 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
       audio: sound === undefined || otherSounds.length > 0 ? undefined : stored(sound),
     },
     unoffered: Object.fromEntries(
-      Object.entries({ ...chips, preposition }).flatMap(([input, { unoffered }]) =>
+      Object.entries(chips).flatMap(([input, { unoffered }]) =>
         unoffered === undefined ? [] : [[input, unoffered]],
       ),
     ),

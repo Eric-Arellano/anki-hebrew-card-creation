@@ -14,7 +14,6 @@ const noun: NounDraft = {
 
 const verb: VerbDraft = {
   binyan: "pi'el",
-  preposition: 'עם',
   past: 'דִּבֵּר',
   present: 'מְדַבֵּר',
   future: 'יְדַבֵּר',
@@ -41,7 +40,7 @@ const ledaberDraft: CardInputsDraft = {
   ...dagDraft,
   word: 'לדבר',
   partOfSpeech: 'verb',
-  definitions: [{ english: 'to speak' }],
+  definitions: [{ english: 'to speak', preposition: 'עם' }],
   pointed: 'לְדַבֵּר',
 };
 
@@ -89,11 +88,20 @@ describe('missingInputs', () => {
       expect(
         missingInputs({
           ...ledaberDraft,
+          definitions: [{ english: 'to speak' }],
           pointed: '',
           root: '',
-          verb: { ...verb, binyan: undefined, preposition: undefined },
+          verb: { ...verb, binyan: undefined },
         }),
       ).toEqual(['preposition', 'pointed', 'binyan']);
+    });
+
+    test('requires a preposition for each meaning, but not for a blank one', () => {
+      const definitions = [{ english: 'to speak', preposition: 'עם' as const }, { english: '' }];
+      expect(missingInputs({ ...ledaberDraft, definitions })).toEqual([]);
+      expect(
+        missingInputs({ ...ledaberDraft, definitions: [...definitions, { english: 'to say' }] }),
+      ).toEqual(['preposition']);
     });
   });
 
@@ -224,11 +232,11 @@ describe('completeInputs', () => {
   });
 
   describe('for a verb', () => {
-    test('returns its preposition, binyan, forms and root, joined with maqafs', () => {
+    test('returns its prepositions, binyan, forms and root, joined with maqafs', () => {
       expect(completeInputs(ledaberDraft)).toEqual({
         word: 'לדבר',
         partOfSpeech: 'verb',
-        definitions: [{ english: 'to speak' }],
+        definitions: [{ english: 'to speak', preposition: 'עם' }],
         pointed: 'לְדַבֵּר',
         root: 'ד־ב־ר',
         verb,
@@ -250,19 +258,46 @@ describe('completeInputs', () => {
     });
   });
 
-  describe('for a verb that takes no preposition', () => {
-    test('returns no preposition', () => {
+  describe('for a verb with meanings that take different prepositions, or none', () => {
+    test('returns each meaning’s, leaving out a blank row', () => {
       expect(
-        completeInputs({ ...ledaberDraft, verb: { ...verb, preposition: 'none' } }),
-      ).toMatchObject({ verb: { preposition: undefined } });
+        completeInputs({
+          ...ledaberDraft,
+          definitions: [
+            { english: ' to talk with ', preposition: 'עם' },
+            { english: '', preposition: 'את' },
+            { english: 'to talk about', preposition: 'על' },
+            { english: 'to speak', preposition: 'none' },
+          ],
+        })?.definitions,
+      ).toEqual([
+        { english: 'to talk with', preposition: 'עם' },
+        { english: 'to talk about', preposition: 'על' },
+        { english: 'to speak', preposition: 'none' },
+      ]);
     });
   });
 
-  describe('for a verb while its preposition is unchosen', () => {
+  describe('for a verb while a meaning’s preposition is unchosen', () => {
     test('returns nothing', () => {
       expect(
-        completeInputs({ ...ledaberDraft, verb: { ...verb, preposition: undefined } }),
+        completeInputs({
+          ...ledaberDraft,
+          definitions: [{ english: 'to speak', preposition: 'עם' }, { english: 'to say' }],
+        }),
       ).toBeUndefined();
+    });
+  });
+
+  describe('for a noun whose meanings kept prepositions from when it was a verb', () => {
+    test('drops them', () => {
+      expect(
+        completeInputs({
+          ...ledaberDraft,
+          partOfSpeech: 'noun',
+          noun: { ...noun, gender: 'm' },
+        })?.definitions,
+      ).toStrictEqual([{ english: 'to speak' }]);
     });
   });
 

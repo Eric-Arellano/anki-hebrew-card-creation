@@ -102,29 +102,27 @@ describe('composeFields', () => {
 
   describe('for a verb', () => {
     const noForms = { past: '', present: '', future: '' };
+    const lehabet = {
+      word: 'לדבר',
+      pointed: 'לְדַבֵּר',
+      definitions: [{ english: 'to speak', preposition: 'עם' }],
+      partOfSpeech: 'verb',
+      root: '',
+    } as const;
 
-    test('answers with its preposition, and writes its binyan, root and forms', () => {
+    test('answers with the word alone, and writes its prepositions, binyan, root and forms', () => {
       expect(
         composeFields({
-          word: 'לדבר',
-          pointed: 'לְדַבֵּר',
-          definitions: [{ english: 'to speak' }],
-          partOfSpeech: 'verb',
+          ...lehabet,
           root: 'ד־ב־ר',
-          verb: {
-            binyan: "pi'el",
-            preposition: 'עם',
-            past: 'דִּבֵּר',
-            present: 'מְדַבֵּר',
-            future: 'יְדַבֵּר',
-          },
+          verb: { binyan: "pi'el", past: 'דִּבֵּר', present: 'מְדַבֵּר', future: 'יְדַבֵּר' },
         }),
       ).toEqual({
         unpointed: 'לדבר',
         partOfSpeech: 'verb',
         pointed: 'לְדַבֵּר',
-        definitions: 'to speak',
-        productionAnswer: 'לדבר עם',
+        definitions: 'to speak <span class="prep"><bdi lang="he">עִם</bdi></span>',
+        productionAnswer: 'לדבר',
         binyan: "pi'el",
         root: 'ד־ב־ר',
         forms: 'past: דִּבֵּר<br>pres: מְדַבֵּר<br>fut: יְדַבֵּר',
@@ -135,18 +133,8 @@ describe('composeFields', () => {
       test('leaves the blank ones out', () => {
         expect(
           composeFields({
-            word: 'לדבר',
-            pointed: 'לְדַבֵּר',
-            definitions: [{ english: 'to speak' }],
-            partOfSpeech: 'verb',
-            root: '',
-            verb: {
-              ...noForms,
-              binyan: "pi'el",
-              preposition: undefined,
-              past: 'דִּבֵּר',
-              future: ' ',
-            },
+            ...lehabet,
+            verb: { ...noForms, binyan: "pi'el", past: 'דִּבֵּר', future: ' ' },
           }).forms,
         ).toBe('past: דִּבֵּר');
       });
@@ -154,46 +142,7 @@ describe('composeFields', () => {
 
     describe('with none of its forms', () => {
       test('leaves them blank', () => {
-        expect(
-          composeFields({
-            word: 'לדבר',
-            pointed: 'לְדַבֵּר',
-            definitions: [{ english: 'to speak' }],
-            partOfSpeech: 'verb',
-            root: '',
-            verb: { ...noForms, binyan: "pi'el", preposition: undefined },
-          }).forms,
-        ).toBe('');
-      });
-    });
-
-    describe('that takes a direct object', () => {
-      test('answers with את', () => {
-        expect(
-          composeFields({
-            word: 'לראות',
-            pointed: 'לִרְאוֹת',
-            definitions: [{ english: 'to see' }],
-            partOfSpeech: 'verb',
-            root: 'ר־א־ה',
-            verb: { ...noForms, binyan: "pa'al", preposition: 'את' },
-          }).productionAnswer,
-        ).toBe('לראות את');
-      });
-    });
-
-    describe('that takes no preposition', () => {
-      test('answers with the word alone', () => {
-        expect(
-          composeFields({
-            word: 'ללכת',
-            pointed: 'לָלֶכֶת',
-            definitions: [{ english: 'to go' }],
-            partOfSpeech: 'verb',
-            root: 'ה־ל־ך',
-            verb: { ...noForms, binyan: "pa'al", preposition: undefined },
-          }).productionAnswer,
-        ).toBe('ללכת');
+        expect(composeFields({ ...lehabet, verb: { ...noForms, binyan: "pi'el" } }).forms).toBe('');
       });
     });
   });

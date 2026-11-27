@@ -1,8 +1,11 @@
 import {
   blankMeaning,
+  completeDefinitions,
+  completeVerbDefinitions,
   type Definitions,
   filledDefinitions,
   type Meaning,
+  type VerbDefinitions,
 } from '#lib/card/definitions.ts';
 import { type AdjectiveInputs, emptyAdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
 import {
@@ -26,17 +29,21 @@ type WordInputs = { word: string; pointed: string };
 // As `formatRoot` writes it, or blank.
 type RootInputs = { root: string };
 
-export type CardInputs = WordInputs & { definitions: Definitions } & (
-    | ({ partOfSpeech: 'noun'; noun: NounInputs } & RootInputs)
-    | ({ partOfSpeech: 'verb'; verb: VerbInputs } & RootInputs)
-    | ({ partOfSpeech: 'adjective'; adjective: AdjectiveInputs } & RootInputs)
-    | { partOfSpeech: PlainPartOfSpeech }
+// Only a verb's meanings each take a preposition.
+export type CardInputs = WordInputs &
+  (
+    | ({ partOfSpeech: 'verb'; verb: VerbInputs; definitions: VerbDefinitions } & RootInputs)
+    | ({ definitions: Definitions } & (
+        | ({ partOfSpeech: 'noun'; noun: NounInputs } & RootInputs)
+        | ({ partOfSpeech: 'adjective'; adjective: AdjectiveInputs } & RootInputs)
+        | { partOfSpeech: PlainPartOfSpeech }
+      ))
   );
 
 // The inputs as the editor holds them while the human types: the part of speech starts unchosen,
 // so the editor never guesses it. Each part of speech keeps its inputs under its own key while
-// another is chosen, so switching back loses nothing. A meaning row may be blank, and the root is
-// as the human typed it.
+// another is chosen, so switching back loses nothing, as each meaning keeps its preposition. A
+// meaning row may be blank, and the root is as the human typed it.
 export type CardInputsDraft = WordInputs & {
   definitions: Meaning[];
   partOfSpeech: PartOfSpeech | undefined;
@@ -102,16 +109,22 @@ export function draftRoot({ partOfSpeech, root }: CardInputsDraft): string | und
   return showsRoot(partOfSpeech) ? formatRoot(root) : undefined;
 }
 
+function missingPrepositions(meanings: readonly Meaning[]): RequiredInput[] {
+  return filledDefinitions(meanings).some(({ preposition }) => preposition === undefined)
+    ? ['preposition']
+    : [];
+}
+
 /** The required inputs still blank in `draft`, in the order the editor shows them. */
 export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
   return [
     ...ifBlank('word', draft.word),
     ...ifBlank('definitions', filledDefinitions(draft.definitions)[0]?.english),
     ...ifBlank('partOfSpeech', draft.partOfSpeech),
-    // A noun's gender and a verb's preposition sit before the pointed word, and a verb's binyan and
-    // any root after it.
+    // A noun's gender and a verb's prepositions sit before the pointed word, and a verb's binyan
+    // and any root after it.
     ...(draft.partOfSpeech === 'noun' ? missingNounInputs(draft.noun) : []),
-    ...(draft.partOfSpeech === 'verb' ? ifBlank('preposition', draft.verb.preposition) : []),
+    ...(draft.partOfSpeech === 'verb' ? missingPrepositions(draft.definitions) : []),
     ...ifBlank('pointed', draft.pointed),
     ...(draft.partOfSpeech === 'verb' ? ifBlank('binyan', draft.verb.binyan) : []),
     ...ifMistypedRoot(draft),
@@ -120,21 +133,24 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
 
 /** `draft` as `CardInputs` once every required input is filled, else `undefined`. */
 export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
-  const { partOfSpeech, noun, verb, adjective, root, definitions: definitionRows, ...word } = draft;
-  const [first, ...rest] = filledDefinitions(definitionRows);
-  if (partOfSpeech === undefined || first === undefined || missingInputs(draft).length > 0) {
-    return undefined;
-  }
-  const card = { ...word, definitions: [first, ...rest] satisfies Definitions };
+  const { partOfSpeech, noun, verb, adjective, root, definitions: meanings, ...word } = draft;
+  if (partOfSpeech === undefined || missingInputs(draft).length > 0) return undefined;
   const rootInputs = { root: formatRoot(root) ?? '' };
+  if (partOfSpeech === 'verb') {
+    const verbInputs = completeVerb(verb);
+    const definitions = completeVerbDefinitions(meanings);
+    return (
+      verbInputs &&
+      definitions && { ...word, ...rootInputs, definitions, partOfSpeech, verb: verbInputs }
+    );
+  }
+  const definitions = completeDefinitions(meanings);
+  if (definitions === undefined) return undefined;
+  const card = { ...word, definitions };
   switch (partOfSpeech) {
     case 'noun': {
       const nounInputs = completeNoun(noun);
       return nounInputs && { ...card, ...rootInputs, partOfSpeech, noun: nounInputs };
-    }
-    case 'verb': {
-      const verbInputs = completeVerb(verb);
-      return verbInputs && { ...card, ...rootInputs, partOfSpeech, verb: verbInputs };
     }
     case 'adjective':
       return { ...card, ...rootInputs, partOfSpeech, adjective };

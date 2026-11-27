@@ -1,13 +1,38 @@
 // `Definitions` holds one meaning alone, or several numbered one a line, joined by `<br>`:
 //
 //   1. friend<br>2. companion
+//
+// A verb's meaning ends in the preposition it takes, drawn as a pill the card's Styling quizzes on
+// the Production front, or in an empty marker for one that takes none:
+//
+//   1. to keep <span class="prep"><bdi lang="he">אֶת</bdi></span><br>2. to go<span class="no-prep"></span>
+//
+// The marker shows nothing on any card. It is there so a None the human chose reads back as None,
+// where a line with neither, like any verb saved before prepositions were per meaning, reads back
+// unchosen.
+// *Rejected: telling None from unchosen by what else the note holds, because a verb saved before
+// this can look exactly like one whose meanings all take none.*
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
+import { isSamePointedText } from '#lib/hebrew/normalize.ts';
+import {
+  GOVERNED_PREPOSITIONS,
+  type GovernedPreposition,
+  POINTED_PREPOSITIONS,
+} from '#lib/hebrew/preposition.ts';
 
-// The English is plain text, not HTML.
-export type Meaning = { english: string };
+export type PrepositionChoice = GovernedPreposition | 'none';
+
+// A meaning as the editor holds it. The English is plain text, not HTML. Only a verb's meaning
+// takes a preposition, absent until the human chooses one; another part of speech keeps it only so
+// switching back to a verb loses nothing, and never writes it.
+export type Meaning = { english: string; preposition?: PrepositionChoice };
+
+type Lines<T> = readonly [T, ...T[]];
 
 // Each meaning trimmed, in the order the human typed them. There is always a first one.
-export type Definitions = readonly [Meaning, ...Meaning[]];
+export type Definitions = Lines<{ english: string }>;
+
+export type VerbDefinitions = Lines<{ english: string; preposition: PrepositionChoice }>;
 
 export function blankMeaning(): Meaning {
   return { english: '' };
@@ -24,21 +49,70 @@ export function filledDefinitions(meanings: readonly Meaning[]): Meaning[] {
     .map((meaning) => ({ ...meaning, english: meaning.english.trim() }));
 }
 
-export function definitionsToAnkiFieldHtml(definitions: Definitions): string {
-  if (definitions.length === 1) return textToAnkiFieldHtml(definitions[0].english);
-  return definitions
-    .map(({ english }, index) => `${index + 1}. ${textToAnkiFieldHtml(english)}`)
-    .join('<br>');
+/** The filled meanings' English alone, or `undefined` while there is none. */
+export function completeDefinitions(meanings: readonly Meaning[]): Definitions | undefined {
+  const [first, ...rest] = filledDefinitions(meanings).map(({ english }) => ({ english }));
+  return first && [first, ...rest];
+}
+
+function hasPreposition(meaning: Meaning): meaning is VerbDefinitions[number] {
+  return meaning.preposition !== undefined;
+}
+
+/** The filled meanings, or `undefined` while there is none or one's preposition is unchosen. */
+export function completeVerbDefinitions(meanings: readonly Meaning[]): VerbDefinitions | undefined {
+  const filled = filledDefinitions(meanings);
+  const chosen = filled.filter(hasPreposition);
+  if (chosen.length < filled.length) return undefined;
+  const [first, ...rest] = chosen.map(({ english, preposition }) => ({ english, preposition }));
+  return first && [first, ...rest];
+}
+
+function prepositionHtml(preposition: PrepositionChoice | undefined): string {
+  if (preposition === undefined) return '';
+  if (preposition === 'none') return '<span class="no-prep"></span>';
+  return ` <span class="prep"><bdi lang="he">${POINTED_PREPOSITIONS[preposition]}</bdi></span>`;
+}
+
+function lineHtml({ english, preposition }: Meaning): string {
+  return `${textToAnkiFieldHtml(english)}${prepositionHtml(preposition)}`;
+}
+
+export function definitionsToAnkiFieldHtml(definitions: Lines<Meaning>): string {
+  if (definitions.length === 1) return lineHtml(definitions[0]);
+  return definitions.map((meaning, index) => `${index + 1}. ${lineHtml(meaning)}`).join('<br>');
+}
+
+const PILL = /\s*<span class="prep"><bdi lang="he">([^<]*)<\/bdi><\/span>\s*$/;
+const NO_PREP = /<span class="no-prep"><\/span>\s*$/;
+
+function pointedPreposition(pointed: string): GovernedPreposition | undefined {
+  return GOVERNED_PREPOSITIONS.find((preposition) =>
+    isSamePointedText(POINTED_PREPOSITIONS[preposition], pointed),
+  );
+}
+
+// A pill holding a preposition no chip offers stays in the English, so the human sees it.
+function lineFromHtml(html: string): Meaning {
+  if (NO_PREP.test(html)) {
+    return { english: ankiFieldHtmlToText(html.replace(NO_PREP, '')), preposition: 'none' };
+  }
+  const pill = PILL.exec(html);
+  const preposition = pill?.[1] === undefined ? undefined : pointedPreposition(pill[1]);
+  if (pill === null || preposition === undefined) return { english: ankiFieldHtmlToText(html) };
+  return { english: ankiFieldHtmlToText(html.replace(PILL, '')), preposition };
 }
 
 /** Each meaning in a `Definitions` field, without the numbers composition adds. */
 export function definitionsFromHtml(html: string): Meaning[] {
   const lines = html
     .split(/<br\s*\/?>/i)
-    .map(ankiFieldHtmlToText)
-    .filter((line) => line !== '');
+    .map(lineFromHtml)
+    .filter(({ english }) => english !== '');
   // Only a list numbered from 1 is one composition wrote, so a meaning like `1. Kings` stays.
   const numbered =
-    lines.length > 1 && lines.every((line, index) => line.startsWith(`${index + 1}. `));
-  return lines.map((line) => ({ english: numbered ? line.replace(/^\d+\. /, '') : line }));
+    lines.length > 1 && lines.every(({ english }, index) => english.startsWith(`${index + 1}. `));
+  return lines.map((line) =>
+    numbered ? { ...line, english: line.english.replace(/^\d+\. /, '') } : line,
+  );
 }

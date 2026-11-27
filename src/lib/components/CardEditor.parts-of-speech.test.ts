@@ -145,11 +145,11 @@ describe('CardEditor', () => {
   });
 
   describe('a verb', () => {
-    test('sends its production answer with its preposition, and its binyan, root and forms', async () => {
+    test('sends its production answer, its meaning’s preposition, and its binyan, root and forms', async () => {
       const requests = await renderConnectedEditor();
       await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to speak' });
       await fillVerb("pi'el", 'ד.ב.ר');
-      await fireEvent.click(screen.getByRole('radio', { name: 'עם' }));
+      await fireEvent.click(screen.getByRole('radio', { name: 'עִם' }));
       await typeInto(input('Past (he), with niqqud'), 'דִּבֵּר');
       await typeInto(input('Present (he), with niqqud'), 'מְדַבֵּר');
       await typeInto(input('Future (he), with niqqud'), 'יְדַבֵּר');
@@ -164,12 +164,42 @@ describe('CardEditor', () => {
           ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
           Hebrew: 'לדבר',
           Pointed: 'לְדַבֵּר',
-          Definitions: 'to speak',
-          'Production answer': 'לדבר עם',
+          Definitions: 'to speak <span class="prep"><bdi lang="he">עִם</bdi></span>',
+          'Production answer': 'לדבר',
           'Part of speech': 'verb',
           Binyan: "pi'el",
           Root: 'ד־ב־ר',
           Forms: 'past: דִּבֵּר<br>pres: מְדַבֵּר<br>fut: יְדַבֵּר',
+        },
+      });
+    });
+
+    test('sends each meaning with its own preposition, or none', async () => {
+      const requests = await renderConnectedEditor();
+      await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to talk with' });
+      await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
+      await typeInto(input('English meaning 2'), 'to talk about');
+      await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
+      await typeInto(input('English meaning 3'), 'to speak');
+      await fillVerb("pi'el", '');
+      expect(screen.getByText('Still needed: preposition, image')).toBeTruthy();
+      for (const [meaning, preposition] of [
+        ['to talk with', 'עִם'],
+        ['to talk about', 'עַל'],
+        ['to speak', 'None'],
+      ] as const) {
+        const group = screen.getByRole('group', { name: meaning });
+        await fireEvent.click(within(group).getByRole('radio', { name: preposition }));
+      }
+
+      await skipImage();
+      expect(await addToDeck(requests)).toMatchObject({
+        fields: {
+          Definitions:
+            '1. to talk with <span class="prep"><bdi lang="he">עִם</bdi></span>' +
+            '<br>2. to talk about <span class="prep"><bdi lang="he">עַל</bdi></span>' +
+            '<br>3. to speak<span class="no-prep"></span>',
+          'Production answer': 'לדבר',
         },
       });
     });
@@ -189,7 +219,7 @@ describe('CardEditor', () => {
         const requests = await renderConnectedEditor();
         await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to speak' });
         await fillVerb("pi'el", '');
-        await fireEvent.click(screen.getByRole('radio', { name: 'עם' }));
+        await fireEvent.click(screen.getByRole('radio', { name: 'עִם' }));
 
         await skipImage();
         expect(await addToDeck(requests)).toMatchObject({ fields: { Root: '' } });
@@ -201,7 +231,7 @@ describe('CardEditor', () => {
         await renderConnectedEditor();
         await fillInputs({ word: 'לדבר', pointed: 'לְדַבֵּר', gloss: 'to speak' });
         await fillVerb("pi'el", 'דִּבֵּר');
-        await fireEvent.click(screen.getByRole('radio', { name: 'את' }));
+        await fireEvent.click(screen.getByRole('radio', { name: 'אֶת' }));
         expect(screen.getByText(/Type only the root's Hebrew letters/)).toBeTruthy();
         expect(screen.getByText('Still needed: root, image')).toBeTruthy();
       });

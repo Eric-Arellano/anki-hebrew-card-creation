@@ -168,18 +168,20 @@ describe('prefillDraft', () => {
   });
 
   describe('for a verb', () => {
-    test('fills the infinitive, binyan, forms and root, and keeps the preposition chosen', () => {
-      const draft = { ...typed, verb: { ...typed.verb, preposition: 'עם' as const } };
+    test('fills the infinitive, binyan, forms and root, and keeps the prepositions chosen', () => {
+      const draft = {
+        ...typed,
+        definitions: [{ english: 'to speak', preposition: 'עם' as const }],
+      };
       expect(prefillDraft(draft, diber)).toEqual({
         draft: {
-          ...typed,
+          ...draft,
           word: 'לדבר',
           pointed: 'לְדַבֵּר',
           partOfSpeech: 'verb',
           root: 'ד־ב־ר',
           verb: {
             binyan: "pi'el",
-            preposition: 'עם',
             past: 'דִּבֵּר',
             present: 'מְדַבֵּר',
             future: 'יְדַבֵּר',
@@ -423,19 +425,11 @@ describe('undoPrefill', () => {
     const before: CardInputsDraft = {
       ...typed,
       pointed: 'כְּלָבִים',
-      verb: { ...typed.verb, preposition: 'עם', future: 'יְדַבֵּר' },
+      verb: { ...typed.verb, future: 'יְדַבֵּר' },
     };
     const filled = prefillDraft(before, diber).draft;
-    const edited = {
-      ...filled,
-      definitions: [{ english: 'to speak' }],
-      verb: { ...filled.verb, preposition: 'על' as const },
-    };
-    expect(undoPrefill(edited, before)).toEqual({
-      ...before,
-      definitions: [{ english: 'to speak' }],
-      verb: { ...before.verb, preposition: 'על' },
-    });
+    const definitions = [{ english: 'to speak', preposition: 'על' as const }];
+    expect(undoPrefill({ ...filled, definitions }, before)).toEqual({ ...before, definitions });
   });
 
   describe('for an adjective', () => {
