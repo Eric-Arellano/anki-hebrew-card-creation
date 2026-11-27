@@ -111,7 +111,9 @@ export const FIELD_HELP = {
   },
   readingContext: {
     noun: BOOK_READING_CONTEXT,
-    verb: BOOK_READING_CONTEXT,
+    verb: readingContextHelp(
+      'לפנות could be “to turn” or “to clear”, so for “to turn” write “לפנות ימינה”.',
+    ),
     adjective: readingContextHelp(
       'ישן could be “old” or “sleeping”, so for “old” write “בית ישן”.',
     ),

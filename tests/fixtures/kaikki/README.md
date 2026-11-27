@@ -1,6 +1,6 @@
 # Dictionary fixtures
 
-`hebrew.jsonl` is 69 lines copied unchanged, in their original order, from kaikki.org's
+`hebrew.jsonl` is 71 lines copied unchanged, in their original order, from kaikki.org's
 [Hebrew extract](https://kaikki.org/dictionary/Hebrew/) of English Wiktionary
 (`kaikki.org-dictionary-Hebrew.jsonl`, extracted on 2026-10-25 from the 2026-10-01 dump). Because it
 has the real file's format, the index can be built from it as if it were the real file.
@@ -39,6 +39,8 @@ It holds every entry with these titles, except where a word is given:
 - חוץ מ־: a preposition whose title ends in a maqaf.
 - גדול (only the adjective): an adjective whose forms are generated from a stem. אחר (only the
   adjective): an irregular feminine. ישראלי (only the adjective): two masculine plurals.
+- פנה (only the verb פָּנָה), פינה (only the verb פִּנָּה): two verbs whose infinitives share a
+  spelling, `לפנות`, that titles no entry.
 
 ## License
 

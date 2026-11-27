@@ -24,8 +24,6 @@ Today a verb goes by its infinitive (the reasons are in `src/lib/card/prefill.ts
 `Forms` and never quizzed. `Audio` holds one recording, found in Downloads by the word's spelling
 (`AudioInput.svelte`).
 
-This runs beside `verb-prepositions.md`, and neither waits for the other.
-
 ## Decisions
 
 - The note still goes by its infinitive: the `Hebrew` field, the Reading card and the
@@ -141,9 +139,12 @@ The app can't edit the note type, so these steps are done by hand:
 
 ## After the PRs, by the human
 
-Re-save the verbs once, with the step in `verb-prepositions.md`: each gets its unpointed past and
-a recording of it. Seven of the old notes (ישב, דיבר, למד, אמר, עמד, חשב, ראה) already hold the
-past's recording, because they were keyed by it.
+Re-save the 11 verbs still keyed by their past: אמר, כתב, ישב, דיבר, למד, עמד, חשב, קרא, בא,
+רצה, ראה (read through AnkiConnect, 2026-11-26). Only אמר has a `Part of speech`. Each becomes its
+infinitive, with a binyan, a preposition per meaning (Suggest meanings drafts the lines), its
+unpointed past and a recording of it; ללכת joins them, and אמר becomes להגיד. Seven (ישב, דיבר,
+למד, אמר, עמד, חשב, ראה) already hold the past's recording, because they were keyed by it. Then
+reset reviews for the deck.
 
 ## Verification
 
