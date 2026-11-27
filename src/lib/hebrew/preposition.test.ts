@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { withoutTrailingMaqaf } from './preposition.ts';
+import { POINTED_PREPOSITIONS, withoutTrailingMaqaf } from './preposition.ts';
 
 describe('withoutTrailingMaqaf', () => {
   test.each([
@@ -10,5 +10,11 @@ describe('withoutTrailingMaqaf', () => {
     ['על־פי', 'על־פי'],
   ])('turns %s into %s', (word, expected) => {
     expect(withoutTrailingMaqaf(word)).toBe(expected);
+  });
+});
+
+describe('POINTED_PREPOSITIONS', () => {
+  test.each(Object.values(POINTED_PREPOSITIONS))('holds %s in NFC', (pointed) => {
+    expect(pointed).toBe(pointed.normalize('NFC'));
   });
 });

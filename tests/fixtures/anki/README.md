@@ -7,4 +7,6 @@ Replies from my own AnkiConnect, saved as it returned them (the `result` of each
   each in the deck's wrappers, and which have no meaning or part of speech yet.
 - `notes-info-mechonit-oto.json`: `notesInfo` for מכונית and אוטו, two words for “car”.
 - `notes-info-ima.json`: `notesInfo` for אמא, whose `Examples` holds two rows.
+- `notes-info-lalechet.json`: `notesInfo` for ללכת, saved by the app with a preposition for each
+  meaning: לְ־ for one, None for two.
 - `model-field-names-hebrew.json`: `modelFieldNames` for the `Hebrew` note type.

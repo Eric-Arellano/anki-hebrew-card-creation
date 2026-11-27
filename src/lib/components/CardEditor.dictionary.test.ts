@@ -215,9 +215,10 @@ describe('CardEditor', () => {
       "pi'el",
     );
     expect(input('Root, like דבר or ד.ב.ר').value).toBe('ח־כ־ה');
-    expect(screen.getByText(/Wiktionary suggests/).textContent).toContain('ל');
-    expect((screen.getByRole('radio', { name: 'ל' }) as HTMLInputElement).checked).toBe(false);
-    expect(screen.getByText('Still needed: English meaning, preposition, image')).toBeTruthy();
+    expect(screen.getByText(/Wiktionary suggests/).textContent).toContain('לְ־');
+    await typeInto(input('English meaning'), 'to wait');
+    expect((screen.getByRole('radio', { name: 'לְ־' }) as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByText('Still needed: preposition, image')).toBeTruthy();
     // The deck check searches the lemma too, which old notes for verbs hold, and the root.
     await vi.waitFor(() =>
       expect(requests.map((request) => request.path)).toContain(

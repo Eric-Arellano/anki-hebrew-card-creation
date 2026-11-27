@@ -106,8 +106,7 @@ describe('draftFromNote', () => {
           },
           audio: stored('pronunciation_he_כלב.mp3'),
         },
-        // The note's `טוב` is no preposition, which matters only once the note is called a verb.
-        unoffered: { preposition: 'טוב' },
+        unoffered: {},
       });
     });
   });
@@ -196,6 +195,13 @@ describe('draftFromNote', () => {
       pointed: 'דָּבָר',
       definitions: [{ english: 'thing' }, { english: 'word & co' }],
     } as const;
+    // A verb's lines each take a preposition, or none, after English that may hold its own
+    // parentheses.
+    const verbDefinitions = [
+      { english: 'to talk with', preposition: 'עם' },
+      { english: '(formal) to address & co', preposition: 'את' },
+      { english: 'to speak', preposition: 'none' },
+    ] as const;
     const prompt = { variant1Prompt: 'a <b>prompt</b>\nover lines', variant1Answer: 'דְּבָרִים' };
     const everyMedia: MediaDraft = {
       images: [stored('a.jpg'), stored('b.JPG')],
@@ -228,13 +234,15 @@ describe('draftFromNote', () => {
         ...word,
         partOfSpeech: 'verb',
         root: 'ד־ב־ר',
-        verb: { binyan: "pi'el", preposition: 'עם', past: 'דִּבֵּר', present: 'מְדַבֵּר', future: '' },
+        definitions: verbDefinitions,
+        verb: { binyan: "pi'el", past: 'דִּבֵּר', present: 'מְדַבֵּר', future: '' },
       },
       {
         ...word,
         partOfSpeech: 'verb',
         root: '',
-        verb: { binyan: "pa'al", preposition: undefined, past: '', present: '', future: 'x' },
+        definitions: [{ english: 'to go', preposition: 'none' }],
+        verb: { binyan: "pa'al", past: '', present: '', future: 'x' },
       },
       {
         ...word,
@@ -281,39 +289,36 @@ describe('draftFromNote', () => {
     });
   });
 
-  describe('for a verb’s preposition', () => {
-    function read(answer: string, partOfSpeech = '') {
+  describe('for the real verb ללכת, saved with a preposition for each meaning', () => {
+    const held = realNote('ללכת');
+
+    test('chooses each meaning’s preposition, or None', () => {
+      expect(draftFromNote(held).inputs.definitions).toStrictEqual([
+        { english: 'to walk, go', preposition: 'ל' },
+        { english: 'to happen, go on', preposition: 'none' },
+        { english: 'to go away, depart', preposition: 'none' },
+      ]);
+    });
+
+    test('saves it again unchanged', () => {
+      expect(changedFields(held, saved(held))).toEqual({});
+    });
+  });
+
+  describe('for a verb saved before its meanings took prepositions', () => {
+    test('leaves each meaning’s unchosen, whatever the production answer held', () => {
       const { inputs, unoffered } = draftFromNote({
         ...blankNote,
         Hebrew: 'לחכות',
-        'Production answer': answer,
-        'Part of speech': partOfSpeech,
+        Definitions: '1. to wait<br>2. to wait for',
+        'Production answer': 'לחכות ל',
+        'Part of speech': 'verb',
       });
-      return { preposition: inputs.verb.preposition, unoffered: unoffered.preposition };
-    }
-
-    test('reads the one after the word', () => {
-      expect(read('לחכות ל')).toEqual({ preposition: 'ל', unoffered: undefined });
-    });
-
-    test('reads the word alone as none on a note saved as a verb', () => {
-      expect(read('לחכות', 'verb')).toEqual({ preposition: 'none', unoffered: undefined });
-    });
-
-    test('leaves the word alone unchosen on a note with no part of speech', () => {
-      expect(read('לחכות')).toEqual({ preposition: undefined, unoffered: undefined });
-    });
-
-    test('leaves a blank answer unchosen', () => {
-      expect(read('', 'verb')).toEqual({ preposition: undefined, unoffered: undefined });
-    });
-
-    test('names a preposition the chips don’t offer', () => {
-      expect(read('לחכות אל', 'verb')).toEqual({ preposition: undefined, unoffered: 'אל' });
-    });
-
-    test('names an answer that doesn’t start with the word', () => {
-      expect(read('לְחַכּוֹת ל', 'verb')).toEqual({ preposition: undefined, unoffered: 'לְחַכּוֹת ל' });
+      expect(inputs.definitions).toStrictEqual([
+        { english: 'to wait' },
+        { english: 'to wait for' },
+      ]);
+      expect(unoffered).toEqual({});
     });
   });
 

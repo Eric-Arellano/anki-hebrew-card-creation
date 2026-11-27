@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/svelte';
+import { fireEvent, screen, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 import { loadedNote } from '#tests/real-notes.ts';
 import {
@@ -63,6 +63,40 @@ describe('CardEditor', () => {
     });
   });
 
+  describe('with a verb’s meanings', () => {
+    const verb = kelevNote({
+      'Part of speech': 'verb',
+      Definitions:
+        '1. to keep <span class="prep"><bdi lang="he">אֶת</bdi></span>' +
+        '<br>2. to go<span class="no-prep"></span><br>3. to wait',
+    });
+
+    function chosen(meaning: string) {
+      const group = screen.getByRole('group', { name: meaning });
+      return within(group)
+        .getAllByRole('radio')
+        .filter((radio) => (radio as HTMLInputElement).checked)
+        .map((radio) => radio.parentElement?.textContent?.trim());
+    }
+
+    test('chooses each one’s preposition, or None, and leaves one with neither unchosen', async () => {
+      await renderConnectedEditor({}, verb);
+      expect([chosen('to keep'), chosen('to go'), chosen('to wait')]).toEqual([
+        ['אֶת'],
+        ['None'],
+        [],
+      ]);
+      expect(screen.getByText('Still needed: preposition, binyan')).toBeTruthy();
+    });
+
+    test('marks a changed preposition with what the note held', async () => {
+      await renderConnectedEditor({}, verb);
+      const group = screen.getByRole('group', { name: 'to keep' });
+      await fireEvent.click(within(group).getByRole('radio', { name: 'עַל' }));
+      expect(screen.getByRole('button', { name: 'Restore to keep' })).toBeTruthy();
+    });
+  });
+
   describe('with a value no chip offers', () => {
     test('names it under the part of speech until one is chosen', async () => {
       await renderConnectedEditor({}, kelevNote({ 'Part of speech': 'Noun' }));
@@ -82,19 +116,6 @@ describe('CardEditor', () => {
       expect(
         screen.getByRole('combobox', { name: 'Binyan' }).getAttribute('aria-describedby'),
       ).toBe(screen.getByText(unofferedText('nitpael')).id);
-    });
-
-    test("names it under a verb's preposition", async () => {
-      await renderConnectedEditor({}, kelevNote({ 'Part of speech': 'verb' }));
-      const preposition = screen.getByRole('group', { name: 'Preposition it takes (מילת יחס)' });
-      expect(within(preposition).getByText(unofferedText('טוב'))).toBeTruthy();
-    });
-
-    describe('for an input another part of speech shows', () => {
-      test('names nothing', async () => {
-        await renderConnectedEditor({}, kelevNote());
-        expect(screen.queryByText(unofferedText('טוב'))).toBeNull();
-      });
     });
   });
 });

@@ -78,7 +78,6 @@ export function prefillDraft(
           pointed: infinitive?.pointed ?? '',
           partOfSpeech: 'verb',
           root: onlyValue(candidate.roots),
-          // The preposition is only ever suggested, so it stays as the human chose it.
           verb: {
             ...draft.verb,
             binyan,
@@ -225,7 +224,7 @@ export function undoPrefill(draft: CardInputsDraft, before: CardInputsDraft): Ca
     root: before.root,
     noun: before.noun,
     adjective: before.adjective,
-    verb: { ...before.verb, preposition: draft.verb.preposition },
+    verb: before.verb,
   };
 }
 

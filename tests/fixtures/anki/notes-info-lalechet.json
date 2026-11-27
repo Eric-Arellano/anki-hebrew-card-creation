@@ -1,0 +1,88 @@
+[
+  {
+    "noteId": 1763328447550,
+    "profile": "User 1",
+    "tags": [],
+    "fields": {
+      "Hebrew": {
+        "value": "ללכת",
+        "order": 0
+      },
+      "Pointed": {
+        "value": "לָלֶכֶת",
+        "order": 1
+      },
+      "Production answer": {
+        "value": "ללכת",
+        "order": 2
+      },
+      "Definitions": {
+        "value": "1. to walk, go <span class=\"prep\"><bdi lang=\"he\">לְ־</bdi></span><br>2. to happen, go on<span class=\"no-prep\"></span><br>3. to go away, depart<span class=\"no-prep\"></span>",
+        "order": 3
+      },
+      "Production context": {
+        "value": "",
+        "order": 4
+      },
+      "Reading context": {
+        "value": "",
+        "order": 5
+      },
+      "Images": {
+        "value": "<img alt=\"Man and woman are talking while walking to somewhere. Vector illustration. 11277542 Vector Art at Vecteezy\" src=\"man-and-woman-are-talking-while-walking-to-somewhere-illustration-vector.jpg\">",
+        "order": 6
+      },
+      "Audio": {
+        "value": "[sound:pronunciation_he_הלך.mp3]",
+        "order": 7
+      },
+      "Part of speech": {
+        "value": "verb",
+        "order": 8
+      },
+      "Gender": {
+        "value": "",
+        "order": 9
+      },
+      "Forms": {
+        "value": "past: הָלַךְ<br>pres: הוֹלֵךְ<br>fut: יֵלֵךְ",
+        "order": 10
+      },
+      "Binyan": {
+        "value": "pa'al",
+        "order": 11
+      },
+      "Root": {
+        "value": "ה־ל־ך",
+        "order": 12
+      },
+      "Variant 1 prompt": {
+        "value": "",
+        "order": 13
+      },
+      "Variant 1 answer": {
+        "value": "",
+        "order": 14
+      },
+      "Variant 2 prompt": {
+        "value": "",
+        "order": 15
+      },
+      "Variant 2 answer": {
+        "value": "",
+        "order": 16
+      },
+      "Examples": {
+        "value": "",
+        "order": 17
+      },
+      "Notes": {
+        "value": "",
+        "order": 18
+      }
+    },
+    "modelName": "Hebrew",
+    "mod": 1795744795,
+    "cards": [1763328447551, 1763328447552, 1763328447553]
+  }
+]

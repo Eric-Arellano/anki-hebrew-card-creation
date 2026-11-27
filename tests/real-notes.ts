@@ -5,14 +5,20 @@ import ima from '#tests/fixtures/anki/notes-info-ima.json' with { type: 'json' }
 import kelevChatulDag from '#tests/fixtures/anki/notes-info-kelev-chatul-dag.json' with {
   type: 'json',
 };
+import lalechet from '#tests/fixtures/anki/notes-info-lalechet.json' with { type: 'json' };
 import mechonitOto from '#tests/fixtures/anki/notes-info-mechonit-oto.json' with { type: 'json' };
 import twoImages from '#tests/fixtures/anki/notes-info-two-images.json' with { type: 'json' };
 
 /** The fixture note whose `Hebrew` is `word`, as AnkiConnect's `notesInfo` answers with it. */
 export function noteInfo(word: string): NoteInfo {
-  const note = [...kelevChatulDag, ...bayit, ...twoImages, ...mechonitOto, ...ima].find(
-    ({ fields }) => fields.Hebrew.value === word,
-  );
+  const note = [
+    ...kelevChatulDag,
+    ...bayit,
+    ...twoImages,
+    ...mechonitOto,
+    ...ima,
+    ...lalechet,
+  ].find(({ fields }) => fields.Hebrew.value === word);
   if (note === undefined) throw new Error(`No fixture note for ${word}`);
   return note;
 }
