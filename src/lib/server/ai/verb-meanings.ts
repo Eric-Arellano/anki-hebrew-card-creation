@@ -48,8 +48,8 @@ const HELP = [
 ].join('\n');
 
 // Each rule here is one Claude broke in trials without it: את for חשב, את for the language after
-// מדבר, ב for where you work, the dictionary's every sense of עבד, and a None the human chose
-// replaced where מ fits too.
+// מדבר, ב for where you work, the dictionary's every sense of עבד, a None the human chose
+// replaced where מ fits too, and a usage for None with מ after the verb.
 const SYSTEM = [
   'You help someone learning Modern Hebrew write a flashcard for one verb. The card lists the ' +
     'verb’s English meanings, each with the preposition the verb takes in that meaning, and ' +
@@ -65,11 +65,17 @@ const SYSTEM = [
     'speaker would say it before a definite object, so never for the language after מדבר.\n' +
     '- An infinitive or a ש clause after the verb isn’t an object: “to want” takes את, from ' +
     'רוצה את הספר, even though רוצה לאכול has none.\n' +
-    '- Answer none only for a meaning that never takes an object, like “to sleep”.',
+    '- Answer none only for a meaning said with no object after the verb, like “to sleep”, or “to ' +
+    'go away, depart” in הוא כבר הלך. A meaning with a direct object never takes none, even when ' +
+    'the object is left out: “to eat” takes את, though אני אוכל has no object.',
   'The learner’s lines, each ending in the preposition they chose, if any:\n' +
     '- Keep each of them, in order, with its wording, and set `from` to its number.\n' +
     '- Keep a preposition they chose unless the verb never takes it in that meaning. Where ' +
     'another would fit too, keep theirs.\n' +
+    '- Keep a None they chose when the meaning is often said with no object after it. If a ' +
+    'preposition also often follows it, don’t replace their None: add that as a meaning of its ' +
+    'own, with English that names what follows, like “to go away from, leave (a place)” מ beside ' +
+    'their “to go away, depart”.\n' +
     '- Split a line in place when its roles take different prepositions a beginner meets often, ' +
     'as “to talk” becomes “to talk with” עם and “to talk about” על. Give each part the line’s ' +
     'number in `from`.\n' +
@@ -89,7 +95,7 @@ const SYSTEM = [
     '(“to talk with”). No Hebrew.\n' +
     '- `usage`: a short everyday phrase in Hebrew, without niqqud, using the verb in this ' +
     'meaning with exactly this preposition before its object, like שומר על הילדים. For את, make ' +
-    'the object definite so את shows. With none, the verb in a short phrase.\n' +
+    'the object definite so את shows. With none, a short phrase with no object after the verb.\n' +
     '- `note`: null, unless you changed a preposition the learner chose, or another preposition ' +
     'is as common in this meaning. Then say so in a few words of English, naming the Hebrew ' +
     'preposition.',
