@@ -12,6 +12,9 @@
 // unchosen.
 // *Rejected: telling None from unchosen by what else the note holds, because a verb saved before
 // this can look exactly like one whose meanings all take none.*
+// *Rejected: a separate field for prepositions, because it parts each one from its meaning.*
+// *Rejected: parentheses, because Definitions already use them for English notes ("(computing) to
+// save"), so a preposition in them is easy to skim past.*
 import { ankiFieldHtmlToText, textToAnkiFieldHtml } from '#lib/anki/html.ts';
 import { isSamePointedText } from '#lib/hebrew/normalize.ts';
 import {

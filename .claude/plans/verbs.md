@@ -6,115 +6,65 @@ A verb's preposition belongs to one of its meanings, not to the verb. שָׁמַ
 and שָׁמַר עַל means "look after". דִּבֵּר takes עִם for who you talk with and עַל for what you
 talk about.
 
-The editor already holds it that way. Each `Meaning` in `src/lib/card/definitions.ts` carries a
-`PrepositionChoice` for a verb, chosen by the human in `MeaningPrepositions.svelte`, under the
-verb's Grammar, and written into `Definitions` as a pill (the format is described in the header
-of `definitions.ts`). A verb's `Production answer` is the infinitive alone. What is left is Claude
-filling those lines, and everything downstream of them seeing each preposition.
+The editor and the deck already hold it that way. Each `Meaning` in `src/lib/card/definitions.ts`
+carries a `PrepositionChoice`, chosen by the human in `MeaningPrepositions.svelte` and written into
+`Definitions` as a pill (the format is in that file's header). A verb's `Production answer` is the
+infinitive alone. Anki's templates and Styling draw the pill, dashed with a `?` on the Production
+front and filled in on every back, and ללכת is saved this way (`notes-info-lalechet.json`).
 
-What the deck holds (read through AnkiConnect, 2026-11-26):
+What is left is Claude filling those lines, and everything downstream of them seeing each
+preposition. The dictionary names a preposition for only 104 of 2,286 verb lemmas, per entry
+rather than per meaning, so Claude has to suggest most of them.
 
-- 12 verbs. אמר was saved by the app. The other 11 are from before it: כתב, ישב, דיבר, למד,
-  עמד, חשב, קרא, בא, הלך, רצה, ראה. They are keyed by their past, with no `Part of speech` and
-  a blank `Production answer`. Two already number their meanings (קרא, הלך).
-- Variants are a prompt and a bare answer for an unusual form (אָבוֹת טוֹבִים, נָשִׁים), with no
-  typing and no examples.
-- The card templates and Styling exist only in Anki, not in this repo.
+## The rules the remaining PRs follow
 
-The human will reset reviews for the whole deck once it is updated, so changing templates now
-costs nothing. They always create and edit notes in the app. The dictionary names a preposition
-for only 104 of 2,286 verb lemmas, per entry rather than per meaning, so Claude has to suggest
-most of them.
-
-## The deck
-
-**One note per verb, meaning one conjugation table. Each line of `Definitions` carries at most
-one preposition. The Production card types the bare infinitive.**
-
-- Reading and Listening show the bare infinitive, and their backs list every meaning with its
-  preposition. That is the recognition being drilled: see or hear לשמור, and know what it can
-  mean. Forvo's audio is of the bare infinitive.
-- Production's front blanks each preposition, and its back reveals it. The typed answer is
-  graded on the verb alone, and the human checks the preposition themselves.
 - A meaning whose roles take different prepositions gets a line per role: "to talk with" עִם,
   then "to talk about" עַל.
 - את counts as a preposition, so a blank always asks which preposition, never whether there is
-  one. A line with no preposition has no blank. "to help" לְ־ and "to see" אֶת both show a blank
-  on the front, and the contrast between them is what's worth drilling.
-- Examples: one per line, each using that line's preposition.
+  one. None is only for a meaning that never takes an object.
+- Each preposition is shown in an example of its own meaning.
 - Variants stay for irregular forms only, like אֵלֵךְ.
 - A second note only for a different verb with the same spelling: לְסַפֵּר "tell" and לִסְפֹּר
   "count". `Reading context` tells them apart.
 
-*Rejected: the preposition in the typed answer, because one slot can't hold a preposition per
-meaning, and Anki grades the string exactly.*
+*Rejected: several prepositions on one line, because the English would have to be split around
+each one, in the inputs, the HTML and Claude's answer.*
 *Rejected: one note per preposition, because two Reading cards would show the same לשמור.*
 *Rejected: a variant for a preposition that changes the meaning, because a variant is a bare card
 for an unusual form, and these meanings are as central as the first one.*
-*Rejected: several prepositions on one line, because the English would have to be split around
-each one, in the inputs, the HTML and Claude's answer.*
-*Rejected: a separate field for prepositions, because it parts each one from its meaning.*
-*Rejected: parentheses, because Definitions already use them for English notes ("(computing) to
-save"), so a preposition in them is easy to skim past.*
-
-### How a line is written
-
-`definitionsToAnkiFieldHtml` in `src/lib/card/definitions.ts` ends each verb line in
-`<span class="prep">` holding the pointed preposition from `POINTED_PREPOSITIONS`
-(`src/lib/hebrew/preposition.ts`), or in an empty `<span class="no-prep">` for None. The Styling
-below draws the pill: dashed with a `?` on the Production front, and solid with the pointed
-preposition on every back. The pointed form is never Claude's or the human's to write.
-
-### The Anki edits, by hand in Manage Note Types, before the reset
-
-1. Production front: `<div class="defs">` becomes `<div class="defs quiz">`.
-2. Production back: `{{FrontSide}}` becomes `<div class="revealed">{{FrontSide}}</div>`.
-3. Reading and Listening backs: the `Production answer` div's class gains
-   `pos-{{text:Part of speech}}`, beside `g-{{text:Gender}}`. Only a noun's answer is more than
-   the word itself, so the Styling hides the line for the rest. A note with no part of speech
-   yet keeps it.
-4. Styling gains:
-
-```css
-.prep {
-  display: inline-block;
-  margin-inline-start: 0.35em;
-  padding: 0 0.55em;
-  border: 1.5px solid #a66f00;
-  border-radius: 999px;
-  background: #fdf3dc;
-  color: #7a5200;
-  font-size: 0.95em;
-  line-height: 1.45;
-}
-.nightMode .prep { border-color: #e0b44c; background: #3a2f15; color: #f0cc76; }
-.quiz .prep { border-style: dashed; background: transparent; }
-.quiz .prep bdi { display: none; }
-.quiz .prep::before { content: "?"; font-weight: 600; }
-.revealed .quiz .prep { border-style: solid; background: #fdf3dc; }
-.nightMode .revealed .quiz .prep { background: #3a2f15; }
-.revealed .quiz .prep bdi { display: inline; }
-.revealed .quiz .prep::before { content: none; }
-
-.chunk.pos-verb, .chunk.pos-adjective, .chunk.pos-adverb,
-.chunk.pos-preposition, .chunk.pos-phrase, .chunk.pos-other { display: none; }
-```
-
-Without these, a pill shows as plain inline Hebrew, so the app's change and the Anki edits can
-land in either order.
 
 ## The app changes, as PRs
+
+Claude sees a verb's meanings the same way in all three prompts below: one per line, each ending
+in its unpointed preposition in brackets, like `- to look after [על]` or `- to sleep [none]`. One
+function builds those lines, so PR 1 adds it and PRs 2 and 3 reuse it.
 
 ### PR 1: Claude suggests a verb's meanings with their prepositions
 
 - `src/lib/server/ai/meanings.ts` with `POST /api/ai/meanings`, shaped like `suggest.ts` and its
   route, through `askForStructured`.
 - Sent: the word, its pointed form, Wiktionary's glosses for the picked entry, its prepositions,
-  and the lines the human has written so far. Claude answers with lines, most common first, each
-  `{ english, preposition: PrepositionChoice }`. It keeps the human's wording where there is
-  some, splits a line whose roles take different prepositions, and adds a common meaning
-  that a different preposition gives (שמר על beside "to keep"). The English passes
-  `isPlainLine`, which moves out of `suggest.ts`, and has no Hebrew letters.
+  and the lines the human has written so far, with any preposition already chosen. The answer is
+  lines, each `{ english, preposition }`, the preposition a `z.enum` of `GOVERNED_PREPOSITIONS`
+  and `none`.
+- The system prompt quotes `MEANING_PREPOSITION_HELP`, as `suggest.ts` quotes `FIELD_HELP`, so
+  Claude follows the rules the human reads. Then:
+  - Answer the preposition that comes before the meaning's object, as a native speaker of
+    today's Israel uses it. For a direct object that is אֶת, even though את drops before an
+    indefinite one.
+  - An infinitive or a ש clause after the verb isn't an object: for רצה, "to want" takes את, from
+    רוצה את הספר, even though רוצה לאכול has none.
+  - Keep the human's lines, their wording and their order, and any preposition they chose. Split
+    a line in place when its roles take different prepositions.
+  - After them, add a meaning only when a different preposition gives it and a beginner would
+    meet it, like "to look after" עַל beside "to keep" אֶת. Add none when the lines cover them.
+  - With no lines yet, write the common meanings from Wiktionary's glosses, most common first,
+    leaving out ones marked archaic, obsolete or rare.
+  - Write each meaning as the deck does: English starting "to", short, with commas between
+    shades of one sense ("to walk, go"), and the English preposition when it tells roles apart
+    ("to talk with").
+- Guards: the English passes `isPlainLine`, which moves out of `suggest.ts`, and has no Hebrew
+  letters. A line that fails is dropped.
 - UI: a Suggest button in `MeaningPrepositions.svelte` shows Claude's lines beside the human's.
   "Use these" replaces `definitions` with them, prepositions and all, so the chips follow. The
   human edits from there, and the check in PR 3 looks at the result again before saving.
@@ -123,18 +73,36 @@ land in either order.
 
 ### PR 2: examples use each line's preposition
 
-- `SuggestRequest` (`src/lib/api/ai.ts`) sends a verb's lines with their prepositions. The prompt
-  asks for one example per line, each using its line's preposition.
+- `SuggestRequest` (`src/lib/api/ai.ts`) sends a verb's lines with their prepositions, and
+  `suggestionRequest` writes them in the bracketed form.
+- The examples rule in `suggestionRequest` gains, for a verb:
+  - Each meaning with a preposition gets its own sentence, using the verb with that preposition
+    before an object. Meanings with different prepositions never share one, though two shades
+    with the same preposition still may.
+  - For את, give the object the definite article or a name, so את appears: ראיתי את הסרט, not
+    ראיתי סרט.
+  - ל, ב and מ join the next word, as in הלכתי לים.
+  - This can need more sentences than `MAX_EXAMPLES`. **Open:** raise the cap for a verb, or
+    keep it and cover the first meanings only.
 - The fields' Suggest waits until every line's preposition is chosen: `suggestBlocker`, in
-  `src/lib/card/suggestions.ts`.
+  `src/lib/card/suggestions.ts`, says "Choose a preposition for each meaning first."
 
 ### PR 3: the review check sees each preposition
 
 - `fieldTexts` in `src/lib/server/ai/check.ts` sends `Definitions` through `ankiFieldHtmlToText`,
-  which today runs each pill into its English (`to look after עַל`). Send each preposition
-  marked instead, like `to look after [על]`, reading the lines with `definitionsFromHtml`.
-- Add "a meaning takes a different preposition than the one beside it" and "an example doesn't
-  use its line's preposition" to the check's list.
+  which today runs each pill into its English (`to look after עַל`). For a verb, send the
+  bracketed lines instead, read with `definitionsFromHtml`.
+- The prompt's "How the note is studied" says what the brackets are, and that the Production card
+  blanks each preposition for the learner to recall.
+- "Look for these" gains:
+  - A meaning paired with a preposition the verb doesn't take in that sense.
+  - An example that uses the verb with a preposition that doesn't match the meaning its English
+    gives.
+- "Leave these alone" gains:
+  - A preposition that fits where another would too. The learner chooses the one they want to
+    practice.
+  - An example with no את because its object is indefinite.
+  - A meaning with no example. The learner chooses the examples.
 
 ### PR 4: an example's conjugated verb is recognized
 
@@ -174,8 +142,10 @@ land in either order.
 
 ## After the PRs, by the human
 
-Re-save the 11 old verbs in the app as infinitives, with a binyan and a preposition per meaning,
-then reset reviews.
+Re-save the 11 verbs left in the app as infinitives, with a binyan and a preposition per
+meaning: אמר, כתב, ישב, דיבר, למד, עמד, חשב, קרא, בא, רצה, ראה (read through AnkiConnect,
+2026-11-26). They are keyed by their past, and only אמר has a `Part of speech`. Then reset
+reviews for the deck.
 
 ## Verification
 
@@ -183,8 +153,5 @@ then reset reviews.
   file until it's clean. No test reaches the network or a real Anki.
 - By hand under `npm run dev`, and only with the human's go-ahead for Claude calls: for שמר,
   Suggest offers "to keep" אֶת and "to guard, look after" עַל, and "Use these" fills the lines and
-  chips. The note's Production front shows two dashed pills, and its back shows them filled in.
-  Nothing is added to Anki without the human clicking Add to deck.
-- After the Anki edits, which so far have only run in a browser: the pills and the hidden
-  `Production answer` line look right in Anki on desktop and on the phone, in day and night
-  mode.
+  chips. Its examples then use שומר את and שומר על. Nothing is added to Anki without the human
+  clicking Add to deck.
