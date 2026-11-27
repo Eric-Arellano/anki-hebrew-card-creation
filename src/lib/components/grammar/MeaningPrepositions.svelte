@@ -35,7 +35,14 @@ const filled = $derived(
 
 <fieldset class="grid grid-cols-1 gap-3">
   <legend class="mb-1">Preposition each meaning takes (מילת יחס)</legend>
-  <p class="hint"><QuotedText text={MEANING_PREPOSITION_HELP} /></p>
+  <div class="hint space-y-1">
+    <p><QuotedText text={MEANING_PREPOSITION_HELP.lead} /></p>
+    <ul class="list-disc space-y-1 ps-5">
+      {#each MEANING_PREPOSITION_HELP.cases as line (line)}
+        <li><QuotedText text={line} /></li>
+      {/each}
+    </ul>
+  </div>
   {#each filled as { meaning, index } (meaning)}
     <ChoiceChips
       legend={meaning.english.trim()}
