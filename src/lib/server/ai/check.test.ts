@@ -9,9 +9,13 @@ import checkKelevPlanted from '#tests/fixtures/claude/check-kelev-planted.json' 
 import { realNote } from '#tests/real-notes.ts';
 import { checkNote, checkRequest, fieldTexts, toNoteCheck } from './check.ts';
 import type { Homograph } from './homographs.ts';
+import { PREPOSITION_RULES } from './verb-meanings.ts';
 
 // כלב as Anki holds it, with an image and audio, and an image in its variant's prompt.
 const kelev: CheckRequest = { partOfSpeech: 'noun', fields: fromAnkiFields(realNote('כלב')) };
+
+// ללכת as Anki holds it, a meaning with לְ־ and two with none.
+const lalechet: CheckRequest = { partOfSpeech: 'verb', fields: fromAnkiFields(realNote('ללכת')) };
 
 const kelevWithExamples: CheckRequest = {
   ...kelev,
@@ -34,7 +38,7 @@ function answer(findings: { field: string; problem: string; rewrite: string | nu
 
 describe('fieldTexts', () => {
   test('gives each field’s text a line per line, leaving out media and blank fields', () => {
-    expect(fieldTexts(kelev.fields)).toEqual({
+    expect(fieldTexts(kelev)).toEqual({
       unpointed: 'כלב',
       pointed: 'כֶּלֶב',
       definitions: 'dog',
@@ -46,9 +50,22 @@ describe('fieldTexts', () => {
   });
 
   test('sends Notes, and leaves out the composed Production answer', () => {
-    expect(fieldTexts({ ...kelev.fields, notes: 'a pet', productionAnswer: 'כלב טוב' })).toEqual({
-      ...fieldTexts(kelev.fields),
+    expect(
+      fieldTexts({
+        ...kelev,
+        fields: { ...kelev.fields, notes: 'a pet', productionAnswer: 'כלב טוב' },
+      }),
+    ).toEqual({
+      ...fieldTexts(kelev),
       notes: 'a pet',
+    });
+  });
+
+  describe('when the note is a verb', () => {
+    test('gives each meaning numbered, with its preposition in brackets', () => {
+      expect(fieldTexts(lalechet).definitions).toBe(
+        '1. to walk, go [ל]\n2. to happen, go on [none]\n3. to go away, depart [none]',
+      );
     });
   });
 });
@@ -90,6 +107,21 @@ describe('checkRequest', () => {
     expect(system).toContain(GROUP_HELP['Unusual variants']);
   });
 
+  describe('when the note is a verb', () => {
+    test('says what the brackets hold, by the rules the examples were written by', () => {
+      const { system, user } = checkRequest(lalechet, []);
+      expect(user).toContain('Definitions:\n  1. to walk, go [ל]\n  2. to happen, go on [none]');
+      expect(system).toContain('ends in the preposition the verb takes in that meaning');
+      expect(system).toContain(PREPOSITION_RULES);
+    });
+  });
+
+  describe('when the note is not a verb', () => {
+    test('leaves out the rules for prepositions', () => {
+      expect(checkRequest(kelev, []).system).not.toContain(PREPOSITION_RULES);
+    });
+  });
+
   test('leaves niqqud and blank fields alone, and allows no findings', () => {
     const { system } = checkRequest(kelev, []);
     expect(system).toContain('Niqqud. It comes from Wiktionary, so never comment on it');
@@ -129,7 +161,7 @@ describe('toNoteCheck', () => {
           },
           { field: 'Gender', problem: 'The examples treat it as feminine.', rewrite: null },
         ]),
-        kelevWithExamples.fields,
+        kelevWithExamples,
       ),
     ).toEqual({
       findings: [
@@ -147,7 +179,7 @@ describe('toNoteCheck', () => {
     expect(
       toNoteCheck(
         answer([{ field: 'Definitions', problem: 'כלב is a dog, not a cat.', rewrite: 'dog' }]),
-        { ...kelev.fields, definitions: 'cat' },
+        { ...kelev, fields: { ...kelev.fields, definitions: 'cat' } },
       ),
     ).toEqual({
       findings: [{ field: 'definitions', problem: 'כלב is a dog, not a cat.', rewrite: 'dog' }],
@@ -157,10 +189,7 @@ describe('toNoteCheck', () => {
   describe('when a rewrite repeats its whole field', () => {
     test('drops the finding', () => {
       expect(
-        toNoteCheck(
-          answer([{ field: 'Definitions', problem: 'Wrong.', rewrite: 'dog' }]),
-          kelev.fields,
-        ),
+        toNoteCheck(answer([{ field: 'Definitions', problem: 'Wrong.', rewrite: 'dog' }]), kelev),
       ).toEqual({ findings: [] });
     });
   });
@@ -173,7 +202,7 @@ describe('toNoteCheck', () => {
       expect(
         toNoteCheck(
           answer([{ field: 'Examples', problem: 'The Hebrew is only one word.', rewrite }]),
-          kelevWithExamples.fields,
+          kelevWithExamples,
         ),
       ).toEqual({ findings: [] });
     });
@@ -184,7 +213,7 @@ describe('toNoteCheck', () => {
       expect(
         toNoteCheck(
           answer([{ field: 'Definitions', problem: 'כלב is not a cat.', rewrite: 'dog' }]),
-          { ...kelev.fields, definitions: 'dog<br>cat' },
+          { ...kelev, fields: { ...kelev.fields, definitions: 'dog<br>cat' } },
         ),
       ).toEqual({
         findings: [{ field: 'definitions', problem: 'כלב is not a cat.', rewrite: 'dog' }],
@@ -197,7 +226,7 @@ describe('toNoteCheck', () => {
       expect(
         toNoteCheck(
           answer([{ field: 'Reading context', problem: 'Add a hint.', rewrite: 'כלב נובח' }]),
-          kelev.fields,
+          kelev,
         ),
       ).toEqual({ findings: [] });
     });
@@ -206,7 +235,7 @@ describe('toNoteCheck', () => {
   describe('when a finding names a field Claude may not judge', () => {
     test('drops it', () => {
       expect(
-        toNoteCheck(answer([{ field: 'Pointed', problem: 'Wrong.', rewrite: null }]), kelev.fields),
+        toNoteCheck(answer([{ field: 'Pointed', problem: 'Wrong.', rewrite: null }]), kelev),
       ).toEqual({ findings: [] });
     });
   });
@@ -215,9 +244,9 @@ describe('toNoteCheck', () => {
     ['a blank problem', ' '],
     ['markup in the problem', 'Use <b>גדול</b>.'],
   ])('drops a finding with %s', (_, problem) => {
-    expect(
-      toNoteCheck(answer([{ field: 'Gender', problem, rewrite: null }]), kelev.fields),
-    ).toEqual({ findings: [] });
+    expect(toNoteCheck(answer([{ field: 'Gender', problem, rewrite: null }]), kelev)).toEqual({
+      findings: [],
+    });
   });
 
   test.each([
@@ -226,9 +255,9 @@ describe('toNoteCheck', () => {
     ['a line break', 'הכלב\nגדול'],
     ['nothing but space', ' '],
   ])('drops a rewrite with %s, keeping its finding', (_, rewrite) => {
-    expect(
-      toNoteCheck(answer([{ field: 'Gender', problem: 'Wrong.', rewrite }]), kelev.fields),
-    ).toEqual({ findings: [{ field: 'gender', problem: 'Wrong.' }] });
+    expect(toNoteCheck(answer([{ field: 'Gender', problem: 'Wrong.', rewrite }]), kelev)).toEqual({
+      findings: [{ field: 'gender', problem: 'Wrong.' }],
+    });
   });
 });
 

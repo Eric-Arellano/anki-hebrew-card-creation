@@ -4,12 +4,14 @@
 import { z } from 'zod';
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import type { CheckRequest, Finding, NoteCheck } from '#lib/api/ai.ts';
+import { definitionsFromHtml } from '#lib/card/definitions.ts';
 import { examplesFromHtml, isBlankExample } from '#lib/card/examples.ts';
 import { FIELD_HELP, GROUP_HELP } from '#lib/field-help.ts';
 import { hasNiqqud, isSamePointedText } from '#lib/hebrew/normalize.ts';
-import { FIELDS, type FieldKey, type FieldValues, type PartOfSpeech } from '#lib/note-type.ts';
+import { FIELDS, type FieldKey, type PartOfSpeech } from '#lib/note-type.ts';
 import { askForStructured, type ClaudeMessages, type StructuredRequest } from './client.ts';
 import { type Homograph, homographLines } from './homographs.ts';
+import { PREPOSITION_RULES, verbMeaningLines } from './verb-meanings.ts';
 
 // What Claude reads, in the order a card shows them. `Production answer` stays out, since it only
 // repeats the word for the card to check a typed answer.
@@ -82,15 +84,27 @@ type Answer = z.infer<typeof answerSchema>;
 
 const GENDER_NAMES: Record<string, string> = { m: 'masculine', f: 'feminine', mf: 'both' };
 
-/** Each sent field's text as the card shows it, a line per line, leaving out the blank ones. */
-export function fieldTexts(fields: FieldValues): Partial<Record<FieldKey, string>> {
+// A verb's meanings as every prompt shows them, since the card's pill would otherwise run into the
+// English as `to look after עַל`.
+function fieldText(key: FieldKey, html: string, partOfSpeech: PartOfSpeech): string {
+  if (key === 'definitions' && partOfSpeech === 'verb') {
+    return verbMeaningLines(definitionsFromHtml(html));
+  }
+  return html
+    .split(/<br\s*\/?>/i)
+    .map(ankiFieldHtmlToText)
+    .filter((line) => line !== '')
+    .join('\n');
+}
+
+/** Each sent field's text as Claude reads it, a line per line, leaving out the blank ones. */
+export function fieldTexts({
+  partOfSpeech,
+  fields,
+}: CheckRequest): Partial<Record<FieldKey, string>> {
   return Object.fromEntries(
     SENT_FIELDS.flatMap((key) => {
-      const text = (fields[key] ?? '')
-        .split(/<br\s*\/?>/i)
-        .map(ankiFieldHtmlToText)
-        .filter((line) => line !== '')
-        .join('\n');
+      const text = fieldText(key, fields[key] ?? '', partOfSpeech);
       return text === '' ? [] : [[key, text]];
     }),
   );
@@ -118,7 +132,31 @@ function fieldBlock(key: FieldKey, text: string): string {
     : `${FIELDS[key].name}: ${value}`;
 }
 
+// A verb's own lines in the prompt, so another part of speech reads only what applies to it.
+const VERB_STUDY =
+  '- Each of a verb’s meanings ends in the preposition the verb takes in that meaning, in ' +
+  'brackets, or [none]. The card asking for the Hebrew blanks each preposition for the learner ' +
+  'to recall, and every other card shows it.\n';
+
+const VERB_PREPOSITIONS =
+  'What counts as a meaning’s preposition, by the same rules the examples were written by:\n' +
+  `${PREPOSITION_RULES}\n` +
+  'A rewrite of a meaning gives its English, then its preposition in brackets, like “to look ' +
+  'after [על]”.';
+
+const VERB_FAULTS =
+  '- A verb’s meaning paired with a preposition the verb doesn’t take in that sense.\n' +
+  '- An example that uses the verb with a preposition that doesn’t match the meaning its English ' +
+  'gives.\n';
+
+const VERB_NON_FAULTS =
+  '- A preposition that fits where another would too. The learner chooses the one they want to ' +
+  'practice.\n' +
+  '- An example with no את because its object is indefinite.\n' +
+  '- A meaning with no example. The learner chooses the examples.\n';
+
 function systemPrompt(partOfSpeech: PartOfSpeech): string {
+  const isVerb = partOfSpeech === 'verb';
   return [
     'You review a flashcard note that someone learning Modern Hebrew wrote for one word, just ' +
       'before they save it to their deck. They will drill whatever it says for years, and as a ' +
@@ -136,6 +174,7 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'the Hebrew to recall.\n' +
       '- The Examples show under the answer, each Hebrew sentence with its English under it.\n' +
       '- The Notes show under the answer too.\n' +
+      (isVerb ? VERB_STUDY : '') +
       'The word, its niqqud, Gender, Binyan, Root and Forms come from Wiktionary. The learner ' +
       'wrote the Definitions in their own words, and the other fields with this help beside ' +
       'each:\n' +
@@ -145,6 +184,8 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       `- Examples: ${FIELD_HELP.examples[partOfSpeech]}\n` +
       `- Notes: ${FIELD_HELP.notes}`,
 
+    ...(isVerb ? [VERB_PREPOSITIONS] : []),
+
     'Look for these, and nothing else:\n' +
       '- A meaning in the Definitions that the word, as it is pointed, doesn’t have, such as ' +
       'one that belongs to another word with the same spelling.\n' +
@@ -153,6 +194,7 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'preposition, or stilted phrasing.\n' +
       '- An example whose English doesn’t say what its Hebrew says.\n' +
       '- An example that uses the word in a sense the Definitions don’t give.\n' +
+      (isVerb ? VERB_FAULTS : '') +
       '- A hint that gives its answer away: a Production context that holds the Hebrew word or ' +
       'one of its forms, or a Reading context that translates the word. A Reading context that ' +
       'reads just as well as one of the other words the spelling could be, when those are ' +
@@ -171,6 +213,7 @@ function systemPrompt(partOfSpeech: PartOfSpeech): string {
       'and the choice of examples.\n' +
       '- A meaning that is right, however it is worded, and any meaning left out. The learner ' +
       'lists only the meanings they want to learn.\n' +
+      (isVerb ? VERB_NON_FAULTS : '') +
       '- Spelling without niqqud, where the full and the defective spelling are both in use.',
 
     'Answer with your findings in the schema given, whose fields say what each holds.',
@@ -181,7 +224,7 @@ export function checkRequest(
   { partOfSpeech, fields }: CheckRequest,
   homographs: readonly Homograph[],
 ): StructuredRequest<Answer> {
-  const texts = fieldTexts(fields);
+  const texts = fieldTexts({ partOfSpeech, fields });
   const user = [
     `Part of speech: ${partOfSpeech}`,
     ...SENT_FIELDS.flatMap((key) => {
@@ -222,8 +265,8 @@ function repeatsField(field: JudgedField, rewrite: string, text: string): boolea
  * The findings in `answer` that name a field the note holds text in. A rewrite that isn't a plain
  * line, or carries niqqud, which a model can't be trusted to point, is dropped from its finding.
  */
-export function toNoteCheck(answer: Answer, fields: FieldValues): NoteCheck {
-  const texts = fieldTexts(fields);
+export function toNoteCheck(answer: Answer, request: CheckRequest): NoteCheck {
+  const texts = fieldTexts(request);
   const findings = answer.findings.flatMap(({ field: name, problem, rewrite }): Finding[] => {
     const field = KEY_BY_NAME.get(name);
     const text = field === undefined ? undefined : texts[field];
@@ -242,8 +285,5 @@ export async function checkNote(
   homographs: readonly Homograph[],
   messages?: ClaudeMessages,
 ): Promise<NoteCheck> {
-  return toNoteCheck(
-    await askForStructured(checkRequest(request, homographs), messages),
-    request.fields,
-  );
+  return toNoteCheck(await askForStructured(checkRequest(request, homographs), messages), request);
 }

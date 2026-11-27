@@ -47,27 +47,31 @@ const HELP = [
   ...VERB_MEANING_PREPOSITION_HELP.cases.map((line) => `- ${line}`),
 ].join('\n');
 
-// Each rule here is one Claude broke in trials without it: את for חשב, את for the language after
-// מדבר, ב for where you work, the dictionary's every sense of עבד, a None the human chose
-// replaced where מ fits too, and a usage for None with מ after the verb.
+// What counts as a meaning's preposition. The review check quotes it too, so it holds the examples
+// to the rules they were written by. Trials broke these without it: את for חשב, את for the language
+// after מדבר, and ב for where you work.
+export const PREPOSITION_RULES =
+  '- A meaning’s preposition is the one that comes right after the verb in that meaning, before ' +
+  'its object, as a native speaker in today’s Israel says it. A place you go to counts as an ' +
+  'object: ללכת takes ל, from הלכתי לים. A place where it happens doesn’t, so “to work” in ' +
+  'עובד בבנק takes none, unless the verb needs it, as גר needs ב.\n' +
+  '- For a direct object it is את, even though את drops before an indefinite one: “to see” ' +
+  'takes את, from ראיתי את הסרט, even though ראיתי סרט has none. A meaning takes את only where a ' +
+  'native speaker would say it before a definite object, so the language after מדבר never does.\n' +
+  '- An infinitive or a ש clause after the verb isn’t an object: “to want” takes את, from ' +
+  'רוצה את הספר, even though רוצה לאכול has none.\n' +
+  '- A meaning takes none only when it is said with no object after the verb, like “to sleep”, ' +
+  'or “to go away, depart” in הוא כבר הלך. A meaning with a direct object never takes none, even ' +
+  'when the object is left out: “to eat” takes את, though אני אוכל has no object.';
+
+// Each rule here is one Claude broke in trials without it: the dictionary's every sense of עבד, a
+// None the human chose replaced where מ fits too, and a usage for None with מ after the verb.
 const SYSTEM = [
   'You help someone learning Modern Hebrew write a flashcard for one verb. The card lists the ' +
     'verb’s English meanings, each with the preposition the verb takes in that meaning, and ' +
     'quizzes the learner on each preposition. This is the help they see when they choose one:\n\n' +
     HELP,
-  'Prepositions:\n' +
-    '- Give the preposition that comes right after the verb in that meaning, before its object, ' +
-    'as a native speaker in today’s Israel says it. A place you go to counts as an object: ' +
-    'ללכת takes ל, from הלכתי לים. A place where it happens doesn’t, so “to work” in ' +
-    'עובד בבנק takes none, unless the verb needs it, as גר needs ב.\n' +
-    '- For a direct object it is את, even though את drops before an indefinite one: “to see” ' +
-    'takes את, from ראיתי את הסרט, even though ראיתי סרט has none. Give את only where a native ' +
-    'speaker would say it before a definite object, so never for the language after מדבר.\n' +
-    '- An infinitive or a ש clause after the verb isn’t an object: “to want” takes את, from ' +
-    'רוצה את הספר, even though רוצה לאכול has none.\n' +
-    '- Answer none only for a meaning said with no object after the verb, like “to sleep”, or “to ' +
-    'go away, depart” in הוא כבר הלך. A meaning with a direct object never takes none, even when ' +
-    'the object is left out: “to eat” takes את, though אני אוכל has no object.',
+  `Prepositions:\n${PREPOSITION_RULES}`,
   'The learner’s lines, each ending in the preposition they chose, if any:\n' +
     '- Keep each of them, in order, with its wording, and set `from` to its number.\n' +
     '- Keep a preposition they chose unless the verb never takes it in that meaning. Where ' +

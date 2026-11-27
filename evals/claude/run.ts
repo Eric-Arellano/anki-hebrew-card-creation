@@ -1,7 +1,7 @@
 // `npm run eval -- <check|verb-meanings|suggest> [efforts] [runs]`: asks the real Claude, at each
 // effort, about every case of that kind in `cases.ts`, and prints what it got wrong and what it
 // cost. Every call is billed, so this runs only when the human asks: the check, three efforts and
-// two runs cost about $2. Set EVAL_VERBOSE to print every answer, not just the wrong ones, and
+// two runs cost about $3. Set EVAL_VERBOSE to print every answer, not just the wrong ones, and
 // EVAL_ONLY to run only the cases whose name holds it.
 //
 // It calls the same functions as the app's routes, so it grades what the editor would show,
