@@ -185,9 +185,6 @@ then reset reviews.
   Suggest offers "to keep" אֶת and "to guard, look after" עַל, and "Use these" fills the lines and
   chips. The note's Production front shows two dashed pills, and its back shows them filled in.
   Nothing is added to Anki without the human clicking Add to deck.
-- Once the human saves a verb with per-meaning prepositions through the app, capture its
-  `notesInfo` as a fixture, with their go-ahead, and read it back in `from-note.test.ts`. The
-  read-back tests so far build the field by hand, since no real note holds a pill yet.
 - After the Anki edits, which so far have only run in a browser: the pills and the hidden
   `Production answer` line look right in Anki on desktop and on the phone, in day and night
   mode.

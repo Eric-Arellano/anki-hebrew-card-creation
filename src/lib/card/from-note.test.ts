@@ -289,6 +289,22 @@ describe('draftFromNote', () => {
     });
   });
 
+  describe('for the real verb ללכת, saved with a preposition for each meaning', () => {
+    const held = realNote('ללכת');
+
+    test('chooses each meaning’s preposition, or None', () => {
+      expect(draftFromNote(held).inputs.definitions).toStrictEqual([
+        { english: 'to walk, go', preposition: 'ל' },
+        { english: 'to happen, go on', preposition: 'none' },
+        { english: 'to go away, depart', preposition: 'none' },
+      ]);
+    });
+
+    test('saves it again unchanged', () => {
+      expect(changedFields(held, saved(held))).toEqual({});
+    });
+  });
+
   describe('for a verb saved before its meanings took prepositions', () => {
     test('leaves each meaning’s unchosen, whatever the production answer held', () => {
       const { inputs, unoffered } = draftFromNote({
