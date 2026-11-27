@@ -4,11 +4,11 @@ import { z } from 'zod';
 import type { Suggestions, SuggestRequest } from '#lib/api/ai.ts';
 import type { Example } from '#lib/card/examples.ts';
 import { FIELD_HELP } from '#lib/field-help.ts';
-import { hasHebrewLetters, hasLatinLetters } from '#lib/hebrew/letters.ts';
-import { hasNiqqud } from '#lib/hebrew/normalize.ts';
+import { hasHebrewLetters } from '#lib/hebrew/letters.ts';
 import type { PartOfSpeech } from '#lib/note-type.ts';
 import { askForStructured, type ClaudeMessages, type StructuredRequest } from './client.ts';
 import { type Homograph, homographLines } from './homographs.ts';
+import { isPlainLine, isUnpointedHebrew } from './plain-text.ts';
 
 const exampleSchema = z.object({ hebrew: z.string(), english: z.string() });
 const answerSchema = z.object({
@@ -108,17 +108,6 @@ export function suggestionRequest(
   ].join('\n');
 
   return { system, user, schema: withReading ? answerWithReadingSchema : answerSchema };
-}
-
-// A hint's textarea is saved as Anki HTML, where `<`, `>` and `&` would be markup, and a line
-// break would split one suggestion into two.
-function isPlainLine(text: string): boolean {
-  return text.trim() !== '' && !/[<>&\r\n]/.test(text);
-}
-
-// Unpointed, because pointing from a model isn't a source the Hebrew text rules can trust.
-function isUnpointedHebrew(text: string): boolean {
-  return isPlainLine(text) && hasHebrewLetters(text) && !hasLatinLetters(text) && !hasNiqqud(text);
 }
 
 function isValidExample({ hebrew, english }: Example): boolean {

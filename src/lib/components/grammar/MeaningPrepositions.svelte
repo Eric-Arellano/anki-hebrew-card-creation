@@ -1,6 +1,8 @@
 <script lang="ts">
+import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import type { Held } from '#lib/card/changed-from.ts';
 import { isBlankMeaning, type Meaning, type PrepositionChoice } from '#lib/card/definitions.ts';
+import { meaningsRequest } from '#lib/card/meaning-suggestions.ts';
 import { MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
 import {
   GOVERNED_PREPOSITIONS,
@@ -9,6 +11,7 @@ import {
 } from '#lib/hebrew/preposition.ts';
 import QuotedText from '../ui/QuotedText.svelte';
 import ChoiceChips from './ChoiceChips.svelte';
+import MeaningSuggestions from './MeaningSuggestions.svelte';
 
 // Pointed, as the card shows them.
 const OPTIONS: readonly { value: PrepositionChoice; label: string }[] = [
@@ -19,13 +22,22 @@ const OPTIONS: readonly { value: PrepositionChoice; label: string }[] = [
 let {
   definitions = $bindable(),
   held,
-  suggested,
+  word,
+  pointed,
+  candidate,
 }: {
   definitions: Meaning[];
   held: Held<readonly Meaning[]>;
-  // From the dictionary, which names them for few verbs, and for the entry, not for a meaning.
-  suggested: readonly GovernedPreposition[];
+  word: string;
+  pointed: string;
+  // The dictionary entry picked, if any.
+  candidate: DictionaryCandidate | undefined;
 } = $props();
+
+// From the dictionary, which names them for few verbs, and for the entry, not for a meaning.
+const suggested: readonly GovernedPreposition[] = $derived(
+  candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : [],
+);
 
 // Each meaning with English, with its index among all the rows, which `held` is marked by.
 const filled = $derived(
@@ -53,7 +65,9 @@ const filled = $derived(
       bind:value={meaning.preposition}
     />
   {:else}
-    <p class="hint">Write an English meaning above, then choose its preposition here.</p>
+    <p class="hint">
+      Write an English meaning above, then choose its preposition here, or have Claude suggest them.
+    </p>
   {/each}
   {#if suggested.length > 0}
     <p class="hint">
@@ -64,4 +78,8 @@ const filled = $derived(
       for this verb, but not for which meaning.
     </p>
   {/if}
+  <MeaningSuggestions
+    request={meaningsRequest({ word, pointed, definitions }, candidate)}
+    onuse={(meanings) => (definitions = meanings)}
+  />
 </fieldset>

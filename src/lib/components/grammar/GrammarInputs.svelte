@@ -122,7 +122,9 @@ function chooseInfinitive(pointed: string) {
     <MeaningPrepositions
       bind:definitions={inputs.definitions}
       held={held?.definitions}
-      suggested={candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : []}
+      word={inputs.word}
+      pointed={inputs.pointed}
+      {candidate}
     />
     <VerbInputs
       bind:verb={inputs.verb}

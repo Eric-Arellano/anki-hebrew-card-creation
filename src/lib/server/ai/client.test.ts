@@ -39,6 +39,12 @@ describe('askForStructured', () => {
       );
     });
 
+    test('sends the effort a request asks for', async () => {
+      const messages = fakeClaude(claudeMessage('end_turn', [textBlock('{"gender":"m"}')]));
+      await askForStructured({ ...request, effort: 'medium' }, messages);
+      expect(messages.create.mock.calls[0]?.[0].output_config?.effort).toBe('medium');
+    });
+
     test('reads the text block after a thinking block', async () => {
       const thinking = { type: 'thinking', thinking: '', signature: 'sig' } as const;
       const messages = fakeClaude(

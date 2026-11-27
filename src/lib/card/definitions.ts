@@ -23,7 +23,9 @@ import {
   POINTED_PREPOSITIONS,
 } from '#lib/hebrew/preposition.ts';
 
-export type PrepositionChoice = GovernedPreposition | 'none';
+export const PREPOSITION_CHOICES = [...GOVERNED_PREPOSITIONS, 'none'] as const;
+
+export type PrepositionChoice = (typeof PREPOSITION_CHOICES)[number];
 
 // A meaning as the editor holds it. The English is plain text, not HTML. Only a verb's meaning
 // takes a preposition, absent until the human chooses one; another part of speech keeps it only so

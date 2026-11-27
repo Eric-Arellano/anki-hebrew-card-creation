@@ -1,0 +1,52 @@
+{
+  "model": "claude-opus-5-5",
+  "id": "msg_011ChSgn92AT6iahQEgYDDhG",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "",
+      "signature": "CAQS7woKEAgUGAI4AUIIdGhpbmtpbmcSDO6eDLR8+4hjI/aRaRoMwWqfCtQhgnBXOV++IjAqcpVSux7eZm4SntrEv3sk1Z4uGBXAD+DXkYbao3XX9rGB8/5IDE4vOPdpYIT/hukqjApm8d4S7WcHoS0FJ0mHqJqs41RbPIaamzpH/qt5eWpJ5mhZs9IDGCLIHFKCv3X05nuZxUdblSawRpPe4Cq2p29WMLVh7zRa6Fn5Zxg0dkJOVaBS3vsuq+VQ0hKA31/mHvtOssNUCUUt4+31xVSXKsMkj1lovdw3CTPmfRpYnzEqDyI3jB/kJdnsgZJIja4Wm+CIHh2Qe+rrlGEmOZ7A3/05nVOhcYKyYdsnnt3k1qzWtuMtCREJWz9q9Oxeaakg3V5l95NvegHDB3Bv6pFgCa3Oq65uvjtoLQ7r9qE9yav93BFW9wDl5dk4X3UNJ+NIY7e7pwD0qqiY7uIZu3M/jmIyNMkeClkPX4CjXLhJ70T6hO9i0x6ZsrEnitVcg/n79FLShspvz55LAUUhcrNACLDNUp1Jh+Jk4PGDgtn4jAgPqkgiHCij3sXD3ddXuLfC0SdoJFSv1QU/XG70ktIzFNehHT228/rrn/g40YpN7niQ3PSUE531yo3eoZDgcqqlyVYK+UT8S/OdTrnk4hyIcFwmY11y4PS0PJuKeu1lh14G+aK2X5SxPAyMGTc0lvqwpmSEqy6bm5dR5o3nEFUW+P+0SOb0spYM1m4FBZHRybb+zxTyL2A/j8nVQbRakCt9n+ddshs8w4qdTzz9WzyeG+2B/Fp0MbPXJBYo6GpESzIGCDOusoO0HfGsqF7L2RnVxnr2hyq9Biz/6cuQs2huLbjiM8ttP4MN3yqfwZwcqCIlz+wAV6Stqn1XiG9xpEP6Pmx1OcLRdqeDGbjF3B6PmxuNiGvTOLhsmin/h1mmvrUSbwwx10Q/cUej2gdm1a2fRtgMEbmaAqglkSAc5RBBuYcrv5VAukpwDUT6T8TE9eTgOwaIrtK44wAGhUa4TU/SOLLKHkCS6RKowVSmfy/3NyYk3TuoFEI467crqz0/Fu/PRdf7eNPXIDbPkfuVct5k+LGMDYayod0eNltP2IJVj0GlMfobP50xfTBB7N7ydNvnTjNqWLPt0YTQ9bVgD3gsSLoGlY9seYDyFvvz0TOOV8wgfbFKkg8VOeJtCklz2z4KbPXpTSzGST85zX0vCgExV9yONyGt1af/WwsuOYdNdbE1E+Dm8LRigP1Q369jwLhcaoxV2x/7g4loXecVuLGb4olMJehEiiGX8RTj0ytEdDwntGabxNf2q/LCwCzpPa+kwBZQi97JTrcEtk9p7wBz9fINSCUUQV6Lf29dvdhVxFcdqnMft4Yf/6u831QUraBEDScXO/3HemMLa0XFNSw29ICWW1lYl856J0zEd5Ya6Xkg+JPXnQWpDKyMFZMFv34aLWlkre9fLAxTATu9ySxppDcp9q6L6Ddl6zWM6eunNx+0x3/+TuJ30841NUYuxVkwPTeeKnGCruHw8ZY7/QQi58QtP249EPuRunDdw3fwkQBSya2SAXFz/eq+WKpP9/8GQ5cv1HgHvKC5vfMtcddlsMIY2Qe/2mo6gCa3bce1UvMf2x0iGh3SPm6VkZFkcv7jax+3d51K/qCN6JCpxMF6V9Rz0u5XXP0sV6OAw0akzQOQ1tre2DUx5knBdE2vlRZORMojZkIeDp9IFqmCtbsZxYTgHslFmg463+MIX111T0eYJZsJVGVzgX8BsfMy2qnqrYwD7TKbqAEILNvczZaEPA9Ub7KODG2KEY/cwstjZi8yKlh3rfsaJvBS2Lf178FMQhTIZjVhaOVkSJT18xgB"
+    },
+    {
+      "type": "text",
+      "text": "{\"meanings\":[{\"from\":1,\"english\":\"to keep\",\"usage\":\"שומר את הקבלה\",\"preposition\":\"את\",\"note\":null},{\"from\":1,\"english\":\"to guard, look after\",\"usage\":\"שומר על הילדים\",\"preposition\":\"על\",\"note\":null}]}"
+    }
+  ],
+  "container": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 1772,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "iterations": [
+      {
+        "input_tokens": 1772,
+        "output_tokens": 365,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "type": "message",
+        "model": null
+      }
+    ],
+    "output_tokens": 365,
+    "output_tokens_details": {
+      "thinking_tokens": 274
+    },
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "speed": "standard"
+  },
+  "diagnostics": null
+}
