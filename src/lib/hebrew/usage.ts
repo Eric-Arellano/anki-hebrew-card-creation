@@ -71,40 +71,53 @@ function rootPattern(letters: readonly string[]): RegExp {
 // What a verb's form may be joined to: ו “and”, then ש “that” or כש “when”, as in `וכשאקנה`.
 const JOINED = '^ו?(?:כ?ש)?';
 
+// The future's א for “I”, which takes no ending, so a word that starts with it ends with the
+// root's last letter: `אקום`, `אשב`, `אקנה`, but not `אנכי` for נ־כ־ה. In medial letters.
+function firstPerson(last: string): string {
+  return `א(?=.*${last}$)`;
+}
+
 // What a verb's form may start with before its root, after what it is joined to: an infinitive's
 // ל, a hif'il's ה, a present's מ or a future's person, and a hitpa'el's ת after any of them:
 // `להקים`, `מתנסה`, `יתראו`.
-const BEFORE_ROOT = `${JOINED}(?:ל?ה|מ|ל|[אתינ])?ת?`;
+function beforeRoot(last: string): string {
+  return `${JOINED}(?:ל?ה|מ|ל|[תינ]|${firstPerson(last)})?ת?`;
+}
 
 // What a form may end with after its root: `קמתי`, `קמנו`, `קמו`, `קמים`, `לשבת`. In medial
 // letters, like the words and roots `rootRanges` matches.
 const AFTER_ROOT = withMedialLetters('(?:|ה|ו|י|ת|תי|תם|תן|נו|ים|ות)$');
 
-// What may follow a root's middle letter where its last is weak: a ה becomes י or ת, or drops
-// before a ו or י, as in `קניתי`, `קנתה`, `קנו` and `קונים`, and a נ drops into the ת after it,
-// as in `נתתי`. Any other last letter may only have a ו or י before it.
+// The same, where a hollow root's middle has dropped: no form that drops it ends in a י.
+const AFTER_DROPPED_MIDDLE = withMedialLetters('(?:|ה|ו|ת|תי|תם|תן|נו|ים|ות)$');
+
+// What may follow a root's middle letter where its last is weak, to the end of the word. A last ה
+// stays, becomes י or ת, or drops before a ו or י, each with only the endings a verb gives it:
+// `קנה`, `קניתי`, `קנתה`, `קנו`, `קונים`, `לקנות`, `קנוי`. So `עליו` doesn't pass for ע־ל־ה. A
+// last נ drops into the ת after it, as in `נתתי`. Any other last letter may only have a ו or י
+// before it.
 const AFTER_MIDDLE: Readonly<Record<string, readonly string[]>> = {
-  ה: ['[וי]*[יתה]', '(?=[וי])'],
-  נ: ['[וי]*נ', '(?=ת)'],
+  ה: [withMedialLetters('(?:ה|י?ית[יםןה]?|ינו|תה|ות|ו|ים|י|וי(?:ה|ים|ות)?)$')],
+  נ: [`[וי]*נ${AFTER_ROOT}`, `(?=ת)${AFTER_ROOT}`],
 };
 
 // The start of a form, through its middle letter, whose first letter has dropped. A first י drops
 // after a future's person or an infinitive's ל, with nothing then between the other two
 // (`אשב`, `לשבת`), or becomes the ו of a hif'il (`מוציא`). A first נ drops after any of them,
-// leaving a י in ktiv male after all but א (`אסע`, `ליפול`, `מכיר`). ה־ל־ך conjugates as if its
-// ה were a י, and ל־ק־ח as if its ל were a נ, here in medial letters.
-function withoutFirst(root: string, middle: string): string[] {
+// leaving a י in ktiv male after all but א (`אסע`, `ליפול`), and a hif'il's present keeps a ו or
+// י before the last letter, unless it is a ה (`מכיר`, `מכה`), so `מצרים` doesn't pass for
+// נ־צ־ר. ה־ל־ך conjugates as if its ה were a י, and ל־ק־ח as if its ל were a נ, here in medial
+// letters.
+function withoutFirst(root: string, middle: string, last: string): string[] {
+  const person = `(?:[תינ]|${firstPerson(last)})`;
   if (root.startsWith('י') || root === 'הלכ') {
-    return [`${JOINED}[אתינל]${middle}(?![וי])`, `${JOINED}(?:ל?ה|מ|[אתינ])ו${middle}`];
+    return [`${JOINED}(?:${person}|ל)${middle}(?![וי])`, `${JOINED}(?:ל?ה|מ|${person})ו${middle}`];
   }
   if (root.startsWith('נ') || root === 'לקח') {
-    return [`${JOINED}(?:ל?ה|מ|א|[תינל]י?)${middle}`];
+    const present = last === 'ה' ? 'מ' : `מ(?=${middle}[וי])`;
+    return [`${JOINED}(?:ל?ה|${present}|${firstPerson(last)}|[תינל]י?)${middle}`];
   }
   return [];
-}
-
-function wholeWord(stem: string): RegExp {
-  return new RegExp(`${stem}${AFTER_ROOT}`);
 }
 
 // A weak root loses or changes a letter as it conjugates, which leaves too little of it to find
@@ -119,16 +132,21 @@ function weakRootPatterns(letters: readonly string[]): RegExp[] {
   if (letters.length !== 3 || first === undefined || middle === undefined || last === undefined) {
     return [];
   }
-  const anyLast = `[וי]*${last}`;
-  // A middle ו or י drops, as in `קמתי` for ק־ו־ם, unless the root ends in ה, which makes it a
-  // consonant: `היינו` for ה־י־ה.
-  if (/[וי]/.test(middle) && last !== 'ה') return [wholeWord(`${BEFORE_ROOT}${first}${anyLast}`)];
+  // A middle ו or י drops only in a past or present, or a hif'il's past with its ה, and never
+  // before a י: `קמתי`, `קמים`, `הקמנו`, but `אקום` and `מקים`. So `ארץ` doesn't pass for ר־ו־ץ,
+  // nor `בני` for ב־י־ן. Unless the root ends in ה, which makes it a consonant: `היינו` for ה־י־ה.
+  if (/[וי]/.test(middle) && last !== 'ה') {
+    return [
+      new RegExp(`${beforeRoot(last)}${first}[וי]+${last}${AFTER_ROOT}`),
+      new RegExp(`${JOINED}ה?${first}${last}${AFTER_DROPPED_MIDDLE}`),
+    ];
+  }
   const starts = [
-    ...(last in AFTER_MIDDLE ? [`${BEFORE_ROOT}${first}[וי]*${middle}`] : []),
-    ...withoutFirst(letters.join(''), middle),
+    ...(last in AFTER_MIDDLE ? [`${beforeRoot(last)}${first}[וי]*${middle}`] : []),
+    ...withoutFirst(letters.join(''), middle, last),
   ];
-  const ends = AFTER_MIDDLE[last] ?? [anyLast];
-  return starts.flatMap((start) => ends.map((end) => wholeWord(`${start}${end}`)));
+  const ends = AFTER_MIDDLE[last] ?? [`[וי]*${last}${AFTER_ROOT}`];
+  return starts.flatMap((start) => ends.map((end) => new RegExp(`${start}${end}`)));
 }
 
 // A root of fewer than three letters would match too much to say anything.
@@ -153,12 +171,15 @@ function merged(ranges: readonly TextRange[]): TextRange[] {
     }, []);
 }
 
-/** The forms a word takes in a sentence, and its root, as `formatRoot` writes it. */
+/**
+ * The forms a word takes in a sentence, and a verb's root, as `formatRoot` writes it. Only a verb's:
+ * the root is matched by how a verb conjugates, which would pass far too much for another word.
+ */
 export type WordUsage = { forms: readonly string[]; root?: string };
 
 /**
- * The ranges of `text` that hold one of `forms`, pointed or not, in ktiv male or haser, or a word
- * built on `root`. A word's prefix letters fall inside its range: `ובבית` for `בַּיִת`.
+ * The ranges of `text` that hold one of `forms`, pointed or not, in ktiv male or haser, or a
+ * conjugation of `root`. A word's prefix letters fall inside its range: `ובבית` for `בַּיִת`.
  */
 export function usageRanges(text: string, { forms, root }: WordUsage): TextRange[] {
   const words = hebrewWords(text);
