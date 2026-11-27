@@ -4,10 +4,13 @@
 
 A verb's preposition belongs to one of its meanings, not to the verb. שָׁמַר אֶת means "keep",
 and שָׁמַר עַל means "look after". דִּבֵּר takes עִם for who you talk with and עַל for what you
-talk about. Today a verb note's Production card checks a typed `Production answer` of the
-infinitive plus one preposition (`לחכות ל`). Its front lists every meaning, so that answer is
-wrong for any meaning that takes another preposition. A noun's gender, which the Production
-answer drills through טוב, is a single fact about the whole word, so it fits in that slot.
+talk about.
+
+The editor already holds it that way. Each `Meaning` in `src/lib/card/definitions.ts` carries a
+`PrepositionChoice` for a verb, chosen by the human in `MeaningPrepositions.svelte`, under the
+verb's Grammar, and written into `Definitions` as a pill (the format is described in the header
+of `definitions.ts`). A verb's `Production answer` is the infinitive alone. What is left is Claude
+filling those lines, and everything downstream of them seeing each preposition.
 
 What the deck holds (read through AnkiConnect, 2026-11-26):
 
@@ -56,30 +59,11 @@ save"), so a preposition in them is easy to skim past.*
 
 ### How a line is written
 
-```html
-1. to keep, save <span class="prep"><bdi lang="he">אֶת</bdi></span><br>2. to guard, look after <span class="prep"><bdi lang="he">עַל</bdi></span>
-```
-
-Each preposition is drawn as a pill: dashed with a `?` on the Production front, and solid with the
-pointed preposition on every back. The pointed form comes from a fixed table beside
-`GOVERNED_PREPOSITIONS` in `src/lib/hebrew/preposition.ts`: אֶת, לְ־, בְּ־, עַל, עִם, מִ־. It is
-never pointed by Claude or typed by the human. Shown standing alone, a prefix takes its citation
-vowel and a maqaf, which settles the old question of how to point לְ, בְּ and מִ before a word.
-
-A meaning that takes none ends in an empty marker instead:
-
-```html
-to go<span class="no-prep"></span>
-```
-
-Being empty, it shows nothing on any card, with or without the Styling. It lets the editor tell a
-None the human chose from a preposition never chosen, as in a verb saved before this. If
-something strips it, the line loads unchosen, so the human chooses again rather than the editor
-guessing.
-
-*Rejected: telling None from unchosen by what else the note holds, because a verb saved before
-this can look exactly like one whose meanings all take none, so None would be asked for again on
-every edit.*
+`definitionsToAnkiFieldHtml` in `src/lib/card/definitions.ts` ends each verb line in
+`<span class="prep">` holding the pointed preposition from `POINTED_PREPOSITIONS`
+(`src/lib/hebrew/preposition.ts`), or in an empty `<span class="no-prep">` for None. The Styling
+below draws the pill: dashed with a `?` on the Production front, and solid with the pointed
+preposition on every back. The pointed form is never Claude's or the human's to write.
 
 ### The Anki edits, by hand in Manage Note Types, before the reset
 
@@ -121,54 +105,38 @@ land in either order.
 
 ## The app changes, as PRs
 
-### PR 1: each of a verb's meanings takes its own preposition
-
-- `Meaning` in `src/lib/card/definitions.ts`, the record each line of `Definitions` is held as,
-  gains a `preposition`. `definitionsToAnkiFieldHtml` writes a line's pill or none marker after
-  its English, and `definitionsFromHtml` reads them back. A line with neither starts unchosen.
-- A verb's `Production answer` is the word alone. `VerbInputs` and `VerbDraft` lose their
-  `preposition`. `readPreposition` in `src/lib/card/from-note.ts`, and the chips in
-  `VerbInputs.svelte`, go away.
-- `DefinitionsInput.svelte`, for a verb only, gives each line chips for the `GOVERNED_PREPOSITIONS`
-  and None. Each starts unchosen and is required. The dictionary's suggested prepositions move
-  under the meanings, still per entry.
-- Help (`src/lib/field-help.ts`): a line per role, את counts, and None for a meaning with no
-  object.
-- Tests: compose and read back for none, one and several lines, a line whose English has its own
-  parentheses, and a note saved before this. Once the human saves a verb through it, capture its
-  `notesInfo` as a fixture, with their go-ahead.
-
-### PR 2: Claude suggests a verb's meanings with their prepositions
+### PR 1: Claude suggests a verb's meanings with their prepositions
 
 - `src/lib/server/ai/meanings.ts` with `POST /api/ai/meanings`, shaped like `suggest.ts` and its
   route, through `askForStructured`.
 - Sent: the word, its pointed form, Wiktionary's glosses for the picked entry, its prepositions,
   and the lines the human has written so far. Claude answers with lines, most common first, each
-  `{ english, preposition: GovernedPreposition | 'none' }`. It keeps the human's wording where
-  there is some, splits a line whose roles take different prepositions, and adds a common meaning
+  `{ english, preposition: PrepositionChoice }`. It keeps the human's wording where there is
+  some, splits a line whose roles take different prepositions, and adds a common meaning
   that a different preposition gives (שמר על beside "to keep"). The English passes
   `isPlainLine`, which moves out of `suggest.ts`, and has no Hebrew letters.
-- UI: a Suggest button under a verb's meanings shows Claude's lines beside the human's. "Use
-  these" replaces the lines and chooses their chips. The human edits from there, and the check
-  in PR 4 looks at the result again before saving.
+- UI: a Suggest button in `MeaningPrepositions.svelte` shows Claude's lines beside the human's.
+  "Use these" replaces `definitions` with them, prepositions and all, so the chips follow. The
+  human edits from there, and the check in PR 3 looks at the result again before saving.
 - Tests: the prompt, the guards, and the route through a fake `ClaudeMessages`. A real fixture
   for שמר is captured only with the human's go-ahead.
 
-### PR 3: examples use each line's preposition
+### PR 2: examples use each line's preposition
 
 - `SuggestRequest` (`src/lib/api/ai.ts`) sends a verb's lines with their prepositions. The prompt
   asks for one example per line, each using its line's preposition.
 - The fields' Suggest waits until every line's preposition is chosen: `suggestBlocker`, in
   `src/lib/card/suggestions.ts`.
 
-### PR 4: the review check sees each preposition
+### PR 3: the review check sees each preposition
 
-- `src/lib/server/ai/check.ts` sends `Definitions` as text with each preposition marked, like
-  `to look after [על]`, rather than run into the English.
+- `fieldTexts` in `src/lib/server/ai/check.ts` sends `Definitions` through `ankiFieldHtmlToText`,
+  which today runs each pill into its English (`to look after עַל`). Send each preposition
+  marked instead, like `to look after [על]`, reading the lines with `definitionsFromHtml`.
 - Add "a meaning takes a different preposition than the one beside it" and "an example doesn't
   use its line's preposition" to the check's list.
 
-### PR 5: an example's conjugated verb is recognized
+### PR 4: an example's conjugated verb is recognized
 
 - `examplesWithoutWord` warns that an example doesn't use the word, and `examplesToAnkiFieldHtml`
   bolds the word, both through `usageRanges` in `src/lib/hebrew/usage.ts`. For a verb it matches
@@ -193,7 +161,7 @@ land in either order.
 - *Rejected: leaving it, because the warning then fires on the examples the tool itself asks
   for, which teaches the human to ignore it.*
 
-### PR 6: a verb gets a Reading context
+### PR 5: a verb gets a Reading context
 
 - `homographsOf` in `src/lib/server/ai/homographs.ts` takes the entries titled with the note's
   spelling. A verb's entry is titled with its past, so an infinitive finds none, and Suggest
@@ -217,6 +185,9 @@ then reset reviews.
   Suggest offers "to keep" אֶת and "to guard, look after" עַל, and "Use these" fills the lines and
   chips. The note's Production front shows two dashed pills, and its back shows them filled in.
   Nothing is added to Anki without the human clicking Add to deck.
+- Once the human saves a verb with per-meaning prepositions through the app, capture its
+  `notesInfo` as a fixture, with their go-ahead, and read it back in `from-note.test.ts`. The
+  read-back tests so far build the field by hand, since no real note holds a pill yet.
 - After the Anki edits, which so far have only run in a browser: the pills and the hidden
   `Production answer` line look right in Anki on desktop and on the phone, in day and night
   mode.
