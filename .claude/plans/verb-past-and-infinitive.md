@@ -75,13 +75,17 @@ known better.*
   - The "never quizzed" comment in `verb.ts` and the reason in `prefill.ts` are rewritten.
 - The check's prompt (`src/lib/server/ai/check.ts`) says a verb's past may be another verb's,
   where that is the one speakers use, as אמר for להגיד, so the check doesn't fault it.
-- **Open:** a pu'al or huf'al has no infinitive, so prefill leaves the word blank. Is its word
-  then its past, with no second form asked?
+- A pu'al or huf'al has no infinitive, so its word is its past. Today prefill leaves the word
+  blank, so instead it fills the word and pointed word from the entry's title and pointed form,
+  as for a noun. Its second past input is hidden and not required, and its Production answer is
+  the word alone. `PART_OF_SPEECH_HELP.verb` says so in a clause. These are rare for a
+  beginner, so this only keeps the editor from asking for a form that doesn't exist.
 
 ### PR 2: the backs show the answer with niqqud
 
 - A `Pointed answer` field, composed entirely, like `Production answer`:
-  - for a verb, the pointed infinitive and past, לָלֶכֶת הָלַךְ;
+  - for a verb, the pointed infinitive and past, לָלֶכֶת הָלַךְ, or a passive's pointed past
+    alone;
   - for a noun, the pointed word and a pointed טוֹב beside `productionTov`'s, כֶּלֶב טוֹב;
   - for the rest, the pointed word.
 - A verb's past leaves `Forms`, which keeps the present and future. `fromNote` reads the pointed
@@ -95,8 +99,8 @@ known better.*
 
 ### PR 3: a recording of each form
 
-- The media's one `audio` becomes one per form: the word's and, for a verb, the past's, which is
-  optional. `Audio` holds them in that order, `[sound:…ללכת.mp3][sound:…הלך.mp3]`, and Anki plays
+- The media's one `audio` becomes one per form: the word's and, for a verb that isn't passive,
+  the past's, which is optional. `Audio` holds them in that order, `[sound:…ללכת.mp3][sound:…הלך.mp3]`, and Anki plays
   them in turn. `fromNote` reads a verb's two by their order. Today a field naming several
   recordings fills none.
 - A second `AudioInput` for the past, with its own Forvo chip and Downloads lookup keyed by the
