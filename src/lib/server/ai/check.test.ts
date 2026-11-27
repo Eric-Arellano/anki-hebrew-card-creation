@@ -154,7 +154,18 @@ describe('toNoteCheck', () => {
     });
   });
 
-  describe('when a rewrite repeats a line of its field', () => {
+  describe('when a rewrite repeats its whole field', () => {
+    test('drops the finding', () => {
+      expect(
+        toNoteCheck(
+          answer([{ field: 'Definitions', problem: 'Wrong.', rewrite: 'dog' }]),
+          kelev.fields,
+        ),
+      ).toEqual({ findings: [] });
+    });
+  });
+
+  describe('when a rewrite repeats a line of the Examples', () => {
     test.each([
       ['as it is', 'יש לי כלב.'],
       ['with another dash and spacing', 'הכלב שלי גדולה.  -  My dog is big.'],
@@ -165,6 +176,19 @@ describe('toNoteCheck', () => {
           kelevWithExamples.fields,
         ),
       ).toEqual({ findings: [] });
+    });
+  });
+
+  describe('when a rewrite keeps one line of a field and drops the rest', () => {
+    test('keeps the finding', () => {
+      expect(
+        toNoteCheck(
+          answer([{ field: 'Definitions', problem: 'כלב is not a cat.', rewrite: 'dog' }]),
+          { ...kelev.fields, definitions: 'dog<br>cat' },
+        ),
+      ).toEqual({
+        findings: [{ field: 'definitions', problem: 'כלב is not a cat.', rewrite: 'dog' }],
+      });
     });
   });
 
