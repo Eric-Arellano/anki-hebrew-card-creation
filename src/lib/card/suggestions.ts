@@ -1,7 +1,7 @@
 // What Suggest with Claude asks about, and what its reply may fill.
 
 import { SUGGESTED_HINTS, type Suggestions, type SuggestRequest } from '#lib/api/ai.ts';
-import { filledDefinitions } from '#lib/card/definitions.ts';
+import { completeVerbDefinitions, filledDefinitions } from '#lib/card/definitions.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
 import { type Example, isBlankExample } from '#lib/card/examples.ts';
 import { labeledForms } from '#lib/card/parts-of-speech/forms.ts';
@@ -13,10 +13,16 @@ function isBlankHint(edits: FieldValues, field: FieldKey): boolean {
   return (edits[field] ?? '').trim() === '';
 }
 
+export const CHOOSE_PREPOSITIONS = 'Choose a preposition for each meaning first.';
+
 /** Why there is nothing to ask Claude for yet, or `undefined` once there is. */
 export function suggestBlocker({ inputs, edits, examples }: AskedAbout): string | undefined {
   if (inputs.word.trim() === '' || filledDefinitions(inputs.definitions).length === 0) {
     return 'Type the word and a meaning first.';
+  }
+  // The examples show each meaning with its preposition, so Claude needs every one.
+  if (inputs.partOfSpeech === 'verb' && completeVerbDefinitions(inputs.definitions) === undefined) {
+    return CHOOSE_PREPOSITIONS;
   }
   if (
     !examples.every(isBlankExample) &&
@@ -35,7 +41,10 @@ export function suggestRequest(
     word: inputs.word.trim(),
     pointed: inputs.pointed.trim(),
     partOfSpeech,
-    definitions: filledDefinitions(inputs.definitions).map(({ english }) => english),
+    // Another part of speech keeps a preposition only for switching back to a verb.
+    definitions: filledDefinitions(inputs.definitions).map(({ english, preposition }) =>
+      partOfSpeech === 'verb' && preposition !== undefined ? { english, preposition } : { english },
+    ),
     forms: labeledForms(inputs, edits.forms ?? ''),
   };
 }

@@ -13,12 +13,13 @@ export const SUGGESTED_HINTS = [
 ] as const satisfies readonly FieldKey[];
 
 // `pointed` may be blank, and then no Reading context is suggested, since nothing tells the note's
-// own entry from its homographs.
+// own entry from its homographs. Only a verb's meanings carry a preposition, and every one of them
+// does.
 export type SuggestRequest = {
   word: string;
   pointed: string;
   partOfSpeech: PartOfSpeech;
-  definitions: string[];
+  definitions: Meaning[];
   forms: LabeledForm[];
 };
 

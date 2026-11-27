@@ -9,6 +9,7 @@ import type { PartOfSpeech } from '#lib/note-type.ts';
 import { askForStructured, type ClaudeMessages, type StructuredRequest } from './client.ts';
 import { type Homograph, homographLines } from './homographs.ts';
 import { isPlainLine, isUnpointedHebrew } from './plain-text.ts';
+import { verbMeaningLines } from './verb-meanings.ts';
 
 const exampleSchema = z.object({ hebrew: z.string(), english: z.string() });
 const answerSchema = z.object({
@@ -20,8 +21,10 @@ const answerWithReadingSchema = answerSchema.extend({ readingContext: z.string()
 
 type Answer = z.infer<typeof answerSchema> & { readingContext?: string | null };
 
-// Enforced on the answer too, since a row per example soon gets noisy.
-const MAX_EXAMPLES = 4;
+// Only a backstop, enforced on the answer too: the prompt asks for a sentence per use, and a verb
+// can have a line per preposition. A row per example soon gets noisy.
+// *Rejected: 4, because a verb with a few prepositions then lost a line's only example.*
+const MAX_EXAMPLES = 6;
 
 // Where my Hebrew is now, on the CEFR scale. Raise it as I learn, so examples grow with me.
 const LEARNER_LEVEL = 'A1';
@@ -50,6 +53,18 @@ function formVariety(partOfSpeech: PartOfSpeech): string {
   );
 }
 
+// The rules for which preposition a meaning takes are `verb-meanings.ts`'s, and the human has
+// already chosen them, so this only asks for them to be shown.
+const VERB_EXAMPLES =
+  '- A verb’s meanings each end in the preposition it takes in that meaning, in brackets. ' +
+  'Every meaning with one gets a sentence of its own, using the verb with that preposition ' +
+  'right before an object, so the learner sees which meaning it gives. Meanings with different ' +
+  'prepositions never share a sentence, though shades with the same one still may, and a ' +
+  'meaning marked [none] has no object after the verb.\n' +
+  '- Keep the preposition before a noun or a name, not joined to a pronoun as in אותו or עליו. ' +
+  'For את, give the object ה or make it a name, so את appears: “ראיתי את הסרט.”, not ' +
+  '“ראיתי סרט.” ל, ב and מ join the next word, as in “הלכתי לים.”\n';
+
 export function suggestionRequest(
   { word, pointed, partOfSpeech, definitions, forms }: SuggestRequest,
   homographs: readonly Homograph[],
@@ -74,10 +89,14 @@ export function suggestionRequest(
       '“החתול ישן על הספה בסלון.” (The cat is sleeping on the sofa in the living room.), ' +
       'where the sofa and the room take over.\n' +
       `- ${formVariety(partOfSpeech)}\n` +
-      '- A few good sentences beat many. Write one for each distinct meaning, in their order, ' +
-      'so its English shows which meaning it uses. Meanings that are shades of one sense share ' +
-      'a sentence, and one marked archaic, obsolete or rare needs none. With only one meaning ' +
-      `left, write two. Never write more than ${MAX_EXAMPLES}.\n` +
+      '- A few good sentences beat many, and each shows a use of the word the others don’t. ' +
+      'Write one for each distinct meaning, in their order, so its English shows which meaning ' +
+      'it uses. Meanings that are shades of one sense share a sentence, and one marked archaic, ' +
+      'obsolete or rare needs none. With only one meaning left, write two, the second using it ' +
+      'another common way, like as the subject rather than the object, or with an infinitive ' +
+      'after it. A sentence that only puts a use already shown in another form repeats it. ' +
+      `Never write more than ${MAX_EXAMPLES}.\n` +
+      (partOfSpeech === 'verb' ? VERB_EXAMPLES : '') +
       '- End every sentence with `.`, `?` or `!`, in Hebrew and in English. Put the Hebrew in ' +
       '`hebrew`, and a natural English translation in `english`, without parentheses.',
     `Production context: ${FIELD_HELP.productionContext[partOfSpeech]}\n` +
@@ -96,7 +115,9 @@ export function suggestionRequest(
     `Word: ${word}`,
     ...(pointed.trim() === '' ? [] : [`With niqqud: ${pointed}`]),
     `Part of speech: ${partOfSpeech}`,
-    `Meanings:\n${definitions.map((meaning) => `- ${meaning}`).join('\n')}`,
+    partOfSpeech === 'verb'
+      ? `Meanings, each with its preposition:\n${verbMeaningLines(definitions)}`
+      : `Meanings:\n${definitions.map(({ english }) => `- ${english}`).join('\n')}`,
     ...(forms.length === 0
       ? []
       : [
