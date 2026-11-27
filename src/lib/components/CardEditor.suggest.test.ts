@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import type { Suggestions } from '#lib/api/ai.ts';
 import {
   chooseNoun,
+  choosePartOfSpeech,
   exampleRows,
   fillInputs,
   heldReply,
@@ -97,7 +98,7 @@ describe('CardEditor', () => {
             word: 'ספר',
             pointed: 'סֵפֶר',
             partOfSpeech: 'noun',
-            definitions: ['book'],
+            definitions: [{ english: 'book' }],
             forms: [{ label: 'plural', form: 'סְפָרִים' }],
           },
         },
@@ -166,6 +167,30 @@ describe('CardEditor', () => {
         );
         expect(exampleRows()).toEqual(blankRow);
         expect(suggestButton().disabled).toBe(false);
+      });
+    });
+
+    describe('for a verb', () => {
+      test('waits for a preposition, then asks with it', async () => {
+        const requests = await renderWithSuggestions();
+        await fillInputs({ word: 'לשמור', pointed: 'לִשְׁמֹר', gloss: 'to keep' });
+        await choosePartOfSpeech('Verb');
+        expect(suggestButton().disabled).toBe(true);
+        expect(description(suggestButton())).toEqual([
+          'Choose a preposition for each meaning first.',
+        ]);
+
+        await fireEvent.click(screen.getByRole('radio', { name: 'אֶת' }));
+        await clickSuggest();
+        expect(suggestRequests(requests).map(({ body }) => body)).toEqual([
+          {
+            word: 'לשמור',
+            pointed: 'לִשְׁמֹר',
+            partOfSpeech: 'verb',
+            definitions: [{ english: 'to keep', preposition: 'את' }],
+            forms: [],
+          },
+        ]);
       });
     });
 

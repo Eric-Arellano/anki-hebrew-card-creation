@@ -10,7 +10,18 @@ const sefer: SuggestRequest = {
   word: 'ספר',
   pointed: 'סֵפֶר',
   partOfSpeech: 'noun',
-  definitions: ['book', '(archaic) a writing'],
+  definitions: [{ english: 'book' }, { english: '(archaic) a writing' }],
+  forms: [],
+};
+
+const lishmor: SuggestRequest = {
+  word: 'לשמור',
+  pointed: 'לִשְׁמֹר',
+  partOfSpeech: 'verb',
+  definitions: [
+    { english: 'to keep', preposition: 'את' },
+    { english: 'to guard, look after', preposition: 'על' },
+  ],
   forms: [],
 };
 
@@ -72,9 +83,49 @@ describe('suggestionRequest', () => {
   });
 
   test('gives the help for the part of speech', () => {
-    const { system } = suggestionRequest({ ...sefer, partOfSpeech: 'verb' }, []);
+    const { system } = suggestionRequest(lishmor, []);
     expect(system).toContain(FIELD_HELP.examples.verb);
     expect(system).toContain(FIELD_HELP.productionContext.verb);
+  });
+
+  describe('for a verb', () => {
+    const request = suggestionRequest(lishmor, []);
+
+    test('numbers its meanings, each with its preposition', () => {
+      expect(request.user).toBe(
+        [
+          'Word: לשמור',
+          'With niqqud: לִשְׁמֹר',
+          'Part of speech: verb',
+          'Meanings, each with its preposition:',
+          '1. to keep [את]',
+          '2. to guard, look after [על]',
+        ].join('\n'),
+      );
+    });
+
+    test('asks for a sentence per preposition, using it before an object', () => {
+      expect(request.system).toContain(
+        'Every meaning with one gets a sentence of its own, using the verb with that preposition ' +
+          'right before an object',
+      );
+      expect(request.system).toContain('Meanings with different prepositions never share');
+    });
+
+    test('asks for את to show, and for ל, ב and מ to join the next word', () => {
+      expect(request.system).toContain('so את appears: “ראיתי את הסרט.”, not “ראיתי סרט.”');
+      expect(request.system).toContain('ל, ב and מ join the next word');
+    });
+  });
+
+  test('gives another part of speech’s meanings without a preposition', () => {
+    const { user, system } = suggestionRequest(
+      { ...sefer, definitions: [{ english: 'book', preposition: 'את' }] },
+      [],
+    );
+    expect(user).toContain('Meanings:\n- book');
+    expect(user).not.toContain('[את]');
+    expect(system).not.toContain('so את appears');
   });
 
   describe('with forms', () => {
@@ -107,11 +158,14 @@ describe('suggestionRequest', () => {
   });
 
   describe('for the examples', () => {
-    test('asks for one sentence per distinct meaning, and at most four', () => {
+    test('asks for one sentence per use, and at most six', () => {
       const { system } = suggestionRequest(sefer, []);
+      expect(system).toContain('each shows a use of the word the others don’t');
       expect(system).toContain('Write one for each distinct meaning, in their order');
       expect(system).toContain('Meanings that are shades of one sense share a sentence');
-      expect(system).toContain('With only one meaning left, write two. Never write more than 4.');
+      expect(system).toContain('With only one meaning left, write two, the second using it');
+      expect(system).toContain('only puts a use already shown in another form repeats it');
+      expect(system).toContain('Never write more than 6.');
     });
 
     test('asks for full sentences, punctuated in both languages', () => {
@@ -172,13 +226,19 @@ describe('toSuggestions', () => {
     });
   });
 
-  test('keeps no more than four examples, counting those that pass the guards', () => {
-    const books = ['ספר אחד', 'שני ספרים', 'שלושה ספרים', 'ארבעה ספרים', 'חמישה ספרים'].map(
-      (hebrew) => ({ hebrew, english: 'books' }),
-    );
+  test('keeps no more than six examples, counting those that pass the guards', () => {
+    const books = [
+      'ספר אחד',
+      'שני ספרים',
+      'שלושה ספרים',
+      'ארבעה ספרים',
+      'חמישה ספרים',
+      'שישה ספרים',
+      'שבעה ספרים',
+    ].map((hebrew) => ({ hebrew, english: 'books' }));
     const dropped = { hebrew: 'קראתי <b>ספר</b>', english: 'I read a book' };
     expect(toSuggestions({ ...kept, examples: [dropped, ...books] }).examples).toEqual(
-      books.slice(0, 4),
+      books.slice(0, 6),
     );
   });
 

@@ -481,22 +481,49 @@ export const CHECK_CASES: CheckCase[] = [
   ),
 ];
 
+// A verb's meanings are given with their prepositions, and any other word's as its English alone.
 function word(
   unpointed: string,
   pointed: string,
   partOfSpeech: SuggestRequest['partOfSpeech'],
-  definitions: string[],
+  definitions: (string | Meaning)[],
   forms: SuggestRequest['forms'] = [],
   homographs: Homograph[] = [],
 ): SuggestCase {
-  return { request: { word: unpointed, pointed, partOfSpeech, definitions, forms }, homographs };
+  const meanings = definitions.map((meaning) =>
+    typeof meaning === 'string' ? { english: meaning } : meaning,
+  );
+  return {
+    request: { word: unpointed, pointed, partOfSpeech, definitions: meanings, forms },
+    homographs,
+  };
 }
 
 // Suggestions have no right answer to grade against, so the eval prints them to read.
 export const SUGGEST_CASES: SuggestCase[] = [
-  word('לחכות', 'לְחַכּוֹת', 'verb', ['to wait (for)']),
-  word('להתקשר', 'לְהִתְקַשֵּׁר', 'verb', ['to call (on the phone)', 'to become attached']),
-  word('להצליח', 'לְהַצְלִיחַ', 'verb', ['to succeed']),
+  word('לחכות', 'לְחַכּוֹת', 'verb', [{ english: 'to wait (for)', preposition: 'ל' }]),
+  word('להתקשר', 'לְהִתְקַשֵּׁר', 'verb', [
+    { english: 'to call (on the phone)', preposition: 'ל' },
+    { english: 'to become attached', preposition: 'ל' },
+  ]),
+  word('להצליח', 'לְהַצְלִיחַ', 'verb', [{ english: 'to succeed', preposition: 'none' }]),
+  word('לשמור', 'לִשְׁמֹר', 'verb', [
+    { english: 'to keep', preposition: 'את' },
+    { english: 'to guard, look after', preposition: 'על' },
+  ]),
+  word('לדבר', 'לְדַבֵּר', 'verb', [
+    { english: 'to talk with', preposition: 'עם' },
+    { english: 'to talk about', preposition: 'על' },
+    { english: 'to speak (a language)', preposition: 'none' },
+  ]),
+  // More lines than the old cap of four examples, two of them sharing a preposition.
+  word('לקרוא', 'לִקְרֹא', 'verb', [
+    { english: 'to read', preposition: 'את' },
+    { english: 'to read about', preposition: 'על' },
+    { english: 'to call (someone)', preposition: 'ל' },
+    { english: 'to name, call (someone something)', preposition: 'ל' },
+    { english: 'to call out, shout', preposition: 'none' },
+  ]),
   word('ספר', 'סֵפֶר', 'noun', ['book'], [{ label: 'plural', form: 'סְפָרִים' }], SEFER_HOMOGRAPHS),
   word('עיר', 'עִיר', 'noun', ['city'], [{ label: 'plural', form: 'עָרִים' }]),
   word('ילדה', 'יַלְדָּה', 'noun', ['girl', 'daughter'], [{ label: 'plural', form: 'יְלָדוֹת' }]),

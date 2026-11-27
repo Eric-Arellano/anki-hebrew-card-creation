@@ -44,6 +44,30 @@ describe('suggestBlocker', () => {
     ).toBe('Type the word and a meaning first.');
   });
 
+  describe('for a verb', () => {
+    function verbDraft(definitions: CardDraft['inputs']['definitions']): CardDraft {
+      const draft = seferDraft();
+      return {
+        ...draft,
+        inputs: { ...draft.inputs, word: 'לשמור', partOfSpeech: 'verb', definitions },
+      };
+    }
+
+    test('asks for each meaning’s preposition first', () => {
+      expect(
+        suggestBlocker(
+          verbDraft([{ english: 'to keep', preposition: 'את' }, { english: 'to guard' }]),
+        ),
+      ).toBe('Choose a preposition for each meaning first.');
+    });
+
+    test('allows asking once every filled meaning has one', () => {
+      expect(
+        suggestBlocker(verbDraft([{ english: 'to keep', preposition: 'את' }, { english: ' ' }])),
+      ).toBeUndefined();
+    });
+  });
+
   test('blocks once the examples and both hints are filled', () => {
     expect(
       suggestBlocker(
@@ -91,9 +115,46 @@ describe('suggestRequest', () => {
       word: 'ספר',
       pointed: 'סֵפֶר',
       partOfSpeech: 'noun',
-      definitions: ['book', 'volume'],
+      definitions: [{ english: 'book' }, { english: 'volume' }],
       forms: [{ label: 'plural', form: 'סְפָרִים' }],
     });
+  });
+
+  describe('for a verb', () => {
+    test('sends each meaning with its preposition', () => {
+      const draft = seferDraft();
+      expect(
+        suggestRequest(
+          {
+            ...draft,
+            inputs: {
+              ...draft.inputs,
+              definitions: [
+                { english: 'to keep', preposition: 'את' },
+                { english: ' to guard ', preposition: 'על' },
+              ],
+            },
+          },
+          'verb',
+        ).definitions,
+      ).toEqual([
+        { english: 'to keep', preposition: 'את' },
+        { english: 'to guard', preposition: 'על' },
+      ]);
+    });
+  });
+
+  test('leaves out a preposition kept from when the word was a verb', () => {
+    const draft = seferDraft();
+    expect(
+      suggestRequest(
+        {
+          ...draft,
+          inputs: { ...draft.inputs, definitions: [{ english: 'book', preposition: 'את' }] },
+        },
+        'noun',
+      ).definitions,
+    ).toEqual([{ english: 'book' }]);
   });
 });
 

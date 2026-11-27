@@ -17,7 +17,7 @@ const sefer = {
   word: 'ספר',
   pointed: 'סֵפֶר',
   partOfSpeech: 'noun',
-  definitions: ['book', '(archaic) a writing'],
+  definitions: [{ english: 'book' }, { english: '(archaic) a writing' }],
   forms: [{ label: 'plural', form: 'סְפָרִים' }],
 };
 
@@ -55,7 +55,11 @@ describe('_suggest', () => {
     const messages = fakeClaude(suggestSefer);
     await _suggest(
       index,
-      suggestRequest({ ...sefer, word: ' ספר ', definitions: ['book', ' '] }),
+      suggestRequest({
+        ...sefer,
+        word: ' ספר ',
+        definitions: [{ english: 'book' }, { english: ' ' }],
+      }),
       messages,
     );
     expect(messages.create.mock.calls[0]?.[0].messages[0]?.content).toMatch(
@@ -66,12 +70,27 @@ describe('_suggest', () => {
   describe('when the request is incomplete', () => {
     test.each([
       ['a blank word', { ...sefer, word: ' ' }],
-      ['no meaning', { ...sefer, definitions: [' '] }],
+      ['no meaning', { ...sefer, definitions: [{ english: ' ' }] }],
     ])('answers 400 for %s without asking Claude', async (_, body) => {
       const messages = fakeClaude(suggestSefer);
       await expect(_suggest(index, suggestRequest(body), messages)).rejects.toSatisfy(
         (error) =>
           isHttpError(error, 400) && error.body.message === 'Type the word and a meaning first.',
+      );
+      expect(messages.create).not.toHaveBeenCalled();
+    });
+
+    test('answers 400 for a verb with a meaning whose preposition is unchosen', async () => {
+      const messages = fakeClaude(suggestSefer);
+      const verb = {
+        ...sefer,
+        partOfSpeech: 'verb',
+        definitions: [{ english: 'to keep', preposition: 'את' }, { english: 'to guard' }],
+      };
+      await expect(_suggest(index, suggestRequest(verb), messages)).rejects.toSatisfy(
+        (error) =>
+          isHttpError(error, 400) &&
+          error.body.message === 'Choose a preposition for each meaning first.',
       );
       expect(messages.create).not.toHaveBeenCalled();
     });
