@@ -31,10 +31,11 @@ export const PART_OF_SPEECH_HELP: Record<PartOfSpeech, string> = {
 
 // Shown above a verb's prepositions, one for each meaning.
 export const MEANING_PREPOSITION_HELP =
-  'Choose the preposition each meaning takes. את counts as one: “to see” takes “אֶת”, and “to ' +
-  'help” takes “לְ־”. Choose None for a meaning with no object, like “to go”. Where one meaning ' +
-  'takes a different preposition for each of its parts, write a meaning for each, like “to talk ' +
-  'with” for “עִם” and “to talk about” for “עַל”.';
+  'For each meaning, choose the word that links the verb to what it acts on. את counts: “to ' +
+  'see” takes “אֶת”, while “to help” takes “לְ־”. Choose None if the meaning never takes an ' +
+  'object, like “to sleep”. If a meaning takes one preposition for one thing and another for ' +
+  'something else, split it into two meanings, like “to talk with” (“עִם”) and “to talk about” ' +
+  '(“עַל”). If it could take more than one, choose the one you want to practice.';
 
 // Help for a whole group, where help on each field would repeat itself.
 export const GROUP_HELP: Partial<Record<FieldGroup, string>> = {
