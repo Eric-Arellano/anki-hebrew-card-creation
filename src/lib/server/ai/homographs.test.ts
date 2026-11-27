@@ -57,6 +57,26 @@ describe('homographsOf', () => {
     });
   });
 
+  describe('for a verb’s infinitive', () => {
+    test('lists the other verb whose infinitive has its spelling, by that infinitive', () => {
+      expect(homographsOf(lookupOf('לפנות'), 'לפנות', 'לִפְנוֹת')).toEqual([
+        {
+          pointed: 'לְפַנּוֹת',
+          partOfSpeech: 'verb',
+          definitions: ['(transitive) to clear (an area or space of someone or something)'],
+        },
+      ]);
+      expect(
+        homographsOf(lookupOf('לפנות'), 'לפנות', 'לְפַנּוֹת').map(({ pointed }) => pointed),
+      ).toEqual(['לִפְנוֹת']);
+    });
+
+    test('leaves out a verb whose infinitive is spelled otherwise', () => {
+      expect(lookupOf('לספר').candidates.map(({ pointed }) => pointed)).toEqual(['סָפַר']);
+      expect(homographsOf(lookupOf('לספר'), 'לספר', 'לְסַפֵּר')).toEqual([]);
+    });
+  });
+
   describe('without niqqud for the note', () => {
     test('finds none', () => {
       expect(homographsOf(lookupOf('ספר'), 'ספר', ' ')).toEqual([]);
