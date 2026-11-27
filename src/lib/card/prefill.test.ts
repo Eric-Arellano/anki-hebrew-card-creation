@@ -63,7 +63,11 @@ const kelevNoun = {
 } as const;
 
 // What the human typed before picking.
-const typed: CardInputsDraft = { ...emptyInputsDraft(), word: 'כלבים', definitions: ['dog'] };
+const typed: CardInputsDraft = {
+  ...emptyInputsDraft(),
+  word: 'כלבים',
+  definitions: [{ english: 'dog' }],
+};
 
 describe('prefillDraft', () => {
   describe('for a noun', () => {
@@ -72,7 +76,7 @@ describe('prefillDraft', () => {
         draft: {
           word: 'כלב',
           pointed: 'כֶּלֶב',
-          definitions: ['dog'],
+          definitions: [{ english: 'dog' }],
           partOfSpeech: 'noun',
           root: '',
           noun: kelevNoun,
@@ -424,12 +428,12 @@ describe('undoPrefill', () => {
     const filled = prefillDraft(before, diber).draft;
     const edited = {
       ...filled,
-      definitions: ['to speak'],
+      definitions: [{ english: 'to speak' }],
       verb: { ...filled.verb, preposition: 'על' as const },
     };
     expect(undoPrefill(edited, before)).toEqual({
       ...before,
-      definitions: ['to speak'],
+      definitions: [{ english: 'to speak' }],
       verb: { ...before.verb, preposition: 'על' },
     });
   });

@@ -29,7 +29,7 @@ const adjective: AdjectiveInputs = {
 const dagDraft: CardInputsDraft = {
   word: 'דג',
   partOfSpeech: 'other',
-  definitions: ['fish'],
+  definitions: [{ english: 'fish' }],
   pointed: 'דָּג',
   root: 'ד.ב.ר',
   noun,
@@ -41,14 +41,19 @@ const ledaberDraft: CardInputsDraft = {
   ...dagDraft,
   word: 'לדבר',
   partOfSpeech: 'verb',
-  definitions: ['to speak'],
+  definitions: [{ english: 'to speak' }],
   pointed: 'לְדַבֵּר',
 };
 
 describe('missingInputs', () => {
   test('lists the blank inputs in the order the editor shows them', () => {
     expect(
-      missingInputs({ ...dagDraft, pointed: ' ', definitions: [''], partOfSpeech: undefined }),
+      missingInputs({
+        ...dagDraft,
+        pointed: ' ',
+        definitions: [{ english: '' }],
+        partOfSpeech: undefined,
+      }),
     ).toEqual(['definitions', 'partOfSpeech', 'pointed']);
   });
 
@@ -60,7 +65,9 @@ describe('missingInputs', () => {
 
   describe('while every meaning is blank', () => {
     test('lists the meaning', () => {
-      expect(missingInputs({ ...dagDraft, definitions: ['', ' '] })).toEqual(['definitions']);
+      expect(
+        missingInputs({ ...dagDraft, definitions: [{ english: '' }, { english: ' ' }] }),
+      ).toEqual(['definitions']);
     });
   });
 
@@ -114,17 +121,27 @@ describe('completeInputs', () => {
     expect(completeInputs(dagDraft)).toEqual({
       word: 'דג',
       partOfSpeech: 'other',
-      definitions: ['fish'],
+      definitions: [{ english: 'fish' }],
       pointed: 'דָּג',
     });
   });
 
   describe('with blank and padded meanings', () => {
     test('keeps the filled ones, trimmed', () => {
-      expect(completeInputs({ ...dagDraft, definitions: ['', ' fish ', ' ', 'Pisces'] })).toEqual({
+      expect(
+        completeInputs({
+          ...dagDraft,
+          definitions: [
+            { english: '' },
+            { english: ' fish ' },
+            { english: ' ' },
+            { english: 'Pisces' },
+          ],
+        }),
+      ).toEqual({
         word: 'דג',
         partOfSpeech: 'other',
-        definitions: ['fish', 'Pisces'],
+        definitions: [{ english: 'fish' }, { english: 'Pisces' }],
         pointed: 'דָּג',
       });
     });
@@ -137,7 +154,7 @@ describe('completeInputs', () => {
         expect(completeInputs({ ...dagDraft, partOfSpeech })).toEqual({
           word: 'דג',
           partOfSpeech,
-          definitions: ['fish'],
+          definitions: [{ english: 'fish' }],
           pointed: 'דָּג',
         });
       });
@@ -149,7 +166,7 @@ describe('completeInputs', () => {
       expect(completeInputs({ ...dagDraft, partOfSpeech: 'adjective' })).toEqual({
         word: 'דג',
         partOfSpeech: 'adjective',
-        definitions: ['fish'],
+        definitions: [{ english: 'fish' }],
         pointed: 'דָּג',
         root: 'ד־ב־ר',
         adjective,
@@ -164,7 +181,7 @@ describe('completeInputs', () => {
       ).toEqual({
         word: 'דג',
         partOfSpeech: 'noun',
-        definitions: ['fish'],
+        definitions: [{ english: 'fish' }],
         pointed: 'דָּג',
         root: 'ד־ב־ר',
         noun: { ...noun, gender: 'm' },
@@ -179,7 +196,7 @@ describe('completeInputs', () => {
       ).toEqual({
         word: 'דג',
         partOfSpeech: 'noun',
-        definitions: ['fish'],
+        definitions: [{ english: 'fish' }],
         pointed: 'דָּג',
         root: 'ד־ב־ר',
         noun: { pluralOnly: false, gender: 'f', plural: 'כְּלָבִים' },
@@ -198,7 +215,7 @@ describe('completeInputs', () => {
       ).toEqual({
         word: 'דג',
         partOfSpeech: 'noun',
-        definitions: ['fish'],
+        definitions: [{ english: 'fish' }],
         pointed: 'דָּג',
         root: 'ד־ב־ר',
         noun: { pluralOnly: true, gender: 'm' },
@@ -211,7 +228,7 @@ describe('completeInputs', () => {
       expect(completeInputs(ledaberDraft)).toEqual({
         word: 'לדבר',
         partOfSpeech: 'verb',
-        definitions: ['to speak'],
+        definitions: [{ english: 'to speak' }],
         pointed: 'לְדַבֵּר',
         root: 'ד־ב־ר',
         verb,
@@ -259,7 +276,7 @@ describe('completeInputs', () => {
 
   describe('while an input is blank', () => {
     test('returns nothing', () => {
-      expect(completeInputs({ ...dagDraft, definitions: [' '] })).toBeUndefined();
+      expect(completeInputs({ ...dagDraft, definitions: [{ english: ' ' }] })).toBeUndefined();
     });
   });
 

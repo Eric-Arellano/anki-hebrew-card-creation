@@ -9,7 +9,7 @@ import type { CardInputs } from './inputs.ts';
 const dagInputs: CardInputs = {
   word: 'דג',
   partOfSpeech: 'other',
-  definitions: ['fish'],
+  definitions: [{ english: 'fish' }],
   pointed: 'דָּג',
 };
 
@@ -67,7 +67,7 @@ describe('composeFields', () => {
           composeFields({
             word: 'מה נשמע',
             pointed: 'מַה נִּשְׁמַע',
-            definitions: ['how are you?'],
+            definitions: [{ english: 'how are you?' }],
             partOfSpeech,
           }),
         ).toEqual({
@@ -87,7 +87,7 @@ describe('composeFields', () => {
         composeFields({
           word: 'חוץ מ־',
           pointed: 'חוּץ מִ־',
-          definitions: ['except for'],
+          definitions: [{ english: 'except for' }],
           partOfSpeech: 'preposition',
         }),
       ).toEqual({
@@ -108,7 +108,7 @@ describe('composeFields', () => {
         composeFields({
           word: 'לדבר',
           pointed: 'לְדַבֵּר',
-          definitions: ['to speak'],
+          definitions: [{ english: 'to speak' }],
           partOfSpeech: 'verb',
           root: 'ד־ב־ר',
           verb: {
@@ -137,7 +137,7 @@ describe('composeFields', () => {
           composeFields({
             word: 'לדבר',
             pointed: 'לְדַבֵּר',
-            definitions: ['to speak'],
+            definitions: [{ english: 'to speak' }],
             partOfSpeech: 'verb',
             root: '',
             verb: {
@@ -158,7 +158,7 @@ describe('composeFields', () => {
           composeFields({
             word: 'לדבר',
             pointed: 'לְדַבֵּר',
-            definitions: ['to speak'],
+            definitions: [{ english: 'to speak' }],
             partOfSpeech: 'verb',
             root: '',
             verb: { ...noForms, binyan: "pi'el", preposition: undefined },
@@ -173,7 +173,7 @@ describe('composeFields', () => {
           composeFields({
             word: 'לראות',
             pointed: 'לִרְאוֹת',
-            definitions: ['to see'],
+            definitions: [{ english: 'to see' }],
             partOfSpeech: 'verb',
             root: 'ר־א־ה',
             verb: { ...noForms, binyan: "pa'al", preposition: 'את' },
@@ -188,7 +188,7 @@ describe('composeFields', () => {
           composeFields({
             word: 'ללכת',
             pointed: 'לָלֶכֶת',
-            definitions: ['to go'],
+            definitions: [{ english: 'to go' }],
             partOfSpeech: 'verb',
             root: 'ה־ל־ך',
             verb: { ...noForms, binyan: "pa'al", preposition: undefined },
@@ -203,7 +203,7 @@ describe('composeFields', () => {
       return composeFields({
         word: 'גדול',
         pointed: 'גָּדוֹל',
-        definitions: ['big'],
+        definitions: [{ english: 'big' }],
         partOfSpeech: 'adjective',
         root: 'ג־ד־ל',
         adjective,
@@ -250,7 +250,7 @@ describe('composeFields', () => {
         composeFields({
           word: 'חתול',
           pointed: 'חָתוּל',
-          definitions: ['cat'],
+          definitions: [{ english: 'cat' }],
           partOfSpeech: 'noun',
           root: '',
           noun: {
@@ -301,7 +301,7 @@ describe('composeFields', () => {
           composeFields({
             word: 'מים',
             pointed: 'מַיִם',
-            definitions: ['water'],
+            definitions: [{ english: 'water' }],
             partOfSpeech: 'noun',
             root: 'מ־י־ם',
             noun: { pluralOnly: true, gender: 'm' },
@@ -347,7 +347,10 @@ describe('composeFields', () => {
   describe('with several meanings', () => {
     test('numbers them, one per line', () => {
       expect(
-        composeFields({ ...dagInputs, definitions: ['fish', 'Pisces & co'] }).definitions,
+        composeFields({
+          ...dagInputs,
+          definitions: [{ english: 'fish' }, { english: 'Pisces & co' }],
+        }).definitions,
       ).toBe('1. fish<br>2. Pisces &amp; co');
     });
   });
@@ -358,7 +361,7 @@ describe('composeFields', () => {
         composeFields({
           word: ' דג ',
           partOfSpeech: 'other',
-          definitions: ['fish & chips'],
+          definitions: [{ english: 'fish & chips' }],
           pointed: ' דָּג ',
         }),
       ).toEqual({
@@ -375,7 +378,7 @@ describe('composeFields', () => {
         composeFields({
           word: 'דג',
           partOfSpeech: 'noun',
-          definitions: ['fish & chips'],
+          definitions: [{ english: 'fish & chips' }],
           pointed: 'דָּג',
           root: '',
           noun: {
@@ -393,7 +396,12 @@ describe('composeFields', () => {
   describe('when the inputs are blank', () => {
     test('suggests blank fields', () => {
       expect(
-        composeFields({ word: '', partOfSpeech: 'other', definitions: [''], pointed: '' }),
+        composeFields({
+          word: '',
+          partOfSpeech: 'other',
+          definitions: [{ english: '' }],
+          pointed: '',
+        }),
       ).toEqual({
         unpointed: '',
         partOfSpeech: 'other',

@@ -71,7 +71,7 @@ describe('draftFromNote', () => {
           ...emptyCardDraft().inputs,
           word: 'כלב',
           pointed: 'כֶּלֶב',
-          definitions: ['dog'],
+          definitions: [{ english: 'dog' }],
           noun: {
             gender: 'm',
             pluralOnly: false,
@@ -162,7 +162,7 @@ describe('draftFromNote', () => {
       const held = realNote('כרטיס');
       const finished = saved(held, (inputs) => ({
         ...inputs,
-        definitions: ['ticket'],
+        definitions: [{ english: 'ticket' }],
         partOfSpeech: 'noun',
         noun: { ...inputs.noun, gender: 'm' },
       }));
@@ -177,7 +177,7 @@ describe('draftFromNote', () => {
       const held = realNote('דרך');
       const finished = saved(held, (inputs) => ({
         ...inputs,
-        definitions: ['road'],
+        definitions: [{ english: 'road' }],
         partOfSpeech: 'noun',
         noun: { ...inputs.noun, gender: 'f' },
       }));
@@ -191,7 +191,11 @@ describe('draftFromNote', () => {
   });
 
   describe('for each part of speech', () => {
-    const word = { word: 'דבר', pointed: 'דָּבָר', definitions: ['thing', 'word & co'] } as const;
+    const word = {
+      word: 'דבר',
+      pointed: 'דָּבָר',
+      definitions: [{ english: 'thing' }, { english: 'word & co' }],
+    } as const;
     const prompt = { variant1Prompt: 'a <b>prompt</b>\nover lines', variant1Answer: 'דְּבָרִים' };
     const everyMedia: MediaDraft = {
       images: [stored('a.jpg'), stored('b.JPG')],
@@ -333,15 +337,21 @@ describe('draftFromNote', () => {
     }
 
     test('drops the numbers composition adds', () => {
-      expect(definitions('1. fish<br>2. Pisces &amp; co')).toEqual(['fish', 'Pisces & co']);
+      expect(definitions('1. fish<br>2. Pisces &amp; co')).toEqual([
+        { english: 'fish' },
+        { english: 'Pisces & co' },
+      ]);
     });
 
     test('keeps lines that aren’t numbered from 1, one a row', () => {
-      expect(definitions('fish<br><br>2. Pisces')).toEqual(['fish', '2. Pisces']);
+      expect(definitions('fish<br><br>2. Pisces')).toEqual([
+        { english: 'fish' },
+        { english: '2. Pisces' },
+      ]);
     });
 
     test('keeps a number that starts a single meaning', () => {
-      expect(definitions('1. Kings')).toEqual(['1. Kings']);
+      expect(definitions('1. Kings')).toEqual([{ english: '1. Kings' }]);
     });
   });
 
