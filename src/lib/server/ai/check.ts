@@ -209,9 +209,13 @@ function comparable(text: string): string {
     .trim();
 }
 
-// A rewrite into a line the field already holds fixes nothing, so its problem is a false alarm.
-function repeatsField(rewrite: string, text: string): boolean {
-  return text.split('\n').some((line) => isSamePointedText(comparable(line), comparable(rewrite)));
+// A rewrite that leaves its text as it is fixes nothing, so its problem is a false alarm. An
+// example's rewrite is one whole example, so repeating any line is a no-op. Any other field's
+// rewrite may keep one line and drop the rest, like `book` for `book` and `barber`, so only a
+// rewrite of the whole field is.
+function repeatsField(field: JudgedField, rewrite: string, text: string): boolean {
+  const lines = field === 'examples' ? text.split('\n') : [text];
+  return lines.some((line) => isSamePointedText(comparable(line), comparable(rewrite)));
 }
 
 /**
@@ -224,7 +228,7 @@ export function toNoteCheck(answer: Answer, fields: FieldValues): NoteCheck {
     const field = KEY_BY_NAME.get(name);
     const text = field === undefined ? undefined : texts[field];
     if (field === undefined || text === undefined || !isOneLineWithoutTags(problem)) return [];
-    if (rewrite != null && repeatsField(rewrite, text)) return [];
+    if (rewrite != null && repeatsField(field, rewrite, text)) return [];
     const keepsRewrite = rewrite != null && isOneLineWithoutTags(rewrite) && !hasNiqqud(rewrite);
     return [
       { field, problem: problem.trim(), ...(keepsRewrite ? { rewrite: rewrite.trim() } : {}) },
