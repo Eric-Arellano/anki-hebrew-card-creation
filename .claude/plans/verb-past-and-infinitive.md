@@ -57,7 +57,6 @@ known better.*
 
 ## The app changes, as PRs
 
-
 ### PR 1: the backs show the answer with niqqud
 
 - A `Pointed answer` field, composed entirely, like `Production answer`:
