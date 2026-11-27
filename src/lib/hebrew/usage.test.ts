@@ -68,6 +68,43 @@ describe('usageRanges', () => {
     });
   });
 
+  describe('for a weak root', () => {
+    test.each([
+      ['a last ה become י', 'קניתי לחם', 'ק־נ־ה', ['קניתי']],
+      ['a last ה become ת', 'היא קנתה לחם', 'ק־נ־ה', ['קנתה']],
+      ['a last ה dropped before a ו', 'הם קנו לחם', 'ק־נ־ה', ['קנו']],
+      ['a last ה dropped before a י', 'הם קונים לחם', 'ק־נ־ה', ['קונים']],
+      ['an infinitive of a last ה', 'אני רוצה לקנות', 'ק־נ־ה', ['לקנות']],
+      ['a hitpa’el of a last ה', 'להתראות!', 'ר־א־ה', ['להתראות']],
+      ['a last ה after a consonant י', 'היא הייתה שם', 'ה־י־ה', ['הייתה']],
+      ['a middle ו dropped', 'קמתי מוקדם', 'ק־ו־ם', ['קמתי']],
+      ['a middle ו dropped in a hif’il', 'הם הביאו פרחים', 'ב־ו־א', ['הביאו']],
+      ['a first ה dropped after a future’s person', 'מחר אלך הביתה', 'ה־ל־ך', ['אלך']],
+      ['a first ה dropped after an infinitive’s ל', 'צריך ללכת', 'ה־ל־ך', ['ללכת']],
+      ['a first י dropped after an infinitive’s ל', 'אפשר לשבת כאן', 'י־ש־ב', ['לשבת']],
+      ['a first י become a hif’il’s ו', 'הוא מוציא כסף', 'י־צ־א', ['מוציא']],
+      ['a first נ dropped, with a י for it', 'מחר ניסע לים', 'נ־ס־ע', ['ניסע']],
+      ['a first נ dropped in a hif’il', 'אני מכיר אותו', 'נ־כ־ר', ['מכיר']],
+      ['a last נ dropped into a ת', 'נתתי לו ספר', 'נ־ת־ן', ['נתתי']],
+      ['a first and a last נ both dropped', 'אפשר לתת לו', 'נ־ת־ן', ['לתת']],
+      ['“and when” before a dropped first letter', 'וכשאלך הביתה', 'ה־ל־ך', ['וכשאלך']],
+    ])('finds %s', (_, text, root, words) => {
+      expect(used(text, { forms: [], root })).toEqual(words);
+    });
+
+    test.each([
+      ['a last ה dropped with no ending', 'הארץ', 'ר־צ־ה'],
+      ['an ending no verb takes', 'זה גרוע', 'ג־ו־ר'],
+      ['a ו or י before a dropped last נ', 'תוכנית שנתית', 'נ־ת־ן'],
+      ['a ו after a dropped first י', 'זאת תשובה טובה', 'י־ש־ב'],
+      ['a prefix letter other than ו, ש or כש before a verb', 'זה בשבילך', 'ה־ל־ך'],
+      ['a ש with nothing for a dropped first letter', 'הספר שלך', 'ה־ל־ך'],
+      ['a command that dropped its first letter', 'זה לך', 'ה־ל־ך'],
+    ])('misses %s', (_, text, root) => {
+      expect(used(text, { forms: [], root })).toEqual([]);
+    });
+  });
+
   describe('for a form and a root in one word', () => {
     test('gives the word once', () => {
       expect(used('הוא מדבר', { forms: ['מְדַבֵּר'], root: 'ד־ב־ר' })).toEqual(['מדבר']);

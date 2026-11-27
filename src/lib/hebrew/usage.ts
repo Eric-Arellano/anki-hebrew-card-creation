@@ -1,5 +1,5 @@
 // Where text uses a word. Only a warning, or bold the human can see, can rest on the answer: a
-// form no one listed goes unrecognized, like `אלך` for `ללכת`, and ignoring ו and י inside a word
+// form no one listed goes unrecognized, like `שב` for `לשבת`, and ignoring ו and י inside a word
 // lets `סיפור` pass for `ספר`.
 import { withMedialLetters } from '#lib/hebrew/final-letters.ts';
 import { POINT_OR_CANTILLATION, toComparisonKey, toDefectiveKey } from '#lib/hebrew/normalize.ts';
@@ -63,12 +63,82 @@ function formRanges(words: readonly Word[], form: readonly string[]): TextRange[
 }
 
 // The letters of `root`, in order, with only a ו or י between them: ד־ב־ר in `דיברתי` and
-// `מדברים`. A root of fewer than three letters would match too much to say anything.
+// `מדברים`.
+function rootPattern(letters: readonly string[]): RegExp {
+  return new RegExp(letters.join('[וי]*'));
+}
+
+// What a verb's form may be joined to: ו “and”, then ש “that” or כש “when”, as in `וכשאקנה`.
+const JOINED = '^ו?(?:כ?ש)?';
+
+// What a verb's form may start with before its root, after what it is joined to: an infinitive's
+// ל, a hif'il's ה, a present's מ or a future's person, and a hitpa'el's ת after any of them:
+// `להקים`, `מתנסה`, `יתראו`.
+const BEFORE_ROOT = `${JOINED}(?:ל?ה|מ|ל|[אתינ])?ת?`;
+
+// What a form may end with after its root: `קמתי`, `קמנו`, `קמו`, `קמים`, `לשבת`. In medial
+// letters, like the words and roots `rootRanges` matches.
+const AFTER_ROOT = withMedialLetters('(?:|ה|ו|י|ת|תי|תם|תן|נו|ים|ות)$');
+
+// What may follow a root's middle letter where its last is weak: a ה becomes י or ת, or drops
+// before a ו or י, as in `קניתי`, `קנתה`, `קנו` and `קונים`, and a נ drops into the ת after it,
+// as in `נתתי`. Any other last letter may only have a ו or י before it.
+const AFTER_MIDDLE: Readonly<Record<string, readonly string[]>> = {
+  ה: ['[וי]*[יתה]', '(?=[וי])'],
+  נ: ['[וי]*נ', '(?=ת)'],
+};
+
+// The start of a form, through its middle letter, whose first letter has dropped. A first י drops
+// after a future's person or an infinitive's ל, with nothing then between the other two
+// (`אשב`, `לשבת`), or becomes the ו of a hif'il (`מוציא`). A first נ drops after any of them,
+// leaving a י in ktiv male after all but א (`אסע`, `ליפול`, `מכיר`). ה־ל־ך conjugates as if its
+// ה were a י, and ל־ק־ח as if its ל were a נ, here in medial letters.
+function withoutFirst(root: string, middle: string): string[] {
+  if (root.startsWith('י') || root === 'הלכ') {
+    return [`${JOINED}[אתינל]${middle}(?![וי])`, `${JOINED}(?:ל?ה|מ|[אתינ])ו${middle}`];
+  }
+  if (root.startsWith('נ') || root === 'לקח') {
+    return [`${JOINED}(?:ל?ה|מ|א|[תינל]י?)${middle}`];
+  }
+  return [];
+}
+
+function wholeWord(stem: string): RegExp {
+  return new RegExp(`${stem}${AFTER_ROOT}`);
+}
+
+// A weak root loses or changes a letter as it conjugates, which leaves too little of it to find
+// inside just any word, so these match a whole word, from what starts a verb's form to what ends
+// one. Even so, another word spelled like a form passes: `שתי`, “two”, for ש־ת־ה. Commands
+// that drop a first letter, like `שב` and `תן`, are left out, because `לך`, “go”, is far more
+// often “to you”.
+// *Rejected: matching the dictionary's conjugation table, because a note loaded from Anki has no
+// picked entry, so its warnings and saved bold would depend on whether its word was looked up.*
+function weakRootPatterns(letters: readonly string[]): RegExp[] {
+  const [first, middle, last] = letters;
+  if (letters.length !== 3 || first === undefined || middle === undefined || last === undefined) {
+    return [];
+  }
+  const anyLast = `[וי]*${last}`;
+  // A middle ו or י drops, as in `קמתי` for ק־ו־ם, unless the root ends in ה, which makes it a
+  // consonant: `היינו` for ה־י־ה.
+  if (/[וי]/.test(middle) && last !== 'ה') return [wholeWord(`${BEFORE_ROOT}${first}${anyLast}`)];
+  const starts = [
+    ...(last in AFTER_MIDDLE ? [`${BEFORE_ROOT}${first}[וי]*${middle}`] : []),
+    ...withoutFirst(letters.join(''), middle),
+  ];
+  const ends = AFTER_MIDDLE[last] ?? [anyLast];
+  return starts.flatMap((start) => ends.map((end) => wholeWord(`${start}${end}`)));
+}
+
+// A root of fewer than three letters would match too much to say anything.
 function rootRanges(words: readonly Word[], root: string): TextRange[] {
   const letters = withMedialLetters(root).split('־');
   if (letters.length < 3) return [];
-  const pattern = new RegExp(letters.join('[וי]*'));
-  return words.filter(({ key }) => pattern.test(withMedialLetters(key)));
+  const patterns = [rootPattern(letters), ...weakRootPatterns(letters)];
+  return words.filter(({ key }) =>
+    patterns.some((pattern) => pattern.test(withMedialLetters(key))),
+  );
 }
 
 // In order, with overlapping or touching ranges joined, so `בית` and `בית ספר` bold once.
