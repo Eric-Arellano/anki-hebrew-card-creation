@@ -625,7 +625,11 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
       { english: 'to happen, go on', preposition: 'none' },
       { english: 'to go away, depart', preposition: 'none' },
     ],
-    [{ meaning: 'go away', takes: ['none'] }],
+    // The learner's None stays, since you can just say הוא הלך, and “from” gets a line of its own.
+    [
+      { meaning: 'go away, depart', takes: ['none'] },
+      { meaning: 'from', takes: ['מ'] },
+    ],
   ),
   verb(
     'lehistakel, blank',
