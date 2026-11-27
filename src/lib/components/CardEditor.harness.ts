@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { vi } from 'vitest';
-import type { CheckRequest, MeaningsRequest, SuggestRequest } from '#lib/api/ai.ts';
+import type { CheckRequest, SuggestRequest, VerbMeaningsRequest } from '#lib/api/ai.ts';
 import type { AnkiStatus, ExistingNotes, LoadedNote, SameMeaningNote } from '#lib/api/anki.ts';
 import type { DictionaryCandidate, DictionaryLookup } from '#lib/api/dictionary.ts';
 import type { ForvoDownloads } from '#lib/api/forvo.ts';
@@ -81,7 +81,7 @@ export type ServerReplies = {
   forvoFile?: (filename: string) => Response;
   // By default, Claude suggests nothing and finds no problems.
   suggest?: (body: SuggestRequest) => Response | Promise<Response>;
-  meanings?: (body: MeaningsRequest) => Response | Promise<Response>;
+  verbMeanings?: (body: VerbMeaningsRequest) => Response | Promise<Response>;
   check?: (body: CheckRequest, signal: AbortSignal | undefined) => Response | Promise<Response>;
 };
 
@@ -98,7 +98,7 @@ export function stubServer({
   forvoDownloads = () => ({ kind: 'found', downloads: [] }),
   forvoFile = () => new Response('mp3 bytes'),
   suggest = () => Response.json({}),
-  meanings = () => Response.json({ meanings: [] }),
+  verbMeanings = () => Response.json({ meanings: [] }),
   check = () => Response.json({ findings: [] }),
 }: ServerReplies = {}) {
   const requests: ServerRequest[] = [];
@@ -128,7 +128,7 @@ export function stubServer({
     }
     if (input === '/api/anki/media') return storeMedia(body);
     if (input === '/api/ai/suggest') return suggest(body);
-    if (input === '/api/ai/meanings') return meanings(body);
+    if (input === '/api/ai/verb-meanings') return verbMeanings(body);
     if (input === '/api/ai/check') return check(body, init?.signal ?? undefined);
     const url = new URL(input, 'http://127.0.0.1');
     if (url.pathname === '/api/forvo/downloads') {

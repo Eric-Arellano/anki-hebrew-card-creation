@@ -7,17 +7,18 @@ and שָׁמַר עַל means "look after". דִּבֵּר takes עִם for who 
 talk about.
 
 The editor and the deck already hold it that way. Each `Meaning` in `src/lib/card/definitions.ts`
-carries a `PrepositionChoice`, chosen by the human in `MeaningPrepositions.svelte` and written into
-`Definitions` as a pill (the format is in that file's header). A verb's `Production answer` is the
-infinitive alone. Anki's templates and Styling draw the pill, dashed with a `?` on the Production
+carries a `PrepositionChoice`, chosen by the human in `VerbMeaningPrepositions.svelte` and written
+into `Definitions` as a pill (the format is in that file's header). A verb's `Production answer` is
+the infinitive alone. Anki's templates and Styling draw the pill, dashed with a `?` on the Production
 front and filled in on every back, and ללכת is saved this way (`notes-info-lalechet.json`).
 
-Claude suggests the lines. Suggest meanings with Claude, in `MeaningPrepositions.svelte`, asks
-`POST /api/ai/meanings` (`src/lib/server/ai/meanings.ts`) with the human's lines and the picked
-entry's definitions, since the dictionary names a preposition for only 104 of 2,286 verb lemmas,
-per entry rather than per meaning. Claude answers the whole list, saying which line each meaning
-keeps or splits, and the human takes any part of it (`src/lib/card/meaning-suggestions.ts`). The
-check below still reads the result again before saving.
+Claude suggests the lines. Suggest meanings with Claude, in `ClaudeVerbMeanings.svelte`, asks
+`POST /api/ai/verb-meanings` (`src/lib/server/ai/verb-meanings.ts`) with the human's lines and the
+picked entry's definitions, since the dictionary names a preposition for only 104 of 2,286 verb
+lemmas, per entry rather than per meaning. Claude answers the whole list, saying which line each
+meaning keeps or splits, and the human takes any part of it
+(`src/lib/card/verb-meaning-suggestions.ts`). The check below still reads the result again before
+saving.
 
 What is left is everything downstream of the lines seeing each preposition.
 
@@ -41,8 +42,8 @@ for an unusual form, and these meanings are as central as the first one.*
 ## The app changes, as PRs
 
 Claude sees a verb's meanings the same way in every prompt: numbered, each ending in its unpointed
-preposition in brackets, like `1. to look after [על]` or `2. to sleep [none]`. `meaningLines` in
-`src/lib/server/ai/meanings.ts` builds them, so the prompts below reuse it.
+preposition in brackets, like `1. to look after [על]` or `2. to sleep [none]`. `verbMeaningLines`
+in `src/lib/server/ai/verb-meanings.ts` builds them, so the prompts below reuse it.
 
 What counts as a meaning's preposition is settled in that module's system prompt, each rule one
 Claude broke in trials without it: a place you go to counts (ללכת ל) but a place where it happens
@@ -53,7 +54,7 @@ must hold to the same rules, or the check faults what Suggest proposed.
 ### PR 1: examples use each line's preposition
 
 - `SuggestRequest` (`src/lib/api/ai.ts`) sends a verb's lines with their prepositions, and
-  `suggestionRequest` writes them with `meaningLines`.
+  `suggestionRequest` writes them with `verbMeaningLines`.
 - The examples rule in `suggestionRequest` gains, for a verb:
   - Each meaning with a preposition gets its own sentence, using the verb with that preposition
     before an object. Meanings with different prepositions never share one, though two shades
@@ -70,7 +71,7 @@ must hold to the same rules, or the check faults what Suggest proposed.
 
 - `fieldTexts` in `src/lib/server/ai/check.ts` sends `Definitions` through `ankiFieldHtmlToText`,
   which today runs each pill into its English (`to look after עַל`). For a verb, send
-  `meaningLines` of what `definitionsFromHtml` reads instead.
+  `verbMeaningLines` of what `definitionsFromHtml` reads instead.
 - The prompt's "How the note is studied" says what the brackets are, and that the Production card
   blanks each preposition for the learner to recall.
 - "Look for these" gains:
@@ -82,7 +83,7 @@ must hold to the same rules, or the check faults what Suggest proposed.
     practice.
   - An example with no את because its object is indefinite.
   - A meaning with no example. The learner chooses the examples.
-- The prompt quotes the rules for what counts as a meaning's preposition from `meanings.ts`,
+- The prompt quotes the rules for what counts as a meaning's preposition from `verb-meanings.ts`,
   exported for it, as `suggest.ts` quotes `FIELD_HELP`, so the two never disagree.
 - **Open:** whether the check asks at medium effort, as the meanings do (`effort` on
   `StructuredRequest`). At low, trials gave חשב a made-up את, which is the kind of finding this

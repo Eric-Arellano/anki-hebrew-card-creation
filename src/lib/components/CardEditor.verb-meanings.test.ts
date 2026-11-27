@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor, within } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
-import type { MeaningSuggestions } from '#lib/api/ai.ts';
+import type { VerbMeaningSuggestions } from '#lib/api/ai.ts';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import {
   choosePartOfSpeech,
@@ -13,30 +13,30 @@ import {
   typeInto,
 } from './CardEditor.harness.ts';
 
-// As `/api/ai/meanings` answers for לִשְׁמֹר and “to keep, guard”, from the captured reply in
+// As `/api/ai/verb-meanings` answers for לִשְׁמֹר and “to keep, guard”, from the captured reply in
 // `tests/fixtures/claude/`.
-const lishmorSplit: MeaningSuggestions = {
+const lishmorSplit: VerbMeaningSuggestions = {
   meanings: [
-    { english: 'to keep', preposition: 'את', from: 0, usage: 'שומר את הקבלה' },
-    { english: 'to guard, look after', preposition: 'על', from: 0, usage: 'שומר על הילדים' },
+    { english: 'to keep', preposition: 'את', fromIndex: 0, usage: 'שומר את הקבלה' },
+    { english: 'to guard, look after', preposition: 'על', fromIndex: 0, usage: 'שומר על הילדים' },
   ],
 };
 
 // As Claude answered in trials of the prompt: once keeping the line and adding two meanings, and
 // once overriding the preposition chosen.
-const lishmorAdded: MeaningSuggestions = {
+const lishmorAdded: VerbMeaningSuggestions = {
   meanings: [
-    { english: 'to keep, guard', preposition: 'את', from: 0, usage: 'שומר את הכסף' },
+    { english: 'to keep, guard', preposition: 'את', fromIndex: 0, usage: 'שומר את הכסף' },
     { english: 'to look after, protect', preposition: 'על', usage: 'שומר על הילדים' },
     { english: 'to save (a file)', preposition: 'את', usage: 'שמרתי את הקובץ' },
   ],
 };
-const laazorOverridden: MeaningSuggestions = {
+const laazorOverridden: VerbMeaningSuggestions = {
   meanings: [
     {
       english: 'to help',
       preposition: 'ל',
-      from: 0,
+      fromIndex: 0,
       usage: 'עוזר לחבר',
       note: 'Changed from את: לעזור takes ל before the person helped (עוזר לו).',
     },
@@ -69,12 +69,12 @@ function useButton() {
   return screen.getByRole('button', { name: 'Use these' }) as HTMLButtonElement;
 }
 
-function meaningsRequests(requests: ServerRequest[]) {
-  return requests.filter((request) => request.path === '/api/ai/meanings');
+function verbMeaningsRequests(requests: ServerRequest[]) {
+  return requests.filter((request) => request.path === '/api/ai/verb-meanings');
 }
 
 function status() {
-  return document.getElementById('meanings-status')?.textContent?.trim();
+  return document.getElementById('verb-meanings-status')?.textContent?.trim();
 }
 
 async function clickSuggest() {
@@ -103,21 +103,21 @@ describe('CardEditor', () => {
   describe('suggesting a verb’s meanings', () => {
     test('asks with the verb, its niqqud, and each meaning with any preposition chosen', async () => {
       const requests = await renderConnectedEditor({
-        meanings: () => Response.json(lishmorSplit),
+        verbMeanings: () => Response.json(lishmorSplit),
       });
       await fillVerb('לעזור', 'לַעֲזֹר', 'to help');
       await fireEvent.click(screen.getByRole('radio', { name: 'אֶת' }));
       await clickSuggest();
-      expect(meaningsRequests(requests)).toEqual([
+      expect(verbMeaningsRequests(requests)).toEqual([
         {
           method: 'POST',
-          path: '/api/ai/meanings',
+          path: '/api/ai/verb-meanings',
           body: {
             word: 'לעזור',
             pointed: 'לַעֲזֹר',
             meanings: [{ english: 'to help', preposition: 'את' }],
-            glosses: [],
-            prepositions: [],
+            dictionaryDefinitions: [],
+            dictionaryPrepositions: [],
           },
         },
       ]);
@@ -131,20 +131,20 @@ describe('CardEditor', () => {
       const dictionary = screen.getByRole('region', { name: 'Dictionary' });
       await fireEvent.click(await within(dictionary).findByRole('button', { name: /חִכָּה/ }));
       await clickSuggest();
-      expect(meaningsRequests(requests).map(({ body }) => body)).toEqual([
+      expect(verbMeaningsRequests(requests).map(({ body }) => body)).toEqual([
         {
           word: 'לחכות',
           pointed: 'לְחַכּוֹת',
           meanings: [],
-          glosses: ['to wait, wait for [with לְ־ ‘for’]'],
-          prepositions: ['ל'],
+          dictionaryDefinitions: ['to wait, wait for [with לְ־ ‘for’]'],
+          dictionaryPrepositions: ['ל'],
         },
       ]);
     });
 
     describe('when Claude splits a line', () => {
       test('shows where each part came from, and uses them with their prepositions', async () => {
-        await renderConnectedEditor({ meanings: () => Response.json(lishmorSplit) });
+        await renderConnectedEditor({ verbMeanings: () => Response.json(lishmorSplit) });
         await fillVerb('לשמור', 'לִשְׁמֹר', 'to keep, guard');
         await clickSuggest();
         const proposal = screen.getByRole('region', { name: 'Claude’s meanings' });
@@ -168,7 +168,7 @@ describe('CardEditor', () => {
 
     describe('with a meaning unchecked', () => {
       test('leaves it out', async () => {
-        await renderConnectedEditor({ meanings: () => Response.json(lishmorAdded) });
+        await renderConnectedEditor({ verbMeanings: () => Response.json(lishmorAdded) });
         await fillVerb('לשמור', 'לִשְׁמֹר', 'to keep, guard');
         await clickSuggest();
         await fireEvent.click(screen.getByRole('checkbox', { name: /to save \(a file\)/ }));
@@ -181,7 +181,7 @@ describe('CardEditor', () => {
 
     describe('when Claude overrides a preposition chosen', () => {
       test('says which was chosen, and why it changed', async () => {
-        await renderConnectedEditor({ meanings: () => Response.json(laazorOverridden) });
+        await renderConnectedEditor({ verbMeanings: () => Response.json(laazorOverridden) });
         await fillVerb('לעזור', 'לַעֲזֹר', 'to help');
         await fireEvent.click(screen.getByRole('radio', { name: 'אֶת' }));
         await clickSuggest();
@@ -199,8 +199,8 @@ describe('CardEditor', () => {
     describe('when Claude would change nothing', () => {
       test('says so, and shows nothing to use', async () => {
         await renderConnectedEditor({
-          meanings: () =>
-            Response.json({ meanings: [{ english: 'to help', preposition: 'ל', from: 0 }] }),
+          verbMeanings: () =>
+            Response.json({ meanings: [{ english: 'to help', preposition: 'ל', fromIndex: 0 }] }),
         });
         await fillVerb('לעזור', 'לַעֲזֹר', 'to help');
         await fireEvent.click(screen.getByRole('radio', { name: 'לְ־' }));
@@ -210,10 +210,32 @@ describe('CardEditor', () => {
       });
     });
 
+    describe('when Claude would change nothing, but notes another preposition', () => {
+      test('shows the note, with nothing to use', async () => {
+        const note = 'על is as common here: שמח על ההצלחה.';
+        await renderConnectedEditor({
+          verbMeanings: () =>
+            Response.json({
+              meanings: [{ english: 'to be happy about', preposition: 'ב', fromIndex: 0, note }],
+            }),
+        });
+        await fillVerb('לשמוח', 'לִשְׂמֹחַ', 'to be happy about');
+        await fireEvent.click(screen.getByRole('radio', { name: 'בְּ־' }));
+        await clickSuggest();
+        expect(status()).toBe(
+          'Claude would keep the meanings and prepositions as they are, with a note.',
+        );
+        const proposal = screen.getByRole('region', { name: 'Claude’s meanings' });
+        expect(within(proposal).getByText(note)).toBeTruthy();
+        expect(within(proposal).queryByRole('checkbox')).toBeNull();
+        expect(within(proposal).queryByRole('button', { name: 'Use these' })).toBeNull();
+      });
+    });
+
     describe('when the meanings change while Claude answers', () => {
       test('sets the answer aside, saying why', async () => {
-        const { reply: meanings, send } = heldReply<MeaningSuggestions>();
-        await renderConnectedEditor({ meanings });
+        const { reply: verbMeanings, send } = heldReply<VerbMeaningSuggestions>();
+        await renderConnectedEditor({ verbMeanings });
         await fillVerb('לשמור', 'לִשְׁמֹר', 'to keep, guard');
         await fireEvent.click(suggestButton());
         await typeInto(input('English meaning'), 'to keep');
@@ -225,7 +247,7 @@ describe('CardEditor', () => {
 
     describe('when the meanings change after Claude answers', () => {
       test('keeps the answer to read, but not to use', async () => {
-        await renderConnectedEditor({ meanings: () => Response.json(lishmorSplit) });
+        await renderConnectedEditor({ verbMeanings: () => Response.json(lishmorSplit) });
         await fillVerb('לשמור', 'לִשְׁמֹר', 'to keep, guard');
         await clickSuggest();
         await typeInto(input('English meaning'), 'to keep');
@@ -237,7 +259,8 @@ describe('CardEditor', () => {
     describe('when the call fails', () => {
       test('says why', async () => {
         await renderConnectedEditor({
-          meanings: () => Response.json({ message: 'Claude declined to answer.' }, { status: 502 }),
+          verbMeanings: () =>
+            Response.json({ message: 'Claude declined to answer.' }, { status: 502 }),
         });
         await fillVerb('לשמור', 'לִשְׁמֹר', 'to keep, guard');
         await clickSuggest();

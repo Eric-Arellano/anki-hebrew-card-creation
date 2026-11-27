@@ -5,6 +5,6 @@ Replies from the Anthropic API, saved as the SDK's `beta.messages.create` return
 - `check-kelev-planted.json`: the check of the כלב note from `tests/fixtures/anki/`, with a
   Production context that names the word, an example with feminine adjectives, and a wrong note
   planted in it, captured on 2026-11-14.
-- `meanings-lishmor.json`: the meanings for לִשְׁמֹר with the line “to keep, guard” and its
+- `verb-meanings-lishmor.json`: the meanings for לִשְׁמֹר with the line “to keep, guard” and its
   Wiktionary definitions, which Claude split into “to keep” את and “to guard, look after” על,
   captured on 2026-11-26.

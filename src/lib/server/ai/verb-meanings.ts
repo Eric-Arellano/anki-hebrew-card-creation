@@ -6,9 +6,13 @@
 // *Rejected: asking only for the prepositions of the human's lines, because the meanings worth
 // adding are the ones a learner wouldn't think to write, like “to look after” for שמר.*
 import { z } from 'zod';
-import type { MeaningSuggestions, MeaningsRequest, SuggestedMeaning } from '#lib/api/ai.ts';
+import type {
+  SuggestedVerbMeaning,
+  VerbMeaningSuggestions,
+  VerbMeaningsRequest,
+} from '#lib/api/ai.ts';
 import { type Meaning, PREPOSITION_CHOICES } from '#lib/card/definitions.ts';
-import { MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
+import { VERB_MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
 import { hasHebrewLetters } from '#lib/hebrew/letters.ts';
 import { askForStructured, type ClaudeMessages, type StructuredRequest } from './client.ts';
 import { isPlainLine, isUnpointedHebrew } from './plain-text.ts';
@@ -29,7 +33,7 @@ const answerSchema = z.object({
 type Answer = z.infer<typeof answerSchema>;
 
 /** A verb's meanings as every prompt shows them: numbered, each with its unpointed preposition. */
-export function meaningLines(meanings: readonly Meaning[]): string {
+export function verbMeaningLines(meanings: readonly Meaning[]): string {
   return meanings
     .map(
       ({ english, preposition }, index) =>
@@ -39,8 +43,8 @@ export function meaningLines(meanings: readonly Meaning[]): string {
 }
 
 const HELP = [
-  MEANING_PREPOSITION_HELP.lead,
-  ...MEANING_PREPOSITION_HELP.cases.map((line) => `- ${line}`),
+  VERB_MEANING_PREPOSITION_HELP.lead,
+  ...VERB_MEANING_PREPOSITION_HELP.cases.map((line) => `- ${line}`),
 ].join('\n');
 
 // Each rule here is one Claude broke in trials without it: את for חשב, את for the language after
@@ -91,28 +95,30 @@ const SYSTEM = [
     'preposition.',
 ].join('\n\n');
 
-export function meaningsRequest({
+export function verbMeaningsPrompt({
   word,
   pointed,
   meanings,
-  glosses,
-  prepositions,
-}: MeaningsRequest): StructuredRequest<Answer> {
+  dictionaryDefinitions,
+  dictionaryPrepositions,
+}: VerbMeaningsRequest): StructuredRequest<Answer> {
   const user = [
     `Verb: ${word}`,
     ...(pointed.trim() === '' ? [] : [`With niqqud: ${pointed}`]),
-    ...(glosses.length === 0
+    ...(dictionaryDefinitions.length === 0
       ? []
-      : [`Dictionary definitions:\n${glosses.map((gloss) => `- ${gloss}`).join('\n')}`]),
-    ...(prepositions.length === 0
+      : [
+          `Dictionary definitions:\n${dictionaryDefinitions.map((gloss) => `- ${gloss}`).join('\n')}`,
+        ]),
+    ...(dictionaryPrepositions.length === 0
       ? []
       : [
           'Prepositions the dictionary names for the verb, though not for which meaning: ' +
-            prepositions.join(', '),
+            dictionaryPrepositions.join(', '),
         ]),
     meanings.length === 0
       ? 'The learner has written no lines yet.'
-      : `The learner’s lines:\n${meaningLines(meanings)}`,
+      : `The learner’s lines:\n${verbMeaningLines(meanings)}`,
   ].join('\n');
   // Medium, since the prepositions are the one part of the card Claude alone supplies, and in
   // trials low effort gave חשב a made-up את and kept more of the dictionary's rare senses.
@@ -120,12 +126,16 @@ export function meaningsRequest({
 }
 
 /**
- * What of `answer` passes the guards, with `from` as an index into the `lineCount` lines asked
- * about. A meaning whose English fails is dropped; a usage or note that fails is left off.
+ * What of `answer` passes the guards, with Claude's 1-based `from` turned into a `fromIndex` among
+ * the `lineCount` lines asked about. A meaning whose English fails is dropped; a usage or note
+ * that fails is left off.
  */
-export function toMeaningSuggestions(answer: Answer, lineCount: number): MeaningSuggestions {
+export function toVerbMeaningSuggestions(
+  answer: Answer,
+  lineCount: number,
+): VerbMeaningSuggestions {
   const meanings = answer.meanings.flatMap(
-    ({ from, english, usage, preposition, note }): SuggestedMeaning[] => {
+    ({ from, english, usage, preposition, note }): SuggestedVerbMeaning[] => {
       if (!isPlainLine(english) || hasHebrewLetters(english)) return [];
       // A number that names none of the lines is a meaning Claude added.
       const index = from !== null && from >= 1 && from <= lineCount ? from - 1 : undefined;
@@ -133,7 +143,7 @@ export function toMeaningSuggestions(answer: Answer, lineCount: number): Meaning
         {
           english: english.trim(),
           preposition,
-          ...(index === undefined ? {} : { from: index }),
+          ...(index === undefined ? {} : { fromIndex: index }),
           ...(isUnpointedHebrew(usage) ? { usage: usage.trim() } : {}),
           ...(note !== null && isPlainLine(note) ? { note: note.trim() } : {}),
         },
@@ -143,10 +153,10 @@ export function toMeaningSuggestions(answer: Answer, lineCount: number): Meaning
   return { meanings };
 }
 
-export async function suggestMeanings(
-  request: MeaningsRequest,
+export async function suggestVerbMeanings(
+  request: VerbMeaningsRequest,
   messages?: ClaudeMessages,
-): Promise<MeaningSuggestions> {
-  const answer = await askForStructured(meaningsRequest(request), messages);
-  return toMeaningSuggestions(answer, request.meanings.length);
+): Promise<VerbMeaningSuggestions> {
+  const answer = await askForStructured(verbMeaningsPrompt(request), messages);
+  return toVerbMeaningSuggestions(answer, request.meanings.length);
 }

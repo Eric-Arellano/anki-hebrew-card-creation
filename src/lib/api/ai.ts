@@ -32,31 +32,34 @@ export function fetchSuggestions(request: SuggestRequest): Promise<Suggestions> 
   return postJsonForReply('/api/ai/suggest', request);
 }
 
-// A verb's meanings so far, each with English, and what the picked dictionary entry says of them:
-// its definitions, and the prepositions it names for the whole entry. Either may be empty.
-export type MeaningsRequest = {
+export type VerbMeaningsRequest = {
   word: string;
   pointed: string;
+  /** The human's meanings so far, each with English, which an answer's `fromIndex` points into. */
   meanings: Meaning[];
-  glosses: string[];
-  prepositions: GovernedPreposition[];
+  /** The picked entry's definitions, empty when no verb entry is picked. */
+  dictionaryDefinitions: string[];
+  /** The prepositions the picked entry names for the whole verb, not for any one meaning. */
+  dictionaryPrepositions: GovernedPreposition[];
 };
 
-// `from` is the index in the request's `meanings` of the one this keeps or splits, and absent for a
-// meaning Claude added. `usage` is a short unpointed phrase that shows the preposition, and `note`
-// says why Claude overrode the human's choice, or which other preposition fits as well.
-export type SuggestedMeaning = {
+export type SuggestedVerbMeaning = {
   english: string;
   preposition: PrepositionChoice;
-  from?: number;
+  /** Which of the request's `meanings` this keeps or splits, or absent for one Claude added. */
+  fromIndex?: number;
+  /** A short unpointed phrase that shows the preposition in use. */
   usage?: string;
+  /** Why Claude overrode the human's preposition, or which other one fits as well. */
   note?: string;
 };
 
-export type MeaningSuggestions = { meanings: SuggestedMeaning[] };
+export type VerbMeaningSuggestions = { meanings: SuggestedVerbMeaning[] };
 
-export function fetchMeaningSuggestions(request: MeaningsRequest): Promise<MeaningSuggestions> {
-  return postJsonForReply('/api/ai/meanings', request);
+export function fetchVerbMeaningSuggestions(
+  request: VerbMeaningsRequest,
+): Promise<VerbMeaningSuggestions> {
+  return postJsonForReply('/api/ai/verb-meanings', request);
 }
 
 // The note's fields as Anki will hold them, as HTML. The server sends Claude only their text.

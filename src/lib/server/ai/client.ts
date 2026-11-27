@@ -6,9 +6,9 @@ import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import type { z } from 'zod';
 import { ANTHROPIC_API_KEY } from '$app/env/private';
 
-// Opus, because Hebrew is where models are weakest. Low effort, unless a request asks for more,
-// keeps a call to a few cents. `fallbacks: 'default'` reruns a refused request on the model
-// Anthropic picks for that kind of refusal, rather than one we would have to keep current.
+// Opus, because Hebrew is where models are weakest. `fallbacks: 'default'` reruns a refused
+// request on the model Anthropic picks for that kind of refusal, rather than one we would have to
+// keep current.
 const REQUEST_SETTINGS: Omit<
   Anthropic.Beta.MessageCreateParamsNonStreaming,
   'system' | 'messages' | 'output_config'
@@ -35,6 +35,7 @@ export type StructuredRequest<T> = {
   system: string;
   user: string;
   schema: z.ZodType<T>;
+  /** Low unless a request asks for more, which keeps a call to a few cents. */
   effort?: 'low' | 'medium';
 };
 

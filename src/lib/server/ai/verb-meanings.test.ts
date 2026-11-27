@@ -1,25 +1,27 @@
 import { describe, expect, test } from 'vitest';
-import type { MeaningsRequest } from '#lib/api/ai.ts';
-import { MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
+import type { VerbMeaningsRequest } from '#lib/api/ai.ts';
+import { VERB_MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
 import { fakeClaude } from '#tests/fake-claude.ts';
-import meaningsLishmor from '#tests/fixtures/claude/meanings-lishmor.json' with { type: 'json' };
+import verbMeaningsLishmor from '#tests/fixtures/claude/verb-meanings-lishmor.json' with {
+  type: 'json',
+};
 import {
-  meaningLines,
-  meaningsRequest,
-  suggestMeanings,
-  toMeaningSuggestions,
-} from './meanings.ts';
+  suggestVerbMeanings,
+  toVerbMeaningSuggestions,
+  verbMeaningLines,
+  verbMeaningsPrompt,
+} from './verb-meanings.ts';
 
 // As the dictionary has שָׁמַר.
-const lishmor: MeaningsRequest = {
+const lishmor: VerbMeaningsRequest = {
   word: 'לשמור',
   pointed: 'לִשְׁמֹר',
   meanings: [{ english: 'to keep, guard' }],
-  glosses: ['to guard', '(by extension) to keep', '(computing) to save'],
-  prepositions: [],
+  dictionaryDefinitions: ['to guard', '(by extension) to keep', '(computing) to save'],
+  dictionaryPrepositions: [],
 };
 
-type AnswerLine = Parameters<typeof toMeaningSuggestions>[0]['meanings'][number];
+type AnswerLine = Parameters<typeof toVerbMeaningSuggestions>[0]['meanings'][number];
 
 function answerLine(line: Partial<AnswerLine> = {}): AnswerLine {
   return {
@@ -32,10 +34,10 @@ function answerLine(line: Partial<AnswerLine> = {}): AnswerLine {
   };
 }
 
-describe('meaningLines', () => {
+describe('verbMeaningLines', () => {
   test('numbers each meaning, ending in its preposition, none, or that none is chosen', () => {
     expect(
-      meaningLines([
+      verbMeaningLines([
         { english: 'to keep', preposition: 'את' },
         { english: 'to sleep', preposition: 'none' },
         { english: 'to guard' },
@@ -44,9 +46,9 @@ describe('meaningLines', () => {
   });
 });
 
-describe('meaningsRequest', () => {
+describe('verbMeaningsPrompt', () => {
   test('sends the verb, its niqqud, the dictionary’s definitions and the learner’s lines', () => {
-    expect(meaningsRequest(lishmor).user).toBe(
+    expect(verbMeaningsPrompt(lishmor).user).toBe(
       [
         'Verb: לשמור',
         'With niqqud: לִשְׁמֹר',
@@ -61,18 +63,18 @@ describe('meaningsRequest', () => {
   });
 
   test('gives the help the learner reads', () => {
-    const { system } = meaningsRequest(lishmor);
-    expect(system).toContain(MEANING_PREPOSITION_HELP.lead);
-    for (const line of MEANING_PREPOSITION_HELP.cases) expect(system).toContain(`- ${line}`);
+    const { system } = verbMeaningsPrompt(lishmor);
+    expect(system).toContain(VERB_MEANING_PREPOSITION_HELP.lead);
+    for (const line of VERB_MEANING_PREPOSITION_HELP.cases) expect(system).toContain(`- ${line}`);
   });
 
   test('asks at medium effort', () => {
-    expect(meaningsRequest(lishmor).effort).toBe('medium');
+    expect(verbMeaningsPrompt(lishmor).effort).toBe('medium');
   });
 
   describe('with the dictionary’s prepositions', () => {
     test('names them for the whole verb', () => {
-      const { user } = meaningsRequest({ ...lishmor, prepositions: ['ל'] });
+      const { user } = verbMeaningsPrompt({ ...lishmor, dictionaryPrepositions: ['ל'] });
       expect(user).toContain(
         'Prepositions the dictionary names for the verb, though not for which meaning: ל',
       );
@@ -81,37 +83,37 @@ describe('meaningsRequest', () => {
 
   describe('with nothing but the verb and a line', () => {
     test('leaves out the niqqud and the definitions', () => {
-      const { user } = meaningsRequest({ ...lishmor, pointed: ' ', glosses: [] });
+      const { user } = verbMeaningsPrompt({ ...lishmor, pointed: ' ', dictionaryDefinitions: [] });
       expect(user).toBe('Verb: לשמור\nThe learner’s lines:\n1. to keep, guard [not chosen]');
     });
   });
 
   describe('with no lines yet', () => {
     test('says so', () => {
-      expect(meaningsRequest({ ...lishmor, meanings: [] }).user).toMatch(
+      expect(verbMeaningsPrompt({ ...lishmor, meanings: [] }).user).toMatch(
         /\nThe learner has written no lines yet\.$/,
       );
     });
   });
 });
 
-describe('toMeaningSuggestions', () => {
-  test('numbers `from` from 0, and trims what it keeps', () => {
+describe('toVerbMeaningSuggestions', () => {
+  test('turns Claude’s numbering into a `fromIndex` from 0, and trims what it keeps', () => {
     expect(
-      toMeaningSuggestions(
+      toVerbMeaningSuggestions(
         { meanings: [answerLine({ from: 1, english: ' to keep ', note: ' ok ' })] },
         1,
       ),
     ).toEqual({
       meanings: [
-        { english: 'to keep', preposition: 'את', from: 0, usage: 'שומר את הקבלה', note: 'ok' },
+        { english: 'to keep', preposition: 'את', fromIndex: 0, usage: 'שומר את הקבלה', note: 'ok' },
       ],
     });
   });
 
   describe('a `from` that names none of the lines', () => {
     test.each([0, 2])('is a meaning Claude added, for %i', (from) => {
-      expect(toMeaningSuggestions({ meanings: [answerLine({ from })] }, 1).meanings).toEqual([
+      expect(toVerbMeaningSuggestions({ meanings: [answerLine({ from })] }, 1).meanings).toEqual([
         { english: 'to keep', preposition: 'את', usage: 'שומר את הקבלה' },
       ]);
     });
@@ -124,7 +126,9 @@ describe('toMeaningSuggestions', () => {
       ['a line break', 'to keep\nto guard'],
       ['nothing', ' '],
     ])('drops the meaning, for %s', (_, english) => {
-      expect(toMeaningSuggestions({ meanings: [answerLine({ english })] }, 0).meanings).toEqual([]);
+      expect(toVerbMeaningSuggestions({ meanings: [answerLine({ english })] }, 0).meanings).toEqual(
+        [],
+      );
     });
   });
 
@@ -134,7 +138,7 @@ describe('toMeaningSuggestions', () => {
       ['English', 'שומר את the receipt'],
       ['nothing', ''],
     ])('leaves it off, for %s', (_, usage) => {
-      expect(toMeaningSuggestions({ meanings: [answerLine({ usage })] }, 0).meanings).toEqual([
+      expect(toVerbMeaningSuggestions({ meanings: [answerLine({ usage })] }, 0).meanings).toEqual([
         { english: 'to keep', preposition: 'את' },
       ]);
     });
@@ -143,20 +147,25 @@ describe('toMeaningSuggestions', () => {
   describe('a note that fails a guard', () => {
     test('leaves it off', () => {
       expect(
-        toMeaningSuggestions({ meanings: [answerLine({ note: 'a <b>bold</b> note' })] }, 0)
+        toVerbMeaningSuggestions({ meanings: [answerLine({ note: 'a <b>bold</b> note' })] }, 0)
           .meanings,
       ).toEqual([{ english: 'to keep', preposition: 'את', usage: 'שומר את הקבלה' }]);
     });
   });
 });
 
-describe('suggestMeanings', () => {
+describe('suggestVerbMeanings', () => {
   test('answers with Claude’s meanings, each pointing at the line it splits', async () => {
-    const messages = fakeClaude(meaningsLishmor);
-    expect(await suggestMeanings(lishmor, messages)).toEqual({
+    const messages = fakeClaude(verbMeaningsLishmor);
+    expect(await suggestVerbMeanings(lishmor, messages)).toEqual({
       meanings: [
-        { english: 'to keep', preposition: 'את', from: 0, usage: 'שומר את הקבלה' },
-        { english: 'to guard, look after', preposition: 'על', from: 0, usage: 'שומר על הילדים' },
+        { english: 'to keep', preposition: 'את', fromIndex: 0, usage: 'שומר את הקבלה' },
+        {
+          english: 'to guard, look after',
+          preposition: 'על',
+          fromIndex: 0,
+          usage: 'שומר על הילדים',
+        },
       ],
     });
     expect(messages.create.mock.calls[0]?.[0].output_config?.effort).toBe('medium');

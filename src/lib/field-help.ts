@@ -29,8 +29,8 @@ export const PART_OF_SPEECH_HELP: Record<PartOfSpeech, string> = {
   other: 'Other is everything else, like “אֲנִי” or “אֲבָל”.',
 };
 
-// Shown above a verb's prepositions, one for each meaning: a line, then a bullet for each case.
-export const MEANING_PREPOSITION_HELP = {
+/** Shown above a verb's prepositions, one for each meaning: a line, then a bullet for each case. */
+export const VERB_MEANING_PREPOSITION_HELP = {
   lead: 'For each meaning, choose the preposition that comes between the verb and its object.',
   cases: [
     '“אֶת” is one of the choices. It marks a definite object: “to see” takes “אֶת”, while “to ' +

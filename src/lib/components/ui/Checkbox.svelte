@@ -5,7 +5,7 @@ let {
   label,
   checked = $bindable(),
 }: {
-  // Markup, where the label is more than words.
+  /** Markup, where the label is more than words. */
   label: string | Snippet;
   checked: boolean;
 } = $props();
