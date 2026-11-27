@@ -1,7 +1,8 @@
 // What the eval asks Claude about. Unlike the fixtures in `tests/`, these are written, not copied
 // from real data, since an eval needs known mistakes planted in notes. Their Hebrew was written by
-// Claude, not a native speaker: a "clean" note here is only as clean as that, so a note Claude
-// keeps faulting may be a case to fix rather than a false alarm.
+// Claude, not a native speaker, and another Claude reviewed it adversarially: a "clean" note here
+// is only as clean as that, so a note Claude keeps faulting may be a case to fix rather than a
+// false alarm.
 import type { CheckRequest, SuggestRequest, VerbMeaningsRequest } from '#lib/api/ai.ts';
 import type { Meaning, PrepositionChoice } from '#lib/card/definitions.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
@@ -39,9 +40,11 @@ function note(
   return { name, request: { partOfSpeech, fields }, homographs, faults };
 }
 
+// What the dictionary lists as the other readings of ספר.
 const SEFER_HOMOGRAPHS: Homograph[] = [
   { pointed: 'סַפָּר', partOfSpeech: 'noun', definitions: ['barber'] },
   { pointed: 'סָפַר', partOfSpeech: 'verb', definitions: ['to count'] },
+  { pointed: 'סְפָר', partOfSpeech: 'noun', definitions: ['border, frontier'] },
 ];
 
 const kelev = {
@@ -278,7 +281,7 @@ export const CHECK_CASES: CheckCase[] = [
       definitions: 'to help',
       binyan: "pa'al",
       root: 'ע־ז־ר',
-      examples: examples(['עזרתי אותו עם שיעורי הבית.', 'I helped him with the homework.']),
+      examples: examples(['עזרתי אותו בשיעורי הבית.', 'I helped him with the homework.']),
     },
     ['examples'],
   ),
@@ -332,7 +335,7 @@ export const CHECK_CASES: CheckCase[] = [
       forms: 'plural: יְלָדוֹת',
       examples: examples(
         ['יש לי שלושה ילדות.', 'I have three girls.'],
-        ['הילדה משחקת בגן.', 'The girl is playing in the park.'],
+        ['הילדה משחקת בפארק.', 'The girl is playing in the park.'],
       ),
     },
     ['examples'],
@@ -415,6 +418,67 @@ export const CHECK_CASES: CheckCase[] = [
     },
     ['gender'],
   ),
+  // Harder mistakes, ones a careful learner could miss.
+  note(
+    'laila, a masculine noun that ends in ה',
+    'noun',
+    {
+      unpointed: 'לילה',
+      pointed: 'לַיְלָה',
+      definitions: 'night',
+      gender: 'm',
+      forms: 'plural: לֵילוֹת',
+      examples: examples(
+        ['הלילה הייתה ארוכה.', 'The night was long.'],
+        ['עבדתי כל הלילה.', 'I worked all night.'],
+      ),
+    },
+    ['examples'],
+  ),
+  note(
+    'shana, a masculine numeral for its ־ים plural',
+    'noun',
+    {
+      unpointed: 'שנה',
+      pointed: 'שָׁנָה',
+      definitions: 'year',
+      gender: 'f',
+      forms: 'plural: שָׁנִים',
+      examples: examples(
+        ['גרתי שם שני שנים.', 'I lived there for two years.'],
+        ['השנה אני לומד עברית.', 'This year I am studying Hebrew.'],
+      ),
+    },
+    ['examples'],
+  ),
+  note(
+    'sefer, a Reading context that fits the barber too',
+    'noun',
+    {
+      ...sefer,
+      definitions: 'book',
+      readingContext: 'הוא ספר טוב',
+      examples: examples(['אני קורא ספר.', 'I am reading a book.']),
+    },
+    ['readingContext'],
+    SEFER_HOMOGRAPHS,
+  ),
+  note(
+    "liftoach, pa'al where it needs nif'al",
+    'verb',
+    {
+      unpointed: 'לפתוח',
+      pointed: 'לִפְתֹּחַ',
+      definitions: 'to open',
+      binyan: "pa'al",
+      root: 'פ־ת־ח',
+      examples: examples(
+        ['הדלת פתחה לאט.', 'The door opened slowly.'],
+        ['פתחתי את החלון.', 'I opened the window.'],
+      ),
+    },
+    ['examples'],
+  ),
 ];
 
 function word(
@@ -484,7 +548,7 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
     ['לדבר', 'לְדַבֵּר'],
     ['to speak (say words)'],
     [{ english: 'to speak, talk' }],
-    [{ meaning: 'speak', takes: ['עם', 'על', 'none'] }],
+    [{ meaning: 'speak', takes: ['עם', 'על', 'ב', 'none'] }],
   ),
   verb(
     'lesaper, blank',
@@ -503,7 +567,7 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
     ['לקרוא', 'לִקְרֹא'],
     ['to read', 'to call', 'to crow'],
     [],
-    [{ meaning: 'read', takes: ['את', 'ל'] }],
+    [{ meaning: 'read', takes: ['את', 'ל', 'על'] }],
   ),
   verb(
     'laavod, blank',
@@ -516,7 +580,7 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
       'to dupe, deceive, trick, bullshit, mess with, be played [with עַל (ál) ‘on’]',
     ],
     [],
-    [{ meaning: 'work', takes: ['none', 'על'] }],
+    [{ meaning: 'work', takes: ['none', 'על', 'עם'] }],
     ['על'],
   ),
   verb(
@@ -536,9 +600,15 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
     ['לעזור', 'לַעֲזֹר'],
     ['to help, to assist'],
     [{ english: 'to help', preposition: 'את' }],
-    [{ meaning: 'help', takes: ['ל', 'ב'] }],
+    [{ meaning: 'help', takes: ['ל', 'ב', 'עם'] }],
   ),
-  verb('lirtzot, blank', ['לרצות', 'לִרְצוֹת'], ['To want.', '(Biblical) accept, choose'], [], []),
+  verb(
+    'lirtzot, blank',
+    ['לרצות', 'לִרְצוֹת'],
+    ['To want.', '(Biblical) accept, choose'],
+    [],
+    [{ meaning: 'want', takes: ['את', 'מ'] }],
+  ),
   verb(
     'lachshov, blank',
     ['לחשוב', 'לַחְשֹׁב'],
@@ -570,7 +640,7 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
     LEHISTAKEL,
     ['to look at [with בְּ־]'],
     [{ english: 'to look at', preposition: 'ב' }],
-    [{ meaning: 'look', takes: ['ב', 'על'] }],
+    [{ meaning: 'look', takes: ['ב'] }],
     ['ב'],
   ),
   verb(
@@ -585,21 +655,24 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
     ['לומר', 'לוֹמַר'],
     ['to say, tell', 'to intend', 'to mean'],
     [{ english: 'to say, tell' }],
-    [],
+    [{ meaning: 'say', takes: ['את', 'ל', 'על'] }],
   ),
   verb(
     'lishol, blank',
     ['לשאול', 'לִשְׁאֹל'],
     ['to ask (a question), to query', 'to borrow (an item)'],
     [],
-    [],
+    [
+      { meaning: 'ask', takes: ['את', 'על'] },
+      { meaning: 'borrow', takes: ['את', 'מ'] },
+    ],
   ),
   verb(
     'lagur, blank',
     ['לגור', 'לָגוּר'],
     ['to dwell, reside, live'],
     [],
-    [{ meaning: 'live', takes: ['ב', 'none'] }],
+    [{ meaning: 'live', takes: ['ב', 'עם'] }],
   ),
   verb(
     'lishmoa, no dictionary',
@@ -616,7 +689,7 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
       '(archaic) To observe, look at; figuratively, to consider.',
     ],
     [{ english: 'to see' }, { english: 'to watch' }],
-    [{ meaning: 'see', takes: ['את'] }],
+    [{ meaning: 'see', takes: ['את', 'ב'] }],
   ),
   verb(
     'lehitkasher, blank',
@@ -634,7 +707,7 @@ export const VERB_MEANINGS_CASES: VerbMeaningsCase[] = [
     ['לבקש', 'לְבַקֵּשׁ'],
     ['(transitive) to ask for, request', '(formal) to seek, strive for'],
     [],
-    [],
+    [{ meaning: 'ask', takes: ['את', 'מ'] }],
   ),
   verb(
     'lilmod, blank',
