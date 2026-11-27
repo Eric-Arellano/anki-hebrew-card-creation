@@ -20,7 +20,9 @@ meaning keeps or splits, and the human takes any part of it
 (`src/lib/card/verb-meaning-suggestions.ts`). The check below still reads the result again before
 saving.
 
-What is left is everything downstream of the lines seeing each preposition.
+Suggest already shows each preposition in an example of its own meaning (`VERB_EXAMPLES` in
+`src/lib/server/ai/suggest.ts`), and waits until every line has one chosen. What is left is the
+review check and the Reading context.
 
 ## The rules the remaining PRs follow
 
@@ -44,31 +46,15 @@ for an unusual form, and these meanings are as central as the first one.*
 
 Claude sees a verb's meanings the same way in every prompt: numbered, each ending in its unpointed
 preposition in brackets, like `1. to look after [על]` or `2. to sleep [none]`. `verbMeaningLines`
-in `src/lib/server/ai/verb-meanings.ts` builds them, so the prompts below reuse it.
+in `src/lib/server/ai/verb-meanings.ts` builds them, and Suggest and the meanings already use it,
+so the check reuses it.
 
 What counts as a meaning's preposition is settled in that module's system prompt, each rule one
 Claude broke in trials without it: a place you go to counts (ללכת ל) but a place where it happens
 doesn't (עובד בבנק), את only where a native speaker says it before a definite object (never the
-language after מדבר), and an infinitive or a ש clause isn't an object. The examples and the check
-must hold to the same rules, or the check faults what Suggest proposed.
+language after מדבר), and an infinitive or a ש clause isn't an object. The check must hold to the same rules the examples follow, or it faults what Suggest proposed.
 
-### PR 1: examples use each line's preposition
-
-- `SuggestRequest` (`src/lib/api/ai.ts`) sends a verb's lines with their prepositions, and
-  `suggestionRequest` writes them with `verbMeaningLines`.
-- The examples rule in `suggestionRequest` gains, for a verb:
-  - Each meaning with a preposition gets its own sentence, using the verb with that preposition
-    before an object. Meanings with different prepositions never share one, though two shades
-    with the same preposition still may.
-  - For את, give the object the definite article or a name, so את appears: ראיתי את הסרט, not
-    ראיתי סרט.
-  - ל, ב and מ join the next word, as in הלכתי לים.
-  - This can need more sentences than `MAX_EXAMPLES`. **Open:** raise the cap for a verb, or
-    keep it and cover the first meanings only.
-- The fields' Suggest waits until every line's preposition is chosen: `suggestBlocker`, in
-  `src/lib/card/suggestions.ts`, says "Choose a preposition for each meaning first."
-
-### PR 2: the review check sees each preposition
+### PR 1: the review check sees each preposition
 
 - `fieldTexts` in `src/lib/server/ai/check.ts` sends `Definitions` through `ankiFieldHtmlToText`,
   which today runs each pill into its English (`to look after עַל`). For a verb, send
@@ -90,7 +76,7 @@ must hold to the same rules, or the check faults what Suggest proposed.
   `StructuredRequest`). At low, trials gave חשב a made-up את, which is the kind of finding this
   check exists to make.
 
-### PR 3: a verb gets a Reading context
+### PR 2: a verb gets a Reading context
 
 - `homographsOf` in `src/lib/server/ai/homographs.ts` takes the entries titled with the note's
   spelling. A verb's entry is titled with its past, so an infinitive finds none, and Suggest
@@ -114,6 +100,3 @@ plan is left carries this step. Then reset reviews for the deck.
 
 - Each PR: `npm run lint && npm run check && npm test`, and `svelte-autofixer` on each Svelte
   file until it's clean. No test reaches the network or a real Anki.
-- By hand under `npm run dev`, and only with the human's go-ahead for Claude calls: for שמר, with
-  "to keep" אֶת and "to guard, look after" עַל, the examples use שומר את and שומר על. Nothing is
-  added to Anki without the human clicking Add to deck.
