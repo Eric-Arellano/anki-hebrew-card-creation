@@ -1,7 +1,9 @@
 <script lang="ts">
+import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import type { Held } from '#lib/card/changed-from.ts';
 import { isBlankMeaning, type Meaning, type PrepositionChoice } from '#lib/card/definitions.ts';
-import { MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
+import { verbMeaningsRequest } from '#lib/card/verb-meaning-suggestions.ts';
+import { VERB_MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
 import {
   GOVERNED_PREPOSITIONS,
   type GovernedPreposition,
@@ -9,6 +11,7 @@ import {
 } from '#lib/hebrew/preposition.ts';
 import QuotedText from '../ui/QuotedText.svelte';
 import ChoiceChips from './ChoiceChips.svelte';
+import ClaudeVerbMeanings from './ClaudeVerbMeanings.svelte';
 
 // Pointed, as the card shows them.
 const OPTIONS: readonly { value: PrepositionChoice; label: string }[] = [
@@ -19,15 +22,24 @@ const OPTIONS: readonly { value: PrepositionChoice; label: string }[] = [
 let {
   definitions = $bindable(),
   held,
-  suggested,
+  word,
+  pointed,
+  candidate,
 }: {
   definitions: Meaning[];
   held: Held<readonly Meaning[]>;
-  // From the dictionary, which names them for few verbs, and for the entry, not for a meaning.
-  suggested: readonly GovernedPreposition[];
+  word: string;
+  pointed: string;
+  /** The dictionary entry picked, if any. */
+  candidate: DictionaryCandidate | undefined;
 } = $props();
 
-// Each meaning with English, with its index among all the rows, which `held` is marked by.
+/** From the dictionary, which names them for few verbs, and for the entry, not for a meaning. */
+const dictionaryPrepositions: readonly GovernedPreposition[] = $derived(
+  candidate?.partOfSpeech === 'verb' ? candidate.verb.prepositions : [],
+);
+
+/** Each meaning with English, with its index among all the rows, which `held` is marked by. */
 const filled = $derived(
   definitions.flatMap((meaning, index) => (isBlankMeaning(meaning) ? [] : [{ meaning, index }])),
 );
@@ -36,9 +48,9 @@ const filled = $derived(
 <fieldset class="grid grid-cols-1 gap-3">
   <legend class="mb-1">Preposition each meaning takes (מילת יחס)</legend>
   <div class="hint space-y-1">
-    <p><QuotedText text={MEANING_PREPOSITION_HELP.lead} /></p>
+    <p><QuotedText text={VERB_MEANING_PREPOSITION_HELP.lead} /></p>
     <ul class="list-disc space-y-1 ps-5">
-      {#each MEANING_PREPOSITION_HELP.cases as line (line)}
+      {#each VERB_MEANING_PREPOSITION_HELP.cases as line (line)}
         <li><QuotedText text={line} /></li>
       {/each}
     </ul>
@@ -48,20 +60,28 @@ const filled = $derived(
       legend={meaning.english.trim()}
       name="preposition-{index}"
       options={OPTIONS}
-      {suggested}
+      suggested={dictionaryPrepositions}
       held={held && (held[index]?.preposition ?? '')}
       bind:value={meaning.preposition}
     />
   {:else}
-    <p class="hint">Write an English meaning above, then choose its preposition here.</p>
+    <p class="hint">
+      Write an English meaning above, then choose its preposition here, or have Claude suggest them.
+    </p>
   {/each}
-  {#if suggested.length > 0}
+  {#if dictionaryPrepositions.length > 0}
     <p class="hint">
       Wiktionary suggests
       <bdi lang="he"
-        >{suggested.map((preposition) => POINTED_PREPOSITIONS[preposition]).join(', ')}</bdi
+        >{dictionaryPrepositions
+          .map((preposition) => POINTED_PREPOSITIONS[preposition])
+          .join(', ')}</bdi
       >
       for this verb, but not for which meaning.
     </p>
   {/if}
+  <ClaudeVerbMeanings
+    request={verbMeaningsRequest({ word, pointed, definitions }, candidate)}
+    onuse={(meanings) => (definitions = meanings)}
+  />
 </fieldset>

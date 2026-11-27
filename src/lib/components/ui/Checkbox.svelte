@@ -1,15 +1,19 @@
 <script lang="ts">
+import type { Snippet } from 'svelte';
+
 let {
   label,
   checked = $bindable(),
 }: {
-  label: string;
+  /** Markup, where the label is more than words. */
+  label: string | Snippet;
   checked: boolean;
 } = $props();
 </script>
 
 <!-- The native input stays, for the keyboard and screen readers, but draws only the box; the check
      mark is drawn over it. -->
+<!-- biome-ignore lint/a11y/noLabelWithoutControl: The input is inside, and Biome can't read a label that's a snippet. -->
 <label class="flex w-fit cursor-pointer items-center gap-2">
   <span class="relative grid shrink-0 place-items-center">
     <input
@@ -30,5 +34,9 @@ let {
       <path d="M3 8.5 6.5 12 13 4.5" />
     </svg>
   </span>
-  {label}
+  {#if typeof label === 'string'}
+    {label}
+  {:else}
+    {@render label()}
+  {/if}
 </label>

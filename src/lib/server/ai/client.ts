@@ -6,15 +6,14 @@ import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import type { z } from 'zod';
 import { ANTHROPIC_API_KEY } from '$app/env/private';
 
-// Opus, because Hebrew is where models are weakest. Low effort keeps a call to a few cents.
-// `fallbacks: 'default'` reruns a refused request on the model Anthropic picks for that kind of
-// refusal, rather than one we would have to keep current.
+// Opus, because Hebrew is where models are weakest. `fallbacks: 'default'` reruns a refused
+// request on the model Anthropic picks for that kind of refusal, rather than one we would have to
+// keep current.
 const REQUEST_SETTINGS: Omit<
   Anthropic.Beta.MessageCreateParamsNonStreaming,
-  'system' | 'messages'
-> & { output_config: { effort: 'low' } } = {
+  'system' | 'messages' | 'output_config'
+> = {
   model: 'claude-opus-5-5',
-  output_config: { effort: 'low' },
   betas: ['server-side-fallback-2026-07-01'],
   fallbacks: 'default',
   max_tokens: 16000,
@@ -32,7 +31,13 @@ export type ClaudeMessages = {
   ): Promise<Anthropic.Beta.BetaMessage>;
 };
 
-export type StructuredRequest<T> = { system: string; user: string; schema: z.ZodType<T> };
+export type StructuredRequest<T> = {
+  system: string;
+  user: string;
+  schema: z.ZodType<T>;
+  /** Low unless a request asks for more, which keeps a call to a few cents. */
+  effort?: 'low' | 'medium';
+};
 
 function defaultMessages(): ClaudeMessages {
   return new Anthropic({ apiKey: ANTHROPIC_API_KEY }).beta.messages;
@@ -40,14 +45,14 @@ function defaultMessages(): ClaudeMessages {
 
 /** Claude's answer to `user`, parsed against `schema`. */
 export async function askForStructured<T>(
-  { system, user, schema }: StructuredRequest<T>,
+  { system, user, schema, effort = 'low' }: StructuredRequest<T>,
   messages: ClaudeMessages = defaultMessages(),
 ): Promise<T> {
   const format = betaZodOutputFormat(schema);
   const message = await withSdkErrorsAsAiErrors(() =>
     messages.create({
       ...REQUEST_SETTINGS,
-      output_config: { ...REQUEST_SETTINGS.output_config, format },
+      output_config: { effort, format },
       system,
       messages: [{ role: 'user', content: user }],
     }),
