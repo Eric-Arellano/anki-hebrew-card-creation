@@ -29,7 +29,6 @@ type WordInputs = { word: string; pointed: string };
 // As `formatRoot` writes it, or blank.
 type RootInputs = { root: string };
 
-// Only a verb's meanings each take a preposition.
 export type CardInputs = WordInputs &
   (
     | ({ partOfSpeech: 'verb'; verb: VerbInputs; definitions: VerbDefinitions } & RootInputs)
@@ -42,8 +41,8 @@ export type CardInputs = WordInputs &
 
 // The inputs as the editor holds them while the human types: the part of speech starts unchosen,
 // so the editor never guesses it. Each part of speech keeps its inputs under its own key while
-// another is chosen, so switching back loses nothing, as each meaning keeps its preposition. A
-// meaning row may be blank, and the root is as the human typed it.
+// another is chosen, so switching back loses nothing. A meaning row may be blank, and the root is
+// as the human typed it.
 export type CardInputsDraft = WordInputs & {
   definitions: Meaning[];
   partOfSpeech: PartOfSpeech | undefined;

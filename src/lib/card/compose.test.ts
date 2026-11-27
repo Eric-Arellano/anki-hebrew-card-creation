@@ -102,7 +102,7 @@ describe('composeFields', () => {
 
   describe('for a verb', () => {
     const noForms = { past: '', present: '', future: '' };
-    const lehabet = {
+    const ledaber = {
       word: 'לדבר',
       pointed: 'לְדַבֵּר',
       definitions: [{ english: 'to speak', preposition: 'עם' }],
@@ -113,7 +113,7 @@ describe('composeFields', () => {
     test('answers with the word alone, and writes its prepositions, binyan, root and forms', () => {
       expect(
         composeFields({
-          ...lehabet,
+          ...ledaber,
           root: 'ד־ב־ר',
           verb: { binyan: "pi'el", past: 'דִּבֵּר', present: 'מְדַבֵּר', future: 'יְדַבֵּר' },
         }),
@@ -133,7 +133,7 @@ describe('composeFields', () => {
       test('leaves the blank ones out', () => {
         expect(
           composeFields({
-            ...lehabet,
+            ...ledaber,
             verb: { ...noForms, binyan: "pi'el", past: 'דִּבֵּר', future: ' ' },
           }).forms,
         ).toBe('past: דִּבֵּר');
@@ -142,7 +142,7 @@ describe('composeFields', () => {
 
     describe('with none of its forms', () => {
       test('leaves them blank', () => {
-        expect(composeFields({ ...lehabet, verb: { ...noForms, binyan: "pi'el" } }).forms).toBe('');
+        expect(composeFields({ ...ledaber, verb: { ...noForms, binyan: "pi'el" } }).forms).toBe('');
       });
     });
   });

@@ -46,8 +46,8 @@ function singleSpaced(text: string): string {
   return text.normalize('NFC').replace(/\s+/g, ' ');
 }
 
-// What composition wrote after the word in `Production answer`: a noun's `טוב`. `undefined` for a blank answer, and one that doesn't start with the word, which
-// composition didn't write.
+// What composition wrote after the word in `Production answer`: a noun's `טוב`. `undefined` for a
+// blank answer, and one that doesn't start with the word, which composition didn't write.
 function afterWord(word: string, answer: string): string | undefined {
   const spacedWord = singleSpaced(word);
   const spacedAnswer = singleSpaced(answer);

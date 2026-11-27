@@ -55,16 +55,15 @@ export function completeDefinitions(meanings: readonly Meaning[]): Definitions |
   return first && [first, ...rest];
 }
 
-function hasPreposition(meaning: Meaning): meaning is VerbDefinitions[number] {
+function isPrepositionChosen(meaning: Meaning): meaning is VerbDefinitions[number] {
   return meaning.preposition !== undefined;
 }
 
 /** The filled meanings, or `undefined` while there is none or one's preposition is unchosen. */
 export function completeVerbDefinitions(meanings: readonly Meaning[]): VerbDefinitions | undefined {
   const filled = filledDefinitions(meanings);
-  const chosen = filled.filter(hasPreposition);
-  if (chosen.length < filled.length) return undefined;
-  const [first, ...rest] = chosen.map(({ english, preposition }) => ({ english, preposition }));
+  if (!filled.every(isPrepositionChosen)) return undefined;
+  const [first, ...rest] = filled.map(({ english, preposition }) => ({ english, preposition }));
   return first && [first, ...rest];
 }
 
@@ -99,7 +98,7 @@ function lineFromHtml(html: string): Meaning {
   }
   const pill = PILL.exec(html);
   const preposition = pill?.[1] === undefined ? undefined : pointedPreposition(pill[1]);
-  if (pill === null || preposition === undefined) return { english: ankiFieldHtmlToText(html) };
+  if (preposition === undefined) return { english: ankiFieldHtmlToText(html) };
   return { english: ankiFieldHtmlToText(html.replace(PILL, '')), preposition };
 }
 
