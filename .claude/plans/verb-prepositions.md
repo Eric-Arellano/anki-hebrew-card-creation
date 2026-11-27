@@ -90,32 +90,7 @@ must hold to the same rules, or the check faults what Suggest proposed.
   `StructuredRequest`). At low, trials gave חשב a made-up את, which is the kind of finding this
   check exists to make.
 
-### PR 3: an example's conjugated verb is recognized
-
-- `examplesWithoutWord` warns that an example doesn't use the word, and `examplesToAnkiFieldHtml`
-  bolds the word, both through `usageRanges` in `src/lib/hebrew/usage.ts`. For a verb it matches
-  the infinitive, the three forms for "he", and any word holding the root's letters in order
-  with only ו or י between them.
-- That misses most conjugations of a weak root, so a correct example is warned about and saved
-  without bold:
-  - a root ending in ה, where the ה turns to י or ת or drops: `קניתי`, `קנו` and `קנתה` for
-    `לקנות`, and the same for `לרצות`, `לראות`, `לשתות`, `לעשות`, `להיות`;
-  - a hollow root: `קמתי` for `לקום`, `גרנו` for `לגור`;
-  - a root that drops its first letter: `אלך` for `ללכת`, `אשב` for `לשבת`, `נתתי` for `לתת`.
-- The Suggest prompt asks for "another person or tense" (`OTHER_FORMS.verb` in
-  `src/lib/server/ai/suggest.ts`), so Claude's own examples are the ones that trip it.
-- **Open:** how to recognize them.
-  - Match against the entry's whole conjugation table. The index already files each entry under
-    every form in it (`keyForms` in `src/lib/server/dictionary/source.ts`), so the server can say
-    which words of an example lead to the picked verb. Exact, but it needs the dictionary, and
-    a note loaded from Anki has no picked entry until its word is looked up.
-  - Loosen the root match, so a final ה may be י, ת or ו. Pure and small, and it covers the
-    largest class, but it bolds `קוראים` in an example for `לראות`, and does nothing for the
-    hollow and first-letter roots.
-- *Rejected: leaving it, because the warning then fires on the examples the tool itself asks
-  for, which teaches the human to ignore it.*
-
-### PR 4: a verb gets a Reading context
+### PR 3: a verb gets a Reading context
 
 - `homographsOf` in `src/lib/server/ai/homographs.ts` takes the entries titled with the note's
   spelling. A verb's entry is titled with its past, so an infinitive finds none, and Suggest
