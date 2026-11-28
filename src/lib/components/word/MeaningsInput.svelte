@@ -6,15 +6,15 @@ import {
   textChange,
   withoutRow,
 } from '#lib/card/changed-from.ts';
-import { blankMeaning, isBlankMeaning, type Meaning } from '#lib/card/definitions.ts';
+import { blankMeaning, isBlankMeaning, type Meaning } from '#lib/card/meanings.ts';
 import ChangedFrom from '../ui/ChangedFrom.svelte';
 import RemovedRow from '../ui/RemovedRow.svelte';
 
 let {
-  definitions = $bindable(),
+  meanings = $bindable(),
   held,
 }: {
-  definitions: Meaning[];
+  meanings: Meaning[];
   // Marked meaning by meaning.
   held?: Held<readonly Meaning[]>;
 } = $props();
@@ -25,14 +25,14 @@ function labelAt(index: number) {
 
 // A copy, since a restored row's input writes into it.
 function restoreThrough(index: number) {
-  definitions = restoredThrough(definitions, held, index, (meaning) => ({ ...meaning }));
+  meanings = restoredThrough(meanings, held, index, (meaning) => ({ ...meaning }));
 }
 </script>
 
 <!-- `grid-cols-1` lets a row shrink below its inputs' intrinsic width, which overflows a phone. -->
 <fieldset class="grid grid-cols-1 content-start gap-2">
   <legend class="required-mark mb-1">English meaning</legend>
-  {#each definitions as meaning, index (meaning)}
+  {#each meanings as meaning, index (meaning)}
     {@const label = labelAt(index)}
     <ChangedFrom
       {label}
@@ -51,16 +51,16 @@ function restoreThrough(index: number) {
         <button
           type="button"
           class="w-8 shrink-0 px-0"
-          aria-label="{definitions.length === 1 ? 'Clear' : 'Remove'} {label}"
-          disabled={definitions.length === 1 && isBlankMeaning(meaning)}
-          onclick={() => (definitions = withoutRow(definitions, index, blankMeaning))}
+          aria-label="{meanings.length === 1 ? 'Clear' : 'Remove'} {label}"
+          disabled={meanings.length === 1 && isBlankMeaning(meaning)}
+          onclick={() => (meanings = withoutRow(meanings, index, blankMeaning))}
         >
           ×
         </button>
       </div>
     </ChangedFrom>
   {/each}
-  {#each removedRows(held, definitions, isBlankMeaning) as { index, row } (index)}
+  {#each removedRows(held, meanings, isBlankMeaning) as { index, row } (index)}
     <RemovedRow label={labelAt(index)} onrestore={() => restoreThrough(index)}>
       “<bdi lang="en">{row.english}</bdi>”
     </RemovedRow>
@@ -68,7 +68,7 @@ function restoreThrough(index: number) {
   <button
     type="button"
     class="justify-self-start text-sm"
-    onclick={() => (definitions = [...definitions, blankMeaning()])}
+    onclick={() => (meanings = [...meanings, blankMeaning()])}
   >
     + Another meaning
   </button>

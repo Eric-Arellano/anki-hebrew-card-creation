@@ -31,7 +31,7 @@ function imageSearches() {
 
 describe('CardEditor', () => {
   describe('two meanings', () => {
-    test('send numbered definitions, and each has its own image search', async () => {
+    test('send numbered meanings, and each has its own image search', async () => {
       const requests = await renderConnectedEditor();
       await fillDag();
       await fireEvent.click(screen.getByRole('button', { name: '+ Another meaning' }));
@@ -150,8 +150,8 @@ describe('CardEditor', () => {
     describe('for the production context', () => {
       const mechonit = {
         noteId: 1751762491688,
-        unpointed: 'מכונית',
-        pointed: 'מְכוֹנִית',
+        word: 'מכונית',
+        wordPointed: 'מְכוֹנִית',
         sharedMeanings: ['car'],
         productionContext: '',
       };
@@ -208,7 +208,7 @@ describe('CardEditor', () => {
 
       test('leaves out the note being edited', async () => {
         const oto = loadedNote('אוטו');
-        const otoFound = { ...mechonit, noteId: oto.noteId, unpointed: 'אוטו', pointed: 'אוֹטוֹ' };
+        const otoFound = { ...mechonit, noteId: oto.noteId, word: 'אוטו', wordPointed: 'אוֹטוֹ' };
         await renderConnectedEditor({ sameMeaning: [otoFound, mechonit], notes: [oto] }, oto);
         await choosePartOfSpeech('Other');
         expect((await screen.findAllByText(/also means/)).map((item) => item.textContent)).toEqual([
@@ -332,7 +332,7 @@ describe('CardEditor', () => {
     test('leave out the inputs and the media', async () => {
       await renderConnectedEditor();
       await fillDag();
-      for (const field of ['unpointed', 'pointed', 'definitions', 'images', 'audio']) {
+      for (const field of ['word', 'wordPointed', 'meanings', 'images', 'audio']) {
         expect(shownFieldIds()).not.toContain(`field-${field}`);
       }
     });

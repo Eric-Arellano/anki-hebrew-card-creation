@@ -13,15 +13,15 @@ describe('findSameMeaningNotes', () => {
       expect(await findSameMeaningNotes(anki, ['car', 'automobile'], ['רכב'])).toEqual([
         {
           noteId: 1751762491688,
-          unpointed: 'מכונית',
-          pointed: 'מְכוֹנִית',
+          word: 'מכונית',
+          wordPointed: 'מְכוֹנִית',
           sharedMeanings: ['car'],
           productionContext: '',
         },
         {
           noteId: 1751762573921,
-          unpointed: 'אוטו',
-          pointed: 'אוֹטוֹ',
+          word: 'אוטו',
+          wordPointed: 'אוֹטוֹ',
           sharedMeanings: ['car'],
           productionContext: '',
         },
@@ -54,7 +54,7 @@ describe('findSameMeaningNotes', () => {
     test('leaves it out, by its unpointed key', async () => {
       const { anki } = ankiWithNotes(mechonitOtoNotes);
       const found = await findSameMeaningNotes(anki, ['car'], [' מְכוֹנִית ']);
-      expect(found.map((note) => note.unpointed)).toEqual(['אוטו']);
+      expect(found.map((note) => note.word)).toEqual(['אוטו']);
     });
   });
 

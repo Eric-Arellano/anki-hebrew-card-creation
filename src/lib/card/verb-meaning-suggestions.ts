@@ -8,7 +8,7 @@
 // than a card wants, and the reasons it gives for each are gone once the answer is used.*
 import type { SuggestedVerbMeaning, VerbMeaningsRequest } from '#lib/api/ai.ts';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
-import { filledDefinitions, type Meaning, type PrepositionChoice } from '#lib/card/definitions.ts';
+import { filledMeanings, type Meaning, type PrepositionChoice } from '#lib/card/meanings.ts';
 
 /** Why there is nothing to ask Claude for yet, or `undefined` once there is. */
 export function verbMeaningsBlocker({
@@ -24,14 +24,14 @@ export function verbMeaningsBlocker({
 }
 
 export function verbMeaningsRequest(
-  { word, pointed, definitions }: { word: string; pointed: string; definitions: Meaning[] },
+  { word, pointed, meanings }: { word: string; pointed: string; meanings: Meaning[] },
   pickedEntry: DictionaryCandidate | undefined,
 ): VerbMeaningsRequest {
   const verb = pickedEntry?.partOfSpeech === 'verb' ? pickedEntry : undefined;
   return {
     word: word.trim(),
     pointed: pointed.trim(),
-    meanings: filledDefinitions(definitions).map(({ english, preposition }) =>
+    meanings: filledMeanings(meanings).map(({ english, preposition }) =>
       preposition === undefined ? { english } : { english, preposition },
     ),
     dictionaryDefinitions: verb?.definitions ?? [],

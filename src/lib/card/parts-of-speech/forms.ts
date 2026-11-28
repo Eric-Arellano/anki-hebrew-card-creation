@@ -89,7 +89,7 @@ export function wordUsage(inputs: CardInputsDraft, formsField: string): WordUsag
   return {
     forms: [
       inputs.word,
-      inputs.pointed,
+      inputs.wordPointed,
       ...labeledForms(inputs, formsField).map(({ form }) => form),
     ],
     // A verb's forms are for “he”, while an example may conjugate it any way: `דיברתי` for

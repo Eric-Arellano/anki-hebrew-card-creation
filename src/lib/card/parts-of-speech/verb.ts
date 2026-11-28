@@ -43,7 +43,7 @@ export function composeVerbFields(word: string, verb: VerbInputs): FieldValues {
     // preposition is in `Definitions`, which the Production card blanks on the front.
     // *Rejected: the preposition here, because one slot can't hold a preposition per meaning, and
     // Anki grades the typed answer exactly.*
-    productionAnswer:
+    answer:
       'unpointedPast' in verb ? `${word} ${textToAnkiFieldHtml(verb.unpointedPast.trim())}` : word,
     binyan: verb.binyan,
     forms: formsHtml([

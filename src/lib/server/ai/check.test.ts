@@ -39,9 +39,9 @@ function answer(findings: { field: string; problem: string; rewrite: string | nu
 describe('fieldTexts', () => {
   test('gives each field’s text a line per line, leaving out media and blank fields', () => {
     expect(fieldTexts(kelev)).toEqual({
-      unpointed: 'כלב',
-      pointed: 'כֶּלֶב',
-      definitions: 'dog',
+      word: 'כלב',
+      wordPointed: 'כֶּלֶב',
+      meanings: 'dog',
       gender: 'm',
       forms: 'f: כַּלְבָּה\nm.pl: כְּלָבִים\nf.pl: כְּלָבוֹת',
       variant1Prompt: 'female dog',
@@ -53,7 +53,7 @@ describe('fieldTexts', () => {
     expect(
       fieldTexts({
         ...kelev,
-        fields: { ...kelev.fields, notes: 'a pet', productionAnswer: 'כלב טוב' },
+        fields: { ...kelev.fields, notes: 'a pet', answer: 'כלב טוב' },
       }),
     ).toEqual({
       ...fieldTexts(kelev),
@@ -63,7 +63,7 @@ describe('fieldTexts', () => {
 
   describe('when the note is a verb', () => {
     test('gives each meaning numbered, with its preposition in brackets', () => {
-      expect(fieldTexts(lalechet).definitions).toBe(
+      expect(fieldTexts(lalechet).meanings).toBe(
         '1. to walk, go [ל]\n2. to happen, go on [none]\n3. to go away, depart [none]',
       );
     });
@@ -179,10 +179,10 @@ describe('toNoteCheck', () => {
     expect(
       toNoteCheck(
         answer([{ field: 'Definitions', problem: 'כלב is a dog, not a cat.', rewrite: 'dog' }]),
-        { ...kelev, fields: { ...kelev.fields, definitions: 'cat' } },
+        { ...kelev, fields: { ...kelev.fields, meanings: 'cat' } },
       ),
     ).toEqual({
-      findings: [{ field: 'definitions', problem: 'כלב is a dog, not a cat.', rewrite: 'dog' }],
+      findings: [{ field: 'meanings', problem: 'כלב is a dog, not a cat.', rewrite: 'dog' }],
     });
   });
 
@@ -213,10 +213,10 @@ describe('toNoteCheck', () => {
       expect(
         toNoteCheck(
           answer([{ field: 'Definitions', problem: 'כלב is not a cat.', rewrite: 'dog' }]),
-          { ...kelev, fields: { ...kelev.fields, definitions: 'dog<br>cat' } },
+          { ...kelev, fields: { ...kelev.fields, meanings: 'dog<br>cat' } },
         ),
       ).toEqual({
-        findings: [{ field: 'definitions', problem: 'כלב is not a cat.', rewrite: 'dog' }],
+        findings: [{ field: 'meanings', problem: 'כלב is not a cat.', rewrite: 'dog' }],
       });
     });
   });

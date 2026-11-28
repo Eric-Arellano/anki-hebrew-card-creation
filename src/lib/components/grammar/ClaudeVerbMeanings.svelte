@@ -1,7 +1,7 @@
 <script lang="ts">
 import { fetchVerbMeaningSuggestions, type VerbMeaningsRequest } from '#lib/api/ai.ts';
 import { errorMessage } from '#lib/api/http.ts';
-import type { Meaning, PrepositionChoice } from '#lib/card/definitions.ts';
+import type { Meaning, PrepositionChoice } from '#lib/card/meanings.ts';
 import {
   type ProposedVerbMeaning,
   proposedVerbMeanings,

@@ -10,7 +10,7 @@ const sefer: SuggestRequest = {
   word: 'ספר',
   pointed: 'סֵפֶר',
   partOfSpeech: 'noun',
-  definitions: [{ english: 'book' }, { english: '(archaic) a writing' }],
+  meanings: [{ english: 'book' }, { english: '(archaic) a writing' }],
   forms: [],
 };
 
@@ -18,7 +18,7 @@ const lishmor: SuggestRequest = {
   word: 'לשמור',
   pointed: 'לִשְׁמֹר',
   partOfSpeech: 'verb',
-  definitions: [
+  meanings: [
     { english: 'to keep', preposition: 'את' },
     { english: 'to guard, look after', preposition: 'על' },
   ],
@@ -120,7 +120,7 @@ describe('suggestionRequest', () => {
 
   test('gives another part of speech’s meanings without a preposition', () => {
     const { user, system } = suggestionRequest(
-      { ...sefer, definitions: [{ english: 'book', preposition: 'את' }] },
+      { ...sefer, meanings: [{ english: 'book', preposition: 'את' }] },
       [],
     );
     expect(user).toContain('Meanings:\n- book');

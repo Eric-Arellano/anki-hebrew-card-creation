@@ -17,10 +17,10 @@ describe('CardEditor', () => {
           exactMatches: [
             {
               noteId: 1751686072898,
-              unpointed: 'כלב',
-              pointed: 'כֶּלֶב',
+              word: 'כלב',
+              wordPointed: 'כֶּלֶב',
               partOfSpeech: '',
-              definitions: '',
+              meanings: '',
             },
           ],
           sameRootMatches: [],
@@ -43,10 +43,10 @@ describe('CardEditor', () => {
           relatedMatches: [
             {
               noteId: 1752426864218,
-              unpointed: 'בית משפט',
-              pointed: 'בֵּית מִשְׁפָּט',
+              word: 'בית משפט',
+              wordPointed: 'בֵּית מִשְׁפָּט',
               partOfSpeech: '',
-              definitions: '',
+              meanings: '',
             },
           ],
         },
@@ -66,10 +66,10 @@ describe('CardEditor', () => {
           sameRootMatches: [
             {
               noteId: 1752427043636,
-              unpointed: 'בית ספר',
-              pointed: 'בֵּית סֵפֶר',
+              word: 'בית ספר',
+              wordPointed: 'בֵּית סֵפֶר',
               partOfSpeech: '',
-              definitions: 'school',
+              meanings: 'school',
             },
           ],
           relatedMatches: [],
@@ -103,20 +103,20 @@ describe('CardEditor', () => {
             exactMatches: [
               {
                 noteId: kelevNote().noteId,
-                unpointed: 'כלב',
-                pointed: 'כֶּלֶב',
+                word: 'כלב',
+                wordPointed: 'כֶּלֶב',
                 partOfSpeech: '',
-                definitions: '',
+                meanings: '',
               },
             ],
             sameRootMatches: [],
             relatedMatches: [
               {
                 noteId: 1,
-                unpointed: 'כלבה',
-                pointed: 'כַּלְבָּה',
+                word: 'כלבה',
+                wordPointed: 'כַּלְבָּה',
                 partOfSpeech: '',
-                definitions: '',
+                meanings: '',
               },
             ],
           },
@@ -139,10 +139,10 @@ describe('CardEditor', () => {
             exactMatches: [
               {
                 noteId: 1,
-                unpointed: 'כלב',
-                pointed: 'כֶּלֶב',
+                word: 'כלב',
+                wordPointed: 'כֶּלֶב',
                 partOfSpeech: '',
-                definitions: '',
+                meanings: '',
               },
             ],
             sameRootMatches: [],
@@ -164,10 +164,10 @@ describe('CardEditor', () => {
             exactMatches: [
               {
                 noteId: kelevNote().noteId,
-                unpointed: 'כלב',
-                pointed: 'כֶּלֶב',
+                word: 'כלב',
+                wordPointed: 'כֶּלֶב',
                 partOfSpeech: '',
-                definitions: '',
+                meanings: '',
               },
             ],
             sameRootMatches: [],

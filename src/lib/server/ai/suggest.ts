@@ -66,7 +66,7 @@ const VERB_EXAMPLES =
   '“ראיתי סרט.” ל, ב and מ join the next word, as in “הלכתי לים.”\n';
 
 export function suggestionRequest(
-  { word, pointed, partOfSpeech, definitions, forms }: SuggestRequest,
+  { word, pointed, partOfSpeech, meanings, forms }: SuggestRequest,
   homographs: readonly Homograph[],
 ): StructuredRequest<Answer> {
   const withReading = homographs.length > 0;
@@ -116,8 +116,8 @@ export function suggestionRequest(
     ...(pointed.trim() === '' ? [] : [`With niqqud: ${pointed}`]),
     `Part of speech: ${partOfSpeech}`,
     partOfSpeech === 'verb'
-      ? `Meanings, each with its preposition:\n${verbMeaningLines(definitions)}`
-      : `Meanings:\n${definitions.map(({ english }) => `- ${english}`).join('\n')}`,
+      ? `Meanings, each with its preposition:\n${verbMeaningLines(meanings)}`
+      : `Meanings:\n${meanings.map(({ english }) => `- ${english}`).join('\n')}`,
     ...(forms.length === 0
       ? []
       : [

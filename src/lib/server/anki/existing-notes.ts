@@ -19,13 +19,13 @@ function partition(
 ): ExistingNotes {
   const existingNotes = notes.map((note) => ({
     noteId: note.noteId,
-    unpointed: fieldText(note, FIELDS.unpointed),
-    pointed: fieldText(note, FIELDS.pointed),
+    word: fieldText(note, FIELDS.word),
+    wordPointed: fieldText(note, FIELDS.wordPointed),
     partOfSpeech: fieldText(note, FIELDS.partOfSpeech),
-    definitions: fieldText(note, FIELDS.definitions),
+    meanings: fieldText(note, FIELDS.meanings),
   }));
   const exactMatches = existingNotes.filter((note) =>
-    comparisonKeys.includes(toComparisonKey(note.unpointed)),
+    comparisonKeys.includes(toComparisonKey(note.word)),
   );
   const rest = existingNotes.filter((note) => !exactMatches.includes(note));
   const sameRootMatches = rest.filter((note) => sameRootNoteIds.includes(note.noteId));
@@ -46,9 +46,7 @@ export async function findExistingNotes(
   if (comparisonKeys.length === 0) return NONE;
 
   const byNoteType = searchByNoteType(NOTE_TYPE);
-  const fieldTerms = comparisonKeys.map((key) =>
-    searchByFieldContainingKey(FIELDS.unpointed.name, key),
-  );
+  const fieldTerms = comparisonKeys.map((key) => searchByFieldContainingKey(FIELDS.word.name, key));
   // Separate searches, so a note is sorted by which one found it, not by rereading its `Root`.
   const [wordNoteIds, sameRootNoteIds] = await Promise.all([
     anki('findNotes', { query: `${byNoteType} ${searchForAny(fieldTerms)}` }),

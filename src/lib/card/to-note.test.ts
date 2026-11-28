@@ -8,7 +8,7 @@ const blankFields = Object.fromEntries(fieldNames.map((name) => [name, '']));
 describe('noteFields', () => {
   test('sends what composition gives each field, and every other field blank', () => {
     expect(
-      noteFields({ composed: { unpointed: 'דג', gender: 'm' }, edits: {}, shownFields: [] }),
+      noteFields({ composed: { word: 'דג', gender: 'm' }, edits: {}, shownFields: [] }),
     ).toEqual({ ...blankFields, Hebrew: 'דג', Gender: 'm' });
   });
 

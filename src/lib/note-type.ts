@@ -63,10 +63,10 @@ export type Field = { name: string } & (
 //   adjectives: the rest are loanwords, but also native words like כלב and ספר, so a blank `Root`
 //   says nothing about the word.
 export const FIELDS = {
-  unpointed: { name: 'Hebrew', shownFor: [] },
-  pointed: { name: 'Pointed', shownFor: [] },
-  productionAnswer: { name: 'Production answer', shownFor: [] },
-  definitions: { name: 'Definitions', shownFor: [] },
+  word: { name: 'Hebrew', shownFor: [] },
+  wordPointed: { name: 'Pointed', shownFor: [] },
+  answer: { name: 'Production answer', shownFor: [] },
+  meanings: { name: 'Definitions', shownFor: [] },
   productionContext: {
     name: 'Production context',
     shownFor: PARTS_OF_SPEECH,

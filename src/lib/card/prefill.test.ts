@@ -84,7 +84,7 @@ const kelevNoun = {
 const typed: CardInputsDraft = {
   ...emptyInputsDraft(),
   word: 'כלבים',
-  definitions: [{ english: 'dog' }],
+  meanings: [{ english: 'dog' }],
 };
 
 describe('prefillDraft', () => {
@@ -93,8 +93,8 @@ describe('prefillDraft', () => {
       expect(prefillDraft(typed, kelev)).toEqual({
         draft: {
           word: 'כלב',
-          pointed: 'כֶּלֶב',
-          definitions: [{ english: 'dog' }],
+          wordPointed: 'כֶּלֶב',
+          meanings: [{ english: 'dog' }],
           partOfSpeech: 'noun',
           root: '',
           noun: kelevNoun,
@@ -180,7 +180,7 @@ describe('prefillDraft', () => {
 
     describe('without a pointed spelling', () => {
       test('leaves the pointed word blank', () => {
-        expect(prefillDraft(typed, { ...kelev, pointed: undefined }).draft.pointed).toBe('');
+        expect(prefillDraft(typed, { ...kelev, pointed: undefined }).draft.wordPointed).toBe('');
       });
     });
   });
@@ -189,13 +189,13 @@ describe('prefillDraft', () => {
     test('fills the infinitive, binyan, forms and root, and keeps the prepositions chosen', () => {
       const draft = {
         ...typed,
-        definitions: [{ english: 'to speak', preposition: 'עם' as const }],
+        meanings: [{ english: 'to speak', preposition: 'עם' as const }],
       };
       expect(prefillDraft(draft, diber)).toEqual({
         draft: {
           ...draft,
           word: 'לדבר',
-          pointed: 'לְדַבֵּר',
+          wordPointed: 'לְדַבֵּר',
           partOfSpeech: 'verb',
           root: 'ד־ב־ר',
           verb: {
@@ -220,7 +220,7 @@ describe('prefillDraft', () => {
           ...diber,
           verb: { ...diber.verb, infinitives },
         });
-        expect([draft.word, draft.pointed]).toEqual(['', '']);
+        expect([draft.word, draft.wordPointed]).toEqual(['', '']);
         expect(choices).toEqual({ infinitives });
       });
     });
@@ -231,7 +231,7 @@ describe('prefillDraft', () => {
           ...diber,
           verb: { ...diber.verb, infinitives: [] },
         });
-        expect([draft.word, draft.pointed, draft.verb.unpointedPast]).toEqual(['', '', 'דיבר']);
+        expect([draft.word, draft.wordPointed, draft.verb.unpointedPast]).toEqual(['', '', 'דיבר']);
       });
     });
 
@@ -241,7 +241,7 @@ describe('prefillDraft', () => {
           draft: {
             ...typed,
             word: 'דובר',
-            pointed: 'דֻּבַּר',
+            wordPointed: 'דֻּבַּר',
             partOfSpeech: 'verb',
             root: 'ד־ב־ר',
             verb: {
@@ -263,7 +263,7 @@ describe('prefillDraft', () => {
           ...diber,
           verb: { ...diber.verb, infinitives: [{ pointed: 'לְדַבֵּר' }] },
         });
-        expect([draft.word, draft.pointed]).toEqual(['', 'לְדַבֵּר']);
+        expect([draft.word, draft.wordPointed]).toEqual(['', 'לְדַבֵּר']);
       });
 
       test('keeps the spelling typed, if it is this infinitive', () => {
@@ -271,7 +271,7 @@ describe('prefillDraft', () => {
           { ...typed, word: 'לטייל ' },
           { ...diber, verb: { ...diber.verb, infinitives: [{ pointed: 'לְטַיֵּל' }] } },
         );
-        expect([draft.word, draft.pointed]).toEqual(['לטייל', 'לְטַיֵּל']);
+        expect([draft.word, draft.wordPointed]).toEqual(['לטייל', 'לְטַיֵּל']);
       });
     });
 
@@ -324,7 +324,7 @@ describe('prefillDraft', () => {
         draft: {
           ...typed,
           word: 'גדול',
-          pointed: 'גָּדוֹל',
+          wordPointed: 'גָּדוֹל',
           partOfSpeech: 'adjective',
           root: 'ג־ד־ל',
           adjective: {
@@ -389,7 +389,10 @@ describe('prefillDraft', () => {
             roots: [],
             partOfSpeech,
           }),
-        ).toEqual({ draft: { ...typed, word: title, pointed, partOfSpeech }, choices: {} });
+        ).toEqual({
+          draft: { ...typed, word: title, wordPointed: pointed, partOfSpeech },
+          choices: {},
+        });
       },
     );
   });
@@ -408,10 +411,10 @@ describe('prefillBlanks', () => {
   });
 
   test("keeps what the note holds, offering the entry's value where it differs", () => {
-    const oldFormat = { ...held, pointed: '(ms) כֶּלֶב', root: 'כ־ל־ב' };
+    const oldFormat = { ...held, wordPointed: '(ms) כֶּלֶב', root: 'כ־ל־ב' };
     expect(prefillBlanks(oldFormat, kelev)).toEqual({
       draft: { ...oldFormat, partOfSpeech: 'noun' },
-      choices: { pointed: ['כֶּלֶב'] },
+      choices: { wordPointed: ['כֶּלֶב'] },
     });
   });
 
@@ -442,9 +445,9 @@ describe('prefillBlanks', () => {
 
   describe('for a verb filed under its past', () => {
     test('keeps the word, and offers the infinitive', () => {
-      const past = { ...emptyInputsDraft(), word: 'דיבר', pointed: 'דִּבֵּר' };
+      const past = { ...emptyInputsDraft(), word: 'דיבר', wordPointed: 'דִּבֵּר' };
       const { draft, choices } = prefillBlanks(past, diber);
-      expect([draft.word, draft.pointed, draft.verb.past]).toEqual(['דיבר', 'דִּבֵּר', 'דִּבֵּר']);
+      expect([draft.word, draft.wordPointed, draft.verb.past]).toEqual(['דיבר', 'דִּבֵּר', 'דִּבֵּר']);
       expect(choices).toEqual({ infinitives: diber.verb.infinitives });
     });
 
@@ -472,9 +475,9 @@ describe('prefillBlanks', () => {
   });
   describe("in pu'al", () => {
     test("keeps the note's word, offering the entry's past as the word", () => {
-      const note = { ...emptyInputsDraft(), word: 'דבר', pointed: 'דֻּבַּר' };
+      const note = { ...emptyInputsDraft(), word: 'דבר', wordPointed: 'דֻּבַּר' };
       const { draft, choices } = prefillBlanks(note, dubar);
-      expect([draft.word, draft.pointed]).toEqual(['דבר', 'דֻּבַּר']);
+      expect([draft.word, draft.wordPointed]).toEqual(['דבר', 'דֻּבַּר']);
       expect(choices).toEqual({ word: ['דובר'] });
     });
   });
@@ -484,12 +487,12 @@ describe('undoPrefill', () => {
   test('puts back every input the entry filled, and keeps the rest', () => {
     const before: CardInputsDraft = {
       ...typed,
-      pointed: 'כְּלָבִים',
+      wordPointed: 'כְּלָבִים',
       verb: { ...typed.verb, future: 'יְדַבֵּר' },
     };
     const filled = prefillDraft(before, diber).draft;
-    const definitions = [{ english: 'to speak', preposition: 'על' as const }];
-    expect(undoPrefill({ ...filled, definitions }, before)).toEqual({ ...before, definitions });
+    const meanings = [{ english: 'to speak', preposition: 'על' as const }];
+    expect(undoPrefill({ ...filled, meanings }, before)).toEqual({ ...before, meanings });
   });
 
   describe('for an adjective', () => {

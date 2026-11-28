@@ -18,7 +18,7 @@ import type { PartOfSpeech } from '#lib/note-type.ts';
 export type PrefillChoices = {
   infinitives?: DictionaryInfinitive[];
   word?: string[];
-  pointed?: string[];
+  wordPointed?: string[];
   partOfSpeech?: PartOfSpeech[];
   gender?: Gender[];
   binyan?: Binyan[];
@@ -38,7 +38,7 @@ export function prefillDraft(
   candidate: DictionaryCandidate,
 ): { draft: CardInputsDraft; choices: PrefillChoices } {
   // The page title is the dictionary's own unpointed spelling, so `ערים` typed becomes `עיר`.
-  const word = { word: candidate.title, pointed: candidate.pointed ?? '' };
+  const word = { word: candidate.title, wordPointed: candidate.pointed ?? '' };
   switch (candidate.partOfSpeech) {
     case 'noun': {
       const { gender, plurals, feminineSingulars, femininePlurals } = candidate.noun;
@@ -100,7 +100,7 @@ export function prefillDraft(
         draft: {
           ...draft,
           word: infinitive === undefined ? '' : unpointedInfinitive(infinitive, draft.word),
-          pointed: infinitive?.pointed ?? '',
+          wordPointed: infinitive?.pointed ?? '',
           partOfSpeech: 'verb',
           root: onlyValue(candidate.roots),
           // The title is the dictionary's own spelling of the past.
@@ -172,9 +172,9 @@ export function prefillBlanks(
       byInfinitive && !isBlank(draft.word)
         ? draft.word
         : (keep('word', draft.word, filled.word) ?? ''),
-    pointed: byInfinitive
-      ? keepInfinitive(draft.pointed, filled.pointed, candidate.verb.infinitives, offered)
-      : (keep('pointed', draft.pointed, filled.pointed) ?? ''),
+    wordPointed: byInfinitive
+      ? keepInfinitive(draft.wordPointed, filled.wordPointed, candidate.verb.infinitives, offered)
+      : (keep('wordPointed', draft.wordPointed, filled.wordPointed) ?? ''),
     partOfSpeech: keep('partOfSpeech', draft.partOfSpeech, filled.partOfSpeech),
     root: keep('root', draft.root, filled.root) ?? '',
     noun: {
@@ -239,7 +239,7 @@ export function undoPrefill(draft: CardInputsDraft, before: CardInputsDraft): Ca
   return {
     ...draft,
     word: before.word,
-    pointed: before.pointed,
+    wordPointed: before.wordPointed,
     partOfSpeech: before.partOfSpeech,
     root: before.root,
     noun: before.noun,

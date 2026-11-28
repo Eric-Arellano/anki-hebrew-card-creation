@@ -98,7 +98,7 @@ describe('CardEditor', () => {
             word: 'ספר',
             pointed: 'סֵפֶר',
             partOfSpeech: 'noun',
-            definitions: [{ english: 'book' }],
+            meanings: [{ english: 'book' }],
             forms: [{ label: 'plural', form: 'סְפָרִים' }],
           },
         },
@@ -187,7 +187,7 @@ describe('CardEditor', () => {
             word: 'לשמור',
             pointed: 'לִשְׁמֹר',
             partOfSpeech: 'verb',
-            definitions: [{ english: 'to keep', preposition: 'את' }],
+            meanings: [{ english: 'to keep', preposition: 'את' }],
             forms: [],
           },
         ]);

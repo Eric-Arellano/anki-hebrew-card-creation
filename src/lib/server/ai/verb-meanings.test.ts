@@ -78,7 +78,7 @@ describe('verbMeaningsPrompt', () => {
   });
 
   describe('with nothing but the verb and a line', () => {
-    test('leaves out the niqqud and the definitions', () => {
+    test('leaves out the niqqud and the meanings', () => {
       const { user } = verbMeaningsPrompt({ ...lishmor, pointed: ' ', dictionaryDefinitions: [] });
       expect(user).toBe('Verb: לשמור\nThe learner’s lines:\n1. to keep, guard [not chosen]');
     });

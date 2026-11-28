@@ -21,10 +21,10 @@ describe('findExistingNotes', () => {
         exactMatches: [
           {
             noteId: 1751686072898,
-            unpointed: 'כלב',
-            pointed: 'כֶּלֶב',
+            word: 'כלב',
+            wordPointed: 'כֶּלֶב',
             partOfSpeech: '',
-            definitions: 'dog',
+            meanings: 'dog',
           },
         ],
         sameRootMatches: [],
@@ -51,40 +51,40 @@ describe('findExistingNotes', () => {
         exactMatches: [
           {
             noteId: 1752114960166,
-            unpointed: 'בית',
-            pointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים`,
+            word: 'בית',
+            wordPointed: `(ms) בַּיִת (mp)${NBSP}בָּתִּים`,
             partOfSpeech: '',
-            definitions: 'house',
+            meanings: 'house',
           },
         ],
         relatedMatches: [
           {
             noteId: 1752426864218,
-            unpointed: 'בית משפט',
-            pointed: 'בֵּית מִשְׁפָּט',
+            word: 'בית משפט',
+            wordPointed: 'בֵּית מִשְׁפָּט',
             partOfSpeech: '',
-            definitions: '',
+            meanings: '',
           },
           {
             noteId: 1752427043636,
-            unpointed: 'בית ספר',
-            pointed: `[ms] בֵּית סֵפֶר [ps]${NBSP}בָּתֵּי סֵפֶר`,
+            word: 'בית ספר',
+            wordPointed: `[ms] בֵּית סֵפֶר [ps]${NBSP}בָּתֵּי סֵפֶר`,
             partOfSpeech: '',
-            definitions: 'school',
+            meanings: 'school',
           },
           {
             noteId: 1752428275813,
-            unpointed: 'בית חולים',
-            pointed: 'בֵּית חוֹלִים',
+            word: 'בית חולים',
+            wordPointed: 'בֵּית חוֹלִים',
             partOfSpeech: '',
-            definitions: '',
+            meanings: '',
           },
           {
             noteId: 1752428348888,
-            unpointed: 'בית כנסת',
-            pointed: 'בֵּית כְּנֶסֶת',
+            word: 'בית כנסת',
+            wordPointed: 'בֵּית כְּנֶסֶת',
             partOfSpeech: '',
-            definitions: '',
+            meanings: '',
           },
         ],
       });
@@ -95,7 +95,7 @@ describe('findExistingNotes', () => {
     test('finds the notes that hold any of them, each as an exact match', async () => {
       const { anki, calls } = ankiWithNotes(kelevChatulDagNotes);
       const found = await findExistingNotes(anki, ['כלב', 'חָתוּל']);
-      expect(found.exactMatches.map((note) => note.unpointed)).toEqual(['כלב', 'חתול']);
+      expect(found.exactMatches.map((note) => note.word)).toEqual(['כלב', 'חתול']);
       expect(calls[0]?.params).toEqual({
         query: '"note:Hebrew" ("Hebrew:*כלב*" OR "Hebrew:*חתול*")',
       });
@@ -129,8 +129,8 @@ describe('findExistingNotes', () => {
         [rootQuery]: [bayit, sefer],
       });
       const found = await findExistingNotes(anki, ['בית'], 'ב־י־ת');
-      expect(found.exactMatches.map((note) => note.unpointed)).toEqual(['בית']);
-      expect(found.sameRootMatches.map((note) => note.unpointed)).toEqual(['בית ספר']);
+      expect(found.exactMatches.map((note) => note.word)).toEqual(['בית']);
+      expect(found.sameRootMatches.map((note) => note.word)).toEqual(['בית ספר']);
       expect(found.relatedMatches).toEqual([]);
       expect(calls.map((call) => call.params)).toEqual([
         { query: '"note:Hebrew" "Hebrew:*בית*"' },
@@ -145,14 +145,14 @@ describe('findExistingNotes', () => {
         [rootQuery]: [sefer],
       });
       const found = await findExistingNotes(anki, ['בית'], 'ב־י־ת');
-      expect(found.sameRootMatches.map((note) => note.unpointed)).toEqual(['בית ספר']);
-      expect(found.relatedMatches.map((note) => note.unpointed)).toEqual(['בית משפט']);
+      expect(found.sameRootMatches.map((note) => note.word)).toEqual(['בית ספר']);
+      expect(found.relatedMatches.map((note) => note.word)).toEqual(['בית משפט']);
     });
 
     test('finds only the root when the word is in no note', async () => {
       const { anki } = ankiFinding({ [rootQuery]: [sefer] });
       const found = await findExistingNotes(anki, ['ביתי'], 'ב־י־ת');
-      expect(found.sameRootMatches.map((note) => note.unpointed)).toEqual(['בית ספר']);
+      expect(found.sameRootMatches.map((note) => note.word)).toEqual(['בית ספר']);
     });
   });
 

@@ -15,7 +15,7 @@ export function emptyAdjectiveInputs(): AdjectiveInputs {
 /** The fields an adjective's inputs write, given `word` as Anki field HTML. */
 export function composeAdjectiveFields(word: string, adjective: AdjectiveInputs): FieldValues {
   return {
-    productionAnswer: word,
+    answer: word,
     forms: formsHtml([
       ['f', adjective.feminine],
       ['m.pl', adjective.masculinePlural],

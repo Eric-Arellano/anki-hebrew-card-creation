@@ -4,9 +4,9 @@
 // for the review before a save to show.
 import { ankiFieldHtmlToText, ankiFieldHtmlToTextarea } from '#lib/anki/html.ts';
 import { soundsInAnkiField, splitImages } from '#lib/anki/media.ts';
-import { blankMeaning, definitionsFromHtml } from '#lib/card/definitions.ts';
 import type { CardDraft } from '#lib/card/draft.ts';
 import { examplesFromHtml } from '#lib/card/examples.ts';
+import { blankMeaning, meaningsFromHtml } from '#lib/card/meanings.ts';
 import { adjectiveInputsFrom } from '#lib/card/parts-of-speech/adjective.ts';
 import { formsByLabel } from '#lib/card/parts-of-speech/forms.ts';
 import { nounDraftFrom } from '#lib/card/parts-of-speech/noun.ts';
@@ -81,22 +81,22 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
     return splitImages(html(key)).images.map(stored);
   }
 
-  const word = text('unpointed');
-  const ending = afterWord(word, text('productionAnswer'));
+  const word = text('word');
+  const ending = afterWord(word, text('answer'));
   const forms = formsByLabel(html('forms'));
   const chips = {
     partOfSpeech: readChip(text('partOfSpeech'), oneOf(PARTS_OF_SPEECH)),
     gender: readChip(text('gender'), oneOf(GENDERS)),
     binyan: readChip(text('binyan'), toBinyan),
   };
-  const definitions = definitionsFromHtml(html('definitions'));
+  const meanings = meaningsFromHtml(html('meanings'));
   const [sound, ...otherSounds] = soundsInAnkiField(html('audio'));
 
   return {
     inputs: {
       word,
-      pointed: text('pointed'),
-      definitions: definitions.length === 0 ? [blankMeaning()] : definitions,
+      wordPointed: text('wordPointed'),
+      meanings: meanings.length === 0 ? [blankMeaning()] : meanings,
       partOfSpeech: chips.partOfSpeech.value,
       root: text('root'),
       noun: nounDraftFrom({ gender: chips.gender.value, forms, tov: ending }),

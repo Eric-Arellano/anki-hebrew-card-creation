@@ -30,10 +30,10 @@ async function renderPageFindingKelev() {
       exactMatches: [
         {
           noteId: kelev.noteId,
-          unpointed: 'כלב',
-          pointed: 'כֶּלֶב',
+          word: 'כלב',
+          wordPointed: 'כֶּלֶב',
           partOfSpeech: '',
-          definitions: '',
+          meanings: '',
         },
       ],
       sameRootMatches: [],
@@ -146,10 +146,10 @@ describe('the page', () => {
             exactMatches: [
               {
                 noteId: kelev.noteId,
-                unpointed: 'כלב',
-                pointed: 'כֶּלֶב',
+                word: 'כלב',
+                wordPointed: 'כֶּלֶב',
                 partOfSpeech: '',
-                definitions: '',
+                meanings: '',
               },
             ],
             sameRootMatches: [],

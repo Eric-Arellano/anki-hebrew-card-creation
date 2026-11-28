@@ -46,7 +46,7 @@ export function completeNoun({
 /** The fields a noun's inputs write, given `word` as Anki field HTML. */
 export function composeNounFields(word: string, noun: NounInputs): FieldValues {
   return {
-    productionAnswer: `${word} ${productionTov(noun)}`,
+    answer: `${word} ${productionTov(noun)}`,
     gender: noun.gender,
     forms: formsHtml(formLines(noun)),
   };

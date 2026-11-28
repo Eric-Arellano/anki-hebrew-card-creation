@@ -70,8 +70,8 @@ describe('draftFromNote', () => {
         inputs: {
           ...emptyCardDraft().inputs,
           word: 'כלב',
-          pointed: 'כֶּלֶב',
-          definitions: [{ english: 'dog' }],
+          wordPointed: 'כֶּלֶב',
+          meanings: [{ english: 'dog' }],
           noun: {
             gender: 'm',
             pluralOnly: false,
@@ -122,7 +122,7 @@ describe('draftFromNote', () => {
     const held = realNote('בית');
 
     test('loads it as the note holds it, on one line', () => {
-      expect(draftFromNote(held).inputs.pointed).toBe('(ms) בַּיִת (mp) בָּתִּים');
+      expect(draftFromNote(held).inputs.wordPointed).toBe('(ms) בַּיִת (mp) בָּתִּים');
     });
 
     test('leaves it out of the fields a save changes', () => {
@@ -145,7 +145,7 @@ describe('draftFromNote', () => {
       expect(loaded.inputs).toEqual({
         ...emptyCardDraft().inputs,
         word: 'כרטיס',
-        pointed: 'כַּרְטִיס',
+        wordPointed: 'כַּרְטִיס',
       });
       expect(loaded.media.images).toHaveLength(2);
     });
@@ -161,7 +161,7 @@ describe('draftFromNote', () => {
       const held = realNote('כרטיס');
       const finished = saved(held, (inputs) => ({
         ...inputs,
-        definitions: [{ english: 'ticket' }],
+        meanings: [{ english: 'ticket' }],
         partOfSpeech: 'noun',
         noun: { ...inputs.noun, gender: 'm' },
       }));
@@ -176,7 +176,7 @@ describe('draftFromNote', () => {
       const held = realNote('דרך');
       const finished = saved(held, (inputs) => ({
         ...inputs,
-        definitions: [{ english: 'road' }],
+        meanings: [{ english: 'road' }],
         partOfSpeech: 'noun',
         noun: { ...inputs.noun, gender: 'f' },
       }));
@@ -192,8 +192,8 @@ describe('draftFromNote', () => {
   describe('for each part of speech', () => {
     const word = {
       word: 'דבר',
-      pointed: 'דָּבָר',
-      definitions: [{ english: 'thing' }, { english: 'word & co' }],
+      wordPointed: 'דָּבָר',
+      meanings: [{ english: 'thing' }, { english: 'word & co' }],
     } as const;
     // A verb's lines each take a preposition, or none, after English that may hold its own
     // parentheses.
@@ -234,7 +234,7 @@ describe('draftFromNote', () => {
         ...word,
         partOfSpeech: 'verb',
         root: 'ד־ב־ר',
-        definitions: verbDefinitions,
+        meanings: verbDefinitions,
         verb: {
           binyan: "pi'el",
           past: 'דִּבֵּר',
@@ -247,14 +247,14 @@ describe('draftFromNote', () => {
         ...word,
         partOfSpeech: 'verb',
         root: '',
-        definitions: [{ english: 'to go', preposition: 'none' }],
+        meanings: [{ english: 'to go', preposition: 'none' }],
         verb: { binyan: "pa'al", past: '', unpointedPast: 'הלך', present: '', future: 'x' },
       },
       {
         ...word,
         partOfSpeech: 'verb',
         root: '',
-        definitions: [{ english: 'to be spoken', preposition: 'none' }],
+        meanings: [{ english: 'to be spoken', preposition: 'none' }],
         verb: { binyan: "pu'al", past: 'דֻּבַּר', present: '', future: '' },
       },
       {
@@ -306,7 +306,7 @@ describe('draftFromNote', () => {
     const held = realNote('ללכת');
 
     test('chooses each meaning’s preposition, or None', () => {
-      expect(draftFromNote(held).inputs.definitions).toStrictEqual([
+      expect(draftFromNote(held).inputs.meanings).toStrictEqual([
         { english: 'to walk, go', preposition: 'ל' },
         { english: 'to happen, go on', preposition: 'none' },
         { english: 'to go away, depart', preposition: 'none' },
@@ -335,10 +335,7 @@ describe('draftFromNote', () => {
         'Production answer': 'לחכות ל',
         'Part of speech': 'verb',
       });
-      expect(inputs.definitions).toStrictEqual([
-        { english: 'to wait' },
-        { english: 'to wait for' },
-      ]);
+      expect(inputs.meanings).toStrictEqual([{ english: 'to wait' }, { english: 'to wait for' }]);
       expect(unoffered).toEqual({});
     });
   });
@@ -358,26 +355,26 @@ describe('draftFromNote', () => {
   });
 
   describe('for Definitions', () => {
-    function definitions(html: string) {
-      return draftFromNote({ ...blankNote, Definitions: html }).inputs.definitions;
+    function meanings(html: string) {
+      return draftFromNote({ ...blankNote, Definitions: html }).inputs.meanings;
     }
 
     test('drops the numbers composition adds', () => {
-      expect(definitions('1. fish<br>2. Pisces &amp; co')).toEqual([
+      expect(meanings('1. fish<br>2. Pisces &amp; co')).toEqual([
         { english: 'fish' },
         { english: 'Pisces & co' },
       ]);
     });
 
     test('keeps lines that aren’t numbered from 1, one a row', () => {
-      expect(definitions('fish<br><br>2. Pisces')).toEqual([
+      expect(meanings('fish<br><br>2. Pisces')).toEqual([
         { english: 'fish' },
         { english: '2. Pisces' },
       ]);
     });
 
     test('keeps a number that starts a single meaning', () => {
-      expect(definitions('1. Kings')).toEqual([{ english: '1. Kings' }]);
+      expect(meanings('1. Kings')).toEqual([{ english: '1. Kings' }]);
     });
   });
 

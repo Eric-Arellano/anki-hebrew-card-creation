@@ -5,10 +5,10 @@
 // false alarm.
 import type { CheckRequest, SuggestRequest, VerbMeaningsRequest } from '#lib/api/ai.ts';
 import {
-  definitionsToAnkiFieldHtml,
   type Meaning,
+  meaningsToAnkiFieldHtml,
   type PrepositionChoice,
-} from '#lib/card/definitions.ts';
+} from '#lib/card/meanings.ts';
 import type { GovernedPreposition } from '#lib/hebrew/preposition.ts';
 import type { FieldKey, FieldValues } from '#lib/note-type.ts';
 import type { Homograph } from '#lib/server/ai/homographs.ts';
@@ -40,7 +40,7 @@ function meaning([english, preposition]: Line): Meaning {
   return { english, preposition };
 }
 function meanings(first: Line, ...rest: Line[]): string {
-  return definitionsToAnkiFieldHtml([meaning(first), ...rest.map(meaning)]);
+  return meaningsToAnkiFieldHtml([meaning(first), ...rest.map(meaning)]);
 }
 
 function note(
@@ -61,30 +61,30 @@ const SEFER_HOMOGRAPHS: Homograph[] = [
 ];
 
 const kelev = {
-  unpointed: 'כלב',
-  pointed: 'כֶּלֶב',
-  definitions: 'dog',
+  word: 'כלב',
+  wordPointed: 'כֶּלֶב',
+  meanings: 'dog',
   gender: 'm',
   root: 'כ־ל־ב',
   forms: 'plural: כְּלָבִים',
 };
 const sefer = {
-  unpointed: 'ספר',
-  pointed: 'סֵפֶר',
+  word: 'ספר',
+  wordPointed: 'סֵפֶר',
   gender: 'm',
   root: 'ס־פ־ר',
   forms: 'plural: סְפָרִים',
 };
 const lishmor = {
-  unpointed: 'לשמור',
-  pointed: 'לִשְׁמֹר',
+  word: 'לשמור',
+  wordPointed: 'לִשְׁמֹר',
   binyan: "pa'al",
   root: 'ש־מ־ר',
 };
 const lechakot = {
-  unpointed: 'לחכות',
-  pointed: 'לְחַכּוֹת',
-  definitions: meanings(['to wait (for)', 'ל']),
+  word: 'לחכות',
+  wordPointed: 'לְחַכּוֹת',
+  meanings: meanings(['to wait (for)', 'ל']),
   binyan: "pi'el",
   root: 'ח־כ־ה',
 };
@@ -105,7 +105,7 @@ export const CHECK_CASES: CheckCase[] = [
     'noun',
     {
       ...sefer,
-      definitions: 'book',
+      meanings: 'book',
       readingContext: 'קראתי ספר מעניין',
       examples: examples(
         ['אני קורא ספר.', 'I am reading a book.'],
@@ -131,9 +131,9 @@ export const CHECK_CASES: CheckCase[] = [
     'chadash',
     'adjective',
     {
-      unpointed: 'חדש',
-      pointed: 'חָדָשׁ',
-      definitions: 'new',
+      word: 'חדש',
+      wordPointed: 'חָדָשׁ',
+      meanings: 'new',
       forms: 'feminine: חֲדָשָׁה<br>plural: חֲדָשִׁים',
       examples: examples(
         ['הטלפון שלי חדש.', 'My phone is new.'],
@@ -147,9 +147,9 @@ export const CHECK_CASES: CheckCase[] = [
     'lilmod',
     'verb',
     {
-      unpointed: 'ללמוד',
-      pointed: 'לִלְמֹד',
-      definitions: meanings(['to learn, study', 'את']),
+      word: 'ללמוד',
+      wordPointed: 'לִלְמֹד',
+      meanings: meanings(['to learn, study', 'את']),
       binyan: "pa'al",
       root: 'ל־מ־ד',
       examples: examples(
@@ -163,9 +163,9 @@ export const CHECK_CASES: CheckCase[] = [
     'lishol',
     'verb',
     {
-      unpointed: 'לשאול',
-      pointed: 'לִשְׁאֹל',
-      definitions: meanings(['to ask', 'את']),
+      word: 'לשאול',
+      wordPointed: 'לִשְׁאֹל',
+      meanings: meanings(['to ask', 'את']),
       binyan: "pa'al",
       root: 'ש־א־ל',
       examples: examples(
@@ -179,9 +179,9 @@ export const CHECK_CASES: CheckCase[] = [
     'mafteach',
     'noun',
     {
-      unpointed: 'מפתח',
-      pointed: 'מַפְתֵּחַ',
-      definitions: 'key',
+      word: 'מפתח',
+      wordPointed: 'מַפְתֵּחַ',
+      meanings: 'key',
       gender: 'm',
       forms: 'plural: מַפְתְּחוֹת',
       examples: examples(
@@ -195,9 +195,9 @@ export const CHECK_CASES: CheckCase[] = [
     'chaver',
     'noun',
     {
-      unpointed: 'חבר',
-      pointed: 'חָבֵר',
-      definitions: 'friend<br>boyfriend<br>member',
+      word: 'חבר',
+      wordPointed: 'חָבֵר',
+      meanings: 'friend<br>boyfriend<br>member',
       gender: 'm',
       examples: examples(
         ['הוא חבר טוב שלי.', 'He is a good friend of mine.'],
@@ -222,10 +222,10 @@ export const CHECK_CASES: CheckCase[] = [
     'noun',
     {
       ...sefer,
-      definitions: 'book<br>barber',
+      meanings: 'book<br>barber',
       examples: examples(['אני קורא ספר.', 'I am reading a book.']),
     },
-    ['definitions'],
+    ['meanings'],
     SEFER_HOMOGRAPHS,
   ),
   note(
@@ -233,7 +233,7 @@ export const CHECK_CASES: CheckCase[] = [
     'noun',
     {
       ...sefer,
-      definitions: 'book',
+      meanings: 'book',
       examples: examples(
         ['אני קורא ספר.', 'I am reading a book.'],
         ['הספר גזר לי את השיער.', 'The barber cut my hair.'],
@@ -247,7 +247,7 @@ export const CHECK_CASES: CheckCase[] = [
     'noun',
     {
       ...sefer,
-      definitions: 'book',
+      meanings: 'book',
       readingContext: 'יש לו מספריים ומסרק',
       examples: examples(['אני קורא ספר.', 'I am reading a book.']),
     },
@@ -270,9 +270,9 @@ export const CHECK_CASES: CheckCase[] = [
     'lehitkasher, את for ל',
     'verb',
     {
-      unpointed: 'להתקשר',
-      pointed: 'לְהִתְקַשֵּׁר',
-      definitions: meanings(['to call (on the phone)', 'ל']),
+      word: 'להתקשר',
+      wordPointed: 'לְהִתְקַשֵּׁר',
+      meanings: meanings(['to call (on the phone)', 'ל']),
       binyan: "hitpa'el",
       root: 'ק־ש־ר',
       examples: examples(['התקשרתי את אמא שלי.', 'I called my mom.']),
@@ -283,9 +283,9 @@ export const CHECK_CASES: CheckCase[] = [
     'lehitanyen, על for ב',
     'verb',
     {
-      unpointed: 'להתעניין',
-      pointed: 'לְהִתְעַנְיֵן',
-      definitions: meanings(['to be interested (in)', 'ב']),
+      word: 'להתעניין',
+      wordPointed: 'לְהִתְעַנְיֵן',
+      meanings: meanings(['to be interested (in)', 'ב']),
       binyan: "hitpa'el",
       examples: examples(['אני מתעניין על היסטוריה.', 'I am interested in history.']),
     },
@@ -295,9 +295,9 @@ export const CHECK_CASES: CheckCase[] = [
     'laazor, את for ל',
     'verb',
     {
-      unpointed: 'לעזור',
-      pointed: 'לַעֲזֹר',
-      definitions: meanings(['to help', 'ל']),
+      word: 'לעזור',
+      wordPointed: 'לַעֲזֹר',
+      meanings: meanings(['to help', 'ל']),
       binyan: "pa'al",
       root: 'ע־ז־ר',
       examples: examples(['עזרתי אותו בשיעורי הבית.', 'I helped him with the homework.']),
@@ -308,9 +308,9 @@ export const CHECK_CASES: CheckCase[] = [
     'sameach, על before an infinitive',
     'adjective',
     {
-      unpointed: 'שמח',
-      pointed: 'שָׂמֵחַ',
-      definitions: 'happy, glad',
+      word: 'שמח',
+      wordPointed: 'שָׂמֵחַ',
+      meanings: 'happy, glad',
       forms: 'feminine: שְׂמֵחָה',
       examples: examples(
         ['אני שמח על לראות אותך.', 'I am happy to see you.'],
@@ -323,9 +323,9 @@ export const CHECK_CASES: CheckCase[] = [
     'higayon, a calque of “makes sense”',
     'noun',
     {
-      unpointed: 'היגיון',
-      pointed: 'הִגָּיוֹן',
-      definitions: 'logic, sense',
+      word: 'היגיון',
+      wordPointed: 'הִגָּיוֹן',
+      meanings: 'logic, sense',
       gender: 'm',
       examples: examples(['זה עושה היגיון.', 'That makes sense.']),
     },
@@ -335,9 +335,9 @@ export const CHECK_CASES: CheckCase[] = [
     'leehov, stilted word order',
     'verb',
     {
-      unpointed: 'לאהוב',
-      pointed: 'לֶאֱהֹב',
-      definitions: meanings(['to love, like', 'את']),
+      word: 'לאהוב',
+      wordPointed: 'לֶאֱהֹב',
+      meanings: meanings(['to love, like', 'את']),
       binyan: "pa'al",
       examples: examples(['אני אוהב מאוד אותה.', 'I love her very much.']),
     },
@@ -347,9 +347,9 @@ export const CHECK_CASES: CheckCase[] = [
     'yalda, a masculine numeral',
     'noun',
     {
-      unpointed: 'ילדה',
-      pointed: 'יַלְדָּה',
-      definitions: 'girl',
+      word: 'ילדה',
+      wordPointed: 'יַלְדָּה',
+      meanings: 'girl',
       gender: 'f',
       forms: 'plural: יְלָדוֹת',
       examples: examples(
@@ -363,9 +363,9 @@ export const CHECK_CASES: CheckCase[] = [
     'shulchan, English that says chair',
     'noun',
     {
-      unpointed: 'שולחן',
-      pointed: 'שֻׁלְחָן',
-      definitions: 'table',
+      word: 'שולחן',
+      wordPointed: 'שֻׁלְחָן',
+      meanings: 'table',
       gender: 'm',
       examples: examples(['השולחן בחדר.', 'The chair is in the room.']),
     },
@@ -375,9 +375,9 @@ export const CHECK_CASES: CheckCase[] = [
     'od, English that says already',
     'adverb',
     {
-      unpointed: 'עוד',
-      pointed: 'עוֹד',
-      definitions: 'still, yet<br>more',
+      word: 'עוד',
+      wordPointed: 'עוֹד',
+      meanings: 'still, yet<br>more',
       examples: examples(
         ['עוד לא אכלתי.', 'I already ate.'],
         ['אני רוצה עוד קפה.', 'I want more coffee.'],
@@ -389,9 +389,9 @@ export const CHECK_CASES: CheckCase[] = [
     'bayit, a Production context that names it',
     'noun',
     {
-      unpointed: 'בית',
-      pointed: 'בַּיִת',
-      definitions: 'house, home',
+      word: 'בית',
+      wordPointed: 'בַּיִת',
+      meanings: 'house, home',
       gender: 'm',
       productionContext: 'as in בית ספר',
       examples: examples(['אני בבית.', 'I am at home.']),
@@ -402,9 +402,9 @@ export const CHECK_CASES: CheckCase[] = [
     'ir, a note that calls it masculine',
     'noun',
     {
-      unpointed: 'עיר',
-      pointed: 'עִיר',
-      definitions: 'city',
+      word: 'עיר',
+      wordPointed: 'עִיר',
+      meanings: 'city',
       gender: 'f',
       forms: 'plural: עָרִים',
       examples: examples(['תל אביב היא עיר גדולה.', 'Tel Aviv is a big city.']),
@@ -416,9 +416,9 @@ export const CHECK_CASES: CheckCase[] = [
     'beitza, a note with the swamp’s plural',
     'noun',
     {
-      unpointed: 'ביצה',
-      pointed: 'בֵּיצָה',
-      definitions: 'egg',
+      word: 'ביצה',
+      wordPointed: 'בֵּיצָה',
+      meanings: 'egg',
       gender: 'f',
       examples: examples(['אני אוכל ביצה בבוקר.', 'I eat an egg in the morning.']),
       notes: 'Plural ביצות.',
@@ -429,9 +429,9 @@ export const CHECK_CASES: CheckCase[] = [
     'regel, a Gender its example contradicts',
     'noun',
     {
-      unpointed: 'רגל',
-      pointed: 'רֶגֶל',
-      definitions: 'leg, foot',
+      word: 'רגל',
+      wordPointed: 'רֶגֶל',
+      meanings: 'leg, foot',
       gender: 'm',
       examples: examples(['הרגל שלי כואבת.', 'My leg hurts.']),
     },
@@ -442,9 +442,9 @@ export const CHECK_CASES: CheckCase[] = [
     'laila, a masculine noun that ends in ה',
     'noun',
     {
-      unpointed: 'לילה',
-      pointed: 'לַיְלָה',
-      definitions: 'night',
+      word: 'לילה',
+      wordPointed: 'לַיְלָה',
+      meanings: 'night',
       gender: 'm',
       forms: 'plural: לֵילוֹת',
       examples: examples(
@@ -458,9 +458,9 @@ export const CHECK_CASES: CheckCase[] = [
     'shana, a masculine numeral for its ־ים plural',
     'noun',
     {
-      unpointed: 'שנה',
-      pointed: 'שָׁנָה',
-      definitions: 'year',
+      word: 'שנה',
+      wordPointed: 'שָׁנָה',
+      meanings: 'year',
       gender: 'f',
       forms: 'plural: שָׁנִים',
       examples: examples(
@@ -475,7 +475,7 @@ export const CHECK_CASES: CheckCase[] = [
     'noun',
     {
       ...sefer,
-      definitions: 'book',
+      meanings: 'book',
       readingContext: 'הוא ספר טוב',
       examples: examples(['אני קורא ספר.', 'I am reading a book.']),
     },
@@ -486,9 +486,9 @@ export const CHECK_CASES: CheckCase[] = [
     "liftoach, pa'al where it needs nif'al",
     'verb',
     {
-      unpointed: 'לפתוח',
-      pointed: 'לִפְתֹּחַ',
-      definitions: meanings(['to open', 'את']),
+      word: 'לפתוח',
+      wordPointed: 'לִפְתֹּחַ',
+      meanings: meanings(['to open', 'את']),
       binyan: "pa'al",
       root: 'פ־ת־ח',
       examples: examples(
@@ -506,7 +506,7 @@ export const CHECK_CASES: CheckCase[] = [
     'verb',
     {
       ...lishmor,
-      definitions: meanings(
+      meanings: meanings(
         ['to keep', 'את'],
         ['to guard, look after', 'על'],
         ['to save (a file)', 'את'],
@@ -522,9 +522,9 @@ export const CHECK_CASES: CheckCase[] = [
     'ledaber, none for a language',
     'verb',
     {
-      unpointed: 'לדבר',
-      pointed: 'לְדַבֵּר',
-      definitions: meanings(
+      word: 'לדבר',
+      wordPointed: 'לְדַבֵּר',
+      meanings: meanings(
         ['to talk with', 'עם'],
         ['to talk about', 'על'],
         ['to speak (a language)', 'none'],
@@ -543,9 +543,9 @@ export const CHECK_CASES: CheckCase[] = [
     'lachshov, none before a ש clause',
     'verb',
     {
-      unpointed: 'לחשוב',
-      pointed: 'לַחְשֹׁב',
-      definitions: meanings(['to think about', 'על'], ['to think (that)', 'none']),
+      word: 'לחשוב',
+      wordPointed: 'לַחְשֹׁב',
+      meanings: meanings(['to think about', 'על'], ['to think (that)', 'none']),
       binyan: "pa'al",
       root: 'ח־ש־ב',
       examples: examples(
@@ -559,9 +559,9 @@ export const CHECK_CASES: CheckCase[] = [
     'lirot, no את before an indefinite object',
     'verb',
     {
-      unpointed: 'לראות',
-      pointed: 'לִרְאוֹת',
-      definitions: meanings(['to see', 'את']),
+      word: 'לראות',
+      wordPointed: 'לִרְאוֹת',
+      meanings: meanings(['to see', 'את']),
       binyan: "pa'al",
       root: 'ר־א־ה',
       examples: examples(['ראיתי סרט טוב אתמול.', 'I saw a good movie yesterday.']),
@@ -572,9 +572,9 @@ export const CHECK_CASES: CheckCase[] = [
     'lehistakel, ב where על fits too',
     'verb',
     {
-      unpointed: 'להסתכל',
-      pointed: 'לְהִסְתַּכֵּל',
-      definitions: meanings(['to look at', 'ב']),
+      word: 'להסתכל',
+      wordPointed: 'לְהִסְתַּכֵּל',
+      meanings: meanings(['to look at', 'ב']),
       binyan: "hitpa'el",
       root: 'ס־כ־ל',
       examples: examples(['הוא מסתכל בשעון.', 'He is looking at the clock.']),
@@ -585,20 +585,20 @@ export const CHECK_CASES: CheckCase[] = [
     'laazor, את on the meaning',
     'verb',
     {
-      unpointed: 'לעזור',
-      pointed: 'לַעֲזֹר',
-      definitions: meanings(['to help', 'את']),
+      word: 'לעזור',
+      wordPointed: 'לַעֲזֹר',
+      meanings: meanings(['to help', 'את']),
       binyan: "pa'al",
       root: 'ע־ז־ר',
     },
-    ['definitions'],
+    ['meanings'],
   ),
   note(
     'lishmor, an example’s preposition for another meaning',
     'verb',
     {
       ...lishmor,
-      definitions: meanings(['to keep', 'את'], ['to guard, look after', 'על']),
+      meanings: meanings(['to keep', 'את'], ['to guard, look after', 'על']),
       examples: examples(
         ['שמרתי את המכתב שלה.', 'I kept her letter.'],
         ['אני שומר את הילדים של אחותי.', 'I look after my sister’s kids.'],
@@ -610,18 +610,18 @@ export const CHECK_CASES: CheckCase[] = [
 
 // A verb's meanings are given with their prepositions, and any other word's as its English alone.
 function word(
-  unpointed: string,
+  word: string,
   pointed: string,
   partOfSpeech: SuggestRequest['partOfSpeech'],
-  definitions: (string | Meaning)[],
+  meaningLines: (string | Meaning)[],
   forms: SuggestRequest['forms'] = [],
   homographs: Homograph[] = [],
 ): SuggestCase {
-  const meanings = definitions.map((meaning) =>
+  const meanings = meaningLines.map((meaning) =>
     typeof meaning === 'string' ? { english: meaning } : meaning,
   );
   return {
-    request: { word: unpointed, pointed, partOfSpeech, definitions: meanings, forms },
+    request: { word, pointed, partOfSpeech, meanings, forms },
     homographs,
   };
 }

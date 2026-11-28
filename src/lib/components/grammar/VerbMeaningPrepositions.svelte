@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
 import type { Held } from '#lib/card/changed-from.ts';
-import { isBlankMeaning, type Meaning, type PrepositionChoice } from '#lib/card/definitions.ts';
+import { isBlankMeaning, type Meaning, type PrepositionChoice } from '#lib/card/meanings.ts';
 import { verbMeaningsRequest } from '#lib/card/verb-meaning-suggestions.ts';
 import { VERB_MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
 import {
@@ -20,13 +20,13 @@ const OPTIONS: readonly { value: PrepositionChoice; label: string }[] = [
 ];
 
 let {
-  definitions = $bindable(),
+  meanings = $bindable(),
   held,
   word,
   pointed,
   candidate,
 }: {
-  definitions: Meaning[];
+  meanings: Meaning[];
   held: Held<readonly Meaning[]>;
   word: string;
   pointed: string;
@@ -41,7 +41,7 @@ const dictionaryPrepositions: readonly GovernedPreposition[] = $derived(
 
 /** Each meaning with English, with its index among all the rows, which `held` is marked by. */
 const filled = $derived(
-  definitions.flatMap((meaning, index) => (isBlankMeaning(meaning) ? [] : [{ meaning, index }])),
+  meanings.flatMap((meaning, index) => (isBlankMeaning(meaning) ? [] : [{ meaning, index }])),
 );
 </script>
 
@@ -81,7 +81,7 @@ const filled = $derived(
     </p>
   {/if}
   <ClaudeVerbMeanings
-    request={verbMeaningsRequest({ word, pointed, definitions }, candidate)}
-    onuse={(meanings) => (definitions = meanings)}
+    request={verbMeaningsRequest({ word, pointed, meanings }, candidate)}
+    onuse={(used) => (meanings = used)}
   />
 </fieldset>

@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { VerbMeaningsRequest } from '#lib/api/ai.ts';
-import { PREPOSITION_CHOICES } from '#lib/card/definitions.ts';
+import { PREPOSITION_CHOICES } from '#lib/card/meanings.ts';
 import { verbMeaningsBlocker } from '#lib/card/verb-meaning-suggestions.ts';
 import { GOVERNED_PREPOSITIONS } from '#lib/hebrew/preposition.ts';
 import type { ClaudeMessages } from '#lib/server/ai/client.ts';

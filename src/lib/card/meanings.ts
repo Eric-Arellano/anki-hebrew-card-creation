@@ -35,9 +35,9 @@ export type Meaning = { english: string; preposition?: PrepositionChoice };
 type Lines<T> = readonly [T, ...T[]];
 
 // Each meaning trimmed, in the order the human typed them. There is always a first one.
-export type Definitions = Lines<{ english: string }>;
+export type Meanings = Lines<{ english: string }>;
 
-export type VerbDefinitions = Lines<{ english: string; preposition: PrepositionChoice }>;
+export type VerbMeanings = Lines<{ english: string; preposition: PrepositionChoice }>;
 
 export function blankMeaning(): Meaning {
   return { english: '' };
@@ -48,25 +48,25 @@ export function isBlankMeaning({ english }: Meaning): boolean {
 }
 
 /** Each meaning with English, trimmed, leaving out blank rows. */
-export function filledDefinitions(meanings: readonly Meaning[]): Meaning[] {
+export function filledMeanings(meanings: readonly Meaning[]): Meaning[] {
   return meanings
     .filter((meaning) => !isBlankMeaning(meaning))
     .map((meaning) => ({ ...meaning, english: meaning.english.trim() }));
 }
 
 /** The filled meanings' English alone, or `undefined` while there is none. */
-export function completeDefinitions(meanings: readonly Meaning[]): Definitions | undefined {
-  const [first, ...rest] = filledDefinitions(meanings).map(({ english }) => ({ english }));
+export function completeMeanings(meanings: readonly Meaning[]): Meanings | undefined {
+  const [first, ...rest] = filledMeanings(meanings).map(({ english }) => ({ english }));
   return first && [first, ...rest];
 }
 
-function isPrepositionChosen(meaning: Meaning): meaning is VerbDefinitions[number] {
+function isPrepositionChosen(meaning: Meaning): meaning is VerbMeanings[number] {
   return meaning.preposition !== undefined;
 }
 
 /** The filled meanings, or `undefined` while there is none or one's preposition is unchosen. */
-export function completeVerbDefinitions(meanings: readonly Meaning[]): VerbDefinitions | undefined {
-  const filled = filledDefinitions(meanings);
+export function completeVerbMeanings(meanings: readonly Meaning[]): VerbMeanings | undefined {
+  const filled = filledMeanings(meanings);
   if (!filled.every(isPrepositionChosen)) return undefined;
   const [first, ...rest] = filled.map(({ english, preposition }) => ({ english, preposition }));
   return first && [first, ...rest];
@@ -82,9 +82,9 @@ function lineHtml({ english, preposition }: Meaning): string {
   return `${textToAnkiFieldHtml(english)}${prepositionHtml(preposition)}`;
 }
 
-export function definitionsToAnkiFieldHtml(definitions: Lines<Meaning>): string {
-  if (definitions.length === 1) return lineHtml(definitions[0]);
-  return definitions.map((meaning, index) => `${index + 1}. ${lineHtml(meaning)}`).join('<br>');
+export function meaningsToAnkiFieldHtml(meanings: Lines<Meaning>): string {
+  if (meanings.length === 1) return lineHtml(meanings[0]);
+  return meanings.map((meaning, index) => `${index + 1}. ${lineHtml(meaning)}`).join('<br>');
 }
 
 const PILL = /\s*<span class="prep"><bdi lang="he">([^<]*)<\/bdi><\/span>\s*$/;
@@ -108,7 +108,7 @@ function lineFromHtml(html: string): Meaning {
 }
 
 /** Each meaning in a `Definitions` field, without the numbers composition adds. */
-export function definitionsFromHtml(html: string): Meaning[] {
+export function meaningsFromHtml(html: string): Meaning[] {
   const lines = html
     .split(/<br\s*\/?>/i)
     .map(lineFromHtml)

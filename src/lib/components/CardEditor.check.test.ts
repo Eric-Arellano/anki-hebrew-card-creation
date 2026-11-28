@@ -166,7 +166,7 @@ describe('CardEditor', () => {
       await within(checkSection()).findByText(/should be גדול/);
       expect(checkRequests(requests)[0]?.body).toMatchObject({
         partOfSpeech: 'noun',
-        fields: { definitions: 'hound' },
+        fields: { meanings: 'hound' },
       });
 
       await pressCmdEnter();
@@ -190,7 +190,7 @@ describe('CardEditor', () => {
       await within(checkSection()).findByText(/should be גדול/);
       expect(checkRequests(requests)[0]?.body).toMatchObject({
         partOfSpeech: 'noun',
-        fields: { unpointed: 'כלב', definitions: 'dog' },
+        fields: { word: 'כלב', meanings: 'dog' },
       });
       expect(saveRequests(requests)).toEqual([]);
     });
