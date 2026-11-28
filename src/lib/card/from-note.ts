@@ -46,8 +46,9 @@ function singleSpaced(text: string): string {
   return text.normalize('NFC').replace(/\s+/g, ' ');
 }
 
-// What composition wrote after the word in `Production answer`: a noun's `טוב`. `undefined` for a
-// blank answer, and one that doesn't start with the word, which composition didn't write.
+// What composition wrote after the word in `Production answer`: a noun's `טוב`, or a verb's past.
+// `undefined` for a blank answer, and one that doesn't start with the word, which composition
+// didn't write.
 function afterWord(word: string, answer: string): string | undefined {
   const spacedWord = singleSpaced(word);
   const spacedAnswer = singleSpaced(answer);
@@ -99,7 +100,12 @@ export function draftFromNote(ankiFields: Readonly<Record<string, string>>): Not
       partOfSpeech: chips.partOfSpeech.value,
       root: text('root'),
       noun: nounDraftFrom({ gender: chips.gender.value, forms, tov: ending }),
-      verb: verbDraftFrom({ binyan: chips.binyan.value, forms }),
+      verb: verbDraftFrom({
+        binyan: chips.binyan.value,
+        forms,
+        // Only a verb's answer holds a past, where a noun's holds its `טוב`.
+        past: chips.partOfSpeech.value === 'verb' ? ending : undefined,
+      }),
       adjective: adjectiveInputsFrom(forms),
     },
     // A variant prompt's images go to its own image input, after its text.

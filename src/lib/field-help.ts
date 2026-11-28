@@ -17,7 +17,9 @@ type FieldHelp = string | Partial<Record<PartOfSpeech, string>>;
 // What sets each part of speech apart, shown once one is chosen.
 export const PART_OF_SPEECH_HELP: Record<PartOfSpeech, string> = {
   noun: 'A noun has a gender and usually a plural, like “כֶּלֶב”, plural “כְּלָבִים”.',
-  verb: 'A verb goes by its infinitive, like “לְדַבֵּר”.',
+  verb:
+    'A verb is learned by its infinitive and its past for “he”, like “לָלֶכֶת” and “הָלַךְ”. A ' +
+    "pu'al or huf'al verb has no infinitive, so it goes by its past alone.",
   adjective:
     'An adjective goes by its masculine singular, and agrees with its noun, like “בַּיִת גָּדוֹל” and ' +
     '“עִיר גְּדוֹלָה”.',
@@ -137,8 +139,8 @@ export const FIELD_HELP = {
       "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
       `“female dog” for כלב. ${PASTE_IMAGE_HELP}`,
     verb:
-      "What you'll be shown. For example, “I will go” for ללכת's irregular " +
-      `future. ${PASTE_IMAGE_HELP}`,
+      "What you'll be shown, only for a form the infinitive and past don't predict. For example, " +
+      `“I will learn” for ללמוד, whose future's vowel isn't the infinitive's. ${PASTE_IMAGE_HELP}`,
     adjective:
       "What you'll be shown. For example, “other (feminine)” for אחר's irregular " +
       `feminine. ${PASTE_IMAGE_HELP}`,
@@ -156,7 +158,7 @@ export const FIELD_HELP = {
     noun:
       'The Hebrew you should recall. For example, “שֻׁלְחָנוֹת טוֹבִים” for “good tables”, or ' +
       '“כַּלְבָּה” for “female dog”.',
-    verb: 'The Hebrew you should recall. For example, “אֵלֵךְ” for “I will go”.',
+    verb: 'The Hebrew you should recall. For example, “אֶלְמַד” for “I will learn”.',
     adjective: 'The Hebrew you should recall. For example, “אַחֶרֶת” for “other (feminine)”.',
     preposition: 'The Hebrew you should recall. For example, “אִתִּי” for “with me”.',
     phrase: 'The Hebrew you should recall. For example, “בְּרוּכָה הַבָּאָה” for “welcome (to a woman)”.',

@@ -21,6 +21,7 @@ import {
   type VerbDraft,
   type VerbInputs,
 } from '#lib/card/parts-of-speech/verb.ts';
+import { hasInfinitive } from '#lib/hebrew/binyan.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import type { PartOfSpeech, PlainPartOfSpeech } from '#lib/note-type.ts';
 
@@ -71,6 +72,7 @@ type RequiredInput =
   | 'partOfSpeech'
   | 'gender'
   | 'preposition'
+  | 'unpointedPast'
   | 'binyan'
   | 'root';
 
@@ -82,6 +84,7 @@ export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
   gender: 'gender',
   preposition: 'preposition',
   pointed: 'Hebrew word with niqqud',
+  unpointedPast: 'past (he) without niqqud',
   binyan: 'binyan',
   root: 'root',
 };
@@ -108,6 +111,15 @@ export function draftRoot({ partOfSpeech, root }: CardInputsDraft): string | und
   return showsRoot(partOfSpeech) ? formatRoot(root) : undefined;
 }
 
+// The past comes before the binyan in the editor's row of forms, and is there only while the
+// binyan has an infinitive to go beside.
+function missingVerbInputs({ binyan, unpointedPast }: VerbDraft): RequiredInput[] {
+  return [
+    ...(hasInfinitive(binyan) ? ifBlank('unpointedPast', unpointedPast) : []),
+    ...ifBlank('binyan', binyan),
+  ];
+}
+
 function missingPrepositions(meanings: readonly Meaning[]): RequiredInput[] {
   return filledDefinitions(meanings).some(({ preposition }) => preposition === undefined)
     ? ['preposition']
@@ -120,12 +132,12 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
     ...ifBlank('word', draft.word),
     ...ifBlank('definitions', filledDefinitions(draft.definitions)[0]?.english),
     ...ifBlank('partOfSpeech', draft.partOfSpeech),
-    // A noun's gender and a verb's prepositions sit before the pointed word, and a verb's binyan
-    // and any root after it.
+    // A noun's gender and a verb's prepositions sit before the pointed word, and a verb's past,
+    // binyan and any root after it.
     ...(draft.partOfSpeech === 'noun' ? missingNounInputs(draft.noun) : []),
     ...(draft.partOfSpeech === 'verb' ? missingPrepositions(draft.definitions) : []),
     ...ifBlank('pointed', draft.pointed),
-    ...(draft.partOfSpeech === 'verb' ? ifBlank('binyan', draft.verb.binyan) : []),
+    ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb) : []),
     ...ifMistypedRoot(draft),
   ];
 }

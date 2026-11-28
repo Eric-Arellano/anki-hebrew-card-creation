@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { BINYANIM, toBinyan } from './binyan.ts';
+import { BINYANIM, hasInfinitive, toBinyan } from './binyan.ts';
 
 describe('toBinyan', () => {
   test.each(BINYANIM)('names %s by its own name', (binyan) => {
@@ -42,6 +42,26 @@ describe('toBinyan', () => {
   describe('for a name on the object prototype', () => {
     test('converts it to nothing', () => {
       expect(toBinyan('constructor')).toBeUndefined();
+    });
+  });
+});
+
+describe('hasInfinitive', () => {
+  test.each([
+    ["pa'al", true],
+    ["nif'al", true],
+    ["pi'el", true],
+    ["pu'al", false],
+    ["hif'il", true],
+    ["huf'al", false],
+    ["hitpa'el", true],
+  ] as const)('answers %s with %s', (binyan, expected) => {
+    expect(hasInfinitive(binyan)).toBe(expected);
+  });
+
+  describe('while the binyan is unchosen', () => {
+    test('assumes the infinitive most verbs have', () => {
+      expect(hasInfinitive(undefined)).toBe(true);
     });
   });
 });
