@@ -11,7 +11,7 @@ import type {
   VerbMeaningSuggestions,
   VerbMeaningsRequest,
 } from '#lib/api/ai.ts';
-import { type Meaning, PREPOSITION_CHOICES } from '#lib/card/definitions.ts';
+import { type Meaning, PREPOSITION_CHOICES } from '#lib/card/meanings.ts';
 import { VERB_MEANING_PREPOSITION_HELP } from '#lib/field-help.ts';
 import { hasHebrewLetters } from '#lib/hebrew/letters.ts';
 import { askForStructured, type ClaudeMessages, type StructuredRequest } from './client.ts';

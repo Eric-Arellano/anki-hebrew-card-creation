@@ -86,7 +86,7 @@ describe('shownFieldGroups', () => {
 
 describe('toAnkiFields', () => {
   test('names every field as Anki does, blank where there is no value', () => {
-    expect(toAnkiFields((key) => (key === 'definitions' ? 'fish' : undefined))).toEqual({
+    expect(toAnkiFields((key) => (key === 'meanings' ? 'fish' : undefined))).toEqual({
       ...Object.fromEntries(fieldNames.map((name) => [name, ''])),
       Definitions: 'fish',
     });

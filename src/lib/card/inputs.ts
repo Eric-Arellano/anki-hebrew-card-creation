@@ -1,12 +1,12 @@
 import {
   blankMeaning,
-  completeDefinitions,
-  completeVerbDefinitions,
-  type Definitions,
-  filledDefinitions,
+  completeMeanings,
+  completeVerbMeanings,
+  filledMeanings,
   type Meaning,
-  type VerbDefinitions,
-} from '#lib/card/definitions.ts';
+  type Meanings,
+  type VerbMeanings,
+} from '#lib/card/meanings.ts';
 import { type AdjectiveInputs, emptyAdjectiveInputs } from '#lib/card/parts-of-speech/adjective.ts';
 import {
   completeNoun,
@@ -25,15 +25,15 @@ import { hasInfinitive } from '#lib/hebrew/binyan.ts';
 import { formatRoot } from '#lib/hebrew/root.ts';
 import type { PartOfSpeech, PlainPartOfSpeech } from '#lib/note-type.ts';
 
-type WordInputs = { word: string; pointed: string };
+type WordInputs = { word: string; wordPointed: string };
 
 // As `formatRoot` writes it, or blank.
 type RootInputs = { root: string };
 
 export type CardInputs = WordInputs &
   (
-    | ({ partOfSpeech: 'verb'; verb: VerbInputs; definitions: VerbDefinitions } & RootInputs)
-    | ({ definitions: Definitions } & (
+    | ({ partOfSpeech: 'verb'; verb: VerbInputs; meanings: VerbMeanings } & RootInputs)
+    | ({ meanings: Meanings } & (
         | ({ partOfSpeech: 'noun'; noun: NounInputs } & RootInputs)
         | ({ partOfSpeech: 'adjective'; adjective: AdjectiveInputs } & RootInputs)
         | { partOfSpeech: PlainPartOfSpeech }
@@ -45,7 +45,7 @@ export type CardInputs = WordInputs &
 // another is chosen, so switching back loses nothing. A meaning row may be blank, and the root is
 // as the human typed it.
 export type CardInputsDraft = WordInputs & {
-  definitions: Meaning[];
+  meanings: Meaning[];
   partOfSpeech: PartOfSpeech | undefined;
   root: string;
   noun: NounDraft;
@@ -56,8 +56,8 @@ export type CardInputsDraft = WordInputs & {
 export function emptyInputsDraft(): CardInputsDraft {
   return {
     word: '',
-    pointed: '',
-    definitions: [blankMeaning()],
+    wordPointed: '',
+    meanings: [blankMeaning()],
     partOfSpeech: undefined,
     root: '',
     noun: emptyNounDraft(),
@@ -68,7 +68,7 @@ export function emptyInputsDraft(): CardInputsDraft {
 
 type RequiredInput =
   | keyof WordInputs
-  | 'definitions'
+  | 'meanings'
   | 'partOfSpeech'
   | 'gender'
   | 'preposition'
@@ -79,11 +79,11 @@ type RequiredInput =
 /** How the editor's messages name each required input, in the order the editor shows them. */
 export const INPUT_NAMES: Readonly<Record<RequiredInput, string>> = {
   word: 'Hebrew word without niqqud',
-  definitions: 'English meaning',
+  meanings: 'English meaning',
   partOfSpeech: 'part of speech',
   gender: 'gender',
   preposition: 'preposition',
-  pointed: 'Hebrew word with niqqud',
+  wordPointed: 'Hebrew word with niqqud',
   unpointedPast: 'past (he) without niqqud',
   binyan: 'binyan',
   root: 'root',
@@ -121,7 +121,7 @@ function missingVerbInputs({ binyan, unpointedPast }: VerbDraft): RequiredInput[
 }
 
 function missingPrepositions(meanings: readonly Meaning[]): RequiredInput[] {
-  return filledDefinitions(meanings).some(({ preposition }) => preposition === undefined)
+  return filledMeanings(meanings).some(({ preposition }) => preposition === undefined)
     ? ['preposition']
     : [];
 }
@@ -130,13 +130,13 @@ function missingPrepositions(meanings: readonly Meaning[]): RequiredInput[] {
 export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
   return [
     ...ifBlank('word', draft.word),
-    ...ifBlank('definitions', filledDefinitions(draft.definitions)[0]?.english),
+    ...ifBlank('meanings', filledMeanings(draft.meanings)[0]?.english),
     ...ifBlank('partOfSpeech', draft.partOfSpeech),
     // A noun's gender and a verb's prepositions sit before the pointed word, and a verb's past,
     // binyan and any root after it.
     ...(draft.partOfSpeech === 'noun' ? missingNounInputs(draft.noun) : []),
-    ...(draft.partOfSpeech === 'verb' ? missingPrepositions(draft.definitions) : []),
-    ...ifBlank('pointed', draft.pointed),
+    ...(draft.partOfSpeech === 'verb' ? missingPrepositions(draft.meanings) : []),
+    ...ifBlank('wordPointed', draft.wordPointed),
     ...(draft.partOfSpeech === 'verb' ? missingVerbInputs(draft.verb) : []),
     ...ifMistypedRoot(draft),
   ];
@@ -144,20 +144,19 @@ export function missingInputs(draft: CardInputsDraft): RequiredInput[] {
 
 /** `draft` as `CardInputs` once every required input is filled, else `undefined`. */
 export function completeInputs(draft: CardInputsDraft): CardInputs | undefined {
-  const { partOfSpeech, noun, verb, adjective, root, definitions: meanings, ...word } = draft;
+  const { partOfSpeech, noun, verb, adjective, root, meanings: meaningLines, ...word } = draft;
   if (partOfSpeech === undefined || missingInputs(draft).length > 0) return undefined;
   const rootInputs = { root: formatRoot(root) ?? '' };
   if (partOfSpeech === 'verb') {
     const verbInputs = completeVerb(verb);
-    const definitions = completeVerbDefinitions(meanings);
+    const meanings = completeVerbMeanings(meaningLines);
     return (
-      verbInputs &&
-      definitions && { ...word, ...rootInputs, definitions, partOfSpeech, verb: verbInputs }
+      verbInputs && meanings && { ...word, ...rootInputs, meanings, partOfSpeech, verb: verbInputs }
     );
   }
-  const definitions = completeDefinitions(meanings);
-  if (definitions === undefined) return undefined;
-  const card = { ...word, definitions };
+  const meanings = completeMeanings(meaningLines);
+  if (meanings === undefined) return undefined;
+  const card = { ...word, meanings };
   switch (partOfSpeech) {
     case 'noun': {
       const nounInputs = completeNoun(noun);

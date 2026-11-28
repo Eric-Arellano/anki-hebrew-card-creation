@@ -29,8 +29,8 @@ const adjective: AdjectiveInputs = {
 const dagDraft: CardInputsDraft = {
   word: 'דג',
   partOfSpeech: 'other',
-  definitions: [{ english: 'fish' }],
-  pointed: 'דָּג',
+  meanings: [{ english: 'fish' }],
+  wordPointed: 'דָּג',
   root: 'ד.ב.ר',
   noun,
   verb,
@@ -41,8 +41,8 @@ const ledaberDraft: CardInputsDraft = {
   ...dagDraft,
   word: 'לדבר',
   partOfSpeech: 'verb',
-  definitions: [{ english: 'to speak', preposition: 'עם' }],
-  pointed: 'לְדַבֵּר',
+  meanings: [{ english: 'to speak', preposition: 'עם' }],
+  wordPointed: 'לְדַבֵּר',
 };
 
 describe('missingInputs', () => {
@@ -50,11 +50,11 @@ describe('missingInputs', () => {
     expect(
       missingInputs({
         ...dagDraft,
-        pointed: ' ',
-        definitions: [{ english: '' }],
+        wordPointed: ' ',
+        meanings: [{ english: '' }],
         partOfSpeech: undefined,
       }),
-    ).toEqual(['definitions', 'partOfSpeech', 'pointed']);
+    ).toEqual(['meanings', 'partOfSpeech', 'wordPointed']);
   });
 
   describe('when every input is filled', () => {
@@ -65,9 +65,9 @@ describe('missingInputs', () => {
 
   describe('while every meaning is blank', () => {
     test('lists the meaning', () => {
-      expect(
-        missingInputs({ ...dagDraft, definitions: [{ english: '' }, { english: ' ' }] }),
-      ).toEqual(['definitions']);
+      expect(missingInputs({ ...dagDraft, meanings: [{ english: '' }, { english: ' ' }] })).toEqual(
+        ['meanings'],
+      );
     });
   });
 
@@ -77,9 +77,9 @@ describe('missingInputs', () => {
     });
 
     test('lists the gender before the pointed word, as the editor shows them', () => {
-      expect(missingInputs({ ...dagDraft, partOfSpeech: 'noun', pointed: '' })).toEqual([
+      expect(missingInputs({ ...dagDraft, partOfSpeech: 'noun', wordPointed: '' })).toEqual([
         'gender',
-        'pointed',
+        'wordPointed',
       ]);
     });
   });
@@ -89,12 +89,12 @@ describe('missingInputs', () => {
       expect(
         missingInputs({
           ...ledaberDraft,
-          definitions: [{ english: 'to speak' }],
-          pointed: '',
+          meanings: [{ english: 'to speak' }],
+          wordPointed: '',
           root: '',
           verb: { ...verb, unpointedPast: ' ', binyan: undefined },
         }),
-      ).toEqual(['preposition', 'pointed', 'unpointedPast', 'binyan']);
+      ).toEqual(['preposition', 'wordPointed', 'unpointedPast', 'binyan']);
     });
 
     test("doesn't require a past for a binyan without an infinitive", () => {
@@ -104,10 +104,10 @@ describe('missingInputs', () => {
     });
 
     test('requires a preposition for each meaning, but not for a blank one', () => {
-      const definitions = [{ english: 'to speak', preposition: 'עם' as const }, { english: '' }];
-      expect(missingInputs({ ...ledaberDraft, definitions })).toEqual([]);
+      const meanings = [{ english: 'to speak', preposition: 'עם' as const }, { english: '' }];
+      expect(missingInputs({ ...ledaberDraft, meanings })).toEqual([]);
       expect(
-        missingInputs({ ...ledaberDraft, definitions: [...definitions, { english: 'to say' }] }),
+        missingInputs({ ...ledaberDraft, meanings: [...meanings, { english: 'to say' }] }),
       ).toEqual(['preposition']);
     });
   });
@@ -136,8 +136,8 @@ describe('completeInputs', () => {
     expect(completeInputs(dagDraft)).toEqual({
       word: 'דג',
       partOfSpeech: 'other',
-      definitions: [{ english: 'fish' }],
-      pointed: 'דָּג',
+      meanings: [{ english: 'fish' }],
+      wordPointed: 'דָּג',
     });
   });
 
@@ -146,7 +146,7 @@ describe('completeInputs', () => {
       expect(
         completeInputs({
           ...dagDraft,
-          definitions: [
+          meanings: [
             { english: '' },
             { english: ' fish ' },
             { english: ' ' },
@@ -156,8 +156,8 @@ describe('completeInputs', () => {
       ).toEqual({
         word: 'דג',
         partOfSpeech: 'other',
-        definitions: [{ english: 'fish' }, { english: 'Pisces' }],
-        pointed: 'דָּג',
+        meanings: [{ english: 'fish' }, { english: 'Pisces' }],
+        wordPointed: 'דָּג',
       });
     });
   });
@@ -169,8 +169,8 @@ describe('completeInputs', () => {
         expect(completeInputs({ ...dagDraft, partOfSpeech })).toEqual({
           word: 'דג',
           partOfSpeech,
-          definitions: [{ english: 'fish' }],
-          pointed: 'דָּג',
+          meanings: [{ english: 'fish' }],
+          wordPointed: 'דָּג',
         });
       });
     },
@@ -181,8 +181,8 @@ describe('completeInputs', () => {
       expect(completeInputs({ ...dagDraft, partOfSpeech: 'adjective' })).toEqual({
         word: 'דג',
         partOfSpeech: 'adjective',
-        definitions: [{ english: 'fish' }],
-        pointed: 'דָּג',
+        meanings: [{ english: 'fish' }],
+        wordPointed: 'דָּג',
         root: 'ד־ב־ר',
         adjective,
       });
@@ -196,8 +196,8 @@ describe('completeInputs', () => {
       ).toEqual({
         word: 'דג',
         partOfSpeech: 'noun',
-        definitions: [{ english: 'fish' }],
-        pointed: 'דָּג',
+        meanings: [{ english: 'fish' }],
+        wordPointed: 'דָּג',
         root: 'ד־ב־ר',
         noun: { ...noun, gender: 'm' },
       });
@@ -211,8 +211,8 @@ describe('completeInputs', () => {
       ).toEqual({
         word: 'דג',
         partOfSpeech: 'noun',
-        definitions: [{ english: 'fish' }],
-        pointed: 'דָּג',
+        meanings: [{ english: 'fish' }],
+        wordPointed: 'דָּג',
         root: 'ד־ב־ר',
         noun: { pluralOnly: false, gender: 'f', plural: 'כְּלָבִים' },
       });
@@ -230,8 +230,8 @@ describe('completeInputs', () => {
       ).toEqual({
         word: 'דג',
         partOfSpeech: 'noun',
-        definitions: [{ english: 'fish' }],
-        pointed: 'דָּג',
+        meanings: [{ english: 'fish' }],
+        wordPointed: 'דָּג',
         root: 'ד־ב־ר',
         noun: { pluralOnly: true, gender: 'm' },
       });
@@ -243,8 +243,8 @@ describe('completeInputs', () => {
       expect(completeInputs(ledaberDraft)).toEqual({
         word: 'לדבר',
         partOfSpeech: 'verb',
-        definitions: [{ english: 'to speak', preposition: 'עם' }],
-        pointed: 'לְדַבֵּר',
+        meanings: [{ english: 'to speak', preposition: 'עם' }],
+        wordPointed: 'לְדַבֵּר',
         root: 'ד־ב־ר',
         verb,
       });
@@ -272,14 +272,14 @@ describe('completeInputs', () => {
       const dubar = {
         ...ledaberDraft,
         word: 'דובר',
-        pointed: 'דֻּבַּר',
+        wordPointed: 'דֻּבַּר',
         verb: { ...verb, binyan: "pu'al" as const, past: 'דֻּבַּר', present: '', future: '' },
       };
       expect(completeInputs(dubar)).toEqual({
         word: 'דובר',
         partOfSpeech: 'verb',
-        definitions: [{ english: 'to speak', preposition: 'עם' }],
-        pointed: 'דֻּבַּר',
+        meanings: [{ english: 'to speak', preposition: 'עם' }],
+        wordPointed: 'דֻּבַּר',
         root: 'ד־ב־ר',
         verb: { binyan: "pu'al", past: 'דֻּבַּר', present: '', future: '' },
       });
@@ -297,13 +297,13 @@ describe('completeInputs', () => {
       expect(
         completeInputs({
           ...ledaberDraft,
-          definitions: [
+          meanings: [
             { english: ' to talk with ', preposition: 'עם' },
             { english: '', preposition: 'את' },
             { english: 'to talk about', preposition: 'על' },
             { english: 'to speak', preposition: 'none' },
           ],
-        })?.definitions,
+        })?.meanings,
       ).toEqual([
         { english: 'to talk with', preposition: 'עם' },
         { english: 'to talk about', preposition: 'על' },
@@ -317,7 +317,7 @@ describe('completeInputs', () => {
       expect(
         completeInputs({
           ...ledaberDraft,
-          definitions: [{ english: 'to speak', preposition: 'עם' }, { english: 'to say' }],
+          meanings: [{ english: 'to speak', preposition: 'עם' }, { english: 'to say' }],
         }),
       ).toBeUndefined();
     });
@@ -330,7 +330,7 @@ describe('completeInputs', () => {
           ...ledaberDraft,
           partOfSpeech: 'noun',
           noun: { ...noun, gender: 'm' },
-        })?.definitions,
+        })?.meanings,
       ).toStrictEqual([{ english: 'to speak' }]);
     });
   });
@@ -345,7 +345,7 @@ describe('completeInputs', () => {
 
   describe('while an input is blank', () => {
     test('returns nothing', () => {
-      expect(completeInputs({ ...dagDraft, definitions: [{ english: ' ' }] })).toBeUndefined();
+      expect(completeInputs({ ...dagDraft, meanings: [{ english: ' ' }] })).toBeUndefined();
     });
   });
 

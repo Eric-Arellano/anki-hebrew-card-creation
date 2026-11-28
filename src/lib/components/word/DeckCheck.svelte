@@ -61,7 +61,7 @@ function foundNone(notes: ExistingNotes): boolean {
 }
 
 function displayed(note: ExistingNote): string {
-  return note.pointed || note.unpointed;
+  return note.wordPointed || note.word;
 }
 
 function askToOpen(note: ExistingNote) {
@@ -113,8 +113,8 @@ function focus(element: HTMLElement) {
               {/if}
               <span class="ms-auto text-sm font-medium text-blue-400">Edit</span>
             </span>
-            {#if note.definitions !== ''}
-              <span class="line-clamp-2 text-sm">{note.definitions}</span>
+            {#if note.meanings !== ''}
+              <span class="line-clamp-2 text-sm">{note.meanings}</span>
             {/if}
           </button>
         </li>

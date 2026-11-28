@@ -9,8 +9,8 @@ import type { CardInputs } from './inputs.ts';
 const dagInputs: CardInputs = {
   word: 'דג',
   partOfSpeech: 'other',
-  definitions: [{ english: 'fish' }],
-  pointed: 'דָּג',
+  meanings: [{ english: 'fish' }],
+  wordPointed: 'דָּג',
 };
 
 const masculine: NounInputs = {
@@ -37,10 +37,10 @@ function realFields(word: string, fields: readonly FieldKey[]) {
 
 // Without `partOfSpeech`, which the real notes predate.
 const NOUN_FIELDS = [
-  'unpointed',
-  'pointed',
-  'definitions',
-  'productionAnswer',
+  'word',
+  'wordPointed',
+  'meanings',
+  'answer',
   'gender',
   'forms',
   'root',
@@ -50,11 +50,11 @@ describe('composeFields', () => {
   describe('for a word that is neither a noun nor a verb', () => {
     test('fills the word, its pointed form, its definition and its production answer', () => {
       expect(composeFields(dagInputs)).toEqual({
-        unpointed: 'דג',
+        word: 'דג',
         partOfSpeech: 'other',
-        pointed: 'דָּג',
-        definitions: 'fish',
-        productionAnswer: 'דג',
+        wordPointed: 'דָּג',
+        meanings: 'fish',
+        answer: 'דג',
       });
     });
   });
@@ -66,16 +66,16 @@ describe('composeFields', () => {
         expect(
           composeFields({
             word: 'מה נשמע',
-            pointed: 'מַה נִּשְׁמַע',
-            definitions: [{ english: 'how are you?' }],
+            wordPointed: 'מַה נִּשְׁמַע',
+            meanings: [{ english: 'how are you?' }],
             partOfSpeech,
           }),
         ).toEqual({
-          unpointed: 'מה נשמע',
+          word: 'מה נשמע',
           partOfSpeech,
-          pointed: 'מַה נִּשְׁמַע',
-          definitions: 'how are you?',
-          productionAnswer: 'מה נשמע',
+          wordPointed: 'מַה נִּשְׁמַע',
+          meanings: 'how are you?',
+          answer: 'מה נשמע',
         });
       });
     },
@@ -86,16 +86,16 @@ describe('composeFields', () => {
       expect(
         composeFields({
           word: 'חוץ מ־',
-          pointed: 'חוּץ מִ־',
-          definitions: [{ english: 'except for' }],
+          wordPointed: 'חוּץ מִ־',
+          meanings: [{ english: 'except for' }],
           partOfSpeech: 'preposition',
         }),
       ).toEqual({
-        unpointed: 'חוץ מ־',
+        word: 'חוץ מ־',
         partOfSpeech: 'preposition',
-        pointed: 'חוּץ מִ־',
-        definitions: 'except for',
-        productionAnswer: 'חוץ מ',
+        wordPointed: 'חוּץ מִ־',
+        meanings: 'except for',
+        answer: 'חוץ מ',
       });
     });
   });
@@ -104,8 +104,8 @@ describe('composeFields', () => {
     const noForms = { past: '', unpointedPast: 'דיבר', present: '', future: '' };
     const ledaber = {
       word: 'לדבר',
-      pointed: 'לְדַבֵּר',
-      definitions: [{ english: 'to speak', preposition: 'עם' }],
+      wordPointed: 'לְדַבֵּר',
+      meanings: [{ english: 'to speak', preposition: 'עם' }],
       partOfSpeech: 'verb',
       root: '',
     } as const;
@@ -124,11 +124,11 @@ describe('composeFields', () => {
           },
         }),
       ).toEqual({
-        unpointed: 'לדבר',
+        word: 'לדבר',
         partOfSpeech: 'verb',
-        pointed: 'לְדַבֵּר',
-        definitions: 'to speak <span class="prep"><bdi lang="he">עִם</bdi></span>',
-        productionAnswer: 'לדבר דיבר',
+        wordPointed: 'לְדַבֵּר',
+        meanings: 'to speak <span class="prep"><bdi lang="he">עִם</bdi></span>',
+        answer: 'לדבר דיבר',
         binyan: "pi'el",
         root: 'ד־ב־ר',
         forms: 'past: דִּבֵּר<br>pres: מְדַבֵּר<br>fut: יְדַבֵּר',
@@ -158,9 +158,9 @@ describe('composeFields', () => {
           composeFields({
             ...ledaber,
             word: 'דובר',
-            pointed: 'דֻּבַּר',
+            wordPointed: 'דֻּבַּר',
             verb: { binyan: "pu'al", past: 'דֻּבַּר', present: '', future: '' },
-          }).productionAnswer,
+          }).answer,
         ).toBe('דובר');
       });
     });
@@ -170,8 +170,8 @@ describe('composeFields', () => {
     function adjectiveFields(adjective: AdjectiveInputs) {
       return composeFields({
         word: 'גדול',
-        pointed: 'גָּדוֹל',
-        definitions: [{ english: 'big' }],
+        wordPointed: 'גָּדוֹל',
+        meanings: [{ english: 'big' }],
         partOfSpeech: 'adjective',
         root: 'ג־ד־ל',
         adjective,
@@ -186,11 +186,11 @@ describe('composeFields', () => {
           femininePlural: 'גְּדוֹלוֹת',
         }),
       ).toEqual({
-        unpointed: 'גדול',
+        word: 'גדול',
         partOfSpeech: 'adjective',
-        pointed: 'גָּדוֹל',
-        definitions: 'big',
-        productionAnswer: 'גדול',
+        wordPointed: 'גָּדוֹל',
+        meanings: 'big',
+        answer: 'גדול',
         forms: 'f: גְּדוֹלָה<br>m.pl: גְּדוֹלִים<br>f.pl: גְּדוֹלוֹת',
         root: 'ג־ד־ל',
       });
@@ -217,8 +217,8 @@ describe('composeFields', () => {
       expect(
         composeFields({
           word: 'חתול',
-          pointed: 'חָתוּל',
-          definitions: [{ english: 'cat' }],
+          wordPointed: 'חָתוּל',
+          meanings: [{ english: 'cat' }],
           partOfSpeech: 'noun',
           root: '',
           noun: {
@@ -240,14 +240,14 @@ describe('composeFields', () => {
     describe.each([
       ['f', 'דג טובה'],
       ['mf', 'דג טוב'],
-    ] as const)('of gender %s', (gender, productionAnswer) => {
-      test(`answers ${productionAnswer} and labels its plural pl`, () => {
+    ] as const)('of gender %s', (gender, answer) => {
+      test(`answers ${answer} and labels its plural pl`, () => {
         expect(composeFields(nounInputs({ pluralOnly: false, gender, plural: 'דָּגִים' }))).toEqual({
-          unpointed: 'דג',
+          word: 'דג',
           partOfSpeech: 'noun',
-          pointed: 'דָּג',
-          definitions: 'fish',
-          productionAnswer,
+          wordPointed: 'דָּג',
+          meanings: 'fish',
+          answer,
           gender,
           forms: 'pl: דָּגִים',
           root: '',
@@ -268,18 +268,18 @@ describe('composeFields', () => {
         expect(
           composeFields({
             word: 'מים',
-            pointed: 'מַיִם',
-            definitions: [{ english: 'water' }],
+            wordPointed: 'מַיִם',
+            meanings: [{ english: 'water' }],
             partOfSpeech: 'noun',
             root: 'מ־י־ם',
             noun: { pluralOnly: true, gender: 'm' },
           }),
         ).toEqual({
-          unpointed: 'מים',
+          word: 'מים',
           partOfSpeech: 'noun',
-          pointed: 'מַיִם',
-          definitions: 'water',
-          productionAnswer: 'מים טובים',
+          wordPointed: 'מַיִם',
+          meanings: 'water',
+          answer: 'מים טובים',
           gender: 'm',
           forms: '',
           root: 'מ־י־ם',
@@ -317,8 +317,8 @@ describe('composeFields', () => {
       expect(
         composeFields({
           ...dagInputs,
-          definitions: [{ english: 'fish' }, { english: 'Pisces & co' }],
-        }).definitions,
+          meanings: [{ english: 'fish' }, { english: 'Pisces & co' }],
+        }).meanings,
       ).toBe('1. fish<br>2. Pisces &amp; co');
     });
   });
@@ -329,15 +329,15 @@ describe('composeFields', () => {
         composeFields({
           word: ' דג ',
           partOfSpeech: 'other',
-          definitions: [{ english: 'fish & chips' }],
-          pointed: ' דָּג ',
+          meanings: [{ english: 'fish & chips' }],
+          wordPointed: ' דָּג ',
         }),
       ).toEqual({
-        unpointed: 'דג',
+        word: 'דג',
         partOfSpeech: 'other',
-        pointed: 'דָּג',
-        definitions: 'fish &amp; chips',
-        productionAnswer: 'דג',
+        wordPointed: 'דָּג',
+        meanings: 'fish &amp; chips',
+        answer: 'דג',
       });
     });
 
@@ -346,8 +346,8 @@ describe('composeFields', () => {
         composeFields({
           word: 'דג',
           partOfSpeech: 'noun',
-          definitions: [{ english: 'fish & chips' }],
-          pointed: 'דָּג',
+          meanings: [{ english: 'fish & chips' }],
+          wordPointed: 'דָּג',
           root: '',
           noun: {
             pluralOnly: false,
@@ -367,15 +367,15 @@ describe('composeFields', () => {
         composeFields({
           word: '',
           partOfSpeech: 'other',
-          definitions: [{ english: '' }],
-          pointed: '',
+          meanings: [{ english: '' }],
+          wordPointed: '',
         }),
       ).toEqual({
-        unpointed: '',
+        word: '',
         partOfSpeech: 'other',
-        pointed: '',
-        definitions: '',
-        productionAnswer: '',
+        wordPointed: '',
+        meanings: '',
+        answer: '',
       });
     });
   });

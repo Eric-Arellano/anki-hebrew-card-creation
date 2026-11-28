@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { SuggestedVerbMeaning } from '#lib/api/ai.ts';
 import type { DictionaryCandidate } from '#lib/api/dictionary.ts';
-import type { Meaning } from './definitions.ts';
+import type { Meaning } from './meanings.ts';
 import {
   proposedVerbMeanings,
   type VerbMeaningChange,
@@ -59,7 +59,7 @@ describe('verbMeaningsRequest', () => {
         {
           word: ' לדבר ',
           pointed: 'לְדַבֵּר ',
-          definitions: [{ english: ' to talk ', preposition: 'עם' }, { english: ' ' }, toTalk],
+          meanings: [{ english: ' to talk ', preposition: 'עם' }, { english: ' ' }, toTalk],
         },
         diber,
       ),
@@ -77,10 +77,7 @@ describe('verbMeaningsRequest', () => {
       ['a noun', kelev],
       ['none', undefined],
     ])('sends no definitions, for %s', (_, candidate) => {
-      const request = verbMeaningsRequest(
-        { word: 'לדבר', pointed: '', definitions: [] },
-        candidate,
-      );
+      const request = verbMeaningsRequest({ word: 'לדבר', pointed: '', meanings: [] }, candidate);
       expect(request.dictionaryDefinitions).toEqual([]);
       expect(request.dictionaryPrepositions).toEqual([]);
     });
@@ -88,10 +85,7 @@ describe('verbMeaningsRequest', () => {
 });
 
 describe('verbMeaningsBlocker', () => {
-  const request = verbMeaningsRequest(
-    { word: 'לדבר', pointed: '', definitions: [toTalk] },
-    undefined,
-  );
+  const request = verbMeaningsRequest({ word: 'לדבר', pointed: '', meanings: [toTalk] }, undefined);
 
   test('needs the verb', () => {
     expect(verbMeaningsBlocker({ ...request, word: '' })).toBe('Type the verb first.');

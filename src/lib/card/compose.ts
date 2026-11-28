@@ -1,6 +1,6 @@
 import { textToAnkiFieldHtml } from '#lib/anki/html.ts';
-import { definitionsToAnkiFieldHtml } from '#lib/card/definitions.ts';
 import type { CardInputs } from '#lib/card/inputs.ts';
+import { meaningsToAnkiFieldHtml } from '#lib/card/meanings.ts';
 import { composeAdjectiveFields } from '#lib/card/parts-of-speech/adjective.ts';
 import { composeNounFields } from '#lib/card/parts-of-speech/noun.ts';
 import { composeVerbFields } from '#lib/card/parts-of-speech/verb.ts';
@@ -12,10 +12,10 @@ export function composeFields(inputs: CardInputs): FieldValues {
   const word = textToAnkiFieldHtml(inputs.word.trim());
   const shared = {
     // What the human typed, never derived from the pointed form: `דִּבֵּר` strips to `דבר`, not `דיבר`.
-    unpointed: word,
+    word,
     partOfSpeech: inputs.partOfSpeech,
-    pointed: textToAnkiFieldHtml(inputs.pointed.trim()),
-    definitions: definitionsToAnkiFieldHtml(inputs.definitions),
+    wordPointed: textToAnkiFieldHtml(inputs.wordPointed.trim()),
+    meanings: meaningsToAnkiFieldHtml(inputs.meanings),
   };
   switch (inputs.partOfSpeech) {
     case 'noun':
@@ -25,10 +25,10 @@ export function composeFields(inputs: CardInputs): FieldValues {
     case 'adjective':
       return { ...shared, root: inputs.root, ...composeAdjectiveFields(word, inputs.adjective) };
     case 'preposition':
-      return { ...shared, productionAnswer: withoutTrailingMaqaf(word) };
+      return { ...shared, answer: withoutTrailingMaqaf(word) };
     case 'adverb':
     case 'phrase':
     case 'other':
-      return { ...shared, productionAnswer: word };
+      return { ...shared, answer: word };
   }
 }

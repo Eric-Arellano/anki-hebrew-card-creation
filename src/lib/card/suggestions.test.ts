@@ -23,8 +23,8 @@ function seferDraft(changes: Partial<CardDraft> = {}): CardDraft {
     inputs: {
       ...empty.inputs,
       word: 'ספר',
-      pointed: 'סֵפֶר',
-      definitions: [{ english: 'book' }],
+      wordPointed: 'סֵפֶר',
+      meanings: [{ english: 'book' }],
       partOfSpeech: 'noun',
       noun: { ...empty.inputs.noun, gender: 'm' },
     },
@@ -40,16 +40,16 @@ describe('suggestBlocker', () => {
   test('counts a meaning of only spaces as none', () => {
     const draft = seferDraft();
     expect(
-      suggestBlocker({ ...draft, inputs: { ...draft.inputs, definitions: [{ english: '  ' }] } }),
+      suggestBlocker({ ...draft, inputs: { ...draft.inputs, meanings: [{ english: '  ' }] } }),
     ).toBe('Type the word and a meaning first.');
   });
 
   describe('for a verb', () => {
-    function verbDraft(definitions: CardDraft['inputs']['definitions']): CardDraft {
+    function verbDraft(meanings: CardDraft['inputs']['meanings']): CardDraft {
       const draft = seferDraft();
       return {
         ...draft,
-        inputs: { ...draft.inputs, word: 'לשמור', partOfSpeech: 'verb', definitions },
+        inputs: { ...draft.inputs, word: 'לשמור', partOfSpeech: 'verb', meanings },
       };
     }
 
@@ -105,7 +105,7 @@ describe('suggestRequest', () => {
           inputs: {
             ...draft.inputs,
             word: ' ספר ',
-            definitions: [{ english: 'book' }, { english: ' ' }, { english: ' volume ' }],
+            meanings: [{ english: 'book' }, { english: ' ' }, { english: ' volume ' }],
             noun: { ...draft.inputs.noun, plural: 'סְפָרִים' },
           },
         },
@@ -115,7 +115,7 @@ describe('suggestRequest', () => {
       word: 'ספר',
       pointed: 'סֵפֶר',
       partOfSpeech: 'noun',
-      definitions: [{ english: 'book' }, { english: 'volume' }],
+      meanings: [{ english: 'book' }, { english: 'volume' }],
       forms: [{ label: 'plural', form: 'סְפָרִים' }],
     });
   });
@@ -129,14 +129,14 @@ describe('suggestRequest', () => {
             ...draft,
             inputs: {
               ...draft.inputs,
-              definitions: [
+              meanings: [
                 { english: 'to keep', preposition: 'את' },
                 { english: ' to guard ', preposition: 'על' },
               ],
             },
           },
           'verb',
-        ).definitions,
+        ).meanings,
       ).toEqual([
         { english: 'to keep', preposition: 'את' },
         { english: 'to guard', preposition: 'על' },
@@ -150,10 +150,10 @@ describe('suggestRequest', () => {
       suggestRequest(
         {
           ...draft,
-          inputs: { ...draft.inputs, definitions: [{ english: 'book', preposition: 'את' }] },
+          inputs: { ...draft.inputs, meanings: [{ english: 'book', preposition: 'את' }] },
         },
         'noun',
-      ).definitions,
+      ).meanings,
     ).toEqual([{ english: 'book' }]);
   });
 });

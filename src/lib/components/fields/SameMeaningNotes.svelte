@@ -32,7 +32,7 @@ function quoted(meanings: string[]): string {
           <ul class="list-disc ps-5">
             {#each notes as note (note.noteId)}
               <li>
-                <bdi lang="he" class="font-hebrew text-base">{note.pointed || note.unpointed}</bdi>
+                <bdi lang="he" class="font-hebrew text-base">{note.wordPointed || note.word}</bdi>
                 also means {quoted(note.sharedMeanings)},
                 {#if note.productionContext === ''}
                   and has no hint yet.

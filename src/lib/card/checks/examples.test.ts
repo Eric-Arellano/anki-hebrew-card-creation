@@ -5,7 +5,7 @@ import { examplesWithoutWord } from './examples.ts';
 const rakevet: CardInputsDraft = {
   ...emptyInputsDraft(),
   word: 'רכבת',
-  pointed: 'רַכֶּבֶת',
+  wordPointed: 'רַכֶּבֶת',
   partOfSpeech: 'noun',
 };
 
@@ -52,7 +52,7 @@ describe('examplesWithoutWord', () => {
     const ledaber: CardInputsDraft = {
       ...emptyInputsDraft(),
       word: 'לדבר',
-      pointed: 'לְדַבֵּר',
+      wordPointed: 'לְדַבֵּר',
       partOfSpeech: 'verb',
       root: 'ד.ב.ר',
     };
@@ -103,7 +103,7 @@ describe('examplesWithoutWord', () => {
           inputs: {
             ...emptyInputsDraft(),
             word: 'לפני',
-            pointed: 'לִפְנֵי',
+            wordPointed: 'לִפְנֵי',
             partOfSpeech: 'preposition',
           },
           formsField: 'me: לְפָנַי\nus: לְפָנֵינוּ',

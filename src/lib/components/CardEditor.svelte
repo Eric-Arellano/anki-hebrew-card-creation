@@ -13,7 +13,7 @@ import {
 import { type DictionaryCandidate, fetchDictionaryLookup } from '#lib/api/dictionary.ts';
 import { errorMessage } from '#lib/api/http.ts';
 import { composeFields } from '#lib/card/compose.ts';
-import { filledDefinitions } from '#lib/card/definitions.ts';
+import { filledMeanings } from '#lib/card/meanings.ts';
 import { type CardDraft, changedBeyondWord, emptyCardDraft, stillNeeded } from '#lib/card/draft.ts';
 import { examplesWithoutWord } from '#lib/card/checks/examples.ts';
 import { examplesToAnkiFieldHtml } from '#lib/card/examples.ts';
@@ -47,7 +47,7 @@ import Checkbox from './ui/Checkbox.svelte';
 import LinkChip from './ui/LinkChip.svelte';
 import Section from './ui/Section.svelte';
 import TextInput from './ui/TextInput.svelte';
-import DefinitionsInput from './word/DefinitionsInput.svelte';
+import MeaningsInput from './word/MeaningsInput.svelte';
 import DeckCheck from './word/DeckCheck.svelte';
 import DictionaryEntries from './word/DictionaryEntries.svelte';
 
@@ -69,7 +69,7 @@ function startingDraft(): NoteDraft {
 
 const { unoffered, ...start } = startingDraft();
 const editedWord =
-  untrack(() => note) === undefined ? undefined : start.inputs.pointed || start.inputs.word;
+  untrack(() => note) === undefined ? undefined : start.inputs.wordPointed || start.inputs.word;
 const pageTitle = `${editedWord === undefined ? 'New word' : `Editing ${editedWord}`} · Hebrew card helper`;
 // The note as Anki last answered with it: as loaded, then as each save left it.
 let heldNote: LoadedNote | undefined = $state.raw(untrack(() => note));
@@ -128,9 +128,7 @@ const lookup = $derived(
 );
 const choices = $derived(picked?.choices ?? {});
 const deckWords = $derived([draft.inputs.word, ...(picked ? [picked.candidate.title] : [])]);
-const meanings = $derived(
-  filledDefinitions(draft.inputs.definitions).map(({ english }) => english),
-);
+const meanings = $derived(filledMeanings(draft.inputs.meanings).map(({ english }) => english));
 const sameMeaningQuery = $derived(JSON.stringify([meanings, deckWords]));
 const sameMeaningSearch = $derived(
   meanings.length === 0
@@ -248,10 +246,7 @@ onMount(checkAnki);
         bind:value={draft.inputs.word}
         oninput={retype}
       />
-      <DefinitionsInput
-        bind:definitions={draft.inputs.definitions}
-        held={marked?.inputs.definitions}
-      />
+      <MeaningsInput bind:meanings={draft.inputs.meanings} held={marked?.inputs.meanings} />
     </div>
     <DeckCheck
       words={deckWords}

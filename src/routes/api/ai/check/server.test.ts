@@ -20,7 +20,7 @@ const kelev = { partOfSpeech: 'noun', fields: fromAnkiFields(realNote('כלב'))
 // סֵפֶר, whose spelling the fixture dictionary also has as סַפָּר, סָפַר and סְפָר.
 const sefer = {
   partOfSpeech: 'noun',
-  fields: { unpointed: 'ספר', pointed: 'סֵפֶר', definitions: 'book', readingContext: 'ספר טוב' },
+  fields: { word: 'ספר', wordPointed: 'סֵפֶר', meanings: 'book', readingContext: 'ספר טוב' },
 };
 
 function checkRequest(body: unknown) {
@@ -76,7 +76,7 @@ describe('_check', () => {
     test('answers 400 without asking Claude', async () => {
       const messages = replyingWith('end_turn');
       await expect(
-        _check(index, checkRequest({ ...sefer, fields: { definitions: 'book' } }), messages),
+        _check(index, checkRequest({ ...sefer, fields: { meanings: 'book' } }), messages),
       ).rejects.toSatisfy(
         (error) => isHttpError(error, 400) && error.body.message === 'Type the word first.',
       );

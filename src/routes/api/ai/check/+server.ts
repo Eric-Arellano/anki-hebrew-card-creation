@@ -26,9 +26,9 @@ export async function _check(
     checkRequestBodySchema,
     'The body must hold the part of speech, and fields mapping field keys to text',
   );
-  const { unpointed, pointed = '' } = fieldTexts(body);
-  if (unpointed === undefined) error(400, 'Type the word first.');
+  const { word, wordPointed = '' } = fieldTexts(body);
+  if (word === undefined) error(400, 'Type the word first.');
 
-  const homographs = withDictionaryAs503(() => lookUpHomographs(paths, unpointed, pointed));
+  const homographs = withDictionaryAs503(() => lookUpHomographs(paths, word, wordPointed));
   return Response.json(await withAiErrorsAs502(() => checkNote(body, homographs, messages)));
 }

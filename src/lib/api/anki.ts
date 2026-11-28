@@ -22,10 +22,10 @@ export type AnkiStatus =
 // often blank in old notes.
 export type ExistingNote = {
   noteId: number;
-  unpointed: string;
-  pointed: string;
+  word: string;
+  wordPointed: string;
   partOfSpeech: string;
-  definitions: string;
+  meanings: string;
 };
 
 // Each note in one list only, the first that fits: its word, then its root, then containing the word.
@@ -39,8 +39,8 @@ export type ExistingNotes = {
 // it wants. `sharedMeanings` are as this word writes them.
 export type SameMeaningNote = {
   noteId: number;
-  unpointed: string;
-  pointed: string;
+  word: string;
+  wordPointed: string;
   sharedMeanings: string[];
   productionContext: string;
 };

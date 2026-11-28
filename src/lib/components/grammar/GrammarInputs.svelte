@@ -61,8 +61,8 @@ let {
 // Only a warning, since a correct spelling can fail the comparison.
 const misspellsWord = $derived(
   inputs.word.trim() !== '' &&
-    inputs.pointed.trim() !== '' &&
-    !spellsWord(inputs.pointed, inputs.word),
+    inputs.wordPointed.trim() !== '' &&
+    !spellsWord(inputs.wordPointed, inputs.word),
 );
 
 // An infinitive is chosen as a pair, so choosing its pointed spelling writes its unpointed one.
@@ -94,10 +94,11 @@ function chooseInfinitive(pointed: string) {
       <TextInput
         label="Hebrew word, with niqqud"
         lang="he"
-        choices={choices.pointed ?? choices.infinitives?.map((infinitive) => infinitive.pointed)}
+        choices={choices.wordPointed ??
+          choices.infinitives?.map((infinitive) => infinitive.pointed)}
         onchoose={choices.infinitives === undefined ? undefined : chooseInfinitive}
-        held={held?.pointed}
-        bind:value={inputs.pointed}
+        held={held?.wordPointed}
+        bind:value={inputs.wordPointed}
       />
       {#if misspellsWord}
         <p class="text-sm text-amber-400" aria-live="polite">
@@ -117,13 +118,19 @@ function chooseInfinitive(pointed: string) {
     >
       {@render pointedInput()}
     </NounInputs>
-    <PluralHints noun={inputs.noun} pointed={inputs.pointed} {edits} {shownFields} onuse={onedit} />
+    <PluralHints
+      noun={inputs.noun}
+      pointed={inputs.wordPointed}
+      {edits}
+      {shownFields}
+      onuse={onedit}
+    />
   {:else if inputs.partOfSpeech === 'verb'}
     <VerbMeaningPrepositions
-      bind:definitions={inputs.definitions}
-      held={held?.definitions}
+      bind:meanings={inputs.meanings}
+      held={held?.meanings}
       word={inputs.word}
-      pointed={inputs.pointed}
+      pointed={inputs.wordPointed}
       {candidate}
     />
     <VerbInputs

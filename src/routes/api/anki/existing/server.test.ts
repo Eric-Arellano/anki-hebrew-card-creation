@@ -20,10 +20,10 @@ describe('_findExisting', () => {
       exactMatches: [
         {
           noteId: 1751714182456,
-          unpointed: 'דג',
-          pointed: 'דָּג',
+          word: 'דג',
+          wordPointed: 'דָּג',
           partOfSpeech: '',
-          definitions: 'fish',
+          meanings: 'fish',
         },
       ],
       sameRootMatches: [],

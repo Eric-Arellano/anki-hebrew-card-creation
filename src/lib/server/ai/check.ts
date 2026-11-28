@@ -4,8 +4,8 @@
 import { z } from 'zod';
 import { ankiFieldHtmlToText } from '#lib/anki/html.ts';
 import type { CheckRequest, Finding, NoteCheck } from '#lib/api/ai.ts';
-import { definitionsFromHtml } from '#lib/card/definitions.ts';
 import { examplesFromHtml, isBlankExample } from '#lib/card/examples.ts';
+import { meaningsFromHtml } from '#lib/card/meanings.ts';
 import { FIELD_HELP, GROUP_HELP } from '#lib/field-help.ts';
 import { hasNiqqud, isSamePointedText } from '#lib/hebrew/normalize.ts';
 import { FIELDS, type FieldKey, type PartOfSpeech } from '#lib/note-type.ts';
@@ -16,9 +16,9 @@ import { PREPOSITION_RULES, verbMeaningLines } from './verb-meanings.ts';
 // What Claude reads, in the order a card shows them. `Production answer` stays out, since it only
 // repeats the word, and a verb's past from `Forms`, for the card to check a typed answer.
 const SENT_FIELDS = [
-  'unpointed',
-  'pointed',
-  'definitions',
+  'word',
+  'wordPointed',
+  'meanings',
   'gender',
   'binyan',
   'root',
@@ -37,7 +37,7 @@ const SENT_FIELDS = [
 // examples can call into question. The rest come from Wiktionary and are only context.
 // `Definitions` is the human's: the editor never fills it from the dictionary's glosses.
 const JUDGED_FIELDS = [
-  'definitions',
+  'meanings',
   'gender',
   'binyan',
   'productionContext',
@@ -87,8 +87,8 @@ const GENDER_NAMES: Record<string, string> = { m: 'masculine', f: 'feminine', mf
 // A verb's meanings as every prompt shows them, since the card's pill would otherwise run into the
 // English as `to look after עַל`.
 function fieldText(key: FieldKey, html: string, partOfSpeech: PartOfSpeech): string {
-  if (key === 'definitions' && partOfSpeech === 'verb') {
-    return verbMeaningLines(definitionsFromHtml(html));
+  if (key === 'meanings' && partOfSpeech === 'verb') {
+    return verbMeaningLines(meaningsFromHtml(html));
   }
   return html
     .split(/<br\s*\/?>/i)

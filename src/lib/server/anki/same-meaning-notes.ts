@@ -1,7 +1,7 @@
 import { searchByFieldHavingPhrase, searchByNoteType, searchForAny } from '#lib/anki/search.ts';
 import type { SameMeaningNote } from '#lib/api/anki.ts';
 import { senseKeys, sharedSenses } from '#lib/card/checks/meanings.ts';
-import { definitionsFromHtml } from '#lib/card/definitions.ts';
+import { meaningsFromHtml } from '#lib/card/meanings.ts';
 import { toComparisonKey } from '#lib/hebrew/normalize.ts';
 import { FIELDS, NOTE_TYPE } from '#lib/note-type.ts';
 import type { AnkiClient } from '#lib/server/anki/client.ts';
@@ -17,7 +17,7 @@ export async function findSameMeaningNotes(
   if (keys.length === 0) return [];
 
   // The search finds `car` in `car park` too, so the senses are compared once the notes are read.
-  const terms = keys.map((key) => searchByFieldHavingPhrase(FIELDS.definitions.name, key));
+  const terms = keys.map((key) => searchByFieldHavingPhrase(FIELDS.meanings.name, key));
   const noteIds = await anki('findNotes', {
     query: `${searchByNoteType(NOTE_TYPE)} ${searchForAny(terms)}`,
   });
@@ -26,14 +26,14 @@ export async function findSameMeaningNotes(
   const wordKeys = words.map(toComparisonKey);
   const notes = await anki('notesInfo', { notes: noteIds });
   return notes
-    .filter((note) => !wordKeys.includes(toComparisonKey(fieldText(note, FIELDS.unpointed))))
+    .filter((note) => !wordKeys.includes(toComparisonKey(fieldText(note, FIELDS.word))))
     .map((note) => ({
       noteId: note.noteId,
-      unpointed: fieldText(note, FIELDS.unpointed),
-      pointed: fieldText(note, FIELDS.pointed),
+      word: fieldText(note, FIELDS.word),
+      wordPointed: fieldText(note, FIELDS.wordPointed),
       sharedMeanings: sharedSenses(
         meanings,
-        definitionsFromHtml(fieldHtml(note, FIELDS.definitions)).map(({ english }) => english),
+        meaningsFromHtml(fieldHtml(note, FIELDS.meanings)).map(({ english }) => english),
       ),
       productionContext: fieldText(note, FIELDS.productionContext),
     }))

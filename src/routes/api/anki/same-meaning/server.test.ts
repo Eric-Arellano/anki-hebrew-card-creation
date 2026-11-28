@@ -23,8 +23,8 @@ describe('_findSameMeaning', () => {
     expect(await response.json()).toEqual([
       {
         noteId: 1751762491688,
-        unpointed: 'מכונית',
-        pointed: 'מְכוֹנִית',
+        word: 'מכונית',
+        wordPointed: 'מְכוֹנִית',
         sharedMeanings: ['car'],
         productionContext: '',
       },

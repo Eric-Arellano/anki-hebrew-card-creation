@@ -17,7 +17,7 @@ const sefer = {
   word: 'ספר',
   pointed: 'סֵפֶר',
   partOfSpeech: 'noun',
-  definitions: [{ english: 'book' }, { english: '(archaic) a writing' }],
+  meanings: [{ english: 'book' }, { english: '(archaic) a writing' }],
   forms: [{ label: 'plural', form: 'סְפָרִים' }],
 };
 
@@ -58,7 +58,7 @@ describe('_suggest', () => {
       suggestRequest({
         ...sefer,
         word: ' ספר ',
-        definitions: [{ english: 'book' }, { english: ' ' }],
+        meanings: [{ english: 'book' }, { english: ' ' }],
       }),
       messages,
     );
@@ -70,7 +70,7 @@ describe('_suggest', () => {
   describe('when the request is incomplete', () => {
     test.each([
       ['a blank word', { ...sefer, word: ' ' }],
-      ['no meaning', { ...sefer, definitions: [{ english: ' ' }] }],
+      ['no meaning', { ...sefer, meanings: [{ english: ' ' }] }],
     ])('answers 400 for %s without asking Claude', async (_, body) => {
       const messages = fakeClaude(suggestSefer);
       await expect(_suggest(index, suggestRequest(body), messages)).rejects.toSatisfy(
@@ -85,7 +85,7 @@ describe('_suggest', () => {
       const verb = {
         ...sefer,
         partOfSpeech: 'verb',
-        definitions: [{ english: 'to keep', preposition: 'את' }, { english: 'to guard' }],
+        meanings: [{ english: 'to keep', preposition: 'את' }, { english: 'to guard' }],
       };
       await expect(_suggest(index, suggestRequest(verb), messages)).rejects.toSatisfy(
         (error) =>

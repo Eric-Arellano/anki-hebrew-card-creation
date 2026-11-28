@@ -101,7 +101,7 @@ describe('wordUsage', () => {
   const ledaber: CardInputsDraft = {
     ...emptyInputsDraft(),
     word: 'לדבר',
-    pointed: 'לְדַבֵּר',
+    wordPointed: 'לְדַבֵּר',
     partOfSpeech: 'verb',
     root: 'ד.ב.ר',
     verb: { ...emptyInputsDraft().verb, present: 'מְדַבֵּר' },
