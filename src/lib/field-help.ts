@@ -139,8 +139,8 @@ export const FIELD_HELP = {
       "What you'll be shown. For example, “good tables” for שולחן's irregular plural, or " +
       `“female dog” for כלב. ${PASTE_IMAGE_HELP}`,
     verb:
-      "What you'll be shown. For example, “I will learn” for ללמוד, whose future's vowel isn't " +
-      `the infinitive's. ${PASTE_IMAGE_HELP}`,
+      "What you'll be shown, only for a form the infinitive and past don't predict. For example, " +
+      `“I will learn” for ללמוד, whose future's vowel isn't the infinitive's. ${PASTE_IMAGE_HELP}`,
     adjective:
       "What you'll be shown. For example, “other (feminine)” for אחר's irregular " +
       `feminine. ${PASTE_IMAGE_HELP}`,
